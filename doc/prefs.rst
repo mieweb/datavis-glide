@@ -1,0 +1,22 @@
+***********
+Preferences
+***********
+
+The preferences system is used to save the current configuration of an interactive grid to the
+server.  Later, when that grid is used again, the configuration is loaded.  This makes the user's
+configuration changes persistent.  The kinds of things that are stored as part of the preferences
+vary depending on the output mode of the grid, but here are the basics:
+
+* sorting
+
+  - column name
+  - direction
+
+* filtering
+
+  - column name
+  - operator
+
+* grouping
+
+  - column name
