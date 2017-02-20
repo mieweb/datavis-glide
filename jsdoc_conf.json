@@ -1,0 +1,16 @@
+{
+    "plugins": ["plugins/markdown"],
+    "opts": {
+        "template": "node_modules/ink-docstrap/template",
+        "destination": "jsdoc"
+    },
+	"templates": {
+		"systemName": "Webchart",
+		"copyright": "Copyright © Medical Informatics Engineering, Inc.",
+		"theme": "spacelab",
+		"linenums": true,
+		"collapseSymbols": true,
+		"inverseNav": true,
+		"methodHeadingReturns": true
+	}
+}

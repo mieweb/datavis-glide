@@ -1,1 +1,6 @@
 .*.swp
+jsdoc
+node_modules
+doc/_build
+doc/.python-version
+dist
