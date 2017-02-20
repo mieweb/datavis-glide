@@ -978,7 +978,7 @@ function fontAwesome(hex, cls, title) {
 	}
 
 	if (title !== undefined) {
-		sp.attr('title', title);
+		span.attr('title', title);
 	}
 
 	return span;
@@ -1068,37 +1068,6 @@ function fontAwesome(hex, cls, title) {
 			return log.warn.apply(null, args);
 		}
 	};
-
-	/**
-	 * Issue a warning with an email.
-	 *
-	 * @memberof wcgraph_int.io
-	 *
-	 * @param {object} defn The grid definition, used for identifying which grid is involved.
-	 * @param {string} msg The explanatory message.
-	 */
-
-	function emailWarning(defn, msg) {
-		var output = msg;
-
-		if (getProp(defn, 'table', 'id')) {
-			output += ' (Grid "' + defn.table.id + '")';
-		}
-
-		wcLogError(output, undefined, undefined, 5);
-		log.warn(output);
-	}
-
-	function emailError(defn, msg) {
-		var output = msg;
-
-		if (getProp(defn, 'table', 'id')) {
-			output += ' (Grid "' + defn.table.id + '")';
-		}
-
-		wcLogError(output, undefined, undefined, 9);
-		log.error(output);
-	}
 
 	/**
 	 * Issue a warning about deprecated usage.  This also sends an email at the warning level, so that

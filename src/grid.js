@@ -4459,7 +4459,7 @@ GridFilterSet.prototype.loadPrefs = function (prefs) {
 
 // Constructor {{{2
 
-var WCGRID = function (id, defn, tagOpts, cb) {
+var WCGrid = function (id, defn, tagOpts, cb) {
 	var self = this;
 
 	var tagContainer = null; // Container div for the contents of the whole tag.
@@ -4662,7 +4662,7 @@ var WCGRID = function (id, defn, tagOpts, cb) {
  * @param {string} id
  */
 
-WCGRID.prototype._addHeaderWidgets = function (header, doingServerFilter, runImmediately, id) {
+WCGrid.prototype._addHeaderWidgets = function (header, doingServerFilter, runImmediately, id) {
 	var self = this;
 	var notHeader = jQuery('<span>', {'class': 'headingInfo'})
 		.on('click', function (evt) {
@@ -4760,7 +4760,7 @@ WCGRID.prototype._addHeaderWidgets = function (header, doingServerFilter, runImm
  * @private
  */
 
-WCGRID.prototype._addCommonButtons = function (toolbar) {
+WCGrid.prototype._addCommonButtons = function (toolbar) {
 	var self = this;
 	var isVisible = true; // If true, the grid is not currently hidden.
 
@@ -4781,7 +4781,7 @@ WCGRID.prototype._addCommonButtons = function (toolbar) {
  * @private
  */
 
-WCGRID.prototype._addPrefsButtons = function (toolbar) {
+WCGrid.prototype._addPrefsButtons = function (toolbar) {
 	var self = this;
 
 	jQuery('<button type="button">')
@@ -4902,7 +4902,7 @@ WCGRID.prototype._addPrefsButtons = function (toolbar) {
  * @private
  */
 
-WCGRID.prototype._addJqwidgetsButtons = function (toolbar) {
+WCGrid.prototype._addJqwidgetsButtons = function (toolbar) {
 	var self = this;
 
 	// Auto-Resize Columns
@@ -5036,7 +5036,7 @@ WCGRID.prototype._addJqwidgetsButtons = function (toolbar) {
  * @private
  */
 
-WCGRID.prototype._addPivotButtons = function (toolbar) {
+WCGrid.prototype._addPivotButtons = function (toolbar) {
 	var self = this;
 
 	$('<input>', { 'id': self.defn.table.id + '_toggleRowTotalsChk', 'type': 'checkbox', 'checked': true })
@@ -5068,7 +5068,7 @@ WCGRID.prototype._addPivotButtons = function (toolbar) {
  * @memberof WCGRID
  */
 
-WCGRID.prototype.refresh = function () {
+WCGrid.prototype.refresh = function () {
 	var self = this;
 
 	if (!self.isGridVisible()) {
@@ -5111,7 +5111,7 @@ WCGRID.prototype.refresh = function () {
  * @memberof WCGRID
  */
 
-WCGRID.prototype.redraw = function () {
+WCGrid.prototype.redraw = function () {
 	var self = this;
 
 	if (!self.isGridVisible()) {
@@ -5133,7 +5133,7 @@ WCGRID.prototype.redraw = function () {
  * @param {number} totalRows The total number of rows.
  */
 
-WCGRID.prototype.updateRowCount = function (numRows, totalRows) {
+WCGrid.prototype.updateRowCount = function (numRows, totalRows) {
 	var self = this
 		, doingServerFilter = getProp(self.defn, 'server', 'filter') && getProp(self.defn, 'server', 'limit') !== -1;
 
@@ -5207,7 +5207,7 @@ WCGRID.prototype.updateRowCount = function (numRows, totalRows) {
  * @memberof WCGRID
  */
 
-WCGRID.prototype.hideGrid = function () {
+WCGrid.prototype.hideGrid = function () {
 	var self = this;
 	self.ui.grid.slideUp({
 		done: function () {
@@ -5227,7 +5227,7 @@ WCGRID.prototype.hideGrid = function () {
  * @memberof WCGRID
  */
 
-WCGRID.prototype.showGrid = function () {
+WCGrid.prototype.showGrid = function () {
 	var self = this;
 	self.ui.grid.slideDown({
 		done: function () {
@@ -5251,7 +5251,7 @@ WCGRID.prototype.showGrid = function () {
  * @memberof WCGRID
  */
 
-WCGRID.prototype.toggleGrid = function () {
+WCGrid.prototype.toggleGrid = function () {
 	if (this.ui.grid.css('display') === 'none') {
 		this.showGrid();
 	}
@@ -5271,13 +5271,13 @@ WCGRID.prototype.toggleGrid = function () {
  * @returns {boolean} True if the grid is currently visible, false if it is not.
  */
 
-WCGRID.prototype.isGridVisible = function () {
+WCGrid.prototype.isGridVisible = function () {
 	return this.ui.grid.css('display') !== 'none';
 };
 
 // #setSpinner {{{2
 
-WCGRID.prototype.setSpinner = function (what) {
+WCGrid.prototype.setSpinner = function (what) {
 	var self = this;
 
 	switch (what) {
@@ -5295,7 +5295,7 @@ WCGRID.prototype.setSpinner = function (what) {
 
 // #showSpinner {{{2
 
-WCGRID.prototype.showSpinner = function () {
+WCGrid.prototype.showSpinner = function () {
 	var self = this;
 
 	if (self.tagOpts.title) {
@@ -5305,7 +5305,7 @@ WCGRID.prototype.showSpinner = function () {
 
 // #hideSpinner {{{2
 
-WCGRID.prototype.hideSpinner = function () {
+WCGrid.prototype.hideSpinner = function () {
 	var self = this;
 
 	if (self.tagOpts.title) {
@@ -5315,7 +5315,7 @@ WCGRID.prototype.hideSpinner = function () {
 
 // #enablePivot {{{2
 
-WCGRID.prototype.enablePivot = function () {
+WCGrid.prototype.enablePivot = function () {
 	var self = this;
 
 	if (self.isPivot) {
@@ -5327,7 +5327,7 @@ WCGRID.prototype.enablePivot = function () {
 
 // #disablePivot {{{2
 
-WCGRID.prototype.disablePivot = function () {
+WCGrid.prototype.disablePivot = function () {
 	var self = this;
 
 	if (!self.isPivot) {
@@ -5339,7 +5339,7 @@ WCGRID.prototype.disablePivot = function () {
 
 // #togglePivot {{{2
 
-WCGRID.prototype.togglePivot = function () {
+WCGrid.prototype.togglePivot = function () {
 	var self = this;
 
 	self.isPivot = !self.isPivot;
@@ -5353,7 +5353,7 @@ WCGRID.prototype.togglePivot = function () {
  * table as a pivot table.
  */
 
-WCGRID.prototype.drawPivotControl = function () {
+WCGrid.prototype.drawPivotControl = function () {
 };
 
 // Pivot {{{1
@@ -5696,3 +5696,9 @@ PivotControlField.prototype.appendTo = function (elt) {
 
 	elt.append(self.div);
 };
+
+// Exports {{{1
+
+window.MIE = window.MIE || {};
+
+window.MIE.WCGrid = WCGrid;

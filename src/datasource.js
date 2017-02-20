@@ -1,578 +1,724 @@
-	// Filters {{{1
+// FilterError {{{1
 
-	/*
-	 * Filters are the inputs that are passed to a system report, which modify its behaviour by adding
-	 * constraints on the result set.
-	 *
-	 * As implemented in this code, filters have a hierarchy that supports complex behaviour.
-	 *
-	 *   - Filter Input = collection of filter sets
-	 *   - Filter Set   = collection of individual filters
-	 *   - Filter       = single logical filter subject; could be more than one HTML input
-	 *
-	 * So, Filters are the underlying individual elements; Filter Sets bundle these together into a
-	 * group of filters that make up a single report request; and Filter Inputs group multiple filter
-	 * sets to form inputs for a series of reports that can be run in succession. Filter Inputs
-	 * fulfill the use case of having "main" and "comparison" filters, each of which is a separate
-	 * Filter Set.
-	 *
-	 * Most API access is done through the filter input: you give it a form and a template.  Then you
-	 * can create separate filter sets (if you need more than one; maybe a "main" and "comparison").
-	 * Finally you hook up the events to switch between filter sets, and attach the filter input to
-	 * the report spec.
-	 */
+/**
+ * @class
+ */
 
-	// Filter Exceptions {{{2
+var FilterError = function (msg) {
+	this.message = msg;
+};
 
-	function FilterError(msg) {
-		this.name = 'FilterError';
-		this.stack = (new Error()).stack;
-		this.message = msg;
+FilterError.prototype = Object.create(Error.prototype);
+FilterError.prototype.name = 'FilterError';
+FilterError.prototype.constructor = FilterError;
+
+// Filter {{{1
+
+/**
+ * @class
+ *
+ * @property {string} inputName Name of an input element from a form.
+ *
+ * @property {string} type What kind of widget to get input from.
+ *
+ * @property {boolean} required If true, an error will be issued if this filter is used on a data
+ * source, when the user has not entered anything into the input element.
+ *
+ * @property {string} method How the input should be sent to the server.  Allowed values: [cgi,
+ * json_where, json_having].
+ *
+ * @property {string} paramName When method = "cgi", the name of the CGI parameter to send.
+ *
+ * @property {object} json When method = "json_where" or method = "json_having", specifies details
+ * about that method.
+ *
+ * @property {string} json.name Name of the constraint set.
+ *
+ * @property {string} json.column Name of the column to add a constraint for.
+ *
+ * @property {string} json.operator Operator to use for the constraint.  Allowed values: [$eq, $ne,
+ * $in, $nin, $gt, $gte, $lt, $lte, $like].
+ *
+ * @property {string} json.operand When absent, the user's input is sent as the value.  When
+ * present, this is sent instead, and any empty array is replaced with the user's input.
+ *
+ * @property {any} value The value that will be sent to the server.
+ *
+ * @property {any} internalValue An internal representation of the value sent (e.g. an object
+ * storing extra information).
+ *
+ * @property {any} defaultValue A default value to send when the user has not specified anything.
+ */
+
+// Constructor {{{2
+
+var Filter = function (config) {
+	var self = this
+		, method
+		, operator;
+
+	_.defaults(config, {
+		inputName: config.paramName,
+		required: false,
+		defaultValue: null
+	});
+
+	_.extend(self, config);
+
+	// Make sure that if we're sending multiple values using JSON, that the operator we're using is
+	// one that accepts multiple values (either "$in" or "$nin").  If we don't do this check, the
+	// array of values will be interpreted as a function expression.
+
+	if (self.type === 'multi-autocomplete'
+		&& (self.method === 'json_where' || self.method === 'json_having')
+		&& (self.json.operator !== '$in' && self.json.operator !== '$nin')) {
+			throw new FilterError('Filter "' + self.paramName + '" is a multi-autocomplete, so the operator must be either "$in" or "$nin" (right now it\'s "' + self.json.operator + '").');
+		}
+};
+
+// #store {{{2
+
+/**
+ * Store a value in this filter from the form.
+ */
+
+Filter.prototype.store = function (id) {
+	var form = id ? document.getElementById(id) : null;
+	var findInput = form ? function (s) {
+		return jQuery(form).find(s);
+	} : jQuery;
+	var self = this;
+	switch (self.type) {
+		case 'text':
+			self.value = findInput('input[name="' + self.inputName + '"]').val();
+			break;
+		case 'date':
+			self.internalValue = {};
+			var x = _.map(['YEAR', 'MONTH', 'DAY'], function (elt) {
+				var value = findInput('[name="' + self.inputName + elt + '"]')[0].value;
+				self.internalValue[elt] = value;
+				return value;
+			}).join('-');
+			self.value = (x === '--' ? '' : x);
+			break;
+		case 'checkbox':
+			self.value = _.map(findInput('input[name="' + self.inputName + '"]:checkbox:checked'), function (x) {
+				return findInput(x).val();
+			});
+			break;
+		case 'toggle-checkbox':
+			self.value = findInput('input[name="' + self.inputName + '"]').prop('checked') ? 'on' : 'off';
+			break;
+		case 'radio':
+			self.value = findInput('input[name="' + self.inputName + '"]:radio:checked').val();
+			break;
+		case 'select':
+			self.value = findInput('select[name="' + self.inputName + '"]').val();
+			break;
+		case 'autocomplete':
+			throw new NotImplementedError();
+		case 'multi-autocomplete':
+			self.value = [];
+			self.internalValue = [];
+			_.each(findInput('input[name="' + self.inputName + '"]'), function (elt, i) {
+				self.value[i] = jQuery(elt).val();
+				self.internalValue[i] = jQuery(elt).parent().text();
+			});
+			break;
+		default:
+			throw 'Invalid parameter specification: unknown input type "' + self.type + '"';
 	}
 
-	FilterError.prototype = Object.create(Error.prototype);
-	FilterError.prototype.constructor = FilterError;
+	debug.info('FILTER', 'Param Name = %s, Value = %s', self.paramName, self.value);
 
+	// if (self.required && (self.value === '' || self.value === [])) {
+	//	throw new MissingRequiredParameterError(self.paramName);
+	// }
+};
 
-	// Filter Class {{{2
+// #load {{{2
 
-	var Filter = function (config) {
-		var self = this
-			, method
-			, operator;
+/**
+ * Loads a filter from memory into a form in the page. Any existing content in
+ * the form is cleared first. This is a lot more complicated than it sounds,
+ * because every type has to be loaded differently.
+ *
+ * @param id The ID of the form to populate.
+ *
+ * @param opts Additional configuration options:
+ *
+ * - animate: If true, use an animation to pulse the background color of the
+ *   input that's being changed from its currently value. When this is true,
+ *   the values bgAccentIn and bgAccountOut must also be provided. (The
+ *   default is false, do not show animation.)
+ *
+ * - bgAccentIn: Hex string for the color to use for fading into the animation
+ *   (e.g. if you want something to highlight in yellow briefly and then go
+ *   back to white, use a yellow color here).
+ *
+ * - bgAccentOut: Hex string for the color to use for fading out of the
+ *   animation (in the example above, you'd use white). Also supports the
+ *   special value "transparent" to remove the highlight.
+ */
 
-		_.defaults(config, {
-			inputName: config.paramName,
-			required: false,
-			defaultValue: null
-		});
+Filter.prototype.load = function (id, opts) {
+	opts = opts || {};
+	var form = id ? document.getElementById(id) : null;
 
-		_.extend(self, config);
+	var findInput = form ? function (s) {
+		return jQuery(form).find(s);
+	} : jQuery;
 
-		// Make sure that if we're sending multiple values using JSON, that the operator we're using is
-		// one that accepts multiple values (either "$in" or "$nin").  If we don't do this check, the
-		// array of values will be interpreted as a function expression.
+	var self = this;
 
-		if (self.type === 'multi-autocomplete'
-			&& (self.method === 'json_where' || self.method === 'json_having')
-			&& (self.json.operator !== '$in' && self.json.operator !== '$nin')) {
-				throw new FilterError('Filter "' + self.paramName + '" is a multi-autocomplete, so the operator must be either "$in" or "$nin" (right now it\'s "' + self.json.operator + '").');
-			}
+	_.defaults(opts, {
+		fade: false
+	});
+
+	if (opts.fade && !(_.isString(opts.bgAccentIn) && _.isString(opts.bgAccentOut))) {
+		throw 'Cannot load filter with fading without specifying bgAccent[In|Out] properties';
+	}
+
+	var fade = {
+		backgroundColor: jQuery.Color(opts.bgAccentIn)
 	};
 
-	/**
-	 * Store a value in this filter from the form.
-	 */
+	function unfade() {
+		jQuery(this).animate({
+			backgroundColor: jQuery.Color(opts.bgAccentOut)
+		}, 500);
+	}
 
-	Filter.prototype.store = function (id) {
-		var form = id ? document.getElementById(id) : null;
-		var findInput = form ? function (s) {
-			return jQuery(form).find(s);
-		} : jQuery;
-		var self = this;
-		switch (self.type) {
-			case 'text':
-				self.value = findInput('input[name="' + self.inputName + '"]').val();
-				break;
-			case 'date':
-				self.internalValue = {};
-				var x = _.map(['YEAR', 'MONTH', 'DAY'], function (elt) {
-					var value = findInput('[name="' + self.inputName + elt + '"]')[0].value;
-					self.internalValue[elt] = value;
-					return value;
-				}).join('-');
-				self.value = (x === '--' ? '' : x);
-				break;
-			case 'checkbox':
-				self.value = _.map(findInput('input[name="' + self.inputName + '"]:checkbox:checked'), function (x) {
-					return findInput(x).val();
-				});
-				break;
-			case 'toggle-checkbox':
-				self.value = findInput('input[name="' + self.inputName + '"]').prop('checked') ? 'on' : 'off';
-				break;
-			case 'radio':
-				self.value = findInput('input[name="' + self.inputName + '"]:radio:checked').val();
-				break;
-			case 'select':
-				self.value = findInput('select[name="' + self.inputName + '"]').val();
-				break;
-			case 'autocomplete':
-				throw new NotImplementedError();
-			case 'multi-autocomplete':
-				self.value = [];
-				self.internalValue = [];
-				_.each(findInput('input[name="' + self.inputName + '"]'), function (elt, i) {
-					self.value[i] = jQuery(elt).val();
-					self.internalValue[i] = jQuery(elt).parent().text();
-				});
-				break;
-			default:
-				throw 'Invalid parameter specification: unknown input type "' + self.type + '"';
-		}
-
-		debug.info('FILTER', 'Param Name = %s, Value = %s', self.paramName, self.value);
-
-		// if (self.required && (self.value === '' || self.value === [])) {
-		//	throw new MissingRequiredParameterError(self.paramName);
-		// }
-	};
-
-	/**
-	 * Loads a filter from memory into a form in the page. Any existing content in
-	 * the form is cleared first. This is a lot more complicated than it sounds,
-	 * because every type has to be loaded differently.
-	 *
-	 * @param id The ID of the form to populate.
-	 *
-	 * @param opts Additional configuration options:
-	 *
-	 * - animate: If true, use an animation to pulse the background color of the
-	 *   input that's being changed from its currently value. When this is true,
-	 *   the values bgAccentIn and bgAccountOut must also be provided. (The
-	 *   default is false, do not show animation.)
-	 *
-	 * - bgAccentIn: Hex string for the color to use for fading into the animation
-	 *   (e.g. if you want something to highlight in yellow briefly and then go
-	 *   back to white, use a yellow color here).
-	 *
-	 * - bgAccentOut: Hex string for the color to use for fading out of the
-	 *   animation (in the example above, you'd use white). Also supports the
-	 *   special value "transparent" to remove the highlight.
-	 */
-
-	Filter.prototype.load = function (id, opts) {
-		opts = opts || {};
-		var form = id ? document.getElementById(id) : null;
-
-		var findInput = form ? function (s) {
-			return jQuery(form).find(s);
-		} : jQuery;
-
-		var self = this;
-
-		_.defaults(opts, {
-			fade: false
+	function unfadeBdr() {
+		jQuery(this).animate({
+			borderColor: jQuery.Color(opts.bgAccentOut)
+		}, 500, function () {
+			jQuery(this).css('border', 'none');
 		});
+	}
 
-		if (opts.fade && !(_.isString(opts.bgAccentIn) && _.isString(opts.bgAccentOut))) {
-			throw 'Cannot load filter with fading without specifying bgAccent[In|Out] properties';
-		}
-
-		var fade = {
-			backgroundColor: jQuery.Color(opts.bgAccentIn)
-		};
-
-		function unfade() {
-			jQuery(this).animate({
-				backgroundColor: jQuery.Color(opts.bgAccentOut)
-			}, 500);
-		}
-
-		function unfadeBdr() {
-			jQuery(this).animate({
-				borderColor: jQuery.Color(opts.bgAccentOut)
-			}, 500, function () {
-				jQuery(this).css('border', 'none');
+	switch (self.type) {
+		case 'text':
+			(function () {
+				var nodes = findInput('input[name="' + self.inputName + '"]');
+				if (opts.fade && nodes.val() !== self.value) {
+					nodes.animate(fade, 500, unfade);
+				}
+				nodes.val(self.value ? self.value : (self.defaultValue ? self.defaultValue : ''));
+			})();
+			break;
+		case 'date':
+			_.each(['YEAR', 'MONTH', 'DAY'], function (elt) {
+				var nodes = findInput('input[name="' + self.inputName + elt + '"]');
+				nodes.val(_.isObject(self.internalValue) && _.isString(self.internalValue[elt]) && self.internalValue[elt] !== '' ? self.internalValue[elt] : (self.defaultValue ? self.defaultValue : ''));
+				if (opts.fade) {
+					nodes.animate(fade, 500, unfade);
+				}
 			});
-		}
-
-		switch (self.type) {
-			case 'text':
-				(function () {
-					var nodes = findInput('input[name="' + self.inputName + '"]');
-					if (opts.fade && nodes.val() !== self.value) {
-						nodes.animate(fade, 500, unfade);
-					}
-					nodes.val(self.value ? self.value : (self.defaultValue ? self.defaultValue : ''));
-				})();
-				break;
-			case 'date':
-				_.each(['YEAR', 'MONTH', 'DAY'], function (elt) {
-					var nodes = findInput('input[name="' + self.inputName + elt + '"]');
-					nodes.val(_.isObject(self.internalValue) && _.isString(self.internalValue[elt]) && self.internalValue[elt] !== '' ? self.internalValue[elt] : (self.defaultValue ? self.defaultValue : ''));
-					if (opts.fade) {
-						nodes.animate(fade, 500, unfade);
-					}
+			break;
+		case 'checkbox':
+			(function () {
+				var curNodes = findInput('input[name="' + self.inputName + '"]:checkbox:checked');
+				var curValues = {};
+				_.each(curNodes, function (node) {
+					curValues[jQuery(node).val()] = node;
 				});
-				break;
-			case 'checkbox':
-				(function () {
-					var curNodes = findInput('input[name="' + self.inputName + '"]:checkbox:checked');
-					var curValues = {};
-					_.each(curNodes, function (node) {
-						curValues[jQuery(node).val()] = node;
-					});
-					curNodes.prop('checked', false);
-					_.each(self.value, function (x) {
-						var nodes = findInput('input[name="' + self.inputName + '"]:checkbox[value="' + x + '"]');
-						nodes.prop('checked', true);
-						delete curValues[x];
-						if (opts.fade) {
-							nodes.parent('label').animate(fade, 500, unfade);
-						}
-					});
-					if (opts.fade) {
-						_.each(curValues, function (node) {
-							var label = jQuery(node).parent('label');
-							// _.each(['Top', 'Bottom', 'Left', 'Right'], function (side) {
-							//	 label.css('border' + side + 'Width', '2px');
-							//	 label.css('border' + side + 'Style', 'dashed');
-							//	 label.css('border' + side + 'Color', '#000000');
-							// });
-							label.animate(fade, 500, unfade);
-						});
-					}
-				})();
-				break;
-			case 'toggle-checkbox':
-				(function () {
-					var node = findInput('input[name="' + self.inputName + '"]');
-					var curValue = node.prop('checked') ? 'on' : 'off';
-					node.prop('checked', self.value === 'on');
-					if (opts.fade && curValue !== self.value) {
-						node.parent('label').animate(fade, 500, unfade);
-					}
-				})();
-				break;
-			case 'radio':
-				(function () {
-					var nodes = findInput('input[name="' + self.inputName + '"]:radio[value="' + self.value + '"]');
+				curNodes.prop('checked', false);
+				_.each(self.value, function (x) {
+					var nodes = findInput('input[name="' + self.inputName + '"]:checkbox[value="' + x + '"]');
 					nodes.prop('checked', true);
+					delete curValues[x];
 					if (opts.fade) {
 						nodes.parent('label').animate(fade, 500, unfade);
 					}
-				})();
-				break;
-			case 'select':
-				(function () {
-					var nodes = findInput('select[name="' + self.inputName + '"]');
-					var oldVal = nodes.val();
-					nodes.val(self.value);
-					if (opts.fade && oldVal !== self.value) {
-						nodes.parent().animate(fade, 500, unfade);
-					}
-				})();
-				break;
-			case 'autocomplete':
-				return new NotImplementedError();
-			case 'multi-autocomplete':
-				(function () {
-					if (!_.isObject(window[self.inputName + '_ac'])) {
-						throw 'Autocomplete object "' + self.inputName + '" does not exist';
-					}
-					// window[self.inputName + '_ac'].multiClear(); // Doesn't work!
-					window[self.inputName + '_ac'].storedvalues = [];
-					jQuery(document.getElementById(self.inputName + '_ac_div')).children().remove();
-					_.each(self.value, function (v, i) {
-						window[self.inputName + '_ac'].multiAddValue(v, self.internalValue[i]);
+				});
+				if (opts.fade) {
+					_.each(curValues, function (node) {
+						var label = jQuery(node).parent('label');
+						// _.each(['Top', 'Bottom', 'Left', 'Right'], function (side) {
+						//	 label.css('border' + side + 'Width', '2px');
+						//	 label.css('border' + side + 'Style', 'dashed');
+						//	 label.css('border' + side + 'Color', '#000000');
+						// });
+						label.animate(fade, 500, unfade);
 					});
-					if (opts.fade) {
-						jQuery(document.getElementById(self.inputName + '_ac_div')).animate(fade, 500, unfade);
-					}
-				})();
-				break;
-			default:
-				throw 'Invalid parameter specification: unknown input type "' + self.type + '"';
-		}
-	};
-
-	/**
-	 * Constructs a hidden input within the specified form which can be used to
-	 * submit the filter's value to the server.
-	 *
-	 * @param form DOM node (optionally wrapped by jQuery) of the form element in
-	 * which to place the input.
-	 */
-
-	Filter.prototype.buildInput = function (form) {
-		var self = this;
-		var val = _.isArray(this.value) ? this.value : [this.value];
-		_.each(val, function (v) {
-			jQuery('<input>').attr({
-				type: 'hidden',
-				name: self.paramName,
-				value: v
-			}).appendTo(form);
-		});
-	};
-
-	Filter.prototype.addJsonParam = function (obj) {
-		var self = this
-			, operand;
-
-		if (isNothing(self.json)) {
-			throw self.error(new FilterError('Missing configuration object for JSON grid parameter.'));
-		}
-
-		if (isNothing(self.json.name) || self.json.name === '') {
-			throw self.error(new FilterError('Missing constraint set name for JSON grid parameter.'));
-		}
-
-		if (isNothing(self.json.column) || self.json.column === '') {
-			throw self.error(new FilterError('Missing column name for JSON grid parameter.'));
-		}
-
-		if (isNothing(self.json.operator) || self.json.operator === '') {
-			self.json.operator = '$eq';
-		}
-
-		var name = self.json.name;
-		var column = self.json.column;
-		var operator = self.json.operator;
-
-		// When there's no value, remove it from the JSON object that we might have already constructed
-		// (e.g. if loading the grid a second time) and make sure we don't end up with any empty stuff.
-
-		if (self.value === null || (self.type === 'date' && self.value === '') || (self.type === 'multi-autocomplete' && self.value.length === 0)) {
-			if (getProp(obj, name, column, operator)) {
-				delete obj[name][column][operator];
-				if (isEmpty(obj[name][column])) {
-					delete obj[name][column];
 				}
-				if (isEmpty(obj[name])) {
-					delete obj[name];
-				}
-			}
-			return;
-		}
-
-		// Handle when the operand is an array, in which case we replace any instance of the empty array
-		// with the value of the parameter.  A good example of this is how we modify a date to make it a
-		// time for the end of the day: ['concat', [], ' 23:59:59'].
-
-		if (_.isArray(self.json.operand)) {
-			operand = arrayCopy(self.json.operand);
-			_.each(operand, function (elt, i) {
-				if (_.isArray(elt) && elt.length === 0) {
-					operand[i] = self.value;
-				}
-			});
-		}
-		else {
-			operand = isNothing(self.json.operand) ? self.value : self.json.operand;
-		}
-
-		setProp(operand, obj, name, column, operator);
-	};
-
-	/**
-	 * Convert this filter into a parameter that can be sent to a system report.  If this filter is
-	 * going to be used for a JSON WHERE or JSON HAVING clause, that is handled as well.
-	 *
-	 * When this filter is being sent using CGI, the parameters object records the parameter name and
-	 * the value of the filter.  If this filter is being sent as a JSON clause, the appropriate
-	 * property (either [json_where] or [json_having]) is updated.  In this latter case, somebody will
-	 * have to encode the object as a string before sending it to the server.
-	 *
-	 * @param {object} params The object containing the parameters that will be sent to the server.
-	 */
-	Filter.prototype.toParams = function (params) {
-		var self = this;
-
-		self.store();
-
-		switch (self.method) {
-		case 'json_where':
-			params.report_json_where = params.report_json_where || {};
-			self.addJsonParam(params.report_json_where);
+			})();
 			break;
-		case 'json_having':
-			params.report_json_having = params.report_json_having || {};
-			self.addJsonParam(params.report_json_having);
+		case 'toggle-checkbox':
+			(function () {
+				var node = findInput('input[name="' + self.inputName + '"]');
+				var curValue = node.prop('checked') ? 'on' : 'off';
+				node.prop('checked', self.value === 'on');
+				if (opts.fade && curValue !== self.value) {
+					node.parent('label').animate(fade, 500, unfade);
+				}
+			})();
 			break;
-		case 'cgi':
-			params[self.paramName] = self.value;
+		case 'radio':
+			(function () {
+				var nodes = findInput('input[name="' + self.inputName + '"]:radio[value="' + self.value + '"]');
+				nodes.prop('checked', true);
+				if (opts.fade) {
+					nodes.parent('label').animate(fade, 500, unfade);
+				}
+			})();
+			break;
+		case 'select':
+			(function () {
+				var nodes = findInput('select[name="' + self.inputName + '"]');
+				var oldVal = nodes.val();
+				nodes.val(self.value);
+				if (opts.fade && oldVal !== self.value) {
+					nodes.parent().animate(fade, 500, unfade);
+				}
+			})();
+			break;
+		case 'autocomplete':
+			return new NotImplementedError();
+		case 'multi-autocomplete':
+			(function () {
+				if (!_.isObject(window[self.inputName + '_ac'])) {
+					throw 'Autocomplete object "' + self.inputName + '" does not exist';
+				}
+				// window[self.inputName + '_ac'].multiClear(); // Doesn't work!
+				window[self.inputName + '_ac'].storedvalues = [];
+				jQuery(document.getElementById(self.inputName + '_ac_div')).children().remove();
+				_.each(self.value, function (v, i) {
+					window[self.inputName + '_ac'].multiAddValue(v, self.internalValue[i]);
+				});
+				if (opts.fade) {
+					jQuery(document.getElementById(self.inputName + '_ac_div')).animate(fade, 500, unfade);
+				}
+			})();
 			break;
 		default:
-			throw 'INVALID METHOD';
+			throw 'Invalid parameter specification: unknown input type "' + self.type + '"';
+	}
+};
+
+// #buildInput {{{2
+
+/**
+ * Constructs a hidden input within the specified form which can be used to
+ * submit the filter's value to the server.
+ *
+ * @param form DOM node (optionally wrapped by jQuery) of the form element in
+ * which to place the input.
+ */
+
+Filter.prototype.buildInput = function (form) {
+	var self = this;
+	var val = _.isArray(this.value) ? this.value : [this.value];
+	_.each(val, function (v) {
+		jQuery('<input>').attr({
+			type: 'hidden',
+			name: self.paramName,
+			value: v
+		}).appendTo(form);
+	});
+};
+
+// #addJsonParam {{{2
+
+Filter.prototype.addJsonParam = function (obj) {
+	var self = this
+		, operand;
+
+	if (isNothing(self.json)) {
+		throw self.error(new FilterError('Missing configuration object for JSON grid parameter.'));
+	}
+
+	if (isNothing(self.json.name) || self.json.name === '') {
+		throw self.error(new FilterError('Missing constraint set name for JSON grid parameter.'));
+	}
+
+	if (isNothing(self.json.column) || self.json.column === '') {
+		throw self.error(new FilterError('Missing column name for JSON grid parameter.'));
+	}
+
+	if (isNothing(self.json.operator) || self.json.operator === '') {
+		self.json.operator = '$eq';
+	}
+
+	var name = self.json.name;
+	var column = self.json.column;
+	var operator = self.json.operator;
+
+	// When there's no value, remove it from the JSON object that we might have already constructed
+	// (e.g. if loading the grid a second time) and make sure we don't end up with any empty stuff.
+
+	if (self.value === null || (self.type === 'date' && self.value === '') || (self.type === 'multi-autocomplete' && self.value.length === 0)) {
+		if (getProp(obj, name, column, operator)) {
+			delete obj[name][column][operator];
+			if (isEmpty(obj[name][column])) {
+				delete obj[name][column];
+			}
+			if (isEmpty(obj[name])) {
+				delete obj[name];
+			}
 		}
-	};
+		return;
+	}
 
+	// Handle when the operand is an array, in which case we replace any instance of the empty array
+	// with the value of the parameter.  A good example of this is how we modify a date to make it a
+	// time for the end of the day: ['concat', [], ' 23:59:59'].
 
-	// FilterSet Class {{{2
-
-	var FilterSet = function (name, template) {
-		this.name = name;
-		this.filters = [];
-		this.filterMap = {};
-		var self = this;
-		_.each(template, function (t) {
-			self.add(new Filter(t));
-		});
-	};
-
-	FilterSet.prototype.copyTo = function (target) {
-		_.each(this.filterMap, function (src, paramName) {
-			var dst = target.get(paramName);
-			if (dst.value === undefined) {
-				dst.value = src.value;
-				dst.internalValue = src.internalValue;
-				if (_.isObject(dst.value)) {
-					dst.value = JSON.parse(JSON.stringify(dst.value));
-				}
-				if (_.isObject(dst.internalValue)) {
-					dst.internalValue = JSON.parse(JSON.stringify(dst.internalValue));
-				}
+	if (_.isArray(self.json.operand)) {
+		operand = arrayCopy(self.json.operand);
+		_.each(operand, function (elt, i) {
+			if (_.isArray(elt) && elt.length === 0) {
+				operand[i] = self.value;
 			}
 		});
-	};
+	}
+	else {
+		operand = isNothing(self.json.operand) ? self.value : self.json.operand;
+	}
 
-	/**
-	 * Adds a new filter with the specified configuration to this filter set.
-	 *
-	 * @param config Configuration for the filter, giving input name, parameter
-	 * name, and other information (see Filter() for details).
-	 */
+	setProp(operand, obj, name, column, operator);
+};
 
-	FilterSet.prototype.add = function (config) {
-		var fltr = new Filter(config);
-		this.filters.push(fltr);
-		this.filterMap[fltr.paramName] = fltr;
-	};
+// #toParams {{{2
 
-	/**
-	 * Remove a filter from this filter set.
-	 *
-	 * @param paramName Parameter name of the filter to remove. All filters should
-	 * have unique parameter names, so this works.
-	 */
+/**
+ * Convert this filter into a parameter that can be sent to a system report.  If this filter is
+ * going to be used for a JSON WHERE or JSON HAVING clause, that is handled as well.
+ *
+ * When this filter is being sent using CGI, the parameters object records the parameter name and
+ * the value of the filter.  If this filter is being sent as a JSON clause, the appropriate
+ * property (either [json_where] or [json_having]) is updated.  In this latter case, somebody will
+ * have to encode the object as a string before sending it to the server.
+ *
+ * @param {object} params The object containing the parameters that will be sent to the server.
+ */
+Filter.prototype.toParams = function (params) {
+	var self = this;
 
-	FilterSet.prototype.remove = function (paramName) {
-		this.filters = _.reject(this.filters, function (fltr) {
-			return fltr.paramName === paramName;
-		});
-	};
+	self.store();
 
-	/**
-	 * Get a filter from this filter set by name.
-	 *
-	 * @param name Parameter name of the filter to retrieve. All filters should
-	 * have unique parameter names, so this works.
-	 */
+	switch (self.method) {
+	case 'json_where':
+		params.report_json_where = params.report_json_where || {};
+		self.addJsonParam(params.report_json_where);
+		break;
+	case 'json_having':
+		params.report_json_having = params.report_json_having || {};
+		self.addJsonParam(params.report_json_having);
+		break;
+	case 'cgi':
+		params[self.paramName] = self.value;
+		break;
+	default:
+		throw 'INVALID METHOD';
+	}
+};
 
-	FilterSet.prototype.get = function (name) {
-		return this.filterMap[name];
-	};
+// FilterSet {{{1
 
-	/**
-	 * Load all filters in this set into a form.
-	 *
-	 * @param id The ID of the form to load filter data into.
-	 *
-	 * @param opts Various options to pass along to Filter#load().
-	 */
+/**
+ * @class
+ */
 
-	FilterSet.prototype.load = function (id, opts) {
-		_.each(this.filters, function (fltr) {
-			fltr.load(id, opts);
-		});
-	};
+// Constructor {{{2
 
-	FilterSet.prototype.store = function (id) {
-		_.each(this.filters, function (fltr) {
-			fltr.store(id);
-		});
-	};
+/**
+ * @param {string} name
+ * @param {object} template
+ */
 
-	/**
-	 * Builds an invisible form containing the parameters for this filter set. The
-	 * form can then be submitted in order to send the parameters to the server.
-	 * This is useful in cases where you want to make a request but you don't want
-	 * to use AJAX (for example, to open the result of a POST in a new window).
-	 */
+var FilterSet = function (name, template) {
+	this.name = name;
+	this.filters = [];
+	this.filterMap = {};
+	var self = this;
+	_.each(template, function (t) {
+		self.add(new Filter(t));
+	});
+};
 
-	FilterSet.prototype.buildForm = function () {
-		var form = jQuery('<form>').attr({
-			action: 'webchart.cgi',
-			method: 'POST'
-		});
-		_.each(this.filters, function (e) {
-			e.buildInput(form);
-		});
-		return form;
-	};
+// #copyTo {{{2
 
-	/**
-	 * Convert the filters in this set into parameters that can be sent to a system report.
-	 */
-	FilterSet.prototype.toParams = function () {
-		var params = {};
+/**
+ * @param {Filter} target
+ */
 
-		_.each(this.filters, function (fltr) {
-			fltr.toParams(params);
-		});
-
-		// The JSON clause parameters will be objects that need to be serialized first, so they can be
-		// sent to the server and unpacked there.
-
-		if (params.report_json_where !== undefined) {
-			params.report_json_where = JSON.stringify(params.report_json_where);
+FilterSet.prototype.copyTo = function (target) {
+	_.each(this.filterMap, function (src, paramName) {
+		var dst = target.get(paramName);
+		if (dst.value === undefined) {
+			dst.value = src.value;
+			dst.internalValue = src.internalValue;
+			if (_.isObject(dst.value)) {
+				dst.value = JSON.parse(JSON.stringify(dst.value));
+			}
+			if (_.isObject(dst.internalValue)) {
+				dst.internalValue = JSON.parse(JSON.stringify(dst.internalValue));
+			}
 		}
+	});
+};
 
-		if (params.report_json_having !== undefined) {
-			params.report_json_having = JSON.stringify(params.report_json_having);
-		}
+// #add {{{2
 
-		return params;
-	};
+/**
+ * Adds a new filter with the specified configuration to this filter set.
+ *
+ * @param config Configuration for the filter, giving input name, parameter
+ * name, and other information (see Filter() for details).
+ */
 
+FilterSet.prototype.add = function (config) {
+	var fltr = new Filter(config);
+	this.filters.push(fltr);
+	this.filterMap[fltr.paramName] = fltr;
+};
 
-	// FilterInput Class {{{2
+// #remove {{{2
 
-	var FilterInput = function (formId) {
-		this.formId = formId;
-		this.activeFilterSet = null;
-		this.availableFilterSets = {};
-	};
+/**
+ * Remove a filter from this filter set.
+ *
+ * @param paramName Parameter name of the filter to remove. All filters should
+ * have unique parameter names, so this works.
+ */
 
-	FilterInput.prototype.store = function () {
-		this.activeFilterSet.store(this.formId);
-		return this;
-	};
+FilterSet.prototype.remove = function (paramName) {
+	this.filters = _.reject(this.filters, function (fltr) {
+		return fltr.paramName === paramName;
+	});
+};
 
-	FilterInput.prototype.load = function (opts) {
-		this.activeFilterSet.load(this.formId, opts);
-		return this;
-	};
+// #get {{{2
 
-	FilterInput.prototype.change = function (name, opts) {
-		opts = _.isObject(opts) ? opts : {};
-		_.defaults(opts, {
-			copy: false
-		});
-		if (this.availableFilterSets[name] === undefined) {
-			throw 'No such filter set: ' + name;
-		}
-		if (opts.copy) {
-			this.activeFilterSet.copyTo(this.availableFilterSets[name]);
-		}
-		this.activeFilterSet = this.availableFilterSets[name];
-		return this;
-	};
+/**
+ * Get a filter from this filter set by name.
+ *
+ * @param name Parameter name of the filter to retrieve. All filters should
+ * have unique parameter names, so this works.
+ */
 
-	FilterInput.prototype.activeName = function () {
-		return this.activeFilterSet.name;
-	};
+FilterSet.prototype.get = function (name) {
+	return this.filterMap[name];
+};
 
-	FilterInput.prototype.add = function (name, template) {
-		this.availableFilterSets[name] = (new FilterSet(name, template));
-		this.change(name);
-		return this;
-	};
+// #load {{{2
 
-	FilterInput.prototype.remove = function (name) {
-		delete this.availableFilterSets[name];
-		return this;
-	};
+/**
+ * Load all filters in this set into a form.
+ *
+ * @param id The ID of the form to load filter data into.
+ *
+ * @param opts Various options to pass along to Filter#load().
+ */
 
-	FilterInput.prototype.get = function (name) {
-		return this.availableFilterSets[name];
-	};
+FilterSet.prototype.load = function (id, opts) {
+	_.each(this.filters, function (fltr) {
+		fltr.load(id, opts);
+	});
+};
 
-// <WCPARAMINPUT> {{{1
+// #store {{{2
 
-/*
+FilterSet.prototype.store = function (id) {
+	_.each(this.filters, function (fltr) {
+		fltr.store(id);
+	});
+};
+
+// #buildForm {{{2
+
+/**
+ * Builds an invisible form containing the parameters for this filter set. The
+ * form can then be submitted in order to send the parameters to the server.
+ * This is useful in cases where you want to make a request but you don't want
+ * to use AJAX (for example, to open the result of a POST in a new window).
+ */
+
+FilterSet.prototype.buildForm = function () {
+	var form = jQuery('<form>').attr({
+		action: 'webchart.cgi',
+		method: 'POST'
+	});
+	_.each(this.filters, function (e) {
+		e.buildInput(form);
+	});
+	return form;
+};
+
+// #toParams {{{2
+
+/**
+ * Convert the filters in this set into parameters that can be sent to a system report.
+ */
+FilterSet.prototype.toParams = function () {
+	var params = {};
+
+	_.each(this.filters, function (fltr) {
+		fltr.toParams(params);
+	});
+
+	// The JSON clause parameters will be objects that need to be serialized first, so they can be
+	// sent to the server and unpacked there.
+
+	if (params.report_json_where !== undefined) {
+		params.report_json_where = JSON.stringify(params.report_json_where);
+	}
+
+	if (params.report_json_having !== undefined) {
+		params.report_json_having = JSON.stringify(params.report_json_having);
+	}
+
+	return params;
+};
+
+// FilterInput {{{1
+
+/**
+ * @class
+ */
+
+// Constructor {{{2
+
+/**
+ * @param {string} formId
+ */
+
+var FilterInput = function (formId) {
+	this.formId = formId;
+	this.activeFilterSet = null;
+	this.availableFilterSets = {};
+};
+
+// #store {{{2
+
+/**
+ */
+
+FilterInput.prototype.store = function () {
+	this.activeFilterSet.store(this.formId);
+	return this;
+};
+
+// #load {{{2
+
+/**
+ * @param {object} opts
+ */
+
+FilterInput.prototype.load = function (opts) {
+	this.activeFilterSet.load(this.formId, opts);
+	return this;
+};
+
+// #change {{{2
+
+/**
+ * @param {string} name
+ * @param {object} opts
+ */
+
+FilterInput.prototype.change = function (name, opts) {
+	opts = _.isObject(opts) ? opts : {};
+	_.defaults(opts, {
+		copy: false
+	});
+	if (this.availableFilterSets[name] === undefined) {
+		throw 'No such filter set: ' + name;
+	}
+	if (opts.copy) {
+		this.activeFilterSet.copyTo(this.availableFilterSets[name]);
+	}
+	this.activeFilterSet = this.availableFilterSets[name];
+	return this;
+};
+
+// #activeName {{{2
+
+/**
+ * @returns {string}
+ */
+
+FilterInput.prototype.activeName = function () {
+	return this.activeFilterSet.name;
+};
+
+// #add {{{2
+
+/**
+ * @param {string} name
+ * @param {object} template
+ */
+
+FilterInput.prototype.add = function (name, template) {
+	this.availableFilterSets[name] = (new FilterSet(name, template));
+	this.change(name);
+	return this;
+};
+
+// #remove {{{2
+
+/**
+ * @param {string} name
+ */
+
+FilterInput.prototype.remove = function (name) {
+	delete this.availableFilterSets[name];
+	return this;
+};
+
+// #get {{{2
+
+/**
+ * @param {string} name
+ */
+
+FilterInput.prototype.get = function (name) {
+	return this.availableFilterSets[name];
+};
+
+// ParamInputError {{{1
+
+function ParamInputError(msg) {
+	this.message = msg;
+}
+
+ParamInputError.prototype = Object.create(Error.prototype);
+ParamInputError.prototype.name = 'ParamInputError';
+ParamInputError.prototype.constructor = ParamInputError;
+
+// ParamInput {{{1
+
+// Constructor {{{2
+
+/**
+ * @typedef ParamInput~ctor_opts
+ *
+ * @property {string} inputName
+ *
+ * @property {string} inputType
+ *
+ * @property {string} reportMethod
+ *
+ * @property {object} cgi
+ *
+ * @property {string} cgi.name
+ *
+ * @property {string} cgi.value
+ *
+ * @property {object} json
+ *
+ * @property {string} json.name
+ *
+ * @property {string} json.column
+ *
+ * @property {string} json.operator
+ *
+ * @property {string} json.operand
+ */
+
+/**
  * The ParamInput class contains the idea that parameters for data sources can come from user
  * inputs.  Multiple types of inputs are supported, such as multi-autocompletes and date inputs.
  * There is also a special case for no input at all, in which case the value is hardcoded by the
@@ -580,48 +726,15 @@
  *
  * Right now this is mostly a wrapper around a Filter, but ParamInputs are a little more generic and
  * probably will become the de facto way of doing this from here on.
- */
-
-// Exceptions {{{2
-
-function ParamInputError(msg) {
-	this.name = 'ParamInputError';
-	this.stack = (new Error()).stack;
-	this.message = msg;
-}
-
-ParamInputError.prototype = Object.create(Error.prototype);
-ParamInputError.prototype.constructor = ParamInputError;
-
-// ParamInput {{{2
-
-/**
- * @typedef ParamInput_ctor_opts
- * @type {object}
- *
- * @property {string} inputName
- * @property {string} inputType
- * @property {string} reportMethod
- * @property {object} cgi
- * @property {string} cgi.name
- * @property {string} cgi.value
- * @property {object} json
- * @property {string} json.name
- * @property {string} json.column
- * @property {string} json.operator
- * @property {string} json.operand
- */
-
-/**
- * Represents a parameter for a data source which can come from user input via a UI element.
  *
  * @param {string} sourceType What type of data source we are working with.  Must be one of: report,
  * json, local.
  *
- * @param {ParamInput_ctor_opts} opts Various options controlling the behavior of the resulting
- * ParamInput instance.
+ * @param {ParamInput~ctor_opts} opts Various options controlling the behavior of the resulting ParamInput
+ * instance.
  *
  * @class
+ *
  * @property {string} inputName
  * @property {string} inputType
  * @property {string} reportMethod
@@ -705,60 +818,17 @@ ParamInput.prototype.toParams = function (obj) {
 	return self.filter.toParams(obj);
 };
 
-// <WCDATASOURCE> {{{1
+// DataSourceError {{{1
 
-/*
- * The data source is in charge of taking input from the user, using that to obtain data from
- * somewhere, and transforming the result so it can be used for a grid and/or graph.  Data sources
- * have a many-to-many relationship with grids/graphs, so you can have a single data source for
- * three different grids, or several data sources that are combined together for the same graph.
- * You can use them to show different portrayals of the same data, or combine several disparate sets
- * together into one visualization.
- *
- * A data source actually captures four different types of information:
- *
- *   - raw data, conceptually "rows" and "columns" but we refer to the columns as "fields"
- *   - type information of the fields
- *   - the "display names" of the fields (if different from the field names)
- *   - unique values across all rows for each field
- */
-
-/**
- * A callback function that receives the data obtained from a data source.
- *
- * @callback DataSource~getData_cb
- *
- * @param {Array<Object>} data The data.
- */
-
-/**
- * A callback function that receives unique element information from a data source.
- *
- * @callback DataSource~getUniqElts_cb
- *
- * @param {Object<string, wcgraph.UniqElt>} uniqElts The unique element information.
- */
-
-/**
- * A callback function that receives the type information about a data source.
- *
- * @callback DataSource~getTypeInfo_cb
- *
- * @param {wcgraph.TypeInfo} typeInfo The type information.
- */
-
-// Exceptions {{{2
-
-function DataSourceError(msg) {
-	this.name = 'DataSourceError';
-	this.stack = (new Error()).stack;
+var DataSourceError = function (msg) {
 	this.message = msg;
-}
+};
 
 DataSourceError.prototype = Object.create(Error.prototype);
+DataSourceError.prototype.name = 'DataSourceError';
 DataSourceError.prototype.constructor = DataSourceError;
 
-// Local Data {{{2
+// LocalDataSource {{{1
 
 var LocalDataSource = function (varName) {
 	var self = this;
@@ -767,7 +837,7 @@ var LocalDataSource = function (varName) {
 	self.cache = {};
 };
 
-// #getData {{{3
+// #getData {{{2
 
 LocalDataSource.prototype.getData = function (params, cont) {
 	var self = this
@@ -793,92 +863,42 @@ LocalDataSource.prototype.getData = function (params, cont) {
 	return cont(localData.data);
 };
 
-// Auxiliary Functions {{{2
+// DataSource {{{1
 
-function DataSource_After(defn, source, data, callback) {
-	if (!_.isArray(data)) {
-		defn.error('Error retrieving data');
-	}
-	// The report definition can include a pre-processing step to convert
-	// the data manually.
-	if (source.conversion) {
-		data = source.conversion(data);
-	}
+// JSDoc Typedefs {{{2
 
-	// Check to see if we're supposed to sort this data.
-	if (_.isObject(source.sort)) {
-		return sort(data, source.sort, callback);
-	}
-	else {
-		return callback(data);
-	}
-}
+/**
+ * A callback function that receives the data obtained from a data source.
+ *
+ * @callback DataSource~getData_cb
+ *
+ * @param {Array<Object>} data The data.
+ */
 
-function ReportDataSource_AddJsonParam(defn, obj, fltr) {
-	var operand;
+/**
+ * A callback function that receives unique element information from a data source.
+ *
+ * @callback DataSource~getUniqElts_cb
+ *
+ * @param {Object<string, wcgraph.UniqElt>} uniqElts The unique element information.
+ */
 
-	if (isNothing(fltr.json)) {
-		throw defn.error('Missing configuration object for JSON grid parameter.');
-	}
+/**
+ * A callback function that receives the type information about a data source.
+ *
+ * @callback DataSource~getTypeInfo_cb
+ *
+ * @param {wcgraph.TypeInfo} typeInfo The type information.
+ */
 
-	if (isNothing(fltr.json.name) || fltr.json.name === '') {
-		throw defn.error('Missing constraint set name for JSON grid parameter.');
-	}
-
-	if (isNothing(fltr.json.column) || fltr.json.column === '') {
-		throw defn.error('Missing column name for JSON grid parameter.');
-	}
-
-	if (isNothing(fltr.json.operator) || fltr.json.operator === '') {
-		fltr.json.operator = '$eq';
-	}
-
-	var name = fltr.json.name;
-	var column = fltr.json.column;
-	var operator = fltr.json.operator;
-
-	// When there's no value, remove it from the JSON object that we might have already constructed
-	// (e.g. if loading the grid a second time) and make sure we don't end up with any empty stuff.
-
-	if (fltr.value === null || (fltr.type === 'date' && fltr.value === '') || (fltr.type === 'multi-autocomplete' && fltr.value.length === 0)) {
-		if (getProp(obj, name, column, operator)) {
-			delete obj[name][column][operator];
-			if (isEmpty(obj[name][column])) {
-				delete obj[name][column];
-			}
-			if (isEmpty(obj[name])) {
-				delete obj[name];
-			}
-		}
-		return;
-	}
-
-	// Handle when the operand is an array, in which case we replace any instance of the empty array
-	// with the value of the parameter.  A good example of this is how we modify a date to make it a
-	// time for the end of the day: ['concat', [], ' 23:59:59'].
-
-	if (_.isArray(fltr.json.operand)) {
-		operand = arrayCopy(fltr.json.operand);
-		_.each(operand, function (elt, i) {
-			if (_.isArray(elt) && elt.length === 0) {
-				operand[i] = fltr.value;
-			}
-		});
-	}
-	else {
-		operand = isNothing(fltr.json.operand) ? fltr.value : fltr.json.operand;
-	}
-
-	setProp(operand, obj, name, column, operator);
-}
-
-// DataSource {{{2
+// Constructor {{{2
 
 /**
  * Abstract data source that wraps specific data source implementations (e.g. for system reports or
  * the JSON API).
  *
- * @memberof wcgraph
+ * @param {object} spec
+ * @param {object} params
  *
  * @class
  * @property {string} name
@@ -912,17 +932,23 @@ var DataSource = function (spec, params) {
 	self.locks.getData = new Lock();
 };
 
-// .sources {{{3
+// .sources {{{2
 
-DataSource.sources = {};
+/**
+ * A map of source types to the classes that implement them.
+ */
 
-// .messages {{{3
+DataSource.sources = {
+	local: LocalDataSource
+};
+
+// .messages {{{2
 
 DataSource.messages = {
 	DATA_UPDATED: 'DATA_UPDATED'
 };
 
-// #getData {{{3
+// #getData {{{2
 
 /**
  * Evaluate the data source, if necessary, and pass along the data that was obtained from it.  The
@@ -963,7 +989,7 @@ DataSource.prototype.getData = function (cont) {
 	});
 };
 
-// #getUniqElts {{{3
+// #getUniqElts {{{2
 
 /**
  * Provide unique element information.
@@ -1004,7 +1030,7 @@ DataSource.prototype.getUniqElts = function (cont) {
 	});
 };
 
-// #getTypeInfo {{{3
+// #getTypeInfo {{{2
 
 /**
  * @param {DataSource~getTypeInfo_cb} cont Continuation function.
@@ -1023,7 +1049,7 @@ DataSource.prototype.getTypeInfo = function (cont) {
 	});
 };
 
-// #getDisplayName {{{3
+// #getDisplayName {{{2
 
 DataSource.prototype.getDisplayName = function (cont) {
 	var self = this;
@@ -1044,7 +1070,7 @@ DataSource.prototype.getDisplayName = function (cont) {
 	}
 };
 
-// #postProcess {{{3
+// #postProcess {{{2
 
 DataSource.prototype.postProcess = function (data, cont) {
 	var self = this;
@@ -1121,7 +1147,7 @@ DataSource.prototype.postProcess = function (data, cont) {
 	});
 };
 
-// #clearCachedData {{{3
+// #clearCachedData {{{2
 
 /**
  * Removes the cache of data, type information, unique elements, and display names.  This is also
@@ -1138,7 +1164,7 @@ DataSource.prototype.clearCachedData = function () {
 	self.publish(DataSource.messages.DATA_UPDATED);
 };
 
-// #createParams {{{3
+// #createParams {{{2
 
 /**
  * Create a parameters object from the ParamInput instances currently bound to this data source.
@@ -1175,7 +1201,7 @@ DataSource.prototype.createParams = function () {
 	return obj;
 };
 
-// #subscribe {{{3
+// #subscribe {{{2
 
 /**
  * Subscribe to events on this data source.  This mechanism is used to notify clients that they need
@@ -1188,7 +1214,7 @@ DataSource.prototype.subscribe = function (f) {
 	this.subscribers.push(f);
 };
 
-// #publish {{{3
+// #publish {{{2
 
 /**
  * Notify all subscribers of a message.
@@ -1210,7 +1236,7 @@ DataSource.prototype.publish = function () {
 	});
 };
 
-// #swapRows {{{3
+// #swapRows {{{2
 
 /**
  *
@@ -1278,7 +1304,6 @@ var DATA_VIEW_ID = 1;
 
 function DataViewError(msg) {
 	this.message = msg;
-	this.stack = (new Error()).stack;
 }
 
 DataViewError.prototype = Object.create(Error.prototype);
@@ -2090,7 +2115,7 @@ DataView.prototype.publish = function () {
 	});
 };
 
-	// Parameters {{{1
+	// Parameters (DELETE) {{{1
 	function getParamValue(id, inputName, type) {
 		var form = id ? document.getElementById(id) : null;
 		var findInput = form ? function (s) {
@@ -2270,7 +2295,7 @@ DataView.prototype.publish = function () {
 		return params;
 	}
 
-	// Data Sources {{{1
+	// Data Sources (DELETE) {{{1
 
 	/**
 	 * Produce a data object as one would normally get from a system report by
@@ -2857,7 +2882,7 @@ DataView.prototype.publish = function () {
 	};
 
 
-	// Data Acquisition {{{1
+	// Data Acquisition (DELETE) {{{1
 
 	/**
 	 * Checks the continuation predicate of a source based on the data that we just received.
@@ -3170,4 +3195,7 @@ DataView.prototype.publish = function () {
 
 window.MIE = window.MIE || {};
 
+window.MIE.ParamInput = ParamInput;
+window.MIE.ParamInputError = ParamInputError;
 window.MIE.DataSource = DataSource;
+window.MIE.DataSourceError = DataSourceError;

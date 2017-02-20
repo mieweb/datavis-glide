@@ -2472,7 +2472,7 @@ Graph.Google.prototype.draw = function () {
 
 // Constructor {{{2
 
-var WCGRAPH = function (id, defn, tagOpts, cb) {
+var WCGraph = function (id, defn, tagOpts, cb) {
 	var self = this;
 
 	var tagContainer        = null; // Container div for the contents of the whole tag.
@@ -2599,7 +2599,7 @@ var WCGRAPH = function (id, defn, tagOpts, cb) {
 
 // #addHeaderWidgets {{{2
 
-WCGRAPH.prototype._addHeaderWidgets = function (header, runImmediately, id) {
+WCGraph.prototype._addHeaderWidgets = function (header, runImmediately, id) {
 	var self = this;
 	var notHeader = jQuery('<span>', {'class': 'headingInfo'})
 		.on('click', function (evt) {
@@ -2649,7 +2649,7 @@ WCGRAPH.prototype._addHeaderWidgets = function (header, runImmediately, id) {
 
 // #addCommonButtons {{{2
 
-WCGRAPH.prototype._addCommonButtons = function (toolbar) {
+WCGraph.prototype._addCommonButtons = function (toolbar) {
 	var self = this;
 	var isVisible = true; // If true, the grid is not currently hidden.
 
@@ -2664,7 +2664,7 @@ WCGRAPH.prototype._addCommonButtons = function (toolbar) {
 
 // #refresh {{{2
 
-WCGRAPH.prototype.refresh = function () {
+WCGraph.prototype.refresh = function () {
 	var self = this;
 
 	if (!self.isGraphVisible()) {
@@ -2679,7 +2679,7 @@ WCGRAPH.prototype.refresh = function () {
 
 // #redraw {{{2
 
-WCGRAPH.prototype.redraw = function () {
+WCGraph.prototype.redraw = function () {
 	var self = this;
 
 	if (!self.isGraphVisible()) {
@@ -2697,7 +2697,7 @@ WCGRAPH.prototype.redraw = function () {
 
 // #hideGraph {{{2
 
-WCGRAPH.prototype.hideGraph = function () {
+WCGraph.prototype.hideGraph = function () {
 	var self = this;
 	self.ui.graphContainer.slideUp({
 		done: function () {
@@ -2710,7 +2710,7 @@ WCGRAPH.prototype.hideGraph = function () {
 
 // #showGraph {{{2
 
-WCGRAPH.prototype.showGraph = function () {
+WCGraph.prototype.showGraph = function () {
 	var self = this;
 	self.ui.graphContainer.slideDown({
 		done: function () {
@@ -2727,7 +2727,7 @@ WCGRAPH.prototype.showGraph = function () {
 
 // #toggleGraph {{{2
 
-WCGRAPH.prototype.toggleGraph = function () {
+WCGraph.prototype.toggleGraph = function () {
 	if (this.ui.graphContainer.css('display') === 'none') {
 		this.showGraph();
 	}
@@ -2738,7 +2738,7 @@ WCGRAPH.prototype.toggleGraph = function () {
 
 // #isGraphVisible {{{2
 
-WCGRAPH.prototype.isGraphVisible = function () {
+WCGraph.prototype.isGraphVisible = function () {
 	return this.ui.graphContainer.css('display') !== 'none';
 };
 
@@ -2922,3 +2922,9 @@ function normalizeDefn(defn) {
 			}
 		}
 	}
+
+// Exports {{{1
+
+window.MIE = window.MIE || {};
+
+window.MIE.WCGraph = WCGraph;
