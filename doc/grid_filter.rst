@@ -5,6 +5,11 @@ Grid Filter
 A grid filter is a collection of user interface elements that allow the user to set a single filter
 on a column in the grid.
 
+.. note::
+
+   Grid filters are applied dynamically by the :doc:`data_view` and should not be confused with
+   :doc:`filters`, which are applied by the :doc:`data_source`.
+
 JavaScript API
 ==============
 

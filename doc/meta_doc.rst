@@ -11,8 +11,7 @@ Using Sphinx
 ============
 
 Find the directory containing the reStructuredText documentation and run ``make html``.  That's all
-you need to do.  Currently, the documentation is in a Git repository at ``~tvenable/git/wcgrid`` on
-zeus.
+you need to do.
 
 Using jsdoc
 ===========

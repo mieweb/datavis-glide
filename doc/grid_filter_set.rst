@@ -4,7 +4,7 @@ Grid Filter Set
 
 A grid filter set is a collection of :doc:`grid filters <grid_filter>`.  The grid filter set is
 responsible for adding and removing grid filters to/from a grid.  It is also responsible for
-building filter specs to send to the :doc:`data view<data_view>`.
+building filter specs to send to the :doc:`data_view`.
 
 JavaScript API
 ==============

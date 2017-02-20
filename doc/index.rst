@@ -13,6 +13,7 @@ Webchart Grid Documentation
    meta_doc
    class_overview
    data_source
+   filters
    data_view
    grid_filter
    grid_filter_set
