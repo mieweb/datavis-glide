@@ -699,24 +699,14 @@ GridTable.prototype.drawPlain = function (container, data, typeInfo) {
 
 				td = jQuery('<td>').append(elt);
 			}
+			else if (self.getColConfig(col, 'widget') === 'checkbox') {
+				td = jQuery('<td>').append(jQuery('<i>', {
+					'class': +row.rowData[col] ? 'fa fa-check-square-o' : 'fa fa-square-o',
+					'data-internal-value': +row.rowData[col] ? 1 : 0
+				}));
+			}
 			else {
-				if (self.getColConfig(col, 'widget') === 'checkbox') {
-					td = jQuery('<td>').append(jQuery('<i>', {
-						'class': +row.rowData[col] ? 'fa fa-check-square-o' : 'fa fa-square-o',
-						'data-internal-value': +row.rowData[col] ? 1 : 0
-					}));
-				}
-				else {
-					if (self.getColConfig(col, 'type') === 'date') {
-						td = jQuery('<td>').text(formatDate(new Date(row.rowData[col])));
-					}
-					else if (self.getColConfig(col, 'type') === 'datetime') {
-						td = jQuery('<td>').text(formatDateTime(new Date(row.rowData[col])));
-					}
-					else {
-						td = jQuery('<td>').text(row.rowData[col]);
-					}
-				}
+				td = jQuery('<td>').text(row.rowData['_ORIG_' + col] || row.rowData[col]);
 			}
 
 			self.setCss(td, col);

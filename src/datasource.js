@@ -917,7 +917,36 @@ HttpDataSource.parseData = function (data) {
 		result.typeInfo = {};
 		typeInfo.children().each(function (_fieldIndex, field) {
 			field = jQuery(field);
-			result.typeInfo[field.prop('tagName')] = field.text();
+			var fieldName = field.prop('tagName');
+			result.typeInfo[fieldName] = {};
+			if (field.children().length === 0) {
+				result.typeInfo[fieldName].type = field.text();
+			}
+			else {
+				var type = field.children('type');
+				if (type.length === 0) {
+					throw new DataSourceError('HTTP Data Source / XML Parser / Missing (root > typeInfo > ' + fieldName + ' > type) element');
+				}
+				else if (type.length > 1) {
+					throw new DataSourceError('HTTP Data Source / XML Parser / Too many (root > typeInfo > ' + fieldName + ' > type) elements');
+				}
+				else if (type.children().length > 0) {
+					throw new DataSourceError('HTTP Data Source / XML Parser / (root > typeInfo > ' + fieldName + ' > type) element cannot have children');
+				}
+
+				result.typeInfo[fieldName].type = type.text();
+
+				var format = field.children('format');
+				if (format.length > 1) {
+					throw new DataSourceError('HTTP Data Source / XML Parser / Too many (root > typeInfo > ' + fieldName + ' > format) elements');
+				}
+				else if (format.length === 1) {
+					if (format.children().length > 0) {
+						throw new DataSourceError('HTTP Data Source / XML Parser / (root > typeInfo > ' + fieldName + ' > format) element cannot have children');
+					}
+					result.typeInfo[fieldName].format = format.text();
+				}
+			}
 		});
 	}
 	else {
@@ -1210,6 +1239,20 @@ DataSource.prototype.postProcess = function (data, cont) {
 	self.getTypeInfo(function (typeInfo) {
 		_.each(data, function (row, rowNum) {
 			_.each(row, function (val, field) {
+				switch (typeInfo[field].type) {
+				case 'number':
+				case 'currency':
+					row['_ORIG_' + field] = val;
+					row[field] = numeral(val);
+					break;
+				case 'date':
+				case 'time':
+				case 'datetime':
+					row['_ORIG_' + field] = val;
+					row[field] = moment(val, typeInfo[field].format);
+					break;
+				}
+
 				var i = 0;
 				while (i < self.conversion.length) {
 					var result = self.conversion[i](val, field, typeInfo[field], row);
@@ -1539,30 +1582,36 @@ DataView.prototype.sort = function () {
 		, timingEvt = ['Data Source "' + self.source.name + '" : ' + self.name, 'Sorting']
 		, conv = I;
 
+	var sortFn = {};
+
+	// Dates and times are stored as Moment instances, so we need to compare them accordingly.
+
+	sortFn.date = function (a, b) {
+		return a.isBefore(b);
+	};
+	sortFn.time = sortFn.date;
+	sortFn.datetime = sortFn.date;
+
+	// Strings, numbers, and currency are stored as JavaScript primitives, so using the builtin
+	// operators to compare them is OK.
+
+	sortFn.string = function (a, b) {
+		return a < b;
+	};
+
+	sortFn.number = function (a, b) {
+		return a._value < b._value;
+	};
+	sortFn.currency = sortFn.number;
+
 	if (self.sortSpec === undefined) {
 		return;
 	}
 
 	self.timing.start(timingEvt);
 
-	switch (self.typeInfo[self.sortSpec.col]) {
-	case 'number':
-		conv = parseFloat;
-		break;
-	case 'date':
-		conv = function (x) { return new Date(x); };
-		break;
-	case 'string':
-		conv = function (x) { return x.toLowerCase(); };
-		break;
-	}
-
-	if (self.data.data[0].rowData['_ORIG_' + self.sortSpec.col] !== undefined) {
-		self.sortSpec.col = '_ORIG_' + self.sortSpec.col;
-	}
-
 	var sorted = mergeSort2(self.data.data, function (a, b) {
-		return !!((conv(a.rowData[self.sortSpec.col]) < conv(b.rowData[self.sortSpec.col])) ^ (self.sortSpec.dir === 'DESC'));
+		return !!(sortFn[self.typeInfo[self.sortSpec.col].type](a.rowData[self.sortSpec.col], b.rowData[self.sortSpec.col]) ^ (self.sortSpec.dir === 'DESC'));
 	});
 
 	if (self.eventHandlers.sort) {

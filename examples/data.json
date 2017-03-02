@@ -457,7 +457,7 @@
     "random_date": "date",
     "random_int": "number",
     "random_float": "number",
-    "random_money": "string",
+    "random_money": "currency",
     "state": "string"
   }
 }

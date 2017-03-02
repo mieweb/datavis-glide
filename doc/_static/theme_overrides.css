@@ -1,7 +1,13 @@
-.wy-nav-content {
+/*.wy-nav-content {
 	max-width: inherit;
 }
 
 code {
 	font-size: inherit ! important;
+}
+*/
+
+table.align-center {
+	margin-left: auto;
+	margin-right: auto;
 }

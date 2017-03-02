@@ -24,19 +24,38 @@ A data source actually captures four different types of information:
 Type Info
 =========
 
-+----------+-------------+
-| Type     | Description |
-+==========+=============+
-| number   |             |
-+----------+-------------+
-| string   |             |
-+----------+-------------+
-| date     |             |
-+----------+-------------+
-| time     |             |
-+----------+-------------+
-| datetime |             |
-+----------+-------------+
+The type information obtained from the source indicates how the data should be interpreted.
+Usually, data formats like XML and JSON do not allow flexible representation of all the different
+types of data that we're interested in.  For example, you can't put a date into JSON unless you
+encode it as a string or number.  Having the type information tells the data source that the value
+should be treated as a date.  That information propagates to the view, where it can affect how the
+value is displayed, sorted, or filtered.
+
+The type information for each field indicates the following:
+
+* The type (e.g. number, string, date).
+* The format (e.g. "MM-DD-YYYY") — used for dates, times, and datetimes.
+
+.. table:: Available types
+
+   +--------------+--------------------------------------------------------------------------------+
+   | Type         | Description                                                                    |
+   +==============+================================================================================+
+   | ``number``   | Integer of floating point number; primarily used for sorting numerically.  The |
+   |              | internal value is a number.                                                    |
+   +--------------+--------------------------------------------------------------------------------+
+   | ``string``   | Catch all data type, can contain anything at all.                              |
+   +--------------+--------------------------------------------------------------------------------+
+   | ``date``     | A string containing a date, which can be formatted or sorted.  The default     |
+   |              | format is "YYYY-MM-DD."  The internal value is a Date instance.                |
+   +--------------+--------------------------------------------------------------------------------+
+   | ``time``     | A string containing a time, which can be formatted or sorted.  The default     |
+   |              | format is "HH:mm:ss."  The internal value is a string.                         |
+   +--------------+--------------------------------------------------------------------------------+
+   | ``datetime`` | A string containing both a date and time, which can be formatted and sorted.   |
+   |              | The default format is "YYYY-MM-DD HH:mm:ss."  The internal value is a Date     |
+   |              | instance.                                                                      |
+   +--------------+--------------------------------------------------------------------------------+
 
 Conversion
 ==========
@@ -69,3 +88,62 @@ Local Data
 
 HTTP Request
 ------------
+
+The HTTP request data source simply makes an AJAX request to get data.  The data can either be in
+JSON or XML.  You don't need to indicate which one is being used, we figure it out automatically.
+However, you must adhere to a specific format for the data, which is outlined below.
+
+.. code-block:: javascript
+
+  var dataSource = new MIE.DataSource({
+    type: 'http',
+    url: '/data.json'
+  });
+
+JSON Data
+^^^^^^^^^
+
+Here's the format for data expressed using JSON.
+
+::
+
+  {
+    data: [
+      {
+        FIELD: VALUE,
+        ...
+      },
+      ...
+    ],
+    typeInfo: {
+      FIELD: {
+        type: TYPE-NAME,
+        format: FORMAT-STRING
+      },
+      ...
+    }
+  }
+
+XML Data
+^^^^^^^^
+
+Here's the format for data expressed using XML.
+
+::
+
+  <root>
+    <data>
+      <item>
+        <FIELD>VALUE</FIELD>
+        ...
+      </item>
+      ...
+    </data>
+    <typeInfo>
+      <FIELD>
+        <type>TYPE-NAME</type>
+        <format>FORMAT-STRING</format>
+      </FIELD>
+      ...
+    </typeInfo>
+  </root>

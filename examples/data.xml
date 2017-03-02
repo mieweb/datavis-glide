@@ -458,7 +458,7 @@
 		<random_date>date</random_date>
 		<random_int>number</random_int>
 		<random_float>number</random_float>
-		<random_money>string</random_money>
+		<random_money>currency</random_money>
 		<state>string</state>
 	</typeInfo>
 </root>
