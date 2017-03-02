@@ -131,7 +131,7 @@ function updateDefnDataInPlace(defn, srcIndex, data) {
 
 	if (data[srcIndex].length > 0) {
 		_.each(data[srcIndex][0], function (value, colName) {
-			var sqlType = defn._typeInfo[srcIndex].byName[colName];
+			var sqlType = defn._typeInfo[srcIndex][colName];
 			if (sqlType === 'string') {
 				// This will do the work necessary to create the _ORIG_ properties.
 				makeLinkConfig(data[srcIndex], colName, defn._dataFieldConfig);
@@ -381,7 +381,7 @@ GridTable.prototype.draw = function (container, tableDone) {
 	return self.dataView.getData(function (data) {
 		return self.dataView.getTypeInfo(function (typeInfo) {
 			debug.info('GRIDTABLE', 'Data = %O', data);
-			debug.info('GRIDTABLE', 'TypeInfo = %O', typeInfo.byName);
+			debug.info('GRIDTABLE', 'TypeInfo = %O', typeInfo);
 
 			// There are three lenses through which we can view the data:
 			//
@@ -473,7 +473,7 @@ GridTable.prototype.drawPlain = function (container, data, typeInfo) {
 
 	// }}}4
 
-	columns = _.keys(typeInfo.byName);
+	columns = _.keys(typeInfo);
 
 	if (self.defn.table.columns !== undefined) {
 		columns = _.union(_.reject(self.defn.table.columns, function (x) { return x === '_DEFAULT'; }), columns);
@@ -875,7 +875,7 @@ GridTable.prototype.drawGroupPivot = function (container, data, typeInfo) {
 			});
 		}
 
-		columns = _.keys(typeInfo.byName);
+		columns = _.keys(typeInfo);
 
 		if (!isNothing(getProp(self.defn, 'table', 'columns'))) {
 			columns = _.union(_.reject(self.defn.table.columns, function (x) { return x === '_DEFAULT'; }), columns);
@@ -1693,7 +1693,7 @@ GridFilterSet.prototype.build = function (colName, filterType, filterBtn) {
 		throw new GridFilterError('This can only be used with a DataSource');
 	}
 
-	colType = self.defn.source.cache.typeInfo.byName[colName];
+	colType = self.defn.source.cache.typeInfo[colName];
 
 	// Make sure that we are able to get the column type.
 
@@ -2012,6 +2012,9 @@ var WCGrid = function (id, defn, tagOpts, cb) {
 	}
 
 	defn._id = id;
+
+	defn.table = defn.table || {};
+
 	defn.table.id = id + '_gridContainer';
 
 	/*
@@ -2874,7 +2877,7 @@ PivotControl.prototype.draw = function (container, tableDoneCont) {
 
 	self.view.getData(function () {
 		self.view.getTypeInfo(function (typeInfo) {
-			var cols = _.keys(typeInfo.byName);
+			var cols = _.keys(typeInfo);
 
 			if (self.defn.table.columns !== undefined) {
 				cols = _.union(_.reject(self.defn.table.columns, function (x) { return x === '_DEFAULT'; }), cols);

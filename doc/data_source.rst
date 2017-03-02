@@ -38,17 +38,34 @@ Type Info
 | datetime |             |
 +----------+-------------+
 
+Conversion
+==========
+
+The data source can be passed an array of functions which can process the data however they like.
+For each row, for each field within that row, the data source goes through the list of conversion
+functions.  If it returns null, the next function is tried.  The first one that returns non-null
+sets the new value.  If none return non-null, then the original value is maintained.  You don't want
+to do too much work in these functions, because they're going to get called a lot.
+
+**Example**
+
+.. code-block:: javascript
+
+   var tryInt = function (val) { return _.isInt(val) ? parseInt(val, 10) : null; }
+   var tryFloat = function (val) { return _.isFloat(val) ? parseFloat(val) : null; }
+   var tryDate = function (val) { return new Date(val); }
+
+   var dataSource = new MIE.DataSource({
+     type: 'http',
+     url: 'data.json',
+     conversion: [tryInt, tryFloat, tryDate]
+   });
+
 Backends
 ========
-
-System Report
--------------
-
-JSON API
---------
 
 Local Data
 ----------
 
-HTML Table
-----------
+HTTP Request
+------------

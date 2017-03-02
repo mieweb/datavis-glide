@@ -12,7 +12,7 @@ $(document).ready(function () {
 
 	var dataSource = new MIE.DataSource({
 		type: 'http',
-		url: 'data.json'
+		url: 'data.xml'
 	});
 	var tagOpts = {
 		runImmediately: true,
@@ -20,6 +20,10 @@ $(document).ready(function () {
 	};
 	var defn = {
 		id: 'example',
+		table: {
+			enableSorting: true,
+			enableFiltering: true
+		},
 		source: dataSource
 	};
 	new MIE.WCGrid('example', defn, tagOpts);

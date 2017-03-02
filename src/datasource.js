@@ -847,9 +847,6 @@ var LocalDataSource = function (spec) {
 	if (isNothing(self.cache.typeInfo)) {
 		self.warning('No type information found in local data (' + self.varName + '.typeInfo is missing).');
 	}
-	else if (isNothing(self.cache.typeInfo.byName) || isNothing(self.cache.typeInfo.byIndex)) {
-		self.warning('Incomplete type information found in local data (either ' + self.varName + '.typeInfo.byName or ' + self.varName + '.typeInfo.byIndex is missing).');
-	}
 };
 
 // #getData {{{2
@@ -879,6 +876,68 @@ var HttpDataSource = function (spec) {
 	self.cache = null;
 };
 
+HttpDataSource.parseData = function (data) {
+	var result = {};
+
+	debug.info('DATA SOURCE // HTTP // PARSER', 'Data = ' + ((data instanceof XMLDocument) ? '%o' : '%O'), data);
+
+	if (data instanceof XMLDocument) {
+		var root = jQuery(data).children('root');
+		if (!root.is('root')) {
+			throw new DataSourceError('HTTP Data Source / XML Parser / Missing (root) element');
+		}
+
+		var data = root.children('data');
+		if (data.length === 0) {
+			throw new DataSourceError('HTTP Data Source / XML Parser / Missing (root > data) element');
+		}
+		else if (data.length > 1) {
+			throw new DataSourceError('HTTP Data Source / XML Parser / Too many (root > data) elements');
+		}
+
+		result.data = [];
+		data.children('item').each(function (_itemIndex, item) {
+			item = jQuery(item);
+			var row = {};
+			item.children().each(function (_fieldIndex, field) {
+				field = jQuery(field);
+				row[field.prop('tagName')] = field.text();
+			});
+			result.data.push(row);
+		});
+
+		var typeInfo = root.children('typeInfo');
+		if (typeInfo.length === 0) {
+			throw new DataSourceError('HTTP Data Source / XML Parser / Missing (root > typeInfo) element');
+		}
+		else if (typeInfo.length > 1) {
+			throw new DataSourceError('HTTP Data Source / XML Parser / Too many (root > typeInfo) elements');
+		}
+
+		result.typeInfo = {};
+		typeInfo.children().each(function (_fieldIndex, field) {
+			field = jQuery(field);
+			result.typeInfo[field.prop('tagName')] = field.text();
+		});
+	}
+	else {
+		if (data.data === undefined) {
+			throw new DataSourceError('HTTP Data Source / JSON Parser / Missing (data) property');
+		}
+		else if (!_.isArray(data.data)) {
+			throw new DataSourceError('HTTP Data Source / JSON Parser / (data) property must be an array');
+		}
+
+		if (data.typeInfo === undefined) {
+			throw new DataSourceError('HTTP Data Source / JSON Parser / Missing (typeInfo) property');
+		}
+
+		result = data;
+	}
+
+	return result;
+};
+
 // #getData {{{2
 
 HttpDataSource.prototype.getData = function (params, cont) {
@@ -888,15 +947,10 @@ HttpDataSource.prototype.getData = function (params, cont) {
 		return jQuery.ajax(self.url, {
 			method: self.method,
 			error: function (jqXHR, textStatus, errorThrown) {
-				log.error('AJAX Failed: %s', textStatus);
-				log.error('AJAX Failed: %O', jqXHR);
-				log.error('AJAX Failed: %O', errorThrown);
-
-				self.cache = null;
-				return cont(null);
+				throw new DataSourceError('HTTP Data Source / AJAX Error / ' + errorThrown.message);
 			},
 			success: function (data, textStatus, jqXHR) {
-				self.cache = data;
+				self.cache = HttpDataSource.parseData(data);
 				return self.getData(params, cont);
 			}
 		});
@@ -980,10 +1034,22 @@ var DataSource = function (spec, params) {
 	self.guessColumnTypes = true;
 
 	if (DataSource.sources[self.type] === undefined) {
-		throw new Error('Unsupported data source type: ' + self.type);
+		throw new DataSourceError('Unsupported data source type: ' + self.type);
 	}
 
 	self.source = new DataSource.sources[self.type](spec);
+
+	if (!isNothing(spec.conversion) && !_.isArray(spec.conversion)) {
+		throw new DataSourceError('Invalid DataSource config: <.conversion> must be an array');
+	}
+
+	_.each(spec.conversion, function (f, i) {
+		if (typeof f !== 'function') {
+			throw new DataSourceError('Invalid DataSource config: <.conversion[' + i + '] must be a function');
+		}
+	});
+
+	self.conversion = spec.conversion || [];
 
 	self.locks.getData = new Lock();
 };
@@ -1031,18 +1097,18 @@ DataSource.prototype.getData = function (cont) {
 
 	self.locks.getData.lock();
 	return self.source.getData(self.createParams(), function (data) {
-	if (self.type === 'local') {
-		self.cache.data = data;
-		self.locks.getData.unlock();
-		return cont(data);
-	}
-	else {
-		self.postProcess(data, function (finalData) {
-			self.cache.data = finalData;
+		if (self.type === 'local') {
+			self.cache.data = data;
 			self.locks.getData.unlock();
-			return cont(finalData);
-		});
-	}
+			return cont(data);
+		}
+		else {
+			self.postProcess(data, function (finalData) {
+				self.cache.data = finalData;
+				self.locks.getData.unlock();
+				return cont(finalData);
+			});
+		}
 	});
 };
 
@@ -1132,75 +1198,31 @@ DataSource.prototype.getDisplayName = function (cont) {
 DataSource.prototype.postProcess = function (data, cont) {
 	var self = this;
 
-	if (!_.isArray(data)) {
-		self.error('Error retrieving data');
+	if (isNothing(data)) {
+		throw new DataSourceError('Data Source / Post Process / Received nothing');
+	}
+	else if (!_.isArray(data)) {
+		throw new DataSourceError('Data Source / Post Process / Data is not an array');
 	}
 
 	debug.info('DATA SOURCE // POST-PROCESSING', 'Beginning post-processing');
 
-	// The report definition can include a pre-processing step to convert the data manually.
-
-	if (self.conversion) {
-		data = self.conversion(data);
-	}
-
 	self.getTypeInfo(function (typeInfo) {
-		_.each(data[0], function (sample, colName) {
-			var sqlType = getProp(typeInfo, 'byName', colName);
-			var looksLikeType = 'undetermined';
-			var convertFn = null;
-			// concatLog.info('[CONVERSION] Column =', colName, '; Type =', sqlType, '; Sample =', sample);
-			// Often times, number columns in the result set have a string type.  Check the first row and
-			// see if it looks like a number.  If it does, then set that as the type.  We don't check all
-			// the rows because that would be inefficient, but because of that, this little trick is
-			// occasionally wrong.
-			if (sqlType === 'number') {
-				if (self.guessColumnTypes && isInt(sample)) {
-					looksLikeType = 'int';
-					convertFn = tryIntConvert;
+		_.each(data, function (row, rowNum) {
+			_.each(row, function (val, field) {
+				var i = 0;
+				while (i < self.conversion.length) {
+					var result = self.conversion[i](val, field, typeInfo[field], row);
+					if (result !== null && result !== undefined) {
+						row[field] = result;
+						break;
+					}
+					i += 1;
 				}
-				else if (self.guessColumnTypes && isFloat(sample)) {
-					looksLikeType = 'float';
-					convertFn = tryFloatConvert;
-				}
-			}
-			else if (sqlType === 'string') {
-				if (self.guessColumnTypes && isInt(sample)) {
-					looksLikeType = 'int';
-					convertFn = tryIntConvert;
-				}
-				else if (self.guessColumnTypes && isFloat(sample)) {
-					looksLikeType = 'float';
-					convertFn = tryFloatConvert;
-				}
-				else {
-					// If we're doing a jQWidgets grid for the output, then we need to do more than just make a
-					// link... so we'll handle that later, after we've started to set up the grid.
-					convertFn = linkConvert;
-				}
-			}
-			else if (sqlType === 'date') {
-				convertFn = makeChain(removeZeroDates, addTimeComponent);
-			}
-			else if (sqlType === 'datetime') {
-				convertFn = makeChain(removeZeroDateTimes, addTimeComponent);
-			}
-			if (convertFn !== null) {
-				//debug.info('CONVERSION', 'Converting column "' + colName + '" (source type = ' + sqlType + ', looks like = ' + looksLikeType + ')');
-				_.each(data, function (row) {
-					row[colName] = convertFn(row[colName], row, colName, null);
-				});
-			}
+			});
 		});
 
-		// Check to see if we're supposed to sort this data.
-
-		if (_.isObject(self.sort)) {
-			return sort(data, self.sort, cont);
-		}
-		else {
-			return cont(data);
-		}
+		return cont(data);
 	});
 };
 
@@ -1523,7 +1545,7 @@ DataView.prototype.sort = function () {
 
 	self.timing.start(timingEvt);
 
-	switch (self.typeInfo.byName[self.sortSpec.col]) {
+	switch (self.typeInfo[self.sortSpec.col]) {
 	case 'number':
 		conv = parseFloat;
 		break;
@@ -1535,11 +1557,11 @@ DataView.prototype.sort = function () {
 		break;
 	}
 
-	if (self.data[0].rowData['_ORIG_' + self.sortSpec.col] !== undefined) {
+	if (self.data.data[0].rowData['_ORIG_' + self.sortSpec.col] !== undefined) {
 		self.sortSpec.col = '_ORIG_' + self.sortSpec.col;
 	}
 
-	var sorted = mergeSort2(self.data, function (a, b) {
+	var sorted = mergeSort2(self.data.data, function (a, b) {
 		return !!((conv(a.rowData[self.sortSpec.col]) < conv(b.rowData[self.sortSpec.col])) ^ (self.sortSpec.dir === 'DESC'));
 	});
 
