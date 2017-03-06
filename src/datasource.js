@@ -1239,28 +1239,34 @@ DataSource.prototype.postProcess = function (data, cont) {
 	self.getTypeInfo(function (typeInfo) {
 		_.each(data, function (row, rowNum) {
 			_.each(row, function (val, field) {
+				row[field] = {
+					value: val
+				};
+
+				var i = 0;
+				while (i < self.conversion.length) {
+					if (self.conversion[i](row[field], field, typeInfo[field], row)) {
+						break;
+					}
+					i += 1;
+				}
+
 				switch (typeInfo[field].type) {
 				case 'number':
 				case 'currency':
-					row['_ORIG_' + field] = val;
-					row[field] = numeral(val);
+					if (row[field].orig === undefined) {
+						row[field].orig = row[field].value;
+					}
+					row[field].value = numeral(row[field].value);
 					break;
 				case 'date':
 				case 'time':
 				case 'datetime':
-					row['_ORIG_' + field] = val;
-					row[field] = moment(val, typeInfo[field].format);
-					break;
-				}
-
-				var i = 0;
-				while (i < self.conversion.length) {
-					var result = self.conversion[i](val, field, typeInfo[field], row);
-					if (result !== null && result !== undefined) {
-						row[field] = result;
-						break;
+					if (row[field].orig === undefined) {
+						row[field].orig = row[field].value;
 					}
-					i += 1;
+					row[field].value = moment(row[field].value, typeInfo[field].format);
+					break;
 				}
 			});
 		});
@@ -1611,7 +1617,7 @@ DataView.prototype.sort = function () {
 	self.timing.start(timingEvt);
 
 	var sorted = mergeSort2(self.data.data, function (a, b) {
-		return !!(sortFn[self.typeInfo[self.sortSpec.col].type](a.rowData[self.sortSpec.col], b.rowData[self.sortSpec.col]) ^ (self.sortSpec.dir === 'DESC'));
+		return !!(sortFn[self.typeInfo[self.sortSpec.col].type](a.rowData[self.sortSpec.col].value, b.rowData[self.sortSpec.col].value) ^ (self.sortSpec.dir === 'DESC'));
 	});
 
 	if (self.eventHandlers.sort) {
@@ -1717,7 +1723,7 @@ DataView.prototype.filter = function () {
 	// Checks to see if the given filter passes for the given row.
 
 	function passesFilter(fltr, colName, row) {
-		var datum = either(row['_ORIG_' + colName], row[colName]);
+		var datum = row[colName].value;
 
 		// When there's no such column, automatically fail.
 
@@ -1854,7 +1860,7 @@ DataView.prototype.filter = function () {
 	*/
 
 	self.timing.start(timingEvt);
-	self.data = _.filter(self.data.data, passesAllFilters);
+	self.data.data = _.filter(self.data.data, passesAllFilters);
 	self.timing.stop(timingEvt);
 };
 
@@ -2128,7 +2134,12 @@ DataView.prototype.getData = function (cont, tries) {
 					isPlain: true,
 					isGroup: false,
 					isPivot: false,
-					data: _.map(data, function (rowData, rowNum) { return { rowNum: rowNum, rowData: rowData }; })
+					data: _.map(data, function (rowData, rowNum) {
+						return {
+							rowNum: rowNum,
+							rowData: rowData
+						};
+					})
 				};
 
 				self.typeInfo = typeInfo;

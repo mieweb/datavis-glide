@@ -1,5 +1,6 @@
 <html>
 	<head>
+		<meta charset="utf-8"/>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js"></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
@@ -12,9 +13,23 @@
 $(document).ready(function () {
 	MIE.DEBUGGING = true;
 
+	var bbcode = function (cell, field, typeInfo, row) {
+		var m = cell.value.match(/\[url=([^\]]+)\]([^\[]+)\[\/url\]/);
+		if (m !== null) {
+			cell.render = function (value) {
+				return jQuery('<a>', { href: m[1] }).text(value);
+			};
+			cell.orig = cell.value;
+			cell.value = m[2];
+			return true;
+		}
+		return false;
+	};
+
 	var dataSource = new MIE.DataSource({
 		type: 'http',
-		url: 'data.xml'
+		url: 'data.xml',
+		conversion: [bbcode]
 	});
 	var tagOpts = {
 		runImmediately: true,
@@ -24,7 +39,16 @@ $(document).ready(function () {
 		id: 'example',
 		table: {
 			enableSorting: true,
-			enableFiltering: true
+			enableFiltering: true,
+			columns: [
+				{ field: "first_name", displayText: "First Name" },
+				{ field: "last_name", displayText: "Last Name" },
+				{ field: "random_date", displayText: "Random Date", format: "MM/DD/YYYY" },
+				{ field: "random_int", displayText: "Random Int" },
+				{ field: "random_float", displayText: "Random Float" },
+				{ field: "random_money", displayText: "Random Money" },
+				{ field: "date_link", displayText: "Date Link", format: "MMM Do, YYYY" }
+			]
 		},
 		source: dataSource
 	};

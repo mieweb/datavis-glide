@@ -220,8 +220,8 @@ function configureRowReordering(defn, tbody) {
 			if ( (typeof oldIndex !== 'undefined') &&
 				(typeof newIndex !== 'undefined') &&
 				(oldIndex !== newIndex) ) {
-					// swap the rows in our internal data structure
-					rowSwapIndex(defn, oldIndex, newIndex);
+				// swap the rows in our internal data structure
+				rowSwapIndex(defn, oldIndex, newIndex);
 			} else {
 				// strange some bad data so just call the 'cancel' method
 				jQuery(this).sortable('cancel');
@@ -453,35 +453,38 @@ GridTable.prototype.drawPlain = function (container, data, typeInfo) {
 
 	// Determine columns in order {{{3
 
+	// This is an array of the names of the *fields* that make up the columns.  If the user specified
+	// defn.table.columns, then it comes from the fields in there.  Otherwise, it comes from the keys
+	// of the data source's typeInfo object.
+
 	var columns = [];
 
 	// Error checking {{{4
 
 	if (self.defn.table.columns !== undefined) {
-		if (!(self.defn.table.columns instanceof Array)) {
-			throw self.defn.error('[table.columns] must be an array');
+		if (!_.isArray(self.defn.table.columns)) {
+			throw new GridTableError('Grid Table / Draw / (table.columns) must be an array');
 		}
 		_.each(self.defn.table.columns, function (elt, i) {
-			if (typeof elt !== 'string') {
-				throw self.defn.error('[table.columns] element #' + i + ' is not a string');
+			if (elt.field === undefined) {
+				throw new GridTableError('Grid Table / Draw / Missing (table.columns[' + i + '].field)');
 			}
-			if (elt !== '_DEFAULT' && data.data[0] !== undefined && data.data[0]['rowData'][elt] === undefined) {
-				emailWarning(self.defn, 'Configuration for column "' + elt + '" refers to something not present in the data.  With jQWidgets output, this can result in empty columns.  Did the data source (e.g. system report) change?');
+			else if (data.data[0].rowData[elt.field] === undefined) {
+				log.warn('Grid Table / Draw / (table.columns[' + i + ']) refers to field "' + elt.field + '" which does not exist in the data');
 			}
 		});
 	}
 
 	// }}}4
 
-	columns = _.keys(typeInfo);
-
-	if (self.defn.table.columns !== undefined) {
-		columns = _.union(_.reject(self.defn.table.columns, function (x) { return x === '_DEFAULT'; }), columns);
+	if (self.defn.table.columns) {
+		columns = _.pluck(self.defn.table.columns, 'field');
 	}
-
-	columns = _.reject(columns, function (colName) {
-		return colName.charAt(0) === '_' || isColumnHidden(self.defn, colName);
-	});
+	else {
+		columns = _.reject(_.keys(typeInfo), function (field) {
+			return field.charAt(0) === '_';
+		});
+	}
 
 	debug.info('GRIDTABLE', 'Columns = %O', columns);
 
@@ -497,107 +500,109 @@ GridTable.prototype.drawPlain = function (container, data, typeInfo) {
 
 	// Create the <TH> elements that go inside the <THEAD>. {{{3
 
-		headingTr = jQuery('<tr>');
-		filterTr = jQuery('<tr>');
+	headingTr = jQuery('<tr>');
+	filterTr = jQuery('<tr>');
 
-		// Row Selection Setup {{{4
+	// Row Selection Setup {{{4
+
+	if (self.features.rowSelection) {
+		self.ui.checkAll_thead = jQuery('<input>', { 'name': 'checkAll', 'type': 'checkbox' })
+			.on('change', function (evt) {
+				rowSelect_checkAll.call(this, evt, self.ui);
+			});
+		headingTr.append(jQuery('<th>').append(self.ui.checkAll_thead));
+		if (self.features.filtering) {
+			filterTr.append(jQuery('<th>').css(filterThCss));
+		}
+	}
+
+	// Sorting Setup {{{4
+
+	if (self.features.sorting) {
+		self.defn.sortSpec = {
+			col: null,
+			asc: false
+		};
+	}
+
+	// Filtering Setup {{{4
+
+	if (self.features.filtering) {
+		self.defn.gridFilterSet = new GridFilterSet(self.defn, self.ui.thead);
+	}
+
+	// }}}4
+
+	_.each(columns, function (field, colIndex) {
+		var colConfig = self.defn.table.columns[colIndex] || {};
 
 		if (self.features.rowSelection) {
-			self.ui.checkAll_thead = jQuery('<input>', { 'name': 'checkAll', 'type': 'checkbox' })
-				.on('change', function (evt) {
-					rowSelect_checkAll.call(this, evt, self.ui);
-				});
-			headingTr.append(jQuery('<th>').append(self.ui.checkAll_thead));
-			if (self.features.filtering) {
-				filterTr.append(jQuery('<th>').css(filterThCss));
-			}
+			colIndex += 1; // Add a column for the row selection checkbox.
 		}
 
-		// Sorting Setup {{{4
+		var headingSpan = jQuery('<span>').text(colConfig.displayText || field);
+
+		var headingTh = jQuery('<th>')
+			.css({'white-space': 'nowrap'})
+			.append(headingSpan);
+
+		// Sorting {{{4
 
 		if (self.features.sorting) {
-			self.defn.sortSpec = {
-				col: null,
-				asc: false
+			var sortSpan = jQuery('<span>').css({'font-size': '1.2em'});
+
+			var onClick = function () {
+				jQuery('span.sort_indicator').hide();
+				headingTh.find('span.sort_indicator').show();
+
+				// Save the sort spec.  If we're resorting a column (i.e. we just sorted it) then
+				// reverse the sort direction.  Otherwise, start in ascending order.
+
+				self.defn.sortSpec.asc = (self.defn.sortSpec.col === field ? !self.defn.sortSpec.asc : true);
+				self.defn.sortSpec.col = field;
+
+				debug.info('SORTING', 'Column = ' + self.defn.sortSpec.col + ' ; Direction = ' + (self.defn.sortSpec.asc ? 'ASC' : 'DESC'));
+
+				sortSpan.html(fontAwesome(self.defn.sortSpec.asc ? 'F0D7' : 'F0D8'));
+
+				self.defn.view.setSort(self.defn.sortSpec.col, self.defn.sortSpec.asc ? 'ASC' : 'DESC');
 			};
+
+			sortSpan.addClass('sort_indicator');
+			sortSpan.css({'cursor': 'pointer'});
+			sortSpan.on('click', onClick);
+
+			headingSpan.css({'cursor': 'pointer', 'margin-left': '0.5ex'});
+			headingSpan.on('click', onClick);
+
+			headingTh.prepend(sortSpan);
 		}
 
-		// Filtering Setup {{{4
+		// Filtering {{{4
 
 		if (self.features.filtering) {
-			self.defn.gridFilterSet = new GridFilterSet(self.defn, self.ui.thead);
-		}
+			// Add a TH to the TR that will contain the filters.  Every filter will actually be a DIV
+			// inside this TH.
 
-		// }}}4
+			var filterTh = jQuery('<th>').css(filterThCss);
+			self.setCss(filterTh, field);
+			filterTr.append(filterTh);
 
-		_.each(columns, function (colName, colIndex) {
-			if (self.features.rowSelection) {
-				colIndex += 1; // Add a column for the row selection checkbox.
-			}
+			// Create the button that will add the filter to the grid, and stick it onto the end of
+			// the column heading TH.
 
-			var headingSpan = jQuery('<span>').text(colName);
-
-			var headingTh = jQuery('<th>')
-				.css({'white-space': 'nowrap'})
-				.append(headingSpan);
-
-			// Sorting {{{4
-
-			if (self.features.sorting) {
-				var sortSpan = jQuery('<span>').css({'font-size': '1.2em'});
-
-				var onClick = function () {
-					jQuery('span.sort_indicator').hide();
-					headingTh.find('span.sort_indicator').show();
-
-					// Save the sort spec.  If we're resorting a column (i.e. we just sorted it) then
-					// reverse the sort direction.  Otherwise, start in ascending order.
-
-					self.defn.sortSpec.asc = (self.defn.sortSpec.col === colName ? !self.defn.sortSpec.asc : true);
-					self.defn.sortSpec.col = colName;
-
-					debug.info('SORTING', 'Column = ' + self.defn.sortSpec.col + ' ; Direction = ' + (self.defn.sortSpec.asc ? 'ASC' : 'DESC'));
-
-					sortSpan.html(fontAwesome(self.defn.sortSpec.asc ? 'F0D7' : 'F0D8'));
-
-					self.defn.view.setSort(self.defn.sortSpec.col, self.defn.sortSpec.asc ? 'ASC' : 'DESC');
-				};
-
-				sortSpan.addClass('sort_indicator');
-				sortSpan.css({'cursor': 'pointer'});
-				sortSpan.on('click', onClick);
-
-				headingSpan.css({'cursor': 'pointer', 'margin-left': '0.5ex'});
-				headingSpan.on('click', onClick);
-
-				headingTh.prepend(sortSpan);
-			}
-
-			// Filtering {{{4
-
-			if (self.features.filtering) {
-				// Add a TH to the TR that will contain the filters.  Every filter will actually be a DIV
-				// inside this TH.
-
-				var filterTh = jQuery('<th>').css(filterThCss);
-				self.setCss(filterTh, colName);
-				filterTr.append(filterTh);
-
-				// Create the button that will add the filter to the grid, and stick it onto the end of
-				// the column heading TH.
-
-				jQuery(fontAwesome('F0B0', null, 'Click to add a filter on this column'))
-					.css({'cursor': 'pointer', 'margin-left': '0.5ex'})
-					.on('click', function () {
-						self.defn.gridFilterSet.add(colName, filterTh, self.getColConfig(colName, 'filter'), jQuery(this));
-					})
-					.appendTo(headingTh);
+			jQuery(fontAwesome('F0B0', null, 'Click to add a filter on this column'))
+				.css({'cursor': 'pointer', 'margin-left': '0.5ex'})
+				.on('click', function () {
+					self.defn.gridFilterSet.add(field, filterTh, colConfig.filter, jQuery(this));
+				})
+				.appendTo(headingTh);
 			}
 
 			// }}}4
 
-			self.setCss(headingTh, colName);
-			self.ui.thMap[colName] = headingTh;
+			self.setCss(headingTh, field);
+			self.ui.thMap[field] = headingTh;
 			headingTr.append(headingTh);
 		});
 
@@ -626,9 +631,9 @@ GridTable.prototype.drawPlain = function (container, data, typeInfo) {
 			tr.append(jQuery('<td>').append(self.ui.checkAll_tfoot));
 		}
 
-		tr.append(_.map(columns, function (colName) {
-			var td = jQuery('<td>').text(colName);
-			self.setCss(td, colName);
+		tr.append(_.map(columns, function (field) {
+			var td = jQuery('<td>').text(field);
+			self.setCss(td, field);
 			return td;
 		}));
 
@@ -659,57 +664,39 @@ GridTable.prototype.drawPlain = function (container, data, typeInfo) {
 
 		// Create the data cells {{{4
 
-		_.each(columns, function (col) {
-			var td;
-			var date;
-			var elt;
+		_.each(columns, function (field, colIndex) {
+			var colConfig = self.defn.table.columns[colIndex] || {};
+			var cell = row.rowData[field];
 
-			if (row.rowData[col] instanceof Element) {
+			var td = jQuery('<td>');
+			var value = cell.orig || cell.value;
 
-				// This has to be a copy of the original element.  Here's why: if the element contains a
-				// MySQL formatted date, we want to format that date according to the user's preference.
-				// However, once we do that, it won't look like a MySQL date anymore.  So subsequent
-				// "redrawings" of the same data won't be the same (they won't look like MySQL dates, so
-				// they won't get parsed and have the original date attached in an attribute).
+			// For types that support formatting, use that instead of the value.
 
-				elt = deepCopy(jQuery(row.rowData[col]));
+			if (['number', 'currency', 'date', 'time', 'datetime'].indexOf(typeInfo[field].type) >= 0
+			 && colConfig.format) {
 
-				// When the data is a date or datetime, we parse that value into a JavaScript Date
-				// object, and store it in the element.  Then we set the text of the element to the
-				// value as formatted according to the user's preferences.  The Date object can be used
-				// for sorting (e.g. we do this with Tablesaw using custom sort functions).
+				// The value here could be either from NumeralJS or from Moment, but fortunately it doesn't
+				// matter because they both have the format() method.
 
-				if (self.getColConfig(col, 'type') === 'date') {
-					if (dateRegexp.test(elt.text())) {
-						date = new Date(elt.text());
-						elt.attr('data-internal-value', date);
-						elt.text(formatDate(date));
-					}
-					else if (dateTimeRegexp.test(elt.text())) {
-						date = new Date(elt.text().replace(dateTimeRegexp, '$1T$2'));
-						elt.attr('data-internal-value', date);
-						elt.text(formatDate(date));
-					}
-				}
-				else if (self.getColConfig(col, 'type') === 'datetime') {
-					date = new Date(elt.text());
-					elt.attr('data-internal-value', date);
-					elt.text(formatDateTime(date));
-				}
-
-				td = jQuery('<td>').append(elt);
+				value = cell.value.format(colConfig.format);
 			}
-			else if (self.getColConfig(col, 'widget') === 'checkbox') {
-				td = jQuery('<td>').append(jQuery('<i>', {
-					'class': +row.rowData[col] ? 'fa fa-check-square-o' : 'fa fa-square-o',
-					'data-internal-value': +row.rowData[col] ? 1 : 0
-				}));
+
+			// If there's a rendering function, pass the (possibly formatted) value through it to get the
+			// new value to display.
+
+			if (cell.render) {
+				value = cell.render(value);
+			}
+
+			if (value instanceof Element || value instanceof jQuery) {
+				td.append(value);
 			}
 			else {
-				td = jQuery('<td>').text(row.rowData['_ORIG_' + col] || row.rowData[col]);
+				td.text(value);
 			}
 
-			self.setCss(td, col);
+			self.setCss(td, field);
 			tr.append(td);
 		});
 
@@ -1179,21 +1166,15 @@ GridTable.prototype._addSortingToHeader = function (colName, headingSpan, headin
  *
  */
 
-GridTable.prototype.getColConfig = function () {
+GridTable.prototype.getColConfig = function (field) {
 	var self = this
 		, args = Array.prototype.slice.call(arguments);
 
-	return getProp.apply(undefined, Array.prototype.concat.call([self.defn, 'table', 'columnConfig'], args));
-};
-
-// #setColConfig {{{2
-
-GridTable.prototype.setColConfig = function () {
-	var self = this
-		, args = Array.prototype.slice.call(arguments)
-		, value = args.shift();
-
-	return setProp.apply(undefined, Array.prototype.concat.call([value], [self.defn, 'table', 'columnConfig'], args));
+	for (var i = 0; i < self.defn.table.columns; i += 1) {
+		if (self.defn.table.columns[i].field === field) {
+			return self.defn.table.columns[i];
+		}
+	}
 };
 
 // #setCss {{{2
@@ -1320,19 +1301,28 @@ GridFilterError.prototype.constructor = GridError;
  * using the default value of the widget (e.g. checkbox widgets apply immediately).
  */
 
-function GridFilter(colName, filterType, filterBtn, gridFilterSet) {
-	var self = this;
+var GridFilter = (function () {
+	var id = 0;
 
-	self.colName = colName;
-	self.filterType = filterType;
-	self.filterBtn = filterBtn;
-	self.gridFilterSet = gridFilterSet;
-	self.limit = 0;
-	self.applyImmediately = false;
-	self.div = jQuery('<div>')
-		.css({'white-space': 'nowrap', 'padding-top': 2, 'padding-bottom': 2});
-	self.removeBtn = self.makeRemoveBtn();
-}
+	var genId = function () {
+		return 'GridFilter_' + id++;
+	};
+
+	return function (colName, filterType, filterBtn, gridFilterSet) {
+		var self = this;
+
+		self.colName = colName;
+		self.filterType = filterType;
+		self.filterBtn = filterBtn;
+		self.gridFilterSet = gridFilterSet;
+		self.limit = 0;
+		self.applyImmediately = false;
+		self.div = jQuery('<div>')
+			.css({'white-space': 'nowrap', 'padding-top': 2, 'padding-bottom': 2});
+		self.removeBtn = self.makeRemoveBtn();
+		self.id = genId();
+	};
+})();
 
 GridFilter.prototype = Object.create(Object.prototype);
 GridFilter.prototype.constructor = GridFilter;
@@ -1352,7 +1342,7 @@ GridFilter.prototype.getOperator = function () {
 // #getId {{{3
 
 GridFilter.prototype.getId = function () {
-	return this.input.attr('id');
+	return this.id;
 };
 
 // #makeOperatorDrop {{{3
@@ -1438,12 +1428,9 @@ StringTextboxGridFilter = function () {
 
 	GridFilter.apply(self, arguments);
 
-	self.input = jQuery('<input type="text">').jqxInput();
+	self.input = jQuery('<input type="text">');
 	self.input.on('change', function (evt) {
-		// Make sure the event came from jQWidgets.
-		if (evt.args !== undefined) {
-			self.gridFilterSet.update();
-		}
+		self.gridFilterSet.update();
 	});
 
 	self.operatorDrop = self.makeOperatorDrop(/*['$eq', '$ne']*/);
@@ -1683,7 +1670,7 @@ GridFilterSet.prototype.build = function (colName, filterType, filterBtn) {
 		throw new GridFilterError('This can only be used with a DataSource');
 	}
 
-	colType = self.defn.source.cache.typeInfo[colName];
+	colType = self.defn.source.cache.typeInfo[colName].type;
 
 	// Make sure that we are able to get the column type.
 
