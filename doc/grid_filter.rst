@@ -18,31 +18,37 @@ Common Properties
 
 All grid filters have the following properties:
 
-.. js:attribute:: grid_filter.colName
+.. js:attribute:: gridFilter.colName
 
    Name of the column for which this filter applies.
 
-.. js:attribute:: grid_filter.gridFilterSet
+.. js:attribute:: gridFilter.filterType
+
+.. js:attribute:: gridFilter.filterBtn
+
+.. js:attribute:: gridFilter.gridFilterSet
 
    The grid filter set to which this filter belongs.
 
-.. js:attribute:: grid_filter.limit
+.. js:attribute:: gridFilter.limit
 
    The maximum number of filters which may be applied to the same column.  The default is zero,
    which means there is no limit.
 
-.. js:attribute:: grid_filter.applyImmediately
+.. js:attribute:: gridFilter.applyImmediately
 
    If true, then the filter should be applied as soon as it is created.  This is used for checkbox
    filters, which are applied (in their unchecked state) as soon as they are added.
 
-.. js:attribute:: grid_filter.div
+.. js:attribute:: gridFilter.div
 
    The div element that wraps all the user interface elements.
 
-.. js:attribute:: grid_filter.removeBtn
+.. js:attribute:: gridFilter.removeBtn
 
    The button that removes the filter from the grid.
+
+.. js:attribute:: gridFilter.id
 
 Common Methods
 --------------
@@ -67,6 +73,10 @@ Common Methods
 .. js:function:: GridFilter.prototype.remove()
 
    Removes ``self.div`` from the page.
+
+.. js:function:: GridFilter.prototype.isRange()
+
+   Should return true if the filter is a range filter (e.g. date range).
 
 Current Implementations
 =======================
@@ -130,12 +140,19 @@ Number Checkbox Grid Filter
 :Column Type: number
 :Filter Type: checkbox
 
-Date Input Grid Filter
+Date Single Grid Filter
+-----------------------
+
+:Class Name: DateSingleGridFilter
+:Column Type: date
+:Filter Type: single
+
+Date Range Grid Filter
 ----------------------
 
-:Class Name: DateInputGridFilter
+:Class Name: DateRangeGridFilter
 :Column Type: date
-:Filter Type: input
+:Filter Type: range
 
 Boolean Checkbox Grid Filter
 ----------------------------

@@ -3,16 +3,14 @@ Data Source
 ***********
 
 A data source represents a place where data comes from and how to retrieve it.  For example, a data
-source can be used to send parameters to a system report.  The data source keeps a "clean" copy of
-the source data, which can be used by a :doc:`data view <data_view>` to represent different ways of
+source can be an HTTP request that returns JSON or XML.  The data source keeps a "clean" copy of the
+source data, which can be used by a :doc:`data view <data_view>` to represent different ways of
 looking at the data.
 
 The data source is in charge of taking input from the user, using that to obtain data from
 somewhere, and transforming the result so it can be used for a grid and/or graph.  Data sources have
-a many-to-many relationship with grids/graphs, so you can have a single data source for three
-different grids, or several data sources that are combined together for the same graph.  You can use
-them to show different portrayals of the same data, or combine several disparate sets together into
-one visualization.
+a one-to-many relationship with grids/graphs, so you can have a single data source for three
+different grids.  This allows you to show different portrayals of the same data.
 
 A data source actually captures four different types of information:
 
@@ -33,8 +31,11 @@ value is displayed, sorted, or filtered.
 
 The type information for each field indicates the following:
 
-* The type (e.g. number, string, date).
-* The format (e.g. "MM-DD-YYYY") — used for dates, times, and datetimes.
+* The type (e.g. number, string, date).  This affects how filtering and sorting works, e.g. dates
+  can be sorted chronologically instead of alphabetically.
+
+* The format (e.g. "MM-DD-YYYY") — used for dates, times, and datetimes.  This is needed to prevent
+  misinterpretation of ambiguous dates like "01/02/03."
 
 .. table:: Available types
 
@@ -61,10 +62,9 @@ Conversion
 ==========
 
 The data source can be passed an array of functions which can process the data however they like.
-For each row, for each field within that row, the data source goes through the list of conversion
-functions.  If it returns null, the next function is tried.  The first one that returns non-null
-sets the new value.  If none return non-null, then the original value is maintained.  You don't want
-to do too much work in these functions, because they're going to get called a lot.
+For each row, for each cell within that row, the data source goes through the list of conversion
+functions.  You don't want to do too much work in these functions, because they're going to get
+called a lot.
 
 **Example**
 
@@ -80,8 +80,31 @@ to do too much work in these functions, because they're going to get called a lo
      conversion: [tryInt, tryFloat, tryDate]
    });
 
-Backends
-========
+Internal Format
+===============
+
+Data sources store the data they retrieve as an array of objects, each representing a row.  The keys
+of the row object are the fields from the data source, and the values are objects with the following
+properties:
+
+``value``
+  This is the value used for all operations on the data, such as sorting, filtering, and grouping.
+  Initially this is the value returned by the data source, but conversion may alter it: for example,
+  when the type of the field is a date, the ``value`` becomes a Moment instance during type
+  conversion.
+
+``orig``
+  This property stores the original value obtained from the source.  During conversion (either
+  user-specified or the builtin type conversion that follows), this property is stored when the
+  ``value`` property is updated.
+
+``render``
+  If present, this should be a function taking one argument.  During output, if this property
+  exists, it will be called with the ``value`` property.  The result — which may be an Element or
+  jQuery instance — will be what's shown in the grid table cell.
+
+Builtin Backends
+================
 
 Local Data
 ----------
@@ -147,3 +170,30 @@ Here's the format for data expressed using XML.
       ...
     </typeInfo>
   </root>
+
+Custom Backends
+===============
+
+Writing support for your own data source backends is easy, you just need to make a class with a few
+methods and register it for a type.
+
+.. js:class:: ExampleDataSource(spec)
+
+   Create a new instance of the data source.
+
+   :param object spec: The object passed to ``DataSource.``
+
+   .. js:function:: getData(params, cont)
+
+      :param object params: Parameters that should be sent to the data source.
+      :param function cont: Function to call with the data.
+
+      Get the data from the source.  When passing along the data after it has been obtained, it must
+      match the format indicated above in `Internal Format`_.
+
+   .. js:function:: getTypeInfo(cont)
+
+      :param function cont: Function to call with the type info.
+
+      Get the type information from the source.  When passing along the data after it has been
+      obtained, it must match the format indicated above in `Type Info`_.

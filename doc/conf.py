@@ -33,6 +33,7 @@
 # ones.
 extensions = [
 		'sphinx.ext.todo',
+		#'sphinx.ext.autosectionlabel',
 		'sphinxcontrib.fulltoc',
 		'cloud_sptheme.ext.relbar_links',
 		]

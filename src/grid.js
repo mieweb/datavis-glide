@@ -597,51 +597,52 @@ GridTable.prototype.drawPlain = function (container, data, typeInfo) {
 					self.defn.gridFilterSet.add(field, filterTh, colConfig.filter, jQuery(this));
 				})
 				.appendTo(headingTh);
-			}
-
-			// }}}4
-
-			self.setCss(headingTh, field);
-			self.ui.thMap[field] = headingTh;
-			headingTr.append(headingTh);
-		});
-
-		if (self.features.rowReordering) {
-			headingTr.append(jQuery('<th>').text('Options'));
-			if (self.features.filtering) {
-				filterTr.append(jQuery('<th>').css(filterThCss));
-			}
 		}
 
-		self.ui.thead.append(headingTr);
+		// }}}4
 
+		self.setCss(headingTh, field);
+		self.ui.thMap[field] = headingTh;
+		headingTr.append(headingTh);
+	});
+
+	if (self.features.rowReordering) {
+		headingTr.append(jQuery('<th>').text('Options'));
 		if (self.features.filtering) {
-			self.ui.thead.append(filterTr);
+			filterTr.append(jQuery('<th>').css(filterThCss));
 		}
+	}
+
+	self.ui.thead.append(headingTr);
+
+	if (self.features.filtering) {
+		self.ui.thead.append(filterTr);
+	}
 
 	// Create the <TD> elements that go inside the <TFOOT>. {{{3
 
-		tr = jQuery('<tr>');
+	tr = jQuery('<tr>');
 
-		if (self.features.rowSelection) {
-			self.ui.checkAll_tfoot = jQuery('<input>', { 'name': 'checkAll', 'type': 'checkbox' })
-				.on('change', function (evt) {
-					rowSelect_checkAll.call(this, evt, self.ui);
-				});
-			tr.append(jQuery('<td>').append(self.ui.checkAll_tfoot));
-		}
+	if (self.features.rowSelection) {
+		self.ui.checkAll_tfoot = jQuery('<input>', { 'name': 'checkAll', 'type': 'checkbox' })
+			.on('change', function (evt) {
+				rowSelect_checkAll.call(this, evt, self.ui);
+			});
+		tr.append(jQuery('<td>').append(self.ui.checkAll_tfoot));
+	}
 
-		tr.append(_.map(columns, function (field) {
-			var td = jQuery('<td>').text(field);
-			self.setCss(td, field);
-			return td;
-		}));
+	tr.append(_.map(columns, function (field, colIndex) {
+		var colConfig = self.defn.table.columns[colIndex] || {};
+		var td = jQuery('<td>').text(colConfig.displayText || field);
+		self.setCss(td, field);
+		return td;
+	}));
 
-		if (self.features.rowReordering) {
-			tr.append(jQuery('<td>').text('Options'));
-		}
+	if (self.features.rowReordering) {
+		tr.append(jQuery('<td>').text('Options'));
+	}
 
-		self.ui.tfoot.append(tr);
+	self.ui.tfoot.append(tr);
 
 	// Create the elements that go inside the <TBODY>. {{{3
 
@@ -800,7 +801,7 @@ GridTable.prototype.drawPlain = function (container, data, typeInfo) {
 
 	self.ui.tbl.attr({
 		'class': 'newui zebra',
-		//'data-tttype': 'sticky' // XXX Just for now!
+		// 'data-tttype': 'sticky' // BUG BREAKS FILTERS
 	});
 
 	container.append(self.ui.tbl.append(self.ui.thead).append(self.ui.tfoot).append(self.ui.tbody));
@@ -1116,7 +1117,7 @@ GridTable.prototype.drawGroupPivot = function (container, data, typeInfo) {
 
 	self.ui.tbl.attr({
 		'class': 'newui zebra',
-		//'data-tttype': 'sticky' // XXX Just for now!
+		// 'data-tttype': 'sticky' // BUG BREAKS FILTERS
 	});
 
 	container.append(self.ui.tbl.append(self.ui.thead).append(self.ui.tbody));
@@ -1291,7 +1292,6 @@ GridFilterError.prototype.constructor = GridError;
 /**
  * Base class for all grid filter widgets.
  *
- * @memberof wcgraph_int
  * @class
  *
  * @property {number} limit If greater than zero, the maximum number of filters of this type that
@@ -1329,6 +1329,31 @@ GridFilter.prototype.constructor = GridFilter;
 
 // #getValue {{{3
 
+/**
+ * This represents an exact value to use with a filter operator to decide what to show in the grid.
+ *
+ * @typedef {string|Moment|Numeral} GridFilter~Value
+ */
+
+/**
+ * This represents a range of allowed values; anything within the range should be shown in the grid.
+ *
+ * @typedef {Object} GridFilter~RangeValue
+ *
+ * @property {GridFilter~Value} start The starting number / date in the range (inclusive).
+ * @property {GridFilter~Value} end The ending number / date in the range (inclusive).
+ */
+
+/**
+ * Gives the value that should be used when building the filters for the DataView from the user's
+ * input in the GridFilter.  A GridFilter can return either a single value (which should be combined
+ * with the operator, e.g. "greater than 40") or a range value (where the operators are implicitly
+ * greater-than-or-equal and less-than-or-equal, e.g. "between January 1st and March 31st").
+ *
+ * @returns {GridFilter~Value|GridFilter~RangeValue} The value of the filter; you can tell whether
+ * or not it will be a range by checking the result of #isRange().
+ */
+
 GridFilter.prototype.getValue = function () {
 	return this.input.val();
 };
@@ -1348,7 +1373,7 @@ GridFilter.prototype.getId = function () {
 // #makeOperatorDrop {{{3
 
 /**
- * Construct a <SELECT> that allows the user to pick the operator.
+ * Construct a SELECT that allows the user to pick the operator.
  *
  * @param {Array<string>} include If present, only include operators that correspond to those
  * operations requested.  This should be an array like ``['$eq', '$ne']`` to only show equality and
@@ -1419,9 +1444,22 @@ GridFilter.prototype.remove = function () {
 	self.gridFilterSet.update();
 };
 
+// #isRange {{{3
+
+GridFilter.prototype.isRange = function () {
+	return false;
+};
+
 // StringTextboxGridFilter {{{2
 
-StringTextboxGridFilter = function () {
+/**
+ * Represents a filter on a single string.
+ *
+ * @class
+ * @extends GridFilter
+ */
+
+var StringTextboxGridFilter = function () {
 	var self = this;
 	var row1 = jQuery('<div>');
 	var row2 = jQuery('<div>');
@@ -1474,22 +1512,29 @@ StringTextboxGridFilter.prototype.getOperator = function () {
 
 // StringDropdownGridFilter {{{2
 
-StringDropdownGridFilter = function () {
+/**
+ * Represents a filter for multiple strings.
+ *
+ * @class
+ * @extends GridFilter
+ */
+
+var StringDropdownGridFilter = function () {
 };
 
 // StringCheckedListGridFilter {{{2
 
-StringCheckedlistGridFilter = function () {
+var StringCheckedlistGridFilter = function () {
 };
 
 // NumberTextboxGridFilter {{{2
 
-NumberTextboxGridFilter = function () {
+var NumberTextboxGridFilter = function () {
 };
 
 // NumberCheckboxGridFilter {{{2
 
-NumberCheckboxGridFilter = function () {
+var NumberCheckboxGridFilter = function () {
 	var self = this;
 
 	GridFilter.apply(self, arguments);
@@ -1519,9 +1564,119 @@ NumberCheckboxGridFilter.prototype.getOperator = function () {
 	return '$eq';
 };
 
-// DateInputGridFilter {{{2
+// DateSingleGridFilter {{{2
 
-DateInputGridFilter = function () {
+/**
+ * Represents a filter for a single date.
+ *
+ * @class
+ * @extends GridFilter
+ */
+
+var DateSingleGridFilter = function () {
+	var self = this;
+
+	GridFilter.apply(self, arguments);
+
+	self.input = jQuery('<input>').attr({
+		'type': 'text',
+		'placeholder': 'Select date...'
+	});
+	
+	self.input.flatpickr({
+		'altInput': false,
+		'onChange': function (selectedDates, dateStr, instance) {
+			console.log(selectedDates, dateStr);
+			//self.gridFilterSet.update();
+		}
+	});
+
+	self.div
+		.append(self.input)
+		.append(self.removeBtn);
+};
+
+DateSingleGridFilter.prototype = Object.create(GridFilter.prototype);
+
+// DateRangeGridFilter {{{2
+
+/**
+ * Represents a filter for a range of dates.
+ *
+ * @class
+ * @extends GridFilter
+ */
+
+var DateRangeGridFilter = function () {
+	var self = this;
+
+	GridFilter.apply(self, arguments);
+
+	self.input = jQuery('<input>').attr({
+		'type': 'text',
+		'placeholder': 'Click here; pick start/end dates.',
+		'size': 28
+	});
+	
+	self.widget = self.input.flatpickr({
+		'altInput': false,
+		'mode': 'range',
+		'onChange': function (selectedDates, dateStr, instance) {
+			self.gridFilterSet.update();
+		}
+	});
+
+	self.div
+		.append(self.input)
+		.append(self.removeBtn);
+};
+
+DateRangeGridFilter.prototype = Object.create(GridFilter.prototype);
+
+// #getValue {{{3
+
+/**
+ * Get the value(s) for this date range filter.  After you bring up the calendar, when you select
+ * the start date, the "onChange" event handler is run.  When you select the end date, the event is
+ * fired again.  So, we use #isRange() to decide if you've only selected one date, or if you've just
+ * picked the second.  When it's a range, we need to produce an object, instead of a simple value.
+ *
+ * @returns {GridFilter~Value|GridFilter~RangeValue} The value that should be used for filtering all
+ * the data in the grid.
+ */
+
+DateRangeGridFilter.prototype.getValue = function () {
+	var self = this;
+
+	if (self.isRange()) {
+		return {
+			'start': moment(self.widget.selectedDates[0]),
+			'end': moment(self.widget.selectedDates[1])
+		};
+	}
+	else {
+		return moment(self.widget.selectedDates[0]);
+	}
+};
+
+// #getOperator {{{3
+
+DateRangeGridFilter.prototype.getOperator = function () {
+	var self = this;
+
+	if (self.isRange()) {
+		log.error('<< TSNH >> GridFilterSet called #getOperator() on a range');
+	}
+
+	return '$gte';
+};
+
+// #isRange {{{3
+
+DateRangeGridFilter.prototype.isRange = function () {
+	var self = this;
+
+	return self.widget.selectedDates.length > 1;
 };
 
 // BooleanCheckboxGridFilter {{{2
@@ -1539,6 +1694,31 @@ BooleanCheckboxGridFilter.prototype.getOperator = function () {
 
 BooleanCheckboxGridFilter.prototype.getId = function () {
 	return this.input.attr('id');
+};
+
+
+// Widget Map {{{2
+
+// Type -> Filter Widget -> Constructor
+
+GridFilter.widgets = {
+	'string': {
+		'textbox': StringTextboxGridFilter,
+		'dropdown': StringDropdownGridFilter
+	},
+	'number': {
+		'textbox': NumberTextboxGridFilter
+	},
+	'date': {
+		'single': DateSingleGridFilter,
+		'range': DateRangeGridFilter
+	}
+};
+
+GridFilter.defaultWidgets = {
+	'string': 'dropdown',
+	'number': 'textbox',
+	'date': 'range'
 };
 
 // GridFilterSet {{{1
@@ -1641,27 +1821,7 @@ GridFilterSet.prototype.add = function (colName, target, filterType, filterBtn) 
 GridFilterSet.prototype.build = function (colName, filterType, filterBtn) {
 	var self = this
 		, colType
-		, ctor
-		, allowed
-		, allowedIndex;
-
-	allowed = {
-		'string': [
-			{ fltr: 'textbox', ctor: StringTextboxGridFilter },
-			{ fltr: 'dropdown', ctor: StringDropdownGridFilter },
-			{ fltr: 'checkedlist', ctor: StringCheckedlistGridFilter }
-		],
-		'number': [
-			{ fltr: 'textbox', ctor: NumberTextboxGridFilter },
-			{ fltr: 'checkbox', ctor: NumberCheckboxGridFilter }
-		],
-		'date': [
-			{ fltr: 'input', ctor: DateInputGridFilter }
-		],
-		'boolean': [
-			{ fltr: 'checkbox', ctor: BooleanCheckboxGridFilter }
-		]
-	};
+		, ctor;
 
 	// We use a data source to get the type information, so if the grid was built without a data
 	// source, this isn't going to work.
@@ -1680,7 +1840,7 @@ GridFilterSet.prototype.build = function (colName, filterType, filterBtn) {
 
 	// Make sure that we know what kinds of filters are allowed for the column type.
 
-	if (allowed[colType] === undefined) {
+	if (GridFilter.widgets[colType] === undefined) {
 		throw new GridFilterError('Unknown type "' + colType + '" for column "' + colName + '"');
 	}
 
@@ -1688,20 +1848,16 @@ GridFilterSet.prototype.build = function (colName, filterType, filterBtn) {
 	// Otherwise, make sure that the filter type they asked for makes sense for the column type.
 
 	if (isNothing(filterType)) {
-		allowedIndex = 0;
+		filterType = GridFilter.defaultWidgets[colType];
+		ctor = GridFilter.widgets[colType][filterType];
 	}
 	else {
-		allowedIndex = _.findIndex(allowed[colType], function (elt) {
-			return elt.fltr === filterType;
-		});
-
-		if (allowedIndex < 0) {
-			throw new GridFilterError('Invalid filter type "' + filterType + '" for type "' + colType + '" of column "' + colName + '"');
-		}
+		ctor = GridFilter.widgets[colType][filterType];
 	}
 
-	filterType = allowed[colType][allowedIndex].fltr;
-	ctor = allowed[colType][allowedIndex].ctor;
+	if (ctor === undefined) {
+		throw new GridFilterError('Invalid filter type "' + filterType + '" for type "' + colType + '" of column "' + colName + '"');
+	}
 
 	debug.info('GRID FILTER', 'Creating new widget: column type = "' + colType + '" ; filter type = "' + filterType + '"');
 
@@ -1785,24 +1941,31 @@ GridFilterSet.prototype.update = function (dontSavePrefs) {
 
 	_.each(self.filters.byCol, function (filterList, colName) {
 		_.each(filterList, function (filter) {
-			var operator = filter.getOperator()
-				, value = filter.getValue();
+			var value = filter.getValue();
 
 			if (spec[colName] === undefined) {
 				spec[colName] = {};
 			}
 
-			if (spec[colName][operator] === undefined) {
-				spec[colName][operator] = value;
-			}
-			else if (_.isArray(spec[colName][operator])) {
-				spec[colName][operator].push(value);
-			}
-			else if (['$eq', '$ne', '$contains'].indexOf(operator) >= 0) {
-				spec[colName][operator] = [spec[colName][operator], value];
+			if (filter.isRange()) {
+				spec[colName]['$gte'] = value.start;
+				spec[colName]['$lte'] = value.end;
 			}
 			else {
-				spec[colName][operator] = value;
+				var operator = filter.getOperator();
+
+				if (spec[colName][operator] === undefined) {
+					spec[colName][operator] = value;
+				}
+				else if (_.isArray(spec[colName][operator])) {
+					spec[colName][operator].push(value);
+				}
+				else if (['$eq', '$ne', '$contains'].indexOf(operator) >= 0) {
+					spec[colName][operator] = [spec[colName][operator], value];
+				}
+				else {
+					spec[colName][operator] = value;
+				}
 			}
 		});
 	});

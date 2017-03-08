@@ -1722,31 +1722,60 @@ DataView.prototype.filter = function () {
 
 	// Checks to see if the given filter passes for the given row.
 
-	function passesFilter(fltr, colName, row) {
-		var datum = row[colName].value;
+	function passesFilter(fltr, field, row) {
+		var datum = row[field].value;
 
 		// When there's no such column, automatically fail.
 
 		if (datum === undefined) {
-			debug.warn('DATA VIEW // FILTER', 'Attempted to filter by non-existent column: ' + colName);
+			debug.warn('DATA VIEW // FILTER', 'Attempted to filter by non-existent column: ' + field);
 			return false;
 		}
 
-		datum = datum.toString().toLowerCase();
+		var isMoment = ['date', 'time', 'datetime'].indexOf(self.typeInfo[field].type) >= 0;
+		var isNumeral = ['number', 'currency'].indexOf(self.typeInfo[field].type) >= 0;
+		var isString = ['string'].indexOf(self.typeInfo[field].type) >= 0;
 
-		var pred = {
-			'$eq': function (x) {
-				return datum === x.toString().toLowerCase();
-			},
-			'$ne': function (x) {
-				return datum !== x.toString().toLowerCase();
-			},
-			'$contains': function (x) {
-				return datum.indexOf(x.toString().toLowerCase()) >= 0;
-			},
-			'$notcontains': function (x) {
-				return datum.indexOf(x.toString().toLowerCase()) < 0;
-			}
+		var pred = {};
+
+		pred['$eq'] = function (operand) {
+			return ( isMoment && datum.isSame(operand))
+				|| ( isNumeral && datum._value === operand._value )
+				|| ( isString && datum.toString().toLowerCase() === operand.toString().toLowerCase() );
+		};
+
+		pred['$ne'] = function (operand) {
+			return !pred['$eq'](operand);
+		};
+
+		pred['$contains'] = function (operand) {
+			return ( isMoment && false )
+				|| ( isNumeral && false )
+				|| ( isString && datum.indexOf(operand.toString().toLowerCase()) >= 0 );
+		};
+
+		pred['$notcontains'] = function (operand) {
+			return !pred['$notcontains'](operand);
+		};
+
+		pred['$gt'] = function (operand) {
+			return ( isMoment && datum.isAfter(operand) )
+			|| ( isNumeral && datum._value > operand._value )
+			|| ( isString && datum.toLowerCase() > operand.toLowerCase() );
+		};
+
+		pred['$gte'] = function (operand) {
+			return pred['$gt'](operand) || pred['$eq'](operand);
+		};
+
+		pred['$lt'] = function (operand) {
+			return ( isMoment && datum.isBefore(operand) )
+			|| ( isNumeral && datum._value < operand._value )
+			|| ( isString && datum.toLowerCase() < operand.toLowerCase() );
+		};
+
+		pred['$lte'] = function (operand) {
+			return pred['$lt'](operand) || pred['$eq'](operand);
 		};
 
 		for (var operator in fltr) {
@@ -1755,7 +1784,7 @@ DataView.prototype.filter = function () {
 			}
 
 			var operand = fltr[operator];
-			// debug.info('DATA VIEW // FILTER', 'ColName = ' + colName + ' ; Datum = ' + datum + ' ; Operator = ' + operator + ' ; Operand = ' + operand);
+			// debug.info('DATA VIEW // FILTER', 'field = ' + field + ' ; Datum = ' + datum + ' ; Operator = ' + operator + ' ; Operand = ' + operand);
 
 			if (pred[operator] !== undefined) {
 				if (_.isArray(operand)) {
@@ -1769,33 +1798,9 @@ DataView.prototype.filter = function () {
 			}
 			else {
 				switch (operator) {
-				case '$gt':
-					if (datum <= operand.toString().toLowerCase()) {
-						return false;
-					}
-					break;
-
-				case '$gte':
-					if (datum < operand.toString().toLowerCase()) {
-						return false;
-					}
-					break;
-
-				case '$lt':
-					if (datum >= operand.toString().toLowerCase()) {
-						return false;
-					}
-					break;
-
-				case '$lte':
-					if (datum > operand.toString().toLowerCase()) {
-						return false;
-					}
-					break;
-
 				case '$in':
 					if (!_.isArray(operand)) {
-						throw new DataViewError('Invalid filter spec, operator "$in" for column "' + colName + '" requires array value');
+						throw new DataViewError('Invalid filter spec, operator "$in" for column "' + field + '" requires array value');
 					}
 
 					if (_.map(operand, function (elt) { return elt.toString().toLowerCase(); }).indexOf(datum) < 0) {
@@ -1805,7 +1810,7 @@ DataView.prototype.filter = function () {
 
 				case '$nin':
 					if (!_.isArray(operand)) {
-						throw new DataViewError('Invalid filter spec, operator "$nin" for column "' + colName + '" requires array value');
+						throw new DataViewError('Invalid filter spec, operator "$nin" for column "' + field + '" requires array value');
 					}
 
 					if (_.map(operand, function (elt) { return elt.toString().toLowerCase(); }).indexOf(datum) >= 0) {
@@ -1814,7 +1819,7 @@ DataView.prototype.filter = function () {
 					break;
 
 				default:
-					throw new DataViewError('Invalid operator "' + operator + '" for column "' + colName + '"');
+					throw new DataViewError('Invalid operator "' + operator + '" for column "' + field + '"');
 				}
 			}
 		}
