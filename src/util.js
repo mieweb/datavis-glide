@@ -11,10 +11,13 @@
 	 * @memberof wcgraph_int.functional
 	 */
 
-	function gensym() {
-		gensymSeed += 1;
-		return 'gensym-' + gensymSeed;
-	}
+	var gensym = (function () {
+		var gensymSeed = 0;
+		return function () {
+			gensymSeed += 1;
+			return 'gensym-' + gensymSeed;
+		};
+	})();
 
 	/**
 	 * Y combinator.
@@ -708,6 +711,53 @@ function needArg(val, varName) {
 				, right = mergeSort2(data.slice(pivot), cmp);
 			return merge(left, right);
 		}
+	}
+
+	function mergeSort3(data, cmp, cont, update) {
+		cmp = cmp || function (a, b) { return a < b };
+		var size = data.length;
+		var step = 0;
+
+		function merge(left, right) {
+			var result = []
+				, leftLen = left.length
+				, leftIdx = 0
+				, rightLen = right.length
+				, rightIdx = 0;
+			while (leftIdx < leftLen && rightIdx < rightLen) {
+				var cmpResult = cmp(left[leftIdx], right[rightIdx]);
+				result.push(cmpResult ? left[leftIdx++] : right[rightIdx++]);
+			}
+			return result.concat(leftIdx < leftLen ? left.slice(leftIdx) : right.slice(rightIdx));
+		}
+
+		function sort(data, cont) {
+			if (data.length <= 1) {
+				return cont(data);
+			}
+			else {
+				var pivot = Math.floor(data.length / 2);
+				return sort(data.slice(0, pivot), function (left) {
+					return sort(data.slice(pivot), function (right) {
+						var fn = function () {
+							return cont(merge(left, right, cont));
+						};
+						step += 1;
+						if (step % 100 === 0) {
+							if (typeof update === 'function') {
+								update(step, size);
+							}
+							return window.setTimeout(fn);
+						}
+						else {
+							return fn();
+						}
+					});
+				});
+			}
+		}
+
+		return sort(data, cont);
 	}
 
 	function objGetPath(obj, fieldPath) {

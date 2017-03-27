@@ -1,3 +1,43 @@
+// Determine Columns {{{1
+
+function determineColumns(defn, data, typeInfo) {
+	// This is an array of the names of the *fields* that make up the columns.  If the user specified
+	// defn.table.columns, then it comes from the fields in there.  Otherwise, it comes from the keys
+	// of the data source's typeInfo object.
+
+	// TODO What to do when the data has been pivotted?
+
+	var columns = [];
+
+	if (defn.table.columns !== undefined) {
+		if (!_.isArray(defn.table.columns)) {
+			throw new GridTableError('Determine Columns / (table.columns) must be an array');
+		}
+		_.each(defn.table.columns, function (elt, i) {
+			if (elt.field === undefined) {
+				throw new GridTableError('Determine Columns / Missing (table.columns[' + i + '].field)');
+			}
+			else if ((data.isPlain && data.data[0].rowData[elt.field] === undefined)
+							 || (data.isGroup && data.data[0][0].rowData[elt.field] === undefined)) {
+				log.warn('Determine Columns / (table.columns[' + i + ']) refers to field "' + elt.field + '" which does not exist in the data');
+			}
+		});
+	}
+
+	if (defn.table.columns) {
+		columns = _.pluck(defn.table.columns, 'field');
+	}
+	else {
+		columns = _.reject(_.keys(typeInfo), function (field) {
+			return field.charAt(0) === '_';
+		});
+	}
+
+	debug.info('DETERMINE COLUMNS', 'Columns = %O', columns);
+
+	return columns;
+};
+
 // Server-Side Filter/Sort {{{1
 
 /*
@@ -240,18 +280,6 @@ function rowSelect_checkAll(evt, elt) {
 		.trigger('change');
 }
 
-// Other {{{1
-
-function isColumnHidden(defn, colName) {
-	var colHiddenProp = getProp(defn, 'table', 'columnConfig', colName, 'hidden');
-	var defaultHiddenProp = getPropDef(false, defn, 'table', 'columnConfig', '_DEFAULT', 'hidden');
-
-	if (colHiddenProp !== undefined) {
-		return colHiddenProp;
-	}
-
-	return defaultHiddenProp;
-}
 
 // GridError {{{1
 
@@ -284,17 +312,17 @@ GridError.prototype.constructor = GridError;
  *
  * @param {object} features Turn features on/off.
  *
- * @param {object} features.rowSelection If true, a new column is added on the far left of the grid.
+ * @param {object} features.rowSelect If true, a new column is added on the far left of the grid.
  * This column contains a checkbox that "selects" the row.
  *
- * @param {object} features.rowReordering If true, a new column is added on the far right of the
+ * @param {object} features.rowReorder If true, a new column is added on the far right of the
  * grid.  This column contains a button that the user can drag to move the entire row up and down
  * relative to the other rows of the grid.
  *
- * @param {object} features.sorting If true, clicking the column heading sorts the whole grid by
+ * @param {object} features.sort If true, clicking the column heading sorts the whole grid by
  * that column.
  *
- * @param {object} features.filtering If true, a button is added within each column heading.
+ * @param {object} features.filter If true, a button is added within each column heading.
  * Clicking this button adds a filter on that column.  When the filter is changed, only rows which
  * match the filter are shown.
  *
@@ -304,20 +332,20 @@ GridError.prototype.constructor = GridError;
  * situations, a feature may be disabled but handled by a wrapper object (e.g. PivotControl handles
  * the filter feature when the GridTable is acting as the output of a pivot table).
  *
- * @property {boolean} features.rowSelection If true, then the GridTable allows the user to select
- * rows.  A column will be added on the far left which contains a checkbox; clicking this selects or
- * unselects the row.  There is an API for accessing which rows are currently selected.
- *
- * @property {boolean} features.rowReordering If true, then the GridTable allows the user to drag
- * and drop rows to reorder them.  A column will be added on the far right which contains a button
- * that acts as the drag handle.
- *
- * @property {boolean} features.sorting If true, then the GridTable allows the user to sort it by
+ * @property {boolean} features.sort If true, then the GridTable allows the user to sort it by
  * clicking the header columns; an arrow will be displayed in the header column indicating the sort
  * direction.
  *
- * @property {boolean} features.filtering If true, then the GridTable supports filtering directly by
+ * @property {boolean} features.filter If true, then the GridTable supports filtering directly by
  * including an "add filter" icon in the header columns of the table.
+ *
+ * @property {boolean} features.rowSelect If true, then the GridTable allows the user to select
+ * rows.  A column will be added on the far left which contains a checkbox; clicking this selects or
+ * unselects the row.  There is an API for accessing which rows are currently selected.
+ *
+ * @property {boolean} features.rowReorder If true, then the GridTable allows the user to drag
+ * and drop rows to reorder them.  A column will be added on the far right which contains a button
+ * that acts as the drag handle.
  *
  * @property {object} defn
  *
@@ -329,19 +357,9 @@ GridError.prototype.constructor = GridError;
 function GridTable(defn, dataView, features) {
 	var self = this;
 
-	if (features === undefined) {
-		features = {};
-	}
-
 	self.defn = defn;
 	self.dataView = dataView;
-
-	self.features = {
-		rowSelection: !!either(features.rowSelection, self.defn.table.enableRowSelection),
-		rowReordering: !!either(features.rowReordering, self.defn.table.enableRowReordering),
-		sorting: !!either(features.sorting, self.defn.table.enableSorting),
-		filtering: !!either(features.filtering, self.defn.table.enableFiltering)
-	};
+	self.features = features;
 }
 
 GridTable.prototype = Object.create(Object.prototype);
@@ -383,18 +401,135 @@ GridTable.prototype.draw = function (container, tableDone) {
 			debug.info('GRIDTABLE', 'Data = %O', data);
 			debug.info('GRIDTABLE', 'TypeInfo = %O', typeInfo);
 
-			// There are three lenses through which we can view the data:
-			//
-			//   1. Plain (no groups)
-			//   2. Grouped (row groups)
-			//   3. Pivotted (row and column groups)
+			var tr
+				, srcIndex = 0;
 
-			if (data.isPlain) {
-				return self.drawPlain(container, data, typeInfo);
+			self.ui = {
+				tbl: jQuery('<table>'),
+				thead: jQuery('<thead>'),
+				tbody: jQuery('<tbody>'),
+				tfoot: jQuery('<tfoot>'),
+				thMap: {},
+				tr: []
+			};
+
+			var check_handler = function () {
+				var tds = jQuery(jQuery(this).parents('tr').get(0)).children('td');
+				if (this.checked) {
+					tds.addClass('selected_row');
+				}
+				else {
+					tds.removeClass('selected_row');
+				}
+			};
+
+			/*
+			 * Determine what columns will be in the table.  This comes from the user, or from the data
+			 * itself.  We may then add columns for extra features (like row selection or reordering).
+			 */
+
+			var columns = determineColumns(self.defn, data, typeInfo)
+				, numCols = columns.length;
+
+			if (self.features.rowSelect) {
+				numCols += 1; // Add a column for the row selection checkbox.
 			}
-			else if (data.isGroup || data.isPivot) {
-				return self.drawGroupPivot(container, data, typeInfo);
+
+			if (self.features.rowReorder) {
+				numCols += 1; // Add a column for the reordering button.
 			}
+
+			self.draw_header(columns, data, typeInfo);
+
+			/*
+			 * Draw the footer.
+			 */
+
+			tr = jQuery('<tr>');
+
+			if (self.features.rowSelect) {
+				self.ui.checkAll_tfoot = jQuery('<input>', { 'name': 'checkAll', 'type': 'checkbox' })
+					.on('change', function (evt) {
+						rowSelect_checkAll.call(this, evt, self.ui);
+					});
+				tr.append(jQuery('<td>').append(self.ui.checkAll_tfoot));
+			}
+
+			tr.append(_.map(columns, function (field, colIndex) {
+				var colConfig = self.defn.table.columns[colIndex] || {};
+				var td = jQuery('<td>').text(colConfig.displayText || field);
+				self.setCss(td, field);
+				return td;
+			}));
+
+			if (self.features.rowReorder) {
+				tr.append(jQuery('<td>').text('Options'));
+			}
+
+			self.ui.tfoot.append(tr);
+
+			/*
+			 * Draw the body.
+			 */
+
+			self.draw_body(data, typeInfo, columns);
+
+			/*
+			 * Register the event handler for when a filter occurs in the view.  Even if we don't have the
+			 * filter feature turned on, we still need to do this because somebody else (e.g. PivotControl)
+			 * might be causing the view to be filtered.
+			 *
+			 * XXX This is currently a lie because filtering is not enabled in the PivotControl.
+			 */
+
+			if (self.features.filter) {
+				var even = false; // Rows are 1-based to match our CSS zebra-striping.
+
+				self.defn.view.off('filter');
+				self.defn.view.on('filter', function (rowNum, hide) {
+					self.ui.tr[rowNum].removeClass('even odd');
+					if (hide) {
+						self.ui.tr[rowNum].hide();
+					}
+					else {
+						self.ui.tr[rowNum].show();
+						self.ui.tr[rowNum].addClass(even ? 'even' : 'odd');
+						even = !even;
+					}
+				});
+			}
+
+			/*
+			 * Register the event handler for when a sort occurs in the view.  Even if we don't have the sort
+			 * feature turned on, we still need to do this because somebody else (e.g. PivotControl) might be
+			 * causing the view to be sorted.
+			 *
+			 * XXX This is currently a lie because sorting is not enabled in the PivotControl.
+			 */
+
+			if (self.features.sort) {
+				self.defn.view.off('sort');
+				self.defn.view.on('sort', function (rowNum, position) {
+					var elt = jQuery(document.getElementById(self.defn.table.id + '_' + rowNum));
+
+					// Add one to the position (which is 0-based) to match the 1-based row number in CSS.
+
+					elt.removeClass('even odd');
+					elt.addClass((position + 1) % 2 === 0 ? 'even' : 'odd');
+					self.ui.tbody.append(elt);
+				});
+			}
+
+			if (self.features.rowReorder) {
+				configureRowReordering(self.defn, self.ui.tbody);
+			}
+
+			self.ui.tbl.attr({
+				'class': 'newui zebra',
+				// 'data-tttype': 'sticky' // BUG BREAKS FILTERS
+			});
+
+			container.append(self.ui.tbl.append(self.ui.thead).append(self.ui.tfoot).append(self.ui.tbody));
 
 			if (typeof tableDone === 'function') {
 				window.setTimeout(function () {
@@ -405,476 +540,27 @@ GridTable.prototype.draw = function (container, tableDone) {
 	});
 };
 
-// #drawPlain {{{2
+// #draw_header {{{2
 
-/**
- * Render a plain (non-grouped, non-pivotted) table.
- *
- * @param {jQuery} container
- *
- * @param {Object} data
- *
- * @param {Object} typeInfo
- */
-
-GridTable.prototype.drawPlain = function (container, data, typeInfo) {
-	var self = this
-		, tr
-		, filterThCss = {
-			'white-space': 'nowrap',
-			'padding-top': 0,
-			'padding-bottom': 0,
-			'vertical-align': 'top'
-		}
-		, srcIndex = 0;
-
-	// Build result object {{{3
-
-	self.ui = {
-		tbl: jQuery('<table>'),
-		thead: jQuery('<thead>'),
-		tbody: jQuery('<tbody>'),
-		tfoot: jQuery('<tfoot>'),
-		thMap: {},
-		tr: []
-	};
-
-	// Callback for using a regular checkbox. {{{3
-
-	var check_handler = function () {
-		var tds = jQuery(jQuery(this).parents('tr').get(0)).children('td');
-		if (this.checked) {
-			tds.addClass('selected_row');
-		}
-		else {
-			tds.removeClass('selected_row');
-		}
-	};
-
-	// Determine columns in order {{{3
-
-	// This is an array of the names of the *fields* that make up the columns.  If the user specified
-	// defn.table.columns, then it comes from the fields in there.  Otherwise, it comes from the keys
-	// of the data source's typeInfo object.
-
-	var columns = [];
-
-	// Error checking {{{4
-
-	if (self.defn.table.columns !== undefined) {
-		if (!_.isArray(self.defn.table.columns)) {
-			throw new GridTableError('Grid Table / Draw / (table.columns) must be an array');
-		}
-		_.each(self.defn.table.columns, function (elt, i) {
-			if (elt.field === undefined) {
-				throw new GridTableError('Grid Table / Draw / Missing (table.columns[' + i + '].field)');
-			}
-			else if (data.data[0].rowData[elt.field] === undefined) {
-				log.warn('Grid Table / Draw / (table.columns[' + i + ']) refers to field "' + elt.field + '" which does not exist in the data');
-			}
-		});
-	}
-
-	// }}}4
-
-	if (self.defn.table.columns) {
-		columns = _.pluck(self.defn.table.columns, 'field');
-	}
-	else {
-		columns = _.reject(_.keys(typeInfo), function (field) {
-			return field.charAt(0) === '_';
-		});
-	}
-
-	debug.info('GRIDTABLE', 'Columns = %O', columns);
-
-	var numCols = columns.length;
-
-	if (self.features.rowSelection) {
-		numCols += 1; // Add a column for the row selection checkbox.
-	}
-
-	if (self.features.rowReordering) {
-		numCols += 1; // Add a column for the reordering button.
-	}
-
-	// Create the <TH> elements that go inside the <THEAD>. {{{3
-
-	headingTr = jQuery('<tr>');
-	filterTr = jQuery('<tr>');
-
-	// Row Selection Setup {{{4
-
-	if (self.features.rowSelection) {
-		self.ui.checkAll_thead = jQuery('<input>', { 'name': 'checkAll', 'type': 'checkbox' })
-			.on('change', function (evt) {
-				rowSelect_checkAll.call(this, evt, self.ui);
-			});
-		headingTr.append(jQuery('<th>').append(self.ui.checkAll_thead));
-		if (self.features.filtering) {
-			filterTr.append(jQuery('<th>').css(filterThCss));
-		}
-	}
-
-	// Sorting Setup {{{4
-
-	if (self.features.sorting) {
-		self.defn.sortSpec = {
-			col: null,
-			asc: false
-		};
-	}
-
-	// Filtering Setup {{{4
-
-	if (self.features.filtering) {
-		self.defn.gridFilterSet = new GridFilterSet(self.defn, self.defn.view);
-	}
-
-	// }}}4
-
-	_.each(columns, function (field, colIndex) {
-		var colConfig = self.defn.table.columns[colIndex] || {};
-
-		if (self.features.rowSelection) {
-			colIndex += 1; // Add a column for the row selection checkbox.
-		}
-
-		var headingSpan = jQuery('<span>').text(colConfig.displayText || field);
-
-		var headingTh = jQuery('<th>')
-			.css({'white-space': 'nowrap'})
-			.append(headingSpan);
-
-		// Sorting {{{4
-
-		if (self.features.sorting) {
-			var sortSpan = jQuery('<span>').css({'font-size': '1.2em'});
-
-			var onClick = function () {
-				jQuery('span.sort_indicator').hide();
-				headingTh.find('span.sort_indicator').show();
-
-				// Save the sort spec.  If we're resorting a column (i.e. we just sorted it) then
-				// reverse the sort direction.  Otherwise, start in ascending order.
-
-				self.defn.sortSpec.asc = (self.defn.sortSpec.col === field ? !self.defn.sortSpec.asc : true);
-				self.defn.sortSpec.col = field;
-
-				debug.info('SORTING', 'Column = ' + self.defn.sortSpec.col + ' ; Direction = ' + (self.defn.sortSpec.asc ? 'ASC' : 'DESC'));
-
-				sortSpan.html(fontAwesome(self.defn.sortSpec.asc ? 'F0D7' : 'F0D8'));
-
-				self.defn.view.setSort(self.defn.sortSpec.col, self.defn.sortSpec.asc ? 'ASC' : 'DESC');
-			};
-
-			sortSpan.addClass('sort_indicator');
-			sortSpan.css({'cursor': 'pointer'});
-			sortSpan.on('click', onClick);
-
-			headingSpan.css({'cursor': 'pointer', 'margin-left': '0.5ex'});
-			headingSpan.on('click', onClick);
-
-			headingTh.prepend(sortSpan);
-		}
-
-		// Filtering {{{4
-
-		if (self.features.filtering) {
-			// Add a TH to the TR that will contain the filters.  Every filter will actually be a DIV
-			// inside this TH.
-
-			var filterTh = jQuery('<th>').css(filterThCss);
-			self.setCss(filterTh, field);
-			filterTr.append(filterTh);
-
-			// Create the button that will add the filter to the grid, and stick it onto the end of
-			// the column heading TH.
-
-			jQuery(fontAwesome('F0B0', null, 'Click to add a filter on this column'))
-				.css({'cursor': 'pointer', 'margin-left': '0.5ex'})
-				.on('click', function () {
-					self.defn.gridFilterSet.add(field, filterTh, colConfig.filter, jQuery(this));
-				})
-				.appendTo(headingTh);
-		}
-
-		// }}}4
-
-		self.setCss(headingTh, field);
-		self.ui.thMap[field] = headingTh;
-		headingTr.append(headingTh);
-	});
-
-	if (self.features.rowReordering) {
-		headingTr.append(jQuery('<th>').text('Options'));
-		if (self.features.filtering) {
-			filterTr.append(jQuery('<th>').css(filterThCss));
-		}
-	}
-
-	self.ui.thead.append(headingTr);
-
-	if (self.features.filtering) {
-		self.ui.thead.append(filterTr);
-	}
-
-	// Create the <TD> elements that go inside the <TFOOT>. {{{3
-
-	tr = jQuery('<tr>');
-
-	if (self.features.rowSelection) {
-		self.ui.checkAll_tfoot = jQuery('<input>', { 'name': 'checkAll', 'type': 'checkbox' })
-			.on('change', function (evt) {
-				rowSelect_checkAll.call(this, evt, self.ui);
-			});
-		tr.append(jQuery('<td>').append(self.ui.checkAll_tfoot));
-	}
-
-	tr.append(_.map(columns, function (field, colIndex) {
-		var colConfig = self.defn.table.columns[colIndex] || {};
-		var td = jQuery('<td>').text(colConfig.displayText || field);
-		self.setCss(td, field);
-		return td;
-	}));
-
-	if (self.features.rowReordering) {
-		tr.append(jQuery('<td>').text('Options'));
-	}
-
-	self.ui.tfoot.append(tr);
-
-	// Create the elements that go inside the <TBODY>. {{{3
-
-	_.each(data.data, function (row, rowNum) {
-		var dateRegexp = /^\d{4}-\d{2}-\d{2}$/;
-		var dateTimeRegexp = /^(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2})$/;
-		var tr = jQuery('<tr>', {id: self.defn.table.id + '_' + rowNum});
-
-		// Create the check box which selects the row {{{4
-
-		if (self.features.rowSelection) {
-			var checkbox = jQuery('<input>', {
-				'type': 'checkbox',
-				'data-source-num': srcNum,
-				'data-row-num': rowNum
-			})
-				.on('change', check_handler);
-			tr.append(jQuery('<td>').append(checkbox));
-		}
-
-		// Create the data cells {{{4
-
-		_.each(columns, function (field, colIndex) {
-			var colConfig = self.defn.table.columns[colIndex] || {};
-			var cell = row.rowData[field];
-
-			var td = jQuery('<td>');
-			var value = cell.orig || cell.value;
-
-			// For types that support formatting, use that instead of the value.
-
-			if (['number', 'currency', 'date', 'time', 'datetime'].indexOf(typeInfo[field].type) >= 0
-			 && colConfig.format) {
-
-				// The value here could be either from NumeralJS or from Moment, but fortunately it doesn't
-				// matter because they both have the format() method.
-
-				value = cell.value.format(colConfig.format);
-			}
-
-			// If there's a rendering function, pass the (possibly formatted) value through it to get the
-			// new value to display.
-
-			if (cell.render) {
-				value = cell.render(value);
-			}
-
-			if (value instanceof Element || value instanceof jQuery) {
-				td.append(value);
-			}
-			else {
-				td.text(value);
-			}
-
-			self.setCss(td, field);
-			tr.append(td);
-		});
-
-		// Create button used as the "handle" for dragging/dropping rows {{{4
-
-		if (self.features.rowReordering) {
-			var drag = jQuery('<button type="button" class="drag-handle fa">')
-				.html(fontAwesome('f07d',null,'Drag or press up/down arrows to move'))
-			// When the drag button has focus, add the keydown handler
-			// to allow up/down arrows to work!
-				.focus( function() {
-					jQuery(this).on('keydown', function(event) {
-						var jobj = jQuery(event.currentTarget).closest('tr'),
-							oldIndex = jobj.index(),
-							newIndex = oldIndex;
-
-						// Reposition if one of the directional keys is pressed
-						switch (event.keyCode) {
-						case 38: // Up
-							if (jobj.prev().length) {
-								jobj.insertBefore(jobj.prev());
-							} else {
-								// already at the top so exit
-								return true;
-							}
-							break;
-						case 40: // Down
-							if (jobj.next().length) {
-								jobj.insertAfter(jobj.next());
-							} else {
-								// already at the bottom so exit
-								return true;
-							}
-							break;
-						default:
-							return true; // Exit
-						}
-						newIndex = jobj.index();
-						if (oldIndex !== newIndex) {
-							rowSwapIndex(self.defn, oldIndex, newIndex);
-						}
-						// keep focus on the button after move
-						jQuery(event.currentTarget).focus();
-					});
-				})
-			// Remove the keydown handler when focus is lost
-				.focusout( function() {
-					jQuery(this).off('keydown');
-				});
-			tr.append(jQuery('<td>').append(drag));
-		}
-
-		// }}}4
-
-		self.ui.tr.push(tr);
-		self.ui.tbody.append(tr);
-	});
-
-	// Register filter event handler {{{3
-	//
-	// Even if we don't have the "filtering" feature turned on, we still need to do this because
-	// somebody else might be causing the view to be filtered.
-
-	var evenOdd = [];
-	var even = false; // Rows are 1-based to match our CSS zebra-striping.
-
-	self.defn.view.off('filter');
-	self.defn.view.on('filter', function (rowNum, hide) {
-		self.ui.tr[rowNum].removeClass('even odd');
-		if (hide) {
-			self.ui.tr[rowNum].hide();
-		}
-		else {
-			self.ui.tr[rowNum].show();
-			self.ui.tr[rowNum].addClass(even ? 'even' : 'odd');
-			even = !even;
-		}
-	});
-
-	// Register sort event handler {{{3
-	//
-	// Even if we don't have the "sorting" feature turned on, we still need to do this because
-	// somebody else might be causing the view to be sorted.
-
-	self.defn.view.off('sort');
-	self.defn.view.on('sort', function (rowNum, position) {
-		var elt = jQuery(document.getElementById(self.defn.table.id + '_' + rowNum));
-
-		// Add one to the position (which is 0-based) to match the 1-based row number in CSS.
-
-		elt.removeClass('even odd');
-		elt.addClass((position + 1) % 2 === 0 ? 'even' : 'odd');
-		self.ui.tbody.append(elt);
-	});
-
-	// }}}3
-
-	if (self.features.rowReordering) {
-		configureRowReordering(self.defn, self.ui.tbody);
-	}
-
-	self.ui.tbl.attr({
-		'class': 'newui zebra',
-		// 'data-tttype': 'sticky' // BUG BREAKS FILTERS
-	});
-
-	container.append(self.ui.tbl.append(self.ui.thead).append(self.ui.tfoot).append(self.ui.tbody));
-};
-
-// #drawGroupPivot {{{2
-
-/**
- * Draw a table that has been grouped or pivotted.
- *
- * @param {jQuery} container
- *
- * @param {Object} data
- *
- * @param {Object} typeInfo
- */
-
-GridTable.prototype.drawGroupPivot = function (container, data, typeInfo) {
-	var self = this
-		, tr
-		, columns
-		, srcIndex = 0;
-
-	// Build result object {{{3
-
-	self.ui = {
-		tbl: jQuery('<table>'),
-		thead: jQuery('<thead>'),
-		tbody: jQuery('<tbody>'),
-		tfoot: jQuery('<tfoot>'),
-		thMap: {},
-		tr: []
-	};
-
-	if (!data.isPivot) {
-		var columns = [];
-
-		if (self.defn.table.columns !== undefined) {
-			if (!(self.defn.table.columns instanceof Array)) {
-				throw self.defn.error('[table.columns] must be an array');
-			}
-			_.each(self.defn.table.columns, function (elt, i) {
-				if (typeof elt !== 'string') {
-					throw self.defn.error('[table.columns] element #' + i + ' is not a string');
-				}
-				if (elt !== '_DEFAULT' && data.data[0][0] !== undefined && data.data[0][0]['rowData'][elt] === undefined) {
-					emailWarning(self.defn, 'Configuration for column "' + elt + '" refers to something not present in the data.  With jQWidgets output, this can result in empty columns.  Did the data source (e.g. system report) change?');
-				}
-			});
-		}
-
-		columns = _.keys(typeInfo);
-
-		if (!isNothing(getProp(self.defn, 'table', 'columns'))) {
-			columns = _.union(_.reject(self.defn.table.columns, function (x) { return x === '_DEFAULT'; }), columns);
-		}
-
-		columns = _.reject(columns, function (colName) {
-			return colName.charAt(0) === '_' || isColumnHidden(self.defn, colName);
-		});
-
-		debug.info('GRIDTABLE // GROUP', 'Columns = %O', columns);
-
-		var numCols = columns.length;
-	}
-
-	// Create the <TH> elements that go inside the <THEAD>. {{{3
+GridTable.prototype.draw_header = function (columns, data, typeInfo) {
+	var self = this;
 
 	var headingTr, headingSpan, headingTh;
 
-	if (data.isPivot) {
-		// Create headers for the colVals. {{{4
-		//
+	var headingThCss = {
+		'white-space': 'nowrap',
+		'padding-bottom': 0
+	};
+
+	var filterThCss = {
+		'white-space': 'nowrap',
+		'padding-top': 4,
+		'padding-bottom': 0,
+		'vertical-align': 'top'
+	};
+
+	if (self.features.pivot && data.isPivot) {
+
 		// This produces separate rows in the header for each pivot field.  That's what allows you to
 		// see the combinations of column values, like this:
 		//
@@ -926,7 +612,7 @@ GridTable.prototype.drawGroupPivot = function (container, data, typeInfo) {
 					headingSpan = jQuery('<span>').text(colVal);
 
 					headingTh = jQuery('<th>')
-						.css({'white-space': 'nowrap'})
+						.css(headingThCss)
 						.append(headingSpan);
 
 					self._addSortingToHeader(colVal, headingSpan, headingTh);
@@ -948,63 +634,329 @@ GridTable.prototype.drawGroupPivot = function (container, data, typeInfo) {
 			// Add the row for this pivot field to the THEAD.
 			self.ui.thead.append(headingTr);
 		}
-
-		// }}}4
 	}
 
-	// Create headers for the grouped fields. {{{4
+	if (self.features.group) {
+		headingTr = jQuery('<tr>');
 
-	headingTr = jQuery('<tr>');
-
-	_.each(data.groupFields, function (fieldName) {
-		headingSpan = jQuery('<span>').text(fieldName);
-
-		headingTh = jQuery('<th>')
-			.css({'white-space': 'nowrap'})
-			.append(headingSpan);
-
-		self._addSortingToHeader(fieldName, headingSpan, headingTh);
-
-		self.setCss(headingTh, fieldName);
-
-		self.ui.thMap[fieldName] = headingTh;
-		headingTr.append(headingTh);
-	});
-
-	if (!data.isPivot) {
-		// Create headers for the non-grouped fields. {{{5
-
-		_.each(columns, function (colName) {
-			headingSpan = jQuery('<span>').text(colName);
+		_.each(data.groupFields, function (fieldName) {
+			headingSpan = jQuery('<span>').text(fieldName);
 
 			headingTh = jQuery('<th>')
-				.css({'white-space': 'nowrap'})
+				.css(headingThCss)
 				.append(headingSpan);
 
-			self._addSortingToHeader(colName, headingSpan, headingTh);
+			self._addSortingToHeader(fieldName, headingSpan, headingTh);
 
-			self.setCss(headingTh, colName);
+			self.setCss(headingTh, fieldName);
 
-			self.ui.thMap[colName] = headingTh;
+			self.ui.thMap[fieldName] = headingTh;
 			headingTr.append(headingTh);
 		});
 
-		// }}}5
+		if (!data.isPivot) {
+			_.each(columns, function (colName) {
+				headingSpan = jQuery('<span>').text(colName);
+
+				headingTh = jQuery('<th>')
+					.css(headingThCss)
+					.append(headingSpan);
+
+				self._addSortingToHeader(colName, headingSpan, headingTh);
+
+				self.setCss(headingTh, colName);
+
+				self.ui.thMap[colName] = headingTh;
+				headingTr.append(headingTh);
+			});
+		}
+
+		self.ui.thead.append(headingTr);
 	}
+	else {
+		headingTr = jQuery('<tr>');
+		filterTr = jQuery('<tr>');
 
-	self.ui.thead.append(headingTr);
+		/*
+		 * Create the checkbox that allows the user to select all rows.
+		 */
 
-	// }}}4
-	// }}}3
+		if (self.features.rowSelect) {
+			self.ui.checkAll_thead = jQuery('<input>', { 'name': 'checkAll', 'type': 'checkbox' })
+				.on('change', function (evt) {
+					rowSelect_checkAll.call(this, evt, self.ui);
+				});
+			headingTr.append(jQuery('<th>').append(self.ui.checkAll_thead));
+			if (self.features.filter) {
+				filterTr.append(jQuery('<th>').css(filterThCss));
+			}
+		}
 
-	if (self.features.sorting) {
-		self.defn.sortSpec = {
-			col: null,
-			asc: false
-		};
+		/*
+		 * Set up the sorting specification for the DataView that belongs to this GridTable.
+		 */
+
+		if (self.features.sort) {
+			self.defn.sortSpec = {
+				col: null,
+				asc: false
+			};
+		}
+
+		/*
+		 * Set up the GridFilterSet instance that manages the (potentially multiple) filters on each
+		 * column of the DataView that belongs to this GridTable.
+		 */
+
+		if (self.features.filter) {
+			self.defn.gridFilterSet = new GridFilterSet(self.defn, self.defn.view);
+		}
+
+		/*
+		 * Configure every column which comes from the data (i.e. not the "select all" checkbox, and not
+		 * the editing "options" column).
+		 */
+
+		_.each(columns, function (field, colIndex) {
+			var colConfig = self.defn.table.columns[colIndex] || {};
+
+			if (self.features.rowSelect) {
+				colIndex += 1; // Add a column for the row selection checkbox.
+			}
+
+			var headingSpan = jQuery('<span>').text(colConfig.displayText || field);
+
+			var headingTh = jQuery('<th>', { id: gensym() })
+				.css(headingThCss)
+				.append(headingSpan);
+
+			/*
+			 * Configure sorting for this column.  This mainly involves setting an onClick handler for the
+			 * column heading text.
+			 */
+
+			if (self.features.sort) {
+				var sortSpan = jQuery('<span>').css({'font-size': '1.2em'});
+
+				var onClick = function () {
+					jQuery('span.sort_indicator').hide();
+					headingTh.find('span.sort_indicator').show();
+
+					// Save the sort spec.  If we're resorting a column (i.e. we just sorted it) then
+					// reverse the sort direction.  Otherwise, start in ascending order.
+
+					self.defn.sortSpec.asc = (self.defn.sortSpec.col === field ? !self.defn.sortSpec.asc : true);
+					self.defn.sortSpec.col = field;
+
+					debug.info('SORTING', 'Column = ' + self.defn.sortSpec.col + ' ; Direction = ' + (self.defn.sortSpec.asc ? 'ASC' : 'DESC'));
+
+					sortSpan.html(fontAwesome(self.defn.sortSpec.asc ? 'F0D7' : 'F0D8'));
+
+					self.defn.view.setSort(self.defn.sortSpec.col,
+																 self.defn.sortSpec.asc ? 'ASC' : 'DESC',
+																 false,
+																 {
+																	 start: function () {
+																		 if (window.NProgress !== undefined) {
+																			 window.NProgress.configure({
+																				 parent: '#' + headingTh.attr('id'),
+																				 showSpinner: false
+																			 });
+																			 window.NProgress.start();
+																		 }
+																	 },
+																	 update: function (amount, estTotal) {
+																		 console.log(sprintf('Sort progress: %.0f%%', (amount / estTotal) * 100));
+																		 if (window.NProgress !== undefined) {
+																			 window.NProgress.set(amount / estTotal);
+																		 }
+																	 },
+																	 done: function () {
+																		 if (window.NProgress !== undefined) {
+																			 window.NProgress.done();
+																		 }
+																	 }
+																 });
+				};
+
+				sortSpan.addClass('sort_indicator');
+				sortSpan.css({'cursor': 'pointer'});
+				sortSpan.on('click', onClick);
+
+				headingSpan.css({'cursor': 'pointer', 'margin-left': '0.5ex'});
+				headingSpan.on('click', onClick);
+
+				headingTh.prepend(sortSpan);
+			}
+
+			/*
+			 * Configure filtering for this column.  This mainly involves creating a button, which when
+			 * clicked adds (for this column) a filter to the GridFilterSet instance.
+			 */
+
+			if (self.features.filter) {
+				// Add a TH to the TR that will contain the filters.  Every filter will actually be a DIV
+				// inside this TH.
+
+				var filterTh = jQuery('<th>', { id: gensym() }).css(filterThCss);
+				self.setCss(filterTh, field);
+				filterTr.append(filterTh);
+
+				// Create the button that will add the filter to the grid, and stick it onto the end of
+				// the column heading TH.
+
+				jQuery(fontAwesome('F0B0', null, 'Click to add a filter on this column'))
+					.css({'cursor': 'pointer', 'margin-left': '0.5ex'})
+					.on('click', function () {
+						self.defn.gridFilterSet.add(field, filterTh, colConfig.filter, jQuery(this));
+					})
+					.appendTo(headingTh);
+			}
+
+			self.setCss(headingTh, field);
+			self.ui.thMap[field] = headingTh;
+			headingTr.append(headingTh);
+		});
+
+		/*
+		 * Create a column with buttons that allows the user to reorder the rows.
+		 */
+
+		if (self.features.rowReorder) {
+			headingTr.append(jQuery('<th>').text('Options'));
+			if (self.features.filter) {
+				filterTr.append(jQuery('<th>').css(filterThCss));
+			}
+		}
+
+		self.ui.thead.append(headingTr);
+
+		if (self.features.filter) {
+			self.ui.thead.append(filterTr);
+		}
+
 	}
+};
 
-	// Create the elements that go inside the <TBODY>. {{{3
+GridTable.prototype.makeRowReorderBtn = function () {
+	return jQuery('<button type="button" class="drag-handle fa">')
+		.html(fontAwesome('f07d',null,'Drag or press up/down arrows to move'))
+	// When the drag button has focus, add the keydown handler
+	// to allow up/down arrows to work!
+		.focus( function() {
+			jQuery(this).on('keydown', function(event) {
+				var jobj = jQuery(event.currentTarget).closest('tr'),
+					oldIndex = jobj.index(),
+					newIndex = oldIndex;
+
+				// Reposition if one of the directional keys is pressed
+				switch (event.keyCode) {
+				case 38: // Up
+					if (jobj.prev().length) {
+						jobj.insertBefore(jobj.prev());
+					} else {
+						// already at the top so exit
+						return true;
+					}
+					break;
+				case 40: // Down
+					if (jobj.next().length) {
+						jobj.insertAfter(jobj.next());
+					} else {
+						// already at the bottom so exit
+						return true;
+					}
+					break;
+				default:
+					return true; // Exit
+				}
+				newIndex = jobj.index();
+				if (oldIndex !== newIndex) {
+					rowSwapIndex(self.defn, oldIndex, newIndex);
+				}
+				// keep focus on the button after move
+				jQuery(event.currentTarget).focus();
+			});
+		})
+	// Remove the keydown handler when focus is lost
+		.focusout( function() {
+			jQuery(this).off('keydown');
+		});
+};
+
+// #draw_body_plain {{{2
+
+GridTable.prototype.draw_body_plain = function (data, typeInfo, columns) {
+	var self = this;
+
+	_.each(data.data, function (row, rowNum) {
+		var tr = jQuery('<tr>', {id: self.defn.table.id + '_' + rowNum});
+
+		// Create the check box which selects the row.
+
+		if (self.features.rowSelect) {
+			var checkbox = jQuery('<input>', {
+				'type': 'checkbox',
+				'data-source-num': srcNum,
+				'data-row-num': rowNum
+			})
+				.on('change', check_handler);
+			tr.append(jQuery('<td>').append(checkbox));
+		}
+
+		// Create the data cells.
+
+		_.each(columns, function (field, colIndex) {
+			var colConfig = self.defn.table.columns[colIndex] || {};
+			var cell = row.rowData[field];
+
+			var td = jQuery('<td>');
+			var value = cell.orig || cell.value;
+
+			// For types that support formatting, use that instead of the value.
+
+			if (['number', 'currency', 'date', 'time', 'datetime'].indexOf(typeInfo[field].type) >= 0
+					&& colConfig.format) {
+
+				// The value here could be either from NumeralJS or from Moment, but fortunately it doesn't
+				// matter because they both have the format() method.
+
+				value = cell.value.format(colConfig.format);
+			}
+
+			// If there's a rendering function, pass the (possibly formatted) value through it to get the
+			// new value to display.
+
+			if (cell.render) {
+				value = cell.render(value);
+			}
+
+			if (value instanceof Element || value instanceof jQuery) {
+				td.append(value);
+			}
+			else {
+				td.text(value);
+			}
+
+			self.setCss(td, field);
+			tr.append(td);
+		});
+
+		// Create button used as the "handle" for dragging/dropping rows.
+
+		if (self.features.rowReorder) {
+			tr.append(jQuery('<td>').append(self.makeRowReorderBtn()));
+		}
+
+		self.ui.tr.push(tr);
+		self.ui.tbody.append(tr);
+	});
+};
+
+// #draw_body_group {{{2
+
+GridTable.prototype.draw_body_group = function (data, typeInfo, columns) {
+	var self = this;
 
 	_.each(data.data, function (rowGroup, groupNum) {
 		var tr = jQuery('<tr>');
@@ -1061,11 +1013,33 @@ GridTable.prototype.drawGroupPivot = function (container, data, typeInfo) {
 				return x.attr('href') || x.text();
 			};
 
-			_.each(columns, function (colName) {
+			_.each(columns, function (field, colIndex) {
 				var uniqueVals = [];
+				var colConfig = self.defn.table.columns[colIndex] || {};
 
 				_.each(rowGroup, function (row) {
-					uniqueVals.push(row.rowData[colName]);
+					var cell = row.rowData[field];
+					var value = cell.orig || cell.value;
+
+					// For types that support formatting, use that instead of the value.
+
+					if (['number', 'currency', 'date', 'time', 'datetime'].indexOf(typeInfo[field].type) >= 0
+							&& colConfig.format) {
+
+						// The value here could be either from NumeralJS or from Moment, but fortunately it doesn't
+						// matter because they both have the format() method.
+
+						value = cell.value.format(colConfig.format);
+					}
+
+					// If there's a rendering function, pass the (possibly formatted) value through it to get the
+					// new value to display.
+
+					if (cell.render) {
+						value = cell.render(value);
+					}
+
+					uniqueVals.push(value);
 				});
 
 				// Sort the values - we need to be careful of when they're elements (e.g. links) instead of
@@ -1088,7 +1062,7 @@ GridTable.prototype.drawGroupPivot = function (container, data, typeInfo) {
 					td.append(x);
 				});
 
-				self.setCss(td, colName);
+				self.setCss(td, field);
 				td.appendTo(tr);
 			});
 		}
@@ -1096,39 +1070,27 @@ GridTable.prototype.drawGroupPivot = function (container, data, typeInfo) {
 		self.ui.tr.push(tr);
 		self.ui.tbody.append(tr);
 	});
-
-	// Register sort event handler {{{3
-	//
-	// Even if we don't have the "sorting" feature turned on, we still need to do this because
-	// somebody else might be causing the view to be sorted.
-
-	self.defn.view.off('sort');
-	self.defn.view.on('sort', function (rowNum, position) {
-		var elt = jQuery(document.getElementById(self.defn.table.id + '_' + rowNum));
-
-		// Add one to the position (which is 0-based) to match the 1-based row number in CSS.
-
-		elt.removeClass('even odd');
-		elt.addClass((position + 1) % 2 === 0 ? 'even' : 'odd');
-		self.ui.tbody.append(elt);
-	});
-
-	// }}}3
-
-	self.ui.tbl.attr({
-		'class': 'newui zebra',
-		// 'data-tttype': 'sticky' // BUG BREAKS FILTERS
-	});
-
-	container.append(self.ui.tbl.append(self.ui.thead).append(self.ui.tbody));
 };
 
-// #_addSortingToHeader
+// #draw_body {{{2
+
+GridTable.prototype.draw_body = function (data, typeInfo, columns) {
+	var self = this;
+
+	if (self.features.group && data.isGroup) {
+		self.draw_body_group(data, typeInfo, columns);
+	}
+	else {
+		self.draw_body_plain(data, typeInfo, columns);
+	}
+};
+
+// #_addSortingToHeader {{{2
 
 GridTable.prototype._addSortingToHeader = function (colName, headingSpan, headingTh) {
 	var self = this;
 
-	if (!self.features.sorting) {
+	if (!self.features.sort) {
 		return;
 	}
 
@@ -1323,7 +1285,7 @@ var GridFilter = (function () {
 		return 'GridFilter_' + id++;
 	};
 
-	return function (field, filterType, filterBtn, gridFilterSet) {
+	return function (field, filterType, filterBtn, gridFilterSet, th) {
 		var self = this;
 
 		self.field = field;
@@ -1336,6 +1298,29 @@ var GridFilter = (function () {
 			.css({'white-space': 'nowrap', 'padding-top': 2, 'padding-bottom': 2});
 		self.removeBtn = self.makeRemoveBtn();
 		self.id = genId();
+		self.progress = {
+			start: function () {
+				console.log('Configuring NProgress');
+				if (window.NProgress !== undefined) {
+					window.NProgress.configure({
+						parent: '#' + th.attr('id'),
+						showSpinner: false
+					});
+					window.NProgress.start();
+				}
+			},
+			update: function (amount, estTotal) {
+				console.log(sprintf('Filter progress: %.0f%%', (amount / estTotal) * 100));
+				if (window.NProgress !== undefined) {
+					window.NProgress.set(amount / estTotal);
+				}
+			},
+			done: function () {
+				if (window.NProgress !== undefined) {
+					window.NProgress.done();
+				}
+			}
+		};
 	};
 })();
 
@@ -1439,7 +1424,7 @@ GridFilter.prototype.makeOperatorDrop = function (include) {
 
 	operatorDrop.on('change', function () {
 		if (self.getValue() !== '') {
-			self.gridFilterSet.update();
+			self.gridFilterSet.update(false, self.progress);
 		}
 	});
 
@@ -1469,7 +1454,7 @@ GridFilter.prototype.remove = function () {
 	var self = this;
 
 	self.div.remove();
-	self.gridFilterSet.update();
+	self.gridFilterSet.update(false, self.progress);
 };
 
 // #isRange {{{3
@@ -1494,7 +1479,7 @@ var StringTextboxGridFilter = function () {
 
 	self.input = jQuery('<input type="text">');
 	self.input.on('change', function (evt) {
-		self.gridFilterSet.update();
+		self.gridFilterSet.update(false, self.progress);
 	});
 
 	self.operatorDrop = self.makeOperatorDrop(/*['$eq', '$ne']*/);
@@ -1556,7 +1541,7 @@ var StringDropdownGridFilter = function () {
 		'multiple': true
 	});
 	self.input.on('change', function (evt) {
-		self.gridFilterSet.update();
+		self.gridFilterSet.update(false, self.progress);
 	});
 
 	self.div
@@ -1597,7 +1582,7 @@ var NumberTextboxGridFilter = function () {
 
 	self.input = jQuery('<input type="text">');
 	self.input.on('change', function (evt) {
-		self.gridFilterSet.update();
+		self.gridFilterSet.update(false, self.progress);
 	});
 
 	self.operatorDrop = self.makeOperatorDrop(['$eq', '$ne', '$lt', '$lte', '$gt', '$gte']);
@@ -1619,7 +1604,7 @@ var NumberCheckboxGridFilter = function () {
 
 	self.input = jQuery('<input>', {'id': gensym(), 'type': 'checkbox'});
 	self.input.on('change', function () {
-		self.gridFilterSet.update();
+		self.gridFilterSet.update(false, self.progress);
 	});
 
 	self.div
@@ -1702,7 +1687,7 @@ var DateRangeGridFilter = function () {
 		'altInput': false,
 		'mode': 'range',
 		'onChange': function (selectedDates, dateStr, instance) {
-			self.gridFilterSet.update();
+			self.gridFilterSet.update(false, self.progress);
 		}
 	});
 
@@ -1871,7 +1856,7 @@ GridFilterSet.prototype.add = function (field, target, filterType, filterBtn) {
 	var self = this
 		, filter;
 
-	filter = self.build(field, filterType, filterBtn);
+	filter = self.build(field, filterType, filterBtn, target);
 
 	// Make sure that requisite data structures are there.
 
@@ -1909,7 +1894,7 @@ GridFilterSet.prototype.add = function (field, target, filterType, filterBtn) {
 
 // #build {{{2
 
-GridFilterSet.prototype.build = function (field, filterType, filterBtn) {
+GridFilterSet.prototype.build = function (field, filterType, filterBtn, target) {
 	var self = this
 		, colType
 		, ctor;
@@ -1952,7 +1937,7 @@ GridFilterSet.prototype.build = function (field, filterType, filterBtn) {
 
 	debug.info('GRID FILTER', 'Creating new widget: column type = "' + colType + '" ; filter type = "' + filterType + '"');
 
-	return new ctor(field, filterType, filterBtn, self);
+	return new ctor(field, filterType, filterBtn, self, target);
 };
 
 // #remove {{{2
@@ -2014,7 +1999,7 @@ GridFilterSet.prototype.reset = function () {
  * @param {boolean} dontSavePrefs If true, don't save preferences.
  */
 
-GridFilterSet.prototype.update = function (dontSavePrefs) {
+GridFilterSet.prototype.update = function (dontSavePrefs, progress) {
 	var self = this
 		, spec = {};
 
@@ -2063,7 +2048,7 @@ GridFilterSet.prototype.update = function (dontSavePrefs) {
 
 	debug.info('GRID FILTER SET', 'Updating with ' + self.filters.all.length + ' filters: ', spec);
 
-	self.defn.view.setFilter(spec);
+	self.defn.view.setFilter(spec, false, progress);
 
 	if (getProp(self.defn, 'table', 'prefs', 'enableSaving') && !dontSavePrefs) {
 		self.savePrefs();
@@ -2164,14 +2149,16 @@ GridFilterSet.prototype.loadPrefs = function (prefs) {
  * @property {wcgrid_tagOpts} tagOpts Options for the grid's container.
  * @property {object} grid The underlying grid object (e.g. a jqxGrid instance).
  * @property {object} ui Contains various user interface components which are tracked for convenience.
- * @property {string} output Name of the output mode being used.
- * @property {boolean} isPivot If true, then we're using a pivot table for output.
  * @property {object} features
- * @property {boolean} features.sorting
- * @property {boolean} features.filtering
- * @property {boolean} features.editing
- * @property {boolean} features.grouping
+ * @property {boolean} features.sort
+ * @property {boolean} features.filter
+ * @property {boolean} features.group
  * @property {boolean} features.pivot
+ * @property {boolean} features.rowSelect
+ * @property {boolean} features.rowReorder
+ * @property {boolean} features.add
+ * @property {boolean} features.edit
+ * @property {boolean} features.delete
  *
  */
 
@@ -2188,7 +2175,6 @@ var WCGrid = function (id, defn, tagOpts, cb) {
 	var gridToolBarHeading = null;
 	var gridToolBarButtons = null;
 	var doingServerFilter = getProp(defn, 'server', 'filter') && getProp(defn, 'server', 'limit') !== -1;
-	var output = getProp(defn, 'table', 'output', 'method');
 	var viewDropdown = null;
 	var prefsCallback = null;
 
@@ -2210,19 +2196,18 @@ var WCGrid = function (id, defn, tagOpts, cb) {
 	self.grid = null; // List of all grids generated as a result.
 	self.ui = {}; // User interface elements.
 	self.selected = {}; // Information about what rows are selected.
-	self.output = output;
-	self.isPivot = (self.output === 'pivot' ? true : false);
 
 	self.defn.wcgrid = self;
 
-	self.features = {
-		editing: getPropDef(false, self.defn, 'table', 'enableEditing'),
-		filtering: getPropDef(false, self.defn, 'table', 'enableFiltering'),
-		sorting: getPropDef(false, self.defn, 'table', 'enableSorting'),
-		grouping: getPropDef(false, self.defn, 'table', 'enableGrouping'),
-		rowSelection: getPropDef(false, self.defn, 'table', 'enableRowSelection'),
-		rowReordering: getPropDef(false, self.defn, 'table', 'enableRowReordering'),
-	};
+	// Set up the features object based on what the user asked for.
+
+	self.features = {};
+
+	_.each(['sort', 'filter', 'group', 'pivot', 'rowSelect', 'rowReorder', 'add', 'edit', 'delete'], function (feat) {
+		self.features[feat] = getPropDef(false, self.defn, 'table', 'features', feat);
+	});
+
+	debug.info('GRID', 'Features =', self.features);
 
 	// If the ID was specified as a jQuery object, extract the ID from the element.
 
@@ -2428,15 +2413,8 @@ WCGrid.prototype._addHeaderWidgets = function (header, doingServerFilter, runImm
 					.on('click', function (evt) {
 						evt.stopPropagation();
 						self.ui.clearFilter.hide();
-						switch (self.output) {
-						case 'jqwidgets':
-							self.grid.jqxGrid('clearfilters');
-							break;
-						default:
-							if (self.defn.gridFilterSet !== undefined) {
-								self.defn.gridFilterSet.reset();
-							}
-							break;
+						if (self.defn.gridFilterSet !== undefined) {
+							self.defn.gridFilterSet.reset();
 						}
 					})
 			)
@@ -2643,7 +2621,7 @@ WCGrid.prototype.refresh = function () {
 	delete self.gridTable;
 	delete self.pivotControl;
 
-	if (self.isPivot) {
+	if (self.features.pivot) {
 		debug.info('WCGRID', 'Creating PivotControl for pivot table output');
 		self.pivotControl = new PivotControl(self.defn, self.defn.view, self.features);
 		self.pivotControl.draw(self.ui.gridContainer, self.tableDoneCont);
@@ -2726,29 +2704,7 @@ WCGrid.prototype.updateRowCount = function (numRows, totalRows) {
 		return;
 	}
 
-	if (getProp(self.defn, 'table', 'output', 'method') === 'jqwidgets') {
-		numRows = self.grid.jqxGrid('getrows').length;
-		if (self.grid.jqxGrid('getfilterinformation').length !== 0) {
-			if (doingServerFilter || totalRows === undefined || totalRows === null) {
-				self.ui.rowCount.text(numRows + ' row(s), filtered');
-			}
-			else {
-				self.ui.rowCount.text(numRows + ' / ' + totalRows + ' row(s), filtered');
-			}
-			if (self.ui.clearFilter) {
-				self.ui.clearFilter.show();
-			}
-		}
-		else {
-			self.ui.rowCount.text(numRows + ' row(s)');
-			if (self.ui.clearFilter) {
-				self.ui.clearFilter.hide();
-			}
-		}
-	}
-	else {
-		self.ui.rowCount.text(self.defn._data[0].length + ' row(s)');
-	}
+	self.ui.rowCount.text(self.defn._data[0].length + ' row(s)');
 };
 
 // #hideGrid {{{2
@@ -2871,7 +2827,7 @@ WCGrid.prototype.hideSpinner = function () {
 WCGrid.prototype.enablePivot = function () {
 	var self = this;
 
-	if (self.isPivot) {
+	if (self.features.pivot) {
 		return;
 	}
 
@@ -2883,7 +2839,7 @@ WCGrid.prototype.enablePivot = function () {
 WCGrid.prototype.disablePivot = function () {
 	var self = this;
 
-	if (!self.isPivot) {
+	if (!self.features.pivot) {
 		return;
 	}
 
@@ -2895,7 +2851,7 @@ WCGrid.prototype.disablePivot = function () {
 WCGrid.prototype.togglePivot = function () {
 	var self = this;
 
-	self.isPivot = !self.isPivot;
+	self.features.pivot = !self.features.pivot;
 	self.refresh();
 };
 
@@ -2980,11 +2936,11 @@ function PivotControl(defn, view, features) {
 	// Create a new grid table to show the pivotted data.  Make sure that we disable some of the
 	// features that don't make sense when showing a pivot table.
 
-	self.gridTable = new GridTable(self.defn, self.view, {
-		filtering: false,
-		rowSelection: false,
-		rowReordering: false
-	});
+	self.gridTable = new GridTable(self.defn, self.view, _.extend({}, self.features, {
+		filter: false,
+		rowSelect: false,
+		rowReorder: false
+	}));
 
 	self.gridFilterSet = new GridFilterSet(self.defn, self.view);
 	self.fields = [];
@@ -3106,19 +3062,9 @@ PivotControl.prototype.draw = function (container, tableDoneCont) {
 	self.ui.cols = jQuery('<div>').text('COLS').appendTo(self.ui.container);
 	self.ui.table = jQuery('<div>').text('TABLE').appendTo(self.ui.container);
 
-	self.view.getData(function () {
+	self.view.getData(function (data) {
 		self.view.getTypeInfo(function (typeInfo) {
-			var cols = _.keys(typeInfo);
-
-			if (self.defn.table.columns !== undefined) {
-				cols = _.union(_.reject(self.defn.table.columns, function (x) { return x === '_DEFAULT'; }), cols);
-			}
-
-			cols = _.reject(cols, function (colName) {
-				return colName.charAt(0) === '_' || isColumnHidden(self.defn, colName);
-			});
-
-			debug.info('GRIDTABLE', 'Columns = %O', cols);
+			var cols = determineColumns(self.defn, data, typeInfo);
 
 			_.each(cols, function (fieldName) {
 				self.fields[fieldName] = new PivotControlField(self, fieldName, self.features);

@@ -1547,7 +1547,7 @@ DataView.prototype.off = function () {
  * view has been sorted.
  */
 
-DataView.prototype.setSort = function (col, dir, dontNotify) {
+DataView.prototype.setSort = function (col, dir, dontNotify, progress) {
 	var self = this;
 
 	self.clearCache();
@@ -1560,6 +1560,7 @@ DataView.prototype.setSort = function (col, dir, dontNotify) {
 			col: col,
 			dir: dir
 		};
+		self.sortProgress = progress;
 	}
 
 	window.setTimeout(function () {
@@ -1586,7 +1587,7 @@ DataView.prototype.clearSort = function (dontNotify) {
  * Sort this view of the data by the specified column name, in the specified direction.
  */
 
-DataView.prototype.sort = function () {
+DataView.prototype.sort = function (cont) {
 	var self = this
 		, timingEvt = ['Data Source "' + self.source.name + '" : ' + self.name, 'Sorting']
 		, conv = I;
@@ -1614,27 +1615,44 @@ DataView.prototype.sort = function () {
 	sortFn.currency = sortFn.number;
 
 	if (self.sortSpec === undefined) {
-		return;
+		return cont(self.data.data);
 	}
 
 	self.timing.start(timingEvt);
 
-	var sorted = mergeSort2(self.data.data, function (a, b) {
-		return !!(sortFn[self.typeInfo[self.sortSpec.col].type](a.rowData[self.sortSpec.col].value, b.rowData[self.sortSpec.col].value) ^ (self.sortSpec.dir === 'DESC'));
-	});
-
-	if (self.eventHandlers.sort) {
-		_.each(sorted, function (row, position) {
-			_.each(self.eventHandlers.sort, function (cb) {
-				if (typeof cb === 'function') {
-					cb(row.rowNum, position);
-				}
-			});
-		});
+	if (self.sortProgress
+			&& typeof self.sortProgress.start === 'function') {
+		self.sortProgress.start();
 	}
 
-	self.timing.stop(timingEvt);
-	return sorted;
+	var cmp = sortFn[self.typeInfo[self.sortSpec.col].type];
+
+	mergeSort3(self.data.data,
+						 function (a, b) {
+							 return !!(cmp(a.rowData[self.sortSpec.col].value, b.rowData[self.sortSpec.col].value)
+												 ^ (self.sortSpec.dir === 'DESC'));
+						 },
+						 function (sorted) {
+							 if (self.eventHandlers.sort) {
+								 _.each(sorted, function (row, position) {
+									 _.each(self.eventHandlers.sort, function (cb) {
+										 if (typeof cb === 'function') {
+											 cb(row.rowNum, position);
+										 }
+									 });
+								 });
+							 }
+
+							 if (self.sortProgress
+									 && typeof self.sortProgress.done === 'function') {
+								 self.sortProgress.done();
+							 }
+
+							 self.timing.stop(timingEvt);
+							 return cont(sorted);
+						 },
+						 self.sortProgress && self.sortProgress.update
+	);
 };
 
 // #setFilter {{{2
@@ -1676,11 +1694,12 @@ DataView.prototype.sort = function () {
  * @param {DataView_Filter_Spec} spec How to perform filtering.
  */
 
-DataView.prototype.setFilter = function (spec, dontNotify) {
+DataView.prototype.setFilter = function (spec, dontNotify, progress) {
 	var self = this;
 
 	self.clearCache();
 	self.filterSpec = spec;
+	self.filterProgress = progress;
 	self.getData();
 };
 
@@ -1715,12 +1734,12 @@ DataView.prototype.isFiltered = function () {
  * Apply the filter previously set.
  */
 
-DataView.prototype.filter = function () {
+DataView.prototype.filter = function (cont) {
 	var self = this
 		, timingEvt = ['Data Source "' + self.source.name + '" : ' + self.name, 'Filtering'];
 
 	if (self.filterSpec === undefined) {
-		return;
+		return cont(self.data.data);
 	}
 
 	// Checks to see if the given filter passes for the given row.
@@ -1868,8 +1887,47 @@ DataView.prototype.filter = function () {
 	*/
 
 	self.timing.start(timingEvt);
-	self.data.data = _.filter(self.data.data, passesAllFilters);
-	self.timing.stop(timingEvt);
+
+	var i0 = {
+		val: 0
+	}, i_step = 100;
+	var newData = [];
+
+	var doFilter = function () {
+		for (i = i0.val; i < self.data.data.length && i < i0.val + 100; i += 1) {
+			if (passesAllFilters(self.data.data[i])) {
+				newData.push(self.data.data[i]);
+			}
+		}
+
+		if (i < self.data.data.length) {
+			i0.val = i;
+
+			if (self.filterProgress
+					&& typeof self.filterProgress.update === 'function') {
+				self.filterProgress.update(i, self.data.data.length);
+			}
+
+			return window.setTimeout(doFilter);
+		}
+		else {
+			self.timing.stop(timingEvt);
+
+			if (self.filterProgress
+					&& typeof self.filterProgress.done === 'function') {
+				self.filterProgress.done();
+			}
+
+			return cont(newData);
+		}
+	};
+
+	if (self.filterProgress
+			&& typeof self.filterProgress.start === 'function') {
+		self.filterProgress.start();
+	}
+
+	return doFilter();
 };
 
 // #setGroup {{{2
@@ -1946,7 +2004,7 @@ DataView.prototype.group = function () {
 		// Assemble all the rows grouped by value for the current field.
 
 		_.each(data, function (row) {
-			var value = row.rowData['_ORIG_' + field] || row.rowData[field];
+			var value = row.rowData[field].orig || row.rowData[field].value;
 
 			if (tmp[value] === undefined) {
 				tmp[value] = [];
@@ -2051,7 +2109,7 @@ DataView.prototype.pivot = function () {
 				, tmp = {};
 
 			_.each(data, function (row) {
-				var value = row.rowData['_ORIG_' + field] || row.rowData[field];
+				var value = row.rowData[field].orig || row.rowData[field].value;
 
 				if (tree[value] === undefined) {
 					tree[value] = fieldNames.length > 1 ? {} : true;
@@ -2152,12 +2210,17 @@ DataView.prototype.getData = function (cont, tries) {
 
 				self.typeInfo = typeInfo;
 
-				self.filter();
-				self.group();
-				self.pivot();
-				self.sort();
+				return self.filter(function (filteredData) {
+					self.data.data = filteredData;
 
-				return self.getData(cont, tries + 1);
+					self.group();
+					self.pivot();
+					return self.sort(function (sortedData) {
+						self.data.data = sortedData;
+
+						return self.getData(cont, tries + 1);
+					});
+				});
 			});
 		});
 	}

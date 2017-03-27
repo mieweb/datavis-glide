@@ -8,13 +8,17 @@
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.17.1/moment.min.js"></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/chosen/1.6.2/chosen.jquery.min.js"></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/2.4.4/flatpickr.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/progressbar.js/1.0.1/progressbar.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/nprogress/0.2.0/nprogress.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/sprintf/1.0.3/sprintf.js"></script>
 		<script src="tabletool.js"></script>
 		<script src="wcdatavis.js"></script>
-		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" type="text/css"/>
-		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/chosen/1.6.2/chosen.css" type="text/css"/>
-		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/2.4.4/flatpickr.css" type="text/css"/>
-		<link rel="stylesheet" href="tabletool.css" type="text/css"/>
-		<link rel="stylesheet" href="wcdatavis.css" type="text/css"/>
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"/>
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/chosen/1.6.2/chosen.css"/>
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/2.4.4/flatpickr.css"/>
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/nprogress/0.2.0/nprogress.css"/>
+		<link rel="stylesheet" href="tabletool.css"/>
+		<link rel="stylesheet" href="wcdatavis.css"/>
 		<script>
 $(document).ready(function () {
 	MIE.DEBUGGING = true;
@@ -34,7 +38,7 @@ $(document).ready(function () {
 
 	var dataSource = new MIE.DataSource({
 		type: 'http',
-		url: 'data.xml',
+		url: 'data5000.xml',
 		conversion: [bbcode]
 	});
 	var tagOpts = {
@@ -44,8 +48,10 @@ $(document).ready(function () {
 	var defn = {
 		id: 'example',
 		table: {
-			enableSorting: true,
-			enableFiltering: true,
+			features: {
+				sort: true,
+				filter: true
+			},
 			columns: [
 				{ field: "first_name", displayText: "First Name" },
 				{ field: "last_name", displayText: "Last Name" },
