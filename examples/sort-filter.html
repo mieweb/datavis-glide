@@ -38,7 +38,7 @@ $(document).ready(function () {
 
 	var dataSource = new MIE.DataSource({
 		type: 'http',
-		url: 'data5000.xml',
+		url: 'data.xml',
 		conversion: [bbcode]
 	});
 	var tagOpts = {
@@ -64,7 +64,7 @@ $(document).ready(function () {
 		},
 		source: dataSource
 	};
-	new MIE.WCGrid('example', defn, tagOpts);
+	new MIE.Grid('example', defn, tagOpts);
 });
 		</script>
 	</head>

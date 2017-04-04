@@ -1027,7 +1027,34 @@ HttpDataSource.prototype.getTypeInfo = function (cont) {
  *
  * @callback DataSource~getTypeInfo_cb
  *
- * @param {wcgraph.TypeInfo} typeInfo The type information.
+ * @param {TypeInfo} typeInfo The type information.
+ */
+
+/**
+ * Represents information about the types of fields produced by a data source.  The keys are field
+ * names.  Values can just be the type name as a string, in simple situations; when more info is
+ * required, you can use the full object to describe the field.
+ *
+ * @typedef DataSource~TypeInfo
+ *
+ * @type {Object<string,string|DataSource~TypeInfo_Field>}
+ */
+
+/**
+ * This is the full specification of a field's type information.  One step of data acquisition is
+ * type decoding, which converts the data to an internal representation which will be used for
+ * sorting and filtering.  This step occurs after any user conversion functions are evaluated.  Type
+ * decoding works on the `value` property of the field value object.  If your conversion function
+ * updates this property, it's possible to perform your own conversion and still get the benefit of
+ * type decoding on the result.
+ *
+ * @typedef DataSource~TypeInfo_Field
+ *
+ * @property {string} type What type of data are we receiving?  Must be one of the following:
+ * string, number, date, datetime, currency.
+ *
+ * @property {string} format For a type of date or datetime, a formatting string for Moment which
+ * will decode the input.  Note that decoding comes *after* any conversion functions are executed.
  */
 
 // Constructor {{{2
@@ -1393,7 +1420,61 @@ DataSource.prototype.swapRows = function (oldIndex, newIndex) {
 // that we would put there.  So the data source is kind of acting as the model now.  This may change
 // when we add editing.
 
-// Data View {{{1
+// DataViewError {{{1
+
+function DataViewError(msg) {
+	this.message = msg;
+}
+
+DataViewError.prototype = Object.create(Error.prototype);
+DataViewError.prototype.name = 'DataViewError';
+DataViewError.prototype.constructor = DataViewError;
+
+// DataView {{{1
+
+/**
+ * @typedef DataView~Data
+ *
+ * @property {boolean} isPlain
+ * @property {boolean} isGroup
+ * @property {boolean} isPivot
+ * @property {Array.<DataView~Data_Row>} data
+ */
+
+/**
+ * @typedef DataView~Data_Row
+ *
+ * @property {number} rowNum A unique row number, which is used to track rows when they are moved
+ * within the GridTable instance, e.g. by reordering the rows manually, or by sorting.
+ *
+ * @property {Object.<string, DataView~Data_Field>} rowData Contains the data for the row; keys are
+ * field names, and values are objects representing the value of that field within the row.
+ */
+
+/**
+ * @typedef DataView~Data_Field
+ *
+ * @property {any} orig The original representation of the data as it came from the data source.
+ * This is mostly only useful when displaying the value, when no `render` function has been
+ * provided.
+ *
+ * @property {any} value The internal representation of the field's value, which is used for sorting
+ * and filtering.  This corresponds to the type of the field, e.g. when the field has a type of
+ * "date," this property contains a Moment instance.
+ *
+ * @property {DataView~Data_Field_Render} [render] If this property exists, it specifies a function
+ * that is used to turn the internal representation into a printable value that will be placed into
+ * the cell when the table is output.
+ */
+
+/**
+ * A function called by the GridTable instance to produce a value that will be placed into a cell in
+ * the table output.  An example usage would be to create a link based on the value of the cell.
+ *
+ * @callback DataView~Data_Field_Render
+ *
+ * @returns {Element|jQuery|string} What should be put into the cell in the table output.
+ */
 
 var DATA_VIEW_ID = 1;
 
@@ -1401,8 +1482,6 @@ var DATA_VIEW_ID = 1;
  * This represents a view of the data obtained by a data source.  While the pool of available data
  * is the same, the way its represented to the user (filtered, sorted, grouped, or pivotted)
  * changes.
- *
- * @memberof wcgraph_int
  *
  * @class
  *
@@ -1431,16 +1510,6 @@ var DATA_VIEW_ID = 1;
  * @property {Timing} timing For keeping track of how long it takes to do things in the view.
  */
 
-// Data View Error {{{2
-
-function DataViewError(msg) {
-	this.message = msg;
-}
-
-DataViewError.prototype = Object.create(Error.prototype);
-DataViewError.prototype.name = 'DataViewError';
-DataViewError.prototype.constructor = DataViewError;
-
 // Constructor {{{2
 
 function DataView(source, defn, wcgrid) {
@@ -1464,6 +1533,8 @@ DataView.prototype.constructor = DataView;
 
 /**
  * Get the number of rows currently being shown by the view.
+ *
+ * @return {number} The number of rows shown in the table output.
  */
 
 DataView.prototype.getRowCount = function () {
@@ -1493,6 +1564,9 @@ DataView.prototype.getRowCount = function () {
 
 /**
  * Get the number of rows that could be shown by the view.
+ *
+ * @return {number} The total number of rows in the data, including those which aren't currently
+ * being sorted (e.g. because they have been filtered out).
  */
 
 DataView.prototype.getTotalRowCount = function () {
@@ -1540,11 +1614,14 @@ DataView.prototype.off = function () {
 /**
  * Set the sorting spec for the view.
  *
- * @param {string} col
- * @param {string} dir
+ * @param {string} col Name of the field to sort by.
+ *
+ * @param {string} dir Direction to sort by, either "ASC" or "DESC."
  *
  * @param {boolean} dontNotify If true, don't fire off the message notifying subscribers that the
  * view has been sorted.
+ *
+ * @param {GridTable~Progress} progress
  */
 
 DataView.prototype.setSort = function (col, dir, dontNotify, progress) {
@@ -1584,7 +1661,10 @@ DataView.prototype.clearSort = function (dontNotify) {
 // #sort {{{2
 
 /**
- * Sort this view of the data by the specified column name, in the specified direction.
+ * Sort this view of the data by the specified column name, in the specified direction.  This is
+ * asynchronous because long running sorts need to keep the user interface responsive.
+ *
+ * @param {function} cont Continuation function to which the sorted data is passed.
  */
 
 DataView.prototype.sort = function (cont) {
@@ -1732,6 +1812,8 @@ DataView.prototype.isFiltered = function () {
 
 /**
  * Apply the filter previously set.
+ *
+ * @param {function} cont Continuation function to which the filtered data is passed.
  */
 
 DataView.prototype.filter = function (cont) {
@@ -1952,6 +2034,10 @@ DataView.prototype.setGroup = function (spec) {
 
 // #clearGroup {{{2
 
+/**
+ * Remove any grouping that had been set.
+ */
+
 DataView.prototype.clearGroup = function () {
 	var self = this;
 
@@ -1961,6 +2047,11 @@ DataView.prototype.clearGroup = function () {
 };
 
 // #group {{{2
+
+/**
+ * Perform grouping on the data.  This modifies the data in place; it's not asynchronous and there's
+ * no return value.
+ */
 
 DataView.prototype.group = function () {
 	var self = this;

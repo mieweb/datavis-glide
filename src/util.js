@@ -1,14 +1,8 @@
 	// Functional {{{1
 
 	/**
-	 * @namespace wcgraph_int.functional
-	 */
-
-	/**
 	 * Generate unique symbols to use for element IDs. It doesn't much matter what the actual string
 	 * produced is, as long as it's unique. That's why we use the 'gensymSeed' upvalue.
-	 *
-	 * @memberof wcgraph_int.functional
 	 */
 
 	var gensym = (function () {
@@ -21,8 +15,6 @@
 
 	/**
 	 * Y combinator.
-	 *
-	 * @memberof wcgraph_int.functional
 	 */
 
 	function Y(f) {
@@ -37,8 +29,6 @@
 
 	/**
 	 * Identity function.
-	 *
-	 * @memberof wcgraph_int.functional
 	 */
 
 	function I(x) {
@@ -47,8 +37,6 @@
 
 	/**
 	 * Does nothing.
-	 *
-	 * @memberof wcgraph_int.functional
 	 */
 
 	function NOP() {
@@ -58,8 +46,6 @@
 	/**
 	 * Universal comparison function.  Uses the builtin JavaScript type-safe equality and less-than
 	 * operators to do the comparison.
-	 *
-	 * @memberof wcgraph_int.functional
 	 *
 	 * @param {any} a First operand.
 	 * @param {any} b Second operand.
@@ -75,8 +61,6 @@
 	/**
 	 * Call a chain of functions, such that each function consumes as its arguments the result(s) of
 	 * the previous function.
-	 *
-	 * @memberof wcgraph_int.functional
 	 *
 	 * @param {array} #0 The arguments to pass to the first function in the chain.  If it's not an
 	 * array, that's OK.  An array of multiple elements gets turned into multiple arguments for the
@@ -114,8 +98,6 @@
 	 * arguments the result of the previous call (converting an array into separate arguments).  The
 	 * arguments of the function thus produced are the arguments for the first function in the chain.
 	 *
-	 * @memberof wcgraph_int.functional
-	 *
 	 * @param {function} ... The functions to chain together.
 	 *
 	 * @returns {function} A function that takes any number of arguments; these are passed to the first
@@ -138,8 +120,6 @@
 	 * Call methods on an object, and build an object from the values which are passed to callbacks by
 	 * those methods.  In other words, it's a way to get results from multiple callback-taking methods
 	 * at the same time.
-	 *
-	 * @memberof wcgraph_int.functional
 	 *
 	 * @param {Function} cont
 	 * @param {Array.<Object.<fn:string, prop:string>>} spec
@@ -265,12 +245,8 @@ function tryFloatConvert(x) {
 
 	// Data Structures {{{1
 
-	/** @namespace wcgraph_int.datastruct */
-
 	/**
 	 * Calls a function on each element in a list until a certain value is returned.
-	 *
-	 * @memberof wcgraph_int.datastruct
 	 *
 	 * @param {array} l List to iterate over.
 	 * @param {function} f Function to invoke on each element.  Called like: f(item, index).
@@ -300,8 +276,6 @@ function tryFloatConvert(x) {
 	/**
 	 * Create a deep copy of an object.
 	 *
-	 * @memberof wcgraph_int.datastruct
-	 *
 	 * @param object o The thing to copy.
 	 *
 	 * @return object A clean copy of the argument.
@@ -313,8 +287,6 @@ function tryFloatConvert(x) {
 
 	/**
 	 * Deep copy an array.
-	 *
-	 * @memberof wcgraph_int.datastruct
 	 */
 
 	function arrayCopy(a) {
@@ -337,8 +309,6 @@ function tryFloatConvert(x) {
 
 	/**
 	 * Returns true if the argument is null or undefined.
-	 *
-	 * @memberof wcgraph_int.datastruct
 	 */
 
 	function isNothing(x) {
@@ -347,8 +317,6 @@ function tryFloatConvert(x) {
 
 	/**
 	 * Returns true if the object doesn't have any properties.
-	 *
-	 * @memberof wcgraph_int.datastruct
 	 */
 
 	function isEmpty(o) {
@@ -365,8 +333,6 @@ function tryFloatConvert(x) {
 	 * Safely get the value of a property path in an object, even if some properties in the path don't
 	 * exist.  Returns the value of the last property in the path, or undefined if some elements in
 	 * the path don't exist in the object.
-	 *
-	 * @memberof wcgraph_int.datastruct
 	 *
 	 * @param {object} obj The object to search for the property path.
 	 * @param {...(string|number)} prop Property path to traverse.
@@ -400,8 +366,6 @@ function tryFloatConvert(x) {
 	 * exist.  Returns the value of the last property in the path, or a default value if some elements
 	 * in the path don't exist in the object.
 	 *
-	 * @memberof wcgraph_int.datastruct
-	 *
 	 * @param {any} value The default value to return if the property doesn't exist.
 	 * @param {object} obj The object to search for the property within.
 	 * @param {...(string|number)} prop Property path to traverse.
@@ -424,8 +388,6 @@ function tryFloatConvert(x) {
 
 	/**
 	 * Set a value for a property path in an object.
-	 *
-	 * @memberof wcgraph_int.datastruct
 	 *
 	 * @param {any} value The value to set for the property.
 	 * @param {object} obj The object to set the property within.
@@ -472,8 +434,6 @@ function tryFloatConvert(x) {
 	/**
 	 * Throw an exception if a property is missing.
 	 *
-	 * @memberof wcgraph_int.datastruct
-	 *
 	 * @param {function} exn Constructor used to instantiate an exception if an error arises.
 	 * @param {object} obj Target object to search within.
 	 * @param {...(string|number)} prop Property path.
@@ -493,8 +453,6 @@ function tryFloatConvert(x) {
 
 	/**
 	 * Throw an exception if a property is missing or not a member of a set.
-	 *
-	 * @memberof wcgraph_int.datastruct
 	 *
 	 * @param {function} exn Constructor used to instantiate an exception if an error arises.
 	 * @param {object} obj Target object to search within.
@@ -517,8 +475,6 @@ function tryFloatConvert(x) {
 	/**
 	 * Throw an exception if a property is missing or not an array.
 	 *
-	 * @memberof wcgraph_int.datastruct
-	 *
 	 * @param {function} exn Constructor used to instantiate an exception if an error arises.
 	 * @param {object} obj Target object to search within.
 	 * @param {...(string|number)} prop Property path.
@@ -539,8 +495,6 @@ function tryFloatConvert(x) {
 	/**
 	 * Throw an exception if a property is missing or not an object.
 	 *
-	 * @memberof wcgraph_int.datastruct
-	 *
 	 * @param {function} exn Constructor used to instantiate an exception if an error arises.
 	 * @param {object} obj Target object to search within.
 	 * @param {...(string|number)} prop Property path.
@@ -560,8 +514,6 @@ function tryFloatConvert(x) {
 
 	/**
 	 * Throw an exception if a property is missing or not an instance of a class.
-	 *
-	 * @memberof wcgraph_int.datastruct
 	 *
 	 * @param {function} exn Constructor used to instantiate an exception if an error arises.
 	 * @param {object} obj Target object to search within.
@@ -609,8 +561,6 @@ function needArg(val, varName) {
 	 * Prune a subtree in an object.  This means to prune the leaf, and then if there are no other
 	 * leaves on that branch, prune the branch, and so on all the way up.
 	 *
-	 * @memberof wcgraph_int.datastruct
-	 *
 	 * @example pruneTree(OBJECT, PATH...)
 	 */
 
@@ -642,8 +592,6 @@ function needArg(val, varName) {
 
 	/**
 	 * Stable sort algorithm that allows for responsive browser UI.
-	 *
-	 * @memberof wcgraph_int.datastruct
 	 */
 
 	function mergeSort(data, cmp, cont) {
@@ -787,8 +735,6 @@ function needArg(val, varName) {
 	 * Compare two arrays against each other, deeply. There is no function built into JavaScript to do
 	 * this, of course.
 	 *
-	 * @memberof wcgraph_int.datastruct
-	 *
 	 * @param {array} a First operand.
 	 * @param {array} b Second operand.
 	 *
@@ -816,8 +762,6 @@ function needArg(val, varName) {
 	/**
 	 * Treating an object like a tree, descends through object values until it hits a non-object, then
 	 * calls the given function.
-	 *
-	 * @memberof wcgraph_int.datastruct
 	 *
 	 * @param object o The root of the tree.
 	 *
@@ -857,7 +801,6 @@ function needArg(val, varName) {
 	 * Create a map (a.k.a. dictionary) where the order of the keys added to the data structure is
 	 * maintained.
 	 *
-	 * @memberof wcgraph_int
 	 * @class
 	 *
 	 * @property {Array<string>} keys List of all keys, in the order they were inserted.
@@ -880,7 +823,6 @@ function needArg(val, varName) {
 	 * Retrieve a key/value association from the map.
 	 *
 	 * @method
-	 * @memberof OrdMap
 	 *
 	 * @param {string} k The key to retrieve.
 	 * @returns {any} The value associated with that key.
@@ -894,7 +836,6 @@ function needArg(val, varName) {
 	 * Create a key/value association in the map.
 	 *
 	 * @method
-	 * @memberof OrdMap
 	 *
 	 * @param {string} k The key to use.
 	 * @param {any} v The value to use.
@@ -913,7 +854,6 @@ function needArg(val, varName) {
 	 * Remove a key/value association from the map.
 	 *
 	 * @method
-	 * @memberof OrdMap
 	 *
 	 * @param {string} k The key for the association to remove.
 	 */
@@ -928,7 +868,6 @@ function needArg(val, varName) {
 	 * Indicate if there is an association set for the specified key.
 	 *
 	 * @method
-	 * @memberof OrdMap
 	 *
 	 * @param {string} k The key to check on.
 	 * @returns {boolean} True if there is an association for this key, false if there is not.
@@ -943,7 +882,6 @@ function needArg(val, varName) {
 	 * OrdMap differs from a regular JavaScript object.
 	 *
 	 * @method
-	 * @memberof OrdMap
 	 *
 	 * @param {function} f A function called for each existing association.  The function is invoked
 	 * like this: f(VALUE, KEY, KEY-NUMBER).
@@ -966,7 +904,6 @@ function needArg(val, varName) {
 	 * Get a list of the keys used, in the order they were inserted.
 	 *
 	 * @method
-	 * @memberof OrdMap
 	 *
 	 * @returns {array} All the keys in order.
 	 */
@@ -984,12 +921,8 @@ function needArg(val, varName) {
 
 	// HTML {{{1
 
-	/** @namespace wcgraph_int.html */
-
 	/**
 	 * Returns the HTML used to construct the argument.
-	 *
-	 * @memberof wcgraph_int.html
 	 */
 
 	function outerHtml(elt) {
@@ -998,8 +931,6 @@ function needArg(val, varName) {
 
 	/**
 	 * Get all the next nodes which are direct children of the specified nodes.
-	 *
-	 * @memberof wcgraph_int.html
 	 *
 	 * @param selector jQuery selector used to search for nodes containing text
 	 * children.
@@ -1036,8 +967,6 @@ function fontAwesome(hex, cls, title) {
 
 	// Input / Output {{{1
 
-	/** @namespace wcgraph_int.io */
-
 	function valueInfo(value) {
 		if (_.isNumber(value)) {
 			return [value, ': Number'];
@@ -1062,8 +991,6 @@ function fontAwesome(hex, cls, title) {
 
 	/**
 	 * Logging wrappers.
-	 *
-	 * @memberof wcgraph_int.io
 	 */
 
 	var log = {
@@ -1074,8 +1001,6 @@ function fontAwesome(hex, cls, title) {
 
 	/**
 	 * More logging wrappers.
-	 *
-	 * @memberof wcgraph_int.io
 	 */
 
 	var concatLog = {
@@ -1092,8 +1017,6 @@ function fontAwesome(hex, cls, title) {
 
 	/**
 	 * Debug logging.
-	 *
-	 * @memberof wcgraph_int.io
 	 */
 
 	var debug = {
@@ -1123,8 +1046,6 @@ function fontAwesome(hex, cls, title) {
 	 * Issue a warning about deprecated usage.  This also sends an email at the warning level, so that
 	 * we can see any systems which are using deprecated features.
 	 *
-	 * @memberof wcgraph_int.io
-	 *
 	 * @param {object} defn The grid definition.
 	 * @param {string} msg The explanatory message.
 	 * @param {string} ref Section in the wiki that describes this deprecated usage.
@@ -1141,8 +1062,6 @@ function fontAwesome(hex, cls, title) {
 
 	// Date and Time Formatting {{{1
 
-	/** @namespace wcgraph_int.datetime */
-
 	// Initialize date and time format strings from user preferences.  There doesn't seem to be a
 	// builtin way to convert the magick numbers into format strings, but since they're stored in the
 	// database it seems safe to assume that they won't change.
@@ -1153,8 +1072,6 @@ function fontAwesome(hex, cls, title) {
 	/**
 	 * Initialization function to grab things we need before doing anything else (e.g. user
 	 * preferences).  This function is asynchronous and requires that you pass it a continuation.
-	 *
-	 * @memberof wcgraph_int.datetime
 	 */
 
 	function init(cont) {
@@ -1178,8 +1095,6 @@ function fontAwesome(hex, cls, title) {
 	/**
 	 * Format a Date object according to the user's date formatting preferences.  To be accurate, you
 	 * need to call the init() function first.
-	 *
-	 * @memberof wcgraph_int.datetime
 	 *
 	 * @param {Date} d The date to format.
 	 * @returns {string} The date formatted according to the user's preference.
@@ -1212,8 +1127,6 @@ function fontAwesome(hex, cls, title) {
 	/**
 	 * Format a Date object according to the user's time formatting preferences.  To be accurate, you
 	 * need to call the init() function first.
-	 *
-	 * @memberof wcgraph_int.datetime
 	 *
 	 * @param {Date} t The time to format.
 	 * @returns {string} The time formatted according to the user's preference.
@@ -1256,7 +1169,6 @@ function fontAwesome(hex, cls, title) {
 	}
 
 	/**
-	 * @memberof wcgraph_int.datetime
 	 */
 
 	function formatDateTime(d) {
@@ -1264,7 +1176,6 @@ function fontAwesome(hex, cls, title) {
 	}
 
 	/**
-	 * @memberof wcgraph_int.datetime
 	 */
 
 	function formatDateString(s) {
@@ -1275,7 +1186,6 @@ function fontAwesome(hex, cls, title) {
 	}
 
 	/**
-	 * @memberof wcgraph_int.datetime
 	 */
 
 	function formatTimeString(s) {
@@ -1286,7 +1196,6 @@ function fontAwesome(hex, cls, title) {
 	}
 
 	/**
-	 * @memberof wcgraph_int.datetime
 	 */
 
 	function formatDateTimeString(s) {
@@ -1297,7 +1206,6 @@ function fontAwesome(hex, cls, title) {
 	}
 
 	/**
-	 * @memberof wcgraph_int.datetime
 	 */
 
 	function removeZeroDates(x) {
@@ -1305,7 +1213,6 @@ function fontAwesome(hex, cls, title) {
 	}
 
 	/**
-	 * @memberof wcgraph_int.datetime
 	 */
 
 	function removeZeroDateTimes(x) {
@@ -1315,7 +1222,6 @@ function fontAwesome(hex, cls, title) {
 	var DATE_ONLY_REGEXP = /^\d\d\d\d-\d\d-\d\d$/;
 
 	/**
-	 * @memberof wcgraph_int.datetime
 	 */
 
 	function addTimeComponent(x) {
@@ -1428,14 +1334,10 @@ function fontAwesome(hex, cls, title) {
 	 * for preferences.  We engage it when load the preferences, then the event handlers find the lock
 	 * engaged, so they don't try to save the preferences.  When the preferences are done loading, we
 	 * disengage the lock, and event handlers are free to save prefs again.
-	 *
-	 * @namespace wcgraph_int.locking
 	 */
 
 	/**
 	 * Engage the lock with the given name.
-	 *
-	 * @memberof wcgraph_int.locking
 	 */
 
 	function lock(defn, name) {
@@ -1453,8 +1355,6 @@ function fontAwesome(hex, cls, title) {
 
 	/**
 	 * Disengage the lock with the given name.
-	 *
-	 * @memberof wcgraph_int.locking
 	 */
 
 	function unlock(defn, name) {
@@ -1472,8 +1372,6 @@ function fontAwesome(hex, cls, title) {
 
 	/**
 	 * Check to see if the lock with the given name is engaged or not.
-	 *
-	 * @memberof wcgraph_int.locking
 	 */
 
 	function isLocked(defn, name) {
@@ -1482,8 +1380,6 @@ function fontAwesome(hex, cls, title) {
 
 /**
  * An implementation of a counting semaphore for JavaScript.
- *
- * @memberof wcgraph_int
  * @class
  */
 

@@ -1,13 +1,32 @@
 // Determine Columns {{{1
 
+/**
+ * Determine which columns should be shown in plain or grouped output, based on information from
+ * several sources.
+ *
+ * If the user has set `defn.table.columns`, then it will be used to figure out what fields are to
+ * be shown.  Otherwise, the fields come from the source's type info, and fields starting with an
+ * underscore are omitted.
+ *
+ * @todo What do we do when the data has been pivotted?
+ *
+ * @param {Grid~Defn} defn
+ *
+ * @param {array} data
+ *
+ * @param {DataSource~TypeInfo} typeInfo
+ *
+ * @returns {Array.<string>} An array of the names of the fields that should constitute the columns
+ * in the output.  This is not necessarily the same as the headers to be shown in the output.
+ */
+
 function determineColumns(defn, data, typeInfo) {
-	// This is an array of the names of the *fields* that make up the columns.  If the user specified
-	// defn.table.columns, then it comes from the fields in there.  Otherwise, it comes from the keys
-	// of the data source's typeInfo object.
-
-	// TODO What to do when the data has been pivotted?
-
 	var columns = [];
+
+	// Error checking for `defn.table.columns` to make sure it:
+	//
+	//   1. Has the correct format.
+	//   2. Only defines fields which actually exist.
 
 	if (defn.table.columns !== undefined) {
 		if (!_.isArray(defn.table.columns)) {
@@ -310,42 +329,11 @@ GridError.prototype.constructor = GridError;
  *
  * @param {object} defn
  *
- * @param {object} features Turn features on/off.
- *
- * @param {object} features.rowSelect If true, a new column is added on the far left of the grid.
- * This column contains a checkbox that "selects" the row.
- *
- * @param {object} features.rowReorder If true, a new column is added on the far right of the
- * grid.  This column contains a button that the user can drag to move the entire row up and down
- * relative to the other rows of the grid.
- *
- * @param {object} features.sort If true, clicking the column heading sorts the whole grid by
- * that column.
- *
- * @param {object} features.filter If true, a button is added within each column heading.
- * Clicking this button adds a filter on that column.  When the filter is changed, only rows which
- * match the filter are shown.
+ * @param {Grid~Features} features
  *
  * @class
  *
- * @property {object} features An object of which features are turned on in the GridTable.  In some
- * situations, a feature may be disabled but handled by a wrapper object (e.g. PivotControl handles
- * the filter feature when the GridTable is acting as the output of a pivot table).
- *
- * @property {boolean} features.sort If true, then the GridTable allows the user to sort it by
- * clicking the header columns; an arrow will be displayed in the header column indicating the sort
- * direction.
- *
- * @property {boolean} features.filter If true, then the GridTable supports filtering directly by
- * including an "add filter" icon in the header columns of the table.
- *
- * @property {boolean} features.rowSelect If true, then the GridTable allows the user to select
- * rows.  A column will be added on the far left which contains a checkbox; clicking this selects or
- * unselects the row.  There is an API for accessing which rows are currently selected.
- *
- * @property {boolean} features.rowReorder If true, then the GridTable allows the user to drag
- * and drop rows to reorder them.  A column will be added on the far right which contains a button
- * that acts as the drag handle.
+ * @property {Grid~Features} features
  *
  * @property {object} defn
  *
@@ -526,10 +514,10 @@ GridTable.prototype.draw = function (container, tableDone) {
 
 			self.ui.tbl.attr({
 				'class': 'newui zebra',
-				// 'data-tttype': 'sticky' // BUG BREAKS FILTERS
+				'data-tttype': 'sticky'
 			});
 
-			container.append(self.ui.tbl.append(self.ui.thead).append(self.ui.tfoot).append(self.ui.tbody));
+			container.append(self.ui.tbl.append(self.ui.thead).append(self.ui.tbody));
 
 			if (typeof tableDone === 'function') {
 				window.setTimeout(function () {
@@ -541,6 +529,17 @@ GridTable.prototype.draw = function (container, tableDone) {
 };
 
 // #draw_header {{{2
+
+/**
+ * Render the header columns of a GridTable.
+ *
+ * @param {Array.<string>} columns A list of the fields that are to be included as columns within
+ * the GridTable.
+ *
+ * @param {DataView~Data} data
+ *
+ * @param {DataSource~TypeInfo} typeInfo
+ */
 
 GridTable.prototype.draw_header = function (columns, data, typeInfo) {
 	var self = this;
@@ -730,64 +729,7 @@ GridTable.prototype.draw_header = function (columns, data, typeInfo) {
 				.css(headingThCss)
 				.append(headingSpan);
 
-			/*
-			 * Configure sorting for this column.  This mainly involves setting an onClick handler for the
-			 * column heading text.
-			 */
-
-			if (self.features.sort) {
-				var sortSpan = jQuery('<span>').css({'font-size': '1.2em'});
-
-				var onClick = function () {
-					jQuery('span.sort_indicator').hide();
-					headingTh.find('span.sort_indicator').show();
-
-					// Save the sort spec.  If we're resorting a column (i.e. we just sorted it) then
-					// reverse the sort direction.  Otherwise, start in ascending order.
-
-					self.defn.sortSpec.asc = (self.defn.sortSpec.col === field ? !self.defn.sortSpec.asc : true);
-					self.defn.sortSpec.col = field;
-
-					debug.info('SORTING', 'Column = ' + self.defn.sortSpec.col + ' ; Direction = ' + (self.defn.sortSpec.asc ? 'ASC' : 'DESC'));
-
-					sortSpan.html(fontAwesome(self.defn.sortSpec.asc ? 'F0D7' : 'F0D8'));
-
-					self.defn.view.setSort(self.defn.sortSpec.col,
-																 self.defn.sortSpec.asc ? 'ASC' : 'DESC',
-																 false,
-																 {
-																	 start: function () {
-																		 if (window.NProgress !== undefined) {
-																			 window.NProgress.configure({
-																				 parent: '#' + headingTh.attr('id'),
-																				 showSpinner: false
-																			 });
-																			 window.NProgress.start();
-																		 }
-																	 },
-																	 update: function (amount, estTotal) {
-																		 console.log(sprintf('Sort progress: %.0f%%', (amount / estTotal) * 100));
-																		 if (window.NProgress !== undefined) {
-																			 window.NProgress.set(amount / estTotal);
-																		 }
-																	 },
-																	 done: function () {
-																		 if (window.NProgress !== undefined) {
-																			 window.NProgress.done();
-																		 }
-																	 }
-																 });
-				};
-
-				sortSpan.addClass('sort_indicator');
-				sortSpan.css({'cursor': 'pointer'});
-				sortSpan.on('click', onClick);
-
-				headingSpan.css({'cursor': 'pointer', 'margin-left': '0.5ex'});
-				headingSpan.on('click', onClick);
-
-				headingTh.prepend(sortSpan);
-			}
+			self._addSortingToHeader(field, headingSpan, headingTh);
 
 			/*
 			 * Configure filtering for this column.  This mainly involves creating a button, which when
@@ -808,6 +750,7 @@ GridTable.prototype.draw_header = function (columns, data, typeInfo) {
 				jQuery(fontAwesome('F0B0', null, 'Click to add a filter on this column'))
 					.css({'cursor': 'pointer', 'margin-left': '0.5ex'})
 					.on('click', function () {
+						// TODO TableTool - need to add to the clone instead.
 						self.defn.gridFilterSet.add(field, filterTh, colConfig.filter, jQuery(this));
 					})
 					.appendTo(headingTh);
@@ -1097,8 +1040,12 @@ GridTable.prototype._addSortingToHeader = function (colName, headingSpan, headin
 	var sortSpan = jQuery('<span>').css({'font-size': '1.2em'});
 
 	var onClick = function () {
+		// TODO TableTool - We need to determine sortSpan based on 'this' so we can find the clone if
+		// we're using TableTool.
+
+		var cloneSortSpan = $(this).siblings('span.sort_indicator');
 		jQuery('span.sort_indicator').hide();
-		sortSpan.show();
+		cloneSortSpan.show();
 
 		// Save the sort spec.  If we're resorting a column (i.e. we just sorted it) then
 		// reverse the sort direction.  Otherwise, start in ascending order.
@@ -1108,9 +1055,33 @@ GridTable.prototype._addSortingToHeader = function (colName, headingSpan, headin
 
 		debug.info('SORTING', 'Column = ' + self.defn.sortSpec.col + ' ; Direction = ' + (self.defn.sortSpec.asc ? 'ASC' : 'DESC'));
 
-		sortSpan.html(fontAwesome(self.defn.sortSpec.asc ? 'F0D7' : 'F0D8'));
+		cloneSortSpan.html(fontAwesome(self.defn.sortSpec.asc ? 'F0D7' : 'F0D8'));
 
-		self.defn.view.setSort(self.defn.sortSpec.col, self.defn.sortSpec.asc ? 'ASC' : 'DESC');
+		self.defn.view.setSort(self.defn.sortSpec.col,
+													 self.defn.sortSpec.asc ? 'ASC' : 'DESC',
+													 false,
+													 {
+														 start: function () {
+															 if (window.NProgress !== undefined) {
+																 window.NProgress.configure({
+																	 parent: '#' + headingTh.attr('id'),
+																	 showSpinner: false
+																 });
+																 window.NProgress.start();
+															 }
+														 },
+														 update: function (amount, estTotal) {
+															 console.log(sprintf('Sort progress: %.0f%%', (amount / estTotal) * 100));
+															 if (window.NProgress !== undefined) {
+																 window.NProgress.set(amount / estTotal);
+															 }
+														 },
+														 done: function () {
+															 if (window.NProgress !== undefined) {
+																 window.NProgress.done();
+															 }
+														 }
+													 });
 	};
 
 	sortSpan.addClass('sort_indicator');
@@ -2110,19 +2081,58 @@ GridFilterSet.prototype.loadPrefs = function (prefs) {
 	self.update(true); // No need to save prefs, we just loaded them!
 };
 
-// WCGRID {{{1
+// Grid {{{1
 
 /**
- * Create a new WCGrid and place it somewhere in the page.  A WCGrid consists of two major parts:
- * the decoration (e.g. titlebar and toolbar), and the underlying grid (e.g. jQWidgets or Tablesaw).
+ * @typedef Grid~Defn
  *
- * @memberof wcgraph
+ * @property {Object} table
+ * @property {string} table.id
+ * @property {Array.<Grid~Defn_Column>} [table.columns]
+ */
+
+/**
+ * @typedef Grid~Defn_Column
+ *
+ * @property {string} field The name of the field (from the data source) we're describing.
+ * @property {string} displayText What to show in the column header (instead of the field name).
+ */
+
+/**
+ * @typedef Grid~Features
+ *
+ * @property {boolean} [sort=false] If true, the user is allowed to sort the data by clicking the
+ * column header.
+ *
+ * @property {boolean} [filter=false] If true, the user is allowed to filter the data by clicking
+ * the "add filter" button in the column header.
+ *
+ * @property {boolean} [group=false] If true, the user is allowed to group the data.
+ *
+ * @property {boolean} [pivot=false] If true, the user is allowed to pivot the data.
+ *
+ * @property {boolean} [rowSelect=false] If true, the user is allowed to select rows by using the
+ * checkbox in the first column.
+ *
+ * @property {boolean} [rowReorder=false] If true, the user is allowed to manually reorder the rows
+ * using the handle in the last column.
+ *
+ * @property {boolean} [add=false] Unused
+ *
+ * @property {boolean} [edit=false] Unused
+ *
+ * @property {boolean} [delete=false] Unused
+ */
+
+/**
+ * Create a new Grid and place it somewhere in the page.  A Grid consists of two major parts: the
+ * decoration (e.g. titlebar and toolbar), and the underlying grid (e.g. jQWidgets or Tablesaw).
  *
  * @param {string} id The ID of a DIV (which must already exist in the page) where we will put the
  * grid and its decoration.  This DIV is also known as the "tag container" because it's typically
  * created by the <WCGRID> layout tag.
  *
- * @param {object} defn The definition of the grid itself.
+ * @param {Grid~Defn} defn The definition of the grid itself.
  *
  * @param {object} tagOpts Configuration of the decoration of the grid.
  *
@@ -2138,33 +2148,23 @@ GridFilterSet.prototype.loadPrefs = function (prefs) {
  * the underlying output method grid object (e.g. the jqxGrid instance) being passed.
  *
  * @example <caption>Getting the grid object using a callback.</caption>
- * var wcgrid = new WCGrid('test', {...}, {...}, (grid) => {
+ * var grid = new MIE.Grid('test', {...}, {...}, (grid) => {
  *   grid.jqxGrid('autoresizecolumns');
  * });
  *
  * @class
  *
  * @property {string} id The ID of the div that contains the whole tag output.
- * @property {object} defn The definition object used to create the grid.
+ * @property {Grid~Defn} defn The definition object used to create the grid.
  * @property {wcgrid_tagOpts} tagOpts Options for the grid's container.
  * @property {object} grid The underlying grid object (e.g. a jqxGrid instance).
  * @property {object} ui Contains various user interface components which are tracked for convenience.
- * @property {object} features
- * @property {boolean} features.sort
- * @property {boolean} features.filter
- * @property {boolean} features.group
- * @property {boolean} features.pivot
- * @property {boolean} features.rowSelect
- * @property {boolean} features.rowReorder
- * @property {boolean} features.add
- * @property {boolean} features.edit
- * @property {boolean} features.delete
- *
+ * @property {Grid~Features} features
  */
 
 // Constructor {{{2
 
-var WCGrid = function (id, defn, tagOpts, cb) {
+var Grid = function (id, defn, tagOpts, cb) {
 	var self = this;
 
 	var tagContainer = null; // Container div for the contents of the whole tag.
@@ -2182,7 +2182,7 @@ var WCGrid = function (id, defn, tagOpts, cb) {
 
 	normalizeDefn(defn);
 
-	debug.info('WCGRID', 'Definition: %O', defn);
+	debug.info('GRID', 'Definition: %O', defn);
 
 	if (tagOpts === undefined) {
 		tagOpts = $.extend(true, {}, {
@@ -2197,7 +2197,7 @@ var WCGrid = function (id, defn, tagOpts, cb) {
 	self.ui = {}; // User interface elements.
 	self.selected = {}; // Information about what rows are selected.
 
-	self.defn.wcgrid = self;
+	self.defn.grid = self;
 
 	// Set up the features object based on what the user asked for.
 
@@ -2220,7 +2220,7 @@ var WCGrid = function (id, defn, tagOpts, cb) {
 	}
 
 	if (typeof id !== 'string') {
-		throw '<wcgrid> "id" is not a string';
+		throw '<grid> "id" is not a string';
 	}
 
 	if (document.getElementById(id) === null) {
@@ -2296,7 +2296,7 @@ var WCGrid = function (id, defn, tagOpts, cb) {
 			initialRender = false;
 		}
 
-		// Invoke the callback for the WCGRID constructor, after the grid has been created.  Sometimes
+		// Invoke the callback for the Grid constructor, after the grid has been created.  Sometimes
 		// people want to start manipulating the grid from JS right away.
 
 		if (typeof cb === 'function') {
@@ -2315,7 +2315,7 @@ var WCGrid = function (id, defn, tagOpts, cb) {
 				, msg = args[1]
 				, info = args[2];
 
-			debug.info('WCGRID', 'Received message "%s" from data view: %O', msg, info);
+			debug.info('GRID', 'Received message "%s" from data view: %O', msg, info);
 		});
 
 		self.defn.source.subscribe(function () {
@@ -2324,7 +2324,7 @@ var WCGrid = function (id, defn, tagOpts, cb) {
 				, msg = args[1]
 				, rest = args.slice(2);
 
-			debug.info('WCGRID', 'Received message "%s" from data source "%s": %O', msg, ds.name, rest);
+			debug.info('GRID', 'Received message "%s" from data source "%s": %O', msg, ds.name, rest);
 			switch (msg) {
 			case DataSource.messages.DATA_UPDATED:
 				self.refresh();
@@ -2345,8 +2345,8 @@ var WCGrid = function (id, defn, tagOpts, cb) {
 	 * Store self object so it can be accessed from other JavaScript in the page.
 	 */
 
-	window.wcgrid = window.wcgrid || {};
-	window.wcgrid[id] = self;
+	window.grid = window.grid || {};
+	window.grid[id] = self;
 };
 
 // #addHeaderWidgets {{{2
@@ -2355,7 +2355,7 @@ var WCGrid = function (id, defn, tagOpts, cb) {
  * Add widgets to the header of the grid.
  *
  * @method
- * @memberof WCGRID
+ * @memberof Grid
  * @private
  *
  * @param {object} header
@@ -2364,7 +2364,7 @@ var WCGrid = function (id, defn, tagOpts, cb) {
  * @param {string} id
  */
 
-WCGrid.prototype._addHeaderWidgets = function (header, doingServerFilter, runImmediately, id) {
+Grid.prototype._addHeaderWidgets = function (header, doingServerFilter, runImmediately, id) {
 	var self = this;
 	var notHeader = jQuery('<span>', {'class': 'headingInfo'})
 		.on('click', function (evt) {
@@ -2451,11 +2451,11 @@ WCGrid.prototype._addHeaderWidgets = function (header, doingServerFilter, runImm
 
 /**
  * @method
- * @memberof WCGRID
+ * @memberof Grid
  * @private
  */
 
-WCGrid.prototype._addCommonButtons = function (toolbar) {
+Grid.prototype._addCommonButtons = function (toolbar) {
 	var self = this;
 	var isVisible = true; // If true, the grid is not currently hidden.
 
@@ -2472,11 +2472,11 @@ WCGrid.prototype._addCommonButtons = function (toolbar) {
 
 /**
  * @method
- * @memberof WCGRID
+ * @memberof Grid
  * @private
  */
 
-WCGrid.prototype._addPrefsButtons = function (toolbar) {
+Grid.prototype._addPrefsButtons = function (toolbar) {
 	var self = this;
 
 	jQuery('<button type="button">')
@@ -2596,10 +2596,10 @@ WCGrid.prototype._addPrefsButtons = function (toolbar) {
  * you cannot use it to retrieve data for an invisible grid).
  *
  * @method
- * @memberof WCGRID
+ * @memberof Grid
  */
 
-WCGrid.prototype.refresh = function () {
+Grid.prototype.refresh = function () {
 	var self = this;
 
 	if (!self.isGridVisible()) {
@@ -2622,14 +2622,14 @@ WCGrid.prototype.refresh = function () {
 	delete self.pivotControl;
 
 	if (self.features.pivot) {
-		debug.info('WCGRID', 'Creating PivotControl for pivot table output');
+		debug.info('GRID', 'Creating PivotControl for pivot table output');
 		self.pivotControl = new PivotControl(self.defn, self.defn.view, self.features);
 		self.pivotControl.draw(self.ui.gridContainer, self.tableDoneCont);
 	}
 	else {
-		debug.info('WCGRID', 'Creating GridTable for normal output');
+		debug.info('GRID', 'Creating GridTable for normal output');
 		self.gridTable = new GridTable(self.defn, self.defn.view, self.features);
-		self.gridTable.draw(self.ui.gridContainer, self.tableDoneCont);
+		self.gridTable.draw(self.ui.gridContainer, self.tableDoneCont); // TODO load prefs
 	}
 };
 
@@ -2639,10 +2639,10 @@ WCGrid.prototype.refresh = function () {
  * Redraws the data from the data view in the grid.
  *
  * @method
- * @memberof WCGRID
+ * @memberof Grid
  */
 
-WCGrid.prototype.redraw = function () {
+Grid.prototype.redraw = function () {
 	var self = this;
 
 	if (!self.isGridVisible()) {
@@ -2658,17 +2658,17 @@ WCGrid.prototype.redraw = function () {
  * Set the number of rows shown in the titlebar.  You can provider the number yourself!
  *
  * @method
- * @memberof WCGRID
+ * @memberof Grid
  *
  * @param {number} numRows The number of rows, filtered.
  * @param {number} totalRows The total number of rows.
  */
 
-WCGrid.prototype.updateRowCount = function (numRows, totalRows) {
+Grid.prototype.updateRowCount = function (numRows, totalRows) {
 	var self = this
 		, doingServerFilter = getProp(self.defn, 'server', 'filter') && getProp(self.defn, 'server', 'limit') !== -1;
 
-	debug.info('WCGRID', 'Updating row count');
+	debug.info('GRID', 'Updating row count');
 
 	// When there's no titlebar, there's nothing for us to do here.
 
@@ -2713,10 +2713,10 @@ WCGrid.prototype.updateRowCount = function (numRows, totalRows) {
  * Hide the grid.
  *
  * @method
- * @memberof WCGRID
+ * @memberof Grid
  */
 
-WCGrid.prototype.hideGrid = function () {
+Grid.prototype.hideGrid = function () {
 	var self = this;
 	self.ui.grid.slideUp({
 		done: function () {
@@ -2733,10 +2733,10 @@ WCGrid.prototype.hideGrid = function () {
  * Make the grid visible.  If the grid has not been "run" yet, it will be done now.
  *
  * @method
- * @memberof WCGRID
+ * @memberof Grid
  */
 
-WCGrid.prototype.showGrid = function () {
+Grid.prototype.showGrid = function () {
 	var self = this;
 	self.ui.grid.slideDown({
 		done: function () {
@@ -2757,10 +2757,10 @@ WCGrid.prototype.showGrid = function () {
  * Toggle grid visibility.
  *
  * @method
- * @memberof WCGRID
+ * @memberof Grid
  */
 
-WCGrid.prototype.toggleGrid = function () {
+Grid.prototype.toggleGrid = function () {
 	if (this.ui.grid.css('display') === 'none') {
 		this.showGrid();
 	}
@@ -2775,18 +2775,18 @@ WCGrid.prototype.toggleGrid = function () {
  * Determine if the grid is currently visible.
  *
  * @method
- * @memberof WCGRID
+ * @memberof Grid
  *
  * @returns {boolean} True if the grid is currently visible, false if it is not.
  */
 
-WCGrid.prototype.isGridVisible = function () {
+Grid.prototype.isGridVisible = function () {
 	return this.ui.grid.css('display') !== 'none';
 };
 
 // #setSpinner {{{2
 
-WCGrid.prototype.setSpinner = function (what) {
+Grid.prototype.setSpinner = function (what) {
 	var self = this;
 
 	switch (what) {
@@ -2804,7 +2804,7 @@ WCGrid.prototype.setSpinner = function (what) {
 
 // #showSpinner {{{2
 
-WCGrid.prototype.showSpinner = function () {
+Grid.prototype.showSpinner = function () {
 	var self = this;
 
 	if (self.tagOpts.title) {
@@ -2814,7 +2814,7 @@ WCGrid.prototype.showSpinner = function () {
 
 // #hideSpinner {{{2
 
-WCGrid.prototype.hideSpinner = function () {
+Grid.prototype.hideSpinner = function () {
 	var self = this;
 
 	if (self.tagOpts.title) {
@@ -2824,7 +2824,7 @@ WCGrid.prototype.hideSpinner = function () {
 
 // #enablePivot {{{2
 
-WCGrid.prototype.enablePivot = function () {
+Grid.prototype.enablePivot = function () {
 	var self = this;
 
 	if (self.features.pivot) {
@@ -2836,7 +2836,7 @@ WCGrid.prototype.enablePivot = function () {
 
 // #disablePivot {{{2
 
-WCGrid.prototype.disablePivot = function () {
+Grid.prototype.disablePivot = function () {
 	var self = this;
 
 	if (!self.features.pivot) {
@@ -2848,7 +2848,7 @@ WCGrid.prototype.disablePivot = function () {
 
 // #togglePivot {{{2
 
-WCGrid.prototype.togglePivot = function () {
+Grid.prototype.togglePivot = function () {
 	var self = this;
 
 	self.features.pivot = !self.features.pivot;
@@ -2862,7 +2862,7 @@ WCGrid.prototype.togglePivot = function () {
  * table as a pivot table.
  */
 
-WCGrid.prototype.drawPivotControl = function () {
+Grid.prototype.drawPivotControl = function () {
 };
 
 // PivotControl {{{1
@@ -2998,7 +2998,7 @@ PivotControl.prototype.updateGroup = function () {
 		self.view.clearGroup();
 	}
 
-	self.gridTable.draw(self.ui.table);
+	self.gridTable.draw(self.ui.table); // TODO load prefs
 };
 
 // #addPivot {{{2
@@ -3041,7 +3041,7 @@ PivotControl.prototype.updatePivot = function () {
 		self.view.clearPivot();
 	}
 
-	self.gridTable.draw(self.ui.table);
+	self.gridTable.draw(self.ui.table); // TODO load prefs
 };
 
 // #draw {{{2
@@ -3070,7 +3070,7 @@ PivotControl.prototype.draw = function (container, tableDoneCont) {
 				self.fields[fieldName] = new PivotControlField(self, fieldName, self.features);
 				self.fields[fieldName].appendTo(self.ui.available);
 			});
-			self.gridTable.draw(self.ui.table, tableDoneCont);
+			self.gridTable.draw(self.ui.table, tableDoneCont); // TODO load prefs
 		});
 	});
 };
@@ -3199,4 +3199,4 @@ PivotControlField.prototype.appendTo = function (elt) {
 window.MIE = window.MIE || {};
 
 window.MIE.trans = I;
-window.MIE.WCGrid = WCGrid;
+window.MIE.Grid = Grid;

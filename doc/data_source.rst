@@ -48,13 +48,13 @@ The type information for each field indicates the following:
    | ``string``   | Catch all data type, can contain anything at all.                              |
    +--------------+--------------------------------------------------------------------------------+
    | ``date``     | A string containing a date, which can be formatted or sorted.  The default     |
-   |              | format is "YYYY-MM-DD."  The internal value is a Date instance.                |
+   |              | format is "YYYY-MM-DD."  The internal value is a Moment instance.              |
    +--------------+--------------------------------------------------------------------------------+
    | ``time``     | A string containing a time, which can be formatted or sorted.  The default     |
    |              | format is "HH:mm:ss."  The internal value is a string.                         |
    +--------------+--------------------------------------------------------------------------------+
    | ``datetime`` | A string containing both a date and time, which can be formatted and sorted.   |
-   |              | The default format is "YYYY-MM-DD HH:mm:ss."  The internal value is a Date     |
+   |              | The default format is "YYYY-MM-DD HH:mm:ss."  The internal value is a Moment   |
    |              | instance.                                                                      |
    +--------------+--------------------------------------------------------------------------------+
 
@@ -68,6 +68,8 @@ called a lot.
 
 **Example**
 
+.. todo:: Update conversion function example!
+
 .. code-block:: javascript
 
    var tryInt = function (val) { return _.isInt(val) ? parseInt(val, 10) : null; }
@@ -80,6 +82,15 @@ called a lot.
      conversion: [tryInt, tryFloat, tryDate]
    });
 
+Type Decoding
+=============
+
+After the user conversion functions have been evaluated, the data source will perform type decoding.
+This process transforms the data row's field values into appropriate internal representations
+according to the type information for that field (e.g. a string containing a date gets transformed
+into a Moment instance when the type info indicates the field should be treated as a date).  The
+internal representation is used when sorting and filtering.
+
 Internal Format
 ===============
 
@@ -89,9 +100,9 @@ properties:
 
 ``value``
   This is the value used for all operations on the data, such as sorting, filtering, and grouping.
-  Initially this is the value returned by the data source, but conversion may alter it: for example,
-  when the type of the field is a date, the ``value`` becomes a Moment instance during type
-  conversion.
+  Initially this is the value returned by the data source, but conversion functions and type
+  decoding may alter it: for example, when the type of the field is a date, the ``value`` becomes a
+  Moment instance during type decoding.
 
 ``orig``
   This property stores the original value obtained from the source.  During conversion (either
