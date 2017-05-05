@@ -548,8 +548,9 @@ GridTable.prototype.draw_header = function (columns, data, typeInfo) {
 		'vertical-align': 'top'
 	};
 
-	if (self.features.pivot && data.isPivot) {
+	// Pivot Headers (Column Values) {{{3
 
+	var drawPivot = function () {
 		// This produces separate rows in the header for each pivot field.  That's what allows you to
 		// see the combinations of column values, like this:
 		//
@@ -623,9 +624,11 @@ GridTable.prototype.draw_header = function (columns, data, typeInfo) {
 			// Add the row for this pivot field to the THEAD.
 			self.ui.thead.append(headingTr);
 		}
-	}
+	};
 
-	if (self.features.group) {
+	// Group Headers (Row Values) {{{3
+
+	var drawGroup = function () {
 		headingTr = jQuery('<tr>');
 
 		_.each(data.groupFields, function (fieldName) {
@@ -661,8 +664,11 @@ GridTable.prototype.draw_header = function (columns, data, typeInfo) {
 		}
 
 		self.ui.thead.append(headingTr);
-	}
-	else {
+	};
+
+	// Plain Headers (Column Fields) {{{3
+
+	var drawPlain = function () {
 		headingTr = jQuery('<tr>');
 		filterTr = jQuery('<tr>');
 
@@ -754,6 +760,14 @@ GridTable.prototype.draw_header = function (columns, data, typeInfo) {
 			}
 
 			self.setCss(headingTh, field);
+
+			var alignment = colConfig.headerAlignment
+				|| (['number', 'currency'].indexOf(typeInfo.get(field).type) >= 0 && 'right');
+
+			if (alignment !== undefined) {
+				headingTh.css('text-align', alignment);
+			}
+
 			self.ui.thMap[field] = headingTh;
 			headingTr.append(headingTh);
 		});
@@ -774,7 +788,17 @@ GridTable.prototype.draw_header = function (columns, data, typeInfo) {
 		if (self.features.filter) {
 			self.ui.thead.append(filterTr);
 		}
+	};
 
+	if (self.features.pivot && data.isPivot) {
+		drawPivot();
+	}
+
+	if (self.features.group) {
+		drawGroup();
+	}
+	else {
+		drawPlain();
 	}
 };
 
@@ -890,6 +914,14 @@ GridTable.prototype.draw_body_plain = function (data, typeInfo, columns) {
 			}
 
 			self.setCss(td, field);
+
+			var alignment = colConfig.cellAlignment
+				|| (['number', 'currency'].indexOf(typeInfo.get(field).type) >= 0 && 'right');
+
+			if (alignment !== undefined) {
+				td.css('text-align', alignment);
+			}
+
 			tr.append(td);
 		});
 
