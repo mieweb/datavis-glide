@@ -865,75 +865,114 @@ GridTable.prototype.draw_body_plain = function (data, typeInfo, columns) {
 		}
 	};
 
-	_.each(data.data, function (row, rowNum) {
-		var tr = jQuery('<tr>', {id: self.defn.table.id + '_' + rowNum});
+	/*
+	 * Check to see if we should be limiting our output.
+	 */
 
-		// Create the check box which selects the row.
-
-		if (self.features.rowSelect) {
-			var checkbox = jQuery('<input>', {
-				'type': 'checkbox',
-				'data-row-num': rowNum
-			})
-				.on('change', check_handler);
-			tr.append(jQuery('<td>').append(checkbox));
+	var useLimit = false;
+	var limitConfig;
+	
+	if (self.features.limit) {
+		if (self.defn.table.limit.threshold === undefined) {
+			debug.info('GRID TABLE // DRAW', 'Disabling limit feature because no limit threshold was provided');
 		}
+		else if (data.data.length > self.defn.table.limit.threshold) {
+			useLimit = true;
+			limitConfig = self.defn.table.limit;
+			debug.info('GRID TABLE // DRAW', 'Limiting output to first ' + limitConfig.threshold + ' rows');
+		}
+	}
 
-		// Create the data cells.
+	for (var rowNum = 0; rowNum < data.data.length; rowNum += 1) {
+		var row = data.data[rowNum];
+		var tr;
 
-		_.each(columns, function (field, colIndex) {
-			var colConfig = self.defn.table.columns[colIndex] || {};
-			var cell = row.rowData[field];
+		if (useLimit && limitConfig.method === 'more' && rowNum > limitConfig.threshold) {
+			tr = jQuery('<tr>');
 
-			var td = jQuery('<td>');
-			var value = cell.orig || cell.value;
+			var colSpan = columns.length
+				+ (self.features.rowSelect ? 1 : 0)
+				+ (self.features.rowReorder ? 1 : 0);
 
-			// For types that support formatting, use that instead of the value.
-
-			if (['number', 'currency', 'date', 'time', 'datetime'].indexOf(typeInfo.get(field).type) >= 0
-					&& colConfig.format) {
-
-				// The value here could be either from NumeralJS or from Moment, but fortunately it doesn't
-				// matter because they both have the format() method.
-
-				value = cell.value.format(colConfig.format);
-			}
-
-			// If there's a rendering function, pass the (possibly formatted) value through it to get the
-			// new value to display.
-
-			if (cell.render) {
-				value = cell.render(value);
-			}
-
-			if (value instanceof Element || value instanceof jQuery) {
-				td.append(value);
-			}
-			else {
-				td.text(value);
-			}
-
-			self.setCss(td, field);
-
-			var alignment = colConfig.cellAlignment
-				|| (['number', 'currency'].indexOf(typeInfo.get(field).type) >= 0 && 'right');
-
-			if (alignment !== undefined) {
-				td.css('text-align', alignment);
-			}
+			var td = jQuery('<td>', {
+				colspan: colSpan
+			})
+				.css('text-align', 'center')
+				.text('Click me to add ' + limitConfig.chunkSize + ' more rows.');
 
 			tr.append(td);
-		});
+			rowNum = data.data.length; // HACK Skip to the end of the loop.
+		}
+		else {
+			tr = jQuery('<tr>', {id: self.defn.table.id + '_' + rowNum});
 
-		// Create button used as the "handle" for dragging/dropping rows.
+			// Create the check box which selects the row.
 
-		if (self.features.rowReorder) {
-			tr.append(jQuery('<td>').append(self.makeRowReorderBtn()));
+			if (self.features.rowSelect) {
+				var checkbox = jQuery('<input>', {
+					'type': 'checkbox',
+					'data-row-num': rowNum
+				})
+					.on('change', check_handler);
+				tr.append(jQuery('<td>').append(checkbox));
+			}
+
+			// Create the data cells.
+
+			_.each(columns, function (field, colIndex) {
+				var colConfig = self.defn.table.columns[colIndex] || {};
+				var cell = row.rowData[field];
+
+				var td = jQuery('<td>');
+				var value = cell.orig || cell.value;
+
+				// For types that support formatting, use that instead of the value.
+
+				if (['number', 'currency', 'date', 'time', 'datetime'].indexOf(typeInfo.get(field).type) >= 0
+						&& colConfig.format) {
+
+					// The value here could be either from NumeralJS or from Moment, but fortunately it doesn't
+					// matter because they both have the format() method.
+
+					value = cell.value.format(colConfig.format);
+				}
+
+				// If there's a rendering function, pass the (possibly formatted) value through it to get the
+				// new value to display.
+
+				if (cell.render) {
+					value = cell.render(value);
+				}
+
+				if (value instanceof Element || value instanceof jQuery) {
+					td.append(value);
+				}
+				else {
+					td.text(value);
+				}
+
+				self.setCss(td, field);
+
+				var alignment = colConfig.cellAlignment
+					|| (['number', 'currency'].indexOf(typeInfo.get(field).type) >= 0 && 'right');
+
+				if (alignment !== undefined) {
+					td.css('text-align', alignment);
+				}
+
+				tr.append(td);
+			});
+
+			// Create button used as the "handle" for dragging/dropping rows.
+
+			if (self.features.rowReorder) {
+				tr.append(jQuery('<td>').append(self.makeRowReorderBtn()));
+			}
 		}
 
 		self.ui.tr.push(tr);
 		self.ui.tbody.append(tr);
-	});
+	}
 };
 
 // #draw_body_group {{{2
@@ -2159,6 +2198,8 @@ GridFilterSet.prototype.loadPrefs = function (prefs) {
  * @property {boolean} [edit=false] Unused
  *
  * @property {boolean} [delete=false] Unused
+ *
+ * @property {boolean} [limit=false] If true, then limit the amount of rows output by some method.
  */
 
 /**
@@ -2250,7 +2291,7 @@ var Grid = function (id, view, source, defn, tagOpts, cb) {
 
 	self.features = {};
 
-	_.each(['sort', 'filter', 'group', 'pivot', 'rowSelect', 'rowReorder', 'add', 'edit', 'delete'], function (feat) {
+	_.each(['sort', 'filter', 'group', 'pivot', 'rowSelect', 'rowReorder', 'add', 'edit', 'delete', 'limit'], function (feat) {
 		self.features[feat] = getPropDef(false, self.defn, 'table', 'features', feat);
 	});
 
@@ -2668,17 +2709,24 @@ Grid.prototype.refresh = function () {
 		self.tagOpts.filterInput.store();
 	}
 
-	delete self.gridTable;
-	delete self.pivotControl;
-
 	if (self.features.pivot) {
-		debug.info('GRID', 'Creating PivotControl for pivot table output');
-		self.pivotControl = new PivotControl(self.defn, self.view, self.features);
+		if (self.pivotControl !== undefined) {
+			self.pivotControl.clear();
+		}
+		else {
+			debug.info('GRID', 'Creating PivotControl for pivot table output');
+			self.pivotControl = new PivotControl(self.defn, self.view, self.features);
+		}
 		self.pivotControl.draw(self.ui.gridContainer, self.tableDoneCont);
 	}
 	else {
-		debug.info('GRID', 'Creating GridTable for normal output');
-		self.gridTable = new GridTable(self.defn, self.view, self.features);
+		if (self.gridTable !== undefined) {
+			self.gridTable.clear();
+		}
+		else {
+			debug.info('GRID', 'Creating GridTable for normal output');
+			self.gridTable = new GridTable(self.defn, self.view, self.features);
+		}
 		self.gridTable.draw(self.ui.gridContainer, self.tableDoneCont); // TODO load prefs
 	}
 };

@@ -1093,7 +1093,7 @@ var DataSource = function (spec, params) {
 		throw new DataSourceError('Unsupported data source type: ' + self.type);
 	}
 
-	self.source = new DataSource.sources[self.type](spec);
+	self.source = new DataSource.sources[self.type](spec, params);
 
 	if (!isNothing(spec.conversion) && !_.isArray(spec.conversion)) {
 		throw new DataSourceError('Invalid DataSource config: `.conversion` must be an array');
@@ -1361,6 +1361,10 @@ DataSource.prototype.postProcess = function (data, cont) {
 
 DataSource.prototype.clearCachedData = function () {
 	var self = this;
+
+	if (typeof self.source.clearCachedData === 'function') {
+		self.source.clearCachedData();
+	}
 
 	self.cache = {};
 	self.publish(DataSource.messages.DATA_UPDATED);
