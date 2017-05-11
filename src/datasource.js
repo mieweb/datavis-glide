@@ -19,7 +19,8 @@ FilterError.prototype.constructor = FilterError;
  *
  * @property {string} inputName Name of an input element from a form.
  *
- * @property {string} type What kind of widget to get input from.
+ * @property {string} type What kind of widget to get input from.  If this is undefined, the default
+ * value will be used for storing (from the page), and loading (into the page) will do nothing.
  *
  * @property {boolean} required If true, an error will be issued if this filter is used on a data
  * source, when the user has not entered anything into the input element.
@@ -88,7 +89,13 @@ Filter.prototype.store = function (id) {
 		return jQuery(form).find(s);
 	} : jQuery;
 	var self = this;
-	switch (self.type) {
+
+	if (self.type === undefined) {
+		self.value = self.defaultValue;
+	}
+	else {
+		switch (self.type) {
+		case 'hidden':
 		case 'text':
 			self.value = findInput('input[name="' + self.inputName + '"]').val();
 			break;
@@ -127,9 +134,10 @@ Filter.prototype.store = function (id) {
 			break;
 		default:
 			throw 'Invalid parameter specification: unknown input type "' + self.type + '"';
+		}
 	}
 
-	debug.info('FILTER', 'Param Name = %s, Value = %s', self.paramName, self.value);
+	debug.info('FILTER // STORE', 'Input Type = %s, Input Name = %s, Param Name = %s, Value = %s', self.type, self.inputName, self.paramName, self.value);
 
 	// if (self.required && (self.value === '' || self.value === [])) {
 	//	throw new MissingRequiredParameterError(self.paramName);
@@ -162,14 +170,18 @@ Filter.prototype.store = function (id) {
  */
 
 Filter.prototype.load = function (id, opts) {
+	var self = this;
+
+	if (self.type === undefined) {
+		return;
+	}
+
 	opts = opts || {};
 	var form = id ? document.getElementById(id) : null;
 
 	var findInput = form ? function (s) {
 		return jQuery(form).find(s);
 	} : jQuery;
-
-	var self = this;
 
 	_.defaults(opts, {
 		fade: false
@@ -198,102 +210,108 @@ Filter.prototype.load = function (id, opts) {
 	}
 
 	switch (self.type) {
-		case 'text':
-			(function () {
-				var nodes = findInput('input[name="' + self.inputName + '"]');
-				if (opts.fade && nodes.val() !== self.value) {
-					nodes.animate(fade, 500, unfade);
-				}
-				nodes.val(self.value ? self.value : (self.defaultValue ? self.defaultValue : ''));
-			})();
-			break;
-		case 'date':
-			_.each(['YEAR', 'MONTH', 'DAY'], function (elt) {
-				var nodes = findInput('input[name="' + self.inputName + elt + '"]');
-				nodes.val(_.isObject(self.internalValue) && _.isString(self.internalValue[elt]) && self.internalValue[elt] !== '' ? self.internalValue[elt] : (self.defaultValue ? self.defaultValue : ''));
-				if (opts.fade) {
-					nodes.animate(fade, 500, unfade);
-				}
+	case 'hidden':
+		(function () {
+			var nodes = findInput('input[name="' + self.inputName + '"]');
+			nodes.val(self.value ? self.value : (self.defaultValue ? self.defaultValue : ''));
+		})();
+		break;
+	case 'text':
+		(function () {
+			var nodes = findInput('input[name="' + self.inputName + '"]');
+			if (opts.fade && nodes.val() !== self.value) {
+				nodes.animate(fade, 500, unfade);
+			}
+			nodes.val(self.value ? self.value : (self.defaultValue ? self.defaultValue : ''));
+		})();
+		break;
+	case 'date':
+		_.each(['YEAR', 'MONTH', 'DAY'], function (elt) {
+			var nodes = findInput('input[name="' + self.inputName + elt + '"]');
+			nodes.val(_.isObject(self.internalValue) && _.isString(self.internalValue[elt]) && self.internalValue[elt] !== '' ? self.internalValue[elt] : (self.defaultValue ? self.defaultValue : ''));
+			if (opts.fade) {
+				nodes.animate(fade, 500, unfade);
+			}
+		});
+		break;
+	case 'checkbox':
+		(function () {
+			var curNodes = findInput('input[name="' + self.inputName + '"]:checkbox:checked');
+			var curValues = {};
+			_.each(curNodes, function (node) {
+				curValues[jQuery(node).val()] = node;
 			});
-			break;
-		case 'checkbox':
-			(function () {
-				var curNodes = findInput('input[name="' + self.inputName + '"]:checkbox:checked');
-				var curValues = {};
-				_.each(curNodes, function (node) {
-					curValues[jQuery(node).val()] = node;
-				});
-				curNodes.prop('checked', false);
-				_.each(self.value, function (x) {
-					var nodes = findInput('input[name="' + self.inputName + '"]:checkbox[value="' + x + '"]');
-					nodes.prop('checked', true);
-					delete curValues[x];
-					if (opts.fade) {
-						nodes.parent('label').animate(fade, 500, unfade);
-					}
-				});
-				if (opts.fade) {
-					_.each(curValues, function (node) {
-						var label = jQuery(node).parent('label');
-						// _.each(['Top', 'Bottom', 'Left', 'Right'], function (side) {
-						//	 label.css('border' + side + 'Width', '2px');
-						//	 label.css('border' + side + 'Style', 'dashed');
-						//	 label.css('border' + side + 'Color', '#000000');
-						// });
-						label.animate(fade, 500, unfade);
-					});
-				}
-			})();
-			break;
-		case 'toggle-checkbox':
-			(function () {
-				var node = findInput('input[name="' + self.inputName + '"]');
-				var curValue = node.prop('checked') ? 'on' : 'off';
-				node.prop('checked', self.value === 'on');
-				if (opts.fade && curValue !== self.value) {
-					node.parent('label').animate(fade, 500, unfade);
-				}
-			})();
-			break;
-		case 'radio':
-			(function () {
-				var nodes = findInput('input[name="' + self.inputName + '"]:radio[value="' + self.value + '"]');
+			curNodes.prop('checked', false);
+			_.each(self.value, function (x) {
+				var nodes = findInput('input[name="' + self.inputName + '"]:checkbox[value="' + x + '"]');
 				nodes.prop('checked', true);
+				delete curValues[x];
 				if (opts.fade) {
 					nodes.parent('label').animate(fade, 500, unfade);
 				}
-			})();
-			break;
-		case 'select':
-			(function () {
-				var nodes = findInput('select[name="' + self.inputName + '"]');
-				var oldVal = nodes.val();
-				nodes.val(self.value);
-				if (opts.fade && oldVal !== self.value) {
-					nodes.parent().animate(fade, 500, unfade);
-				}
-			})();
-			break;
-		case 'autocomplete':
-			return new NotImplementedError();
-		case 'multi-autocomplete':
-			(function () {
-				if (!_.isObject(window[self.inputName + '_ac'])) {
-					throw 'Autocomplete object "' + self.inputName + '" does not exist';
-				}
-				// window[self.inputName + '_ac'].multiClear(); // Doesn't work!
-				window[self.inputName + '_ac'].storedvalues = [];
-				jQuery(document.getElementById(self.inputName + '_ac_div')).children().remove();
-				_.each(self.value, function (v, i) {
-					window[self.inputName + '_ac'].multiAddValue(v, self.internalValue[i]);
+			});
+			if (opts.fade) {
+				_.each(curValues, function (node) {
+					var label = jQuery(node).parent('label');
+					// _.each(['Top', 'Bottom', 'Left', 'Right'], function (side) {
+					//	 label.css('border' + side + 'Width', '2px');
+					//	 label.css('border' + side + 'Style', 'dashed');
+					//	 label.css('border' + side + 'Color', '#000000');
+					// });
+					label.animate(fade, 500, unfade);
 				});
-				if (opts.fade) {
-					jQuery(document.getElementById(self.inputName + '_ac_div')).animate(fade, 500, unfade);
-				}
-			})();
-			break;
-		default:
-			throw 'Invalid parameter specification: unknown input type "' + self.type + '"';
+			}
+		})();
+		break;
+	case 'toggle-checkbox':
+		(function () {
+			var node = findInput('input[name="' + self.inputName + '"]');
+			var curValue = node.prop('checked') ? 'on' : 'off';
+			node.prop('checked', self.value === 'on');
+			if (opts.fade && curValue !== self.value) {
+				node.parent('label').animate(fade, 500, unfade);
+			}
+		})();
+		break;
+	case 'radio':
+		(function () {
+			var nodes = findInput('input[name="' + self.inputName + '"]:radio[value="' + self.value + '"]');
+			nodes.prop('checked', true);
+			if (opts.fade) {
+				nodes.parent('label').animate(fade, 500, unfade);
+			}
+		})();
+		break;
+	case 'select':
+		(function () {
+			var nodes = findInput('select[name="' + self.inputName + '"]');
+			var oldVal = nodes.val();
+			nodes.val(self.value);
+			if (opts.fade && oldVal !== self.value) {
+				nodes.parent().animate(fade, 500, unfade);
+			}
+		})();
+		break;
+	case 'autocomplete':
+		return new NotImplementedError();
+	case 'multi-autocomplete':
+		(function () {
+			if (!_.isObject(window[self.inputName + '_ac'])) {
+				throw 'Autocomplete object "' + self.inputName + '" does not exist';
+			}
+			// window[self.inputName + '_ac'].multiClear(); // Doesn't work!
+			window[self.inputName + '_ac'].storedvalues = [];
+			jQuery(document.getElementById(self.inputName + '_ac_div')).children().remove();
+			_.each(self.value, function (v, i) {
+				window[self.inputName + '_ac'].multiAddValue(v, self.internalValue[i]);
+			});
+			if (opts.fade) {
+				jQuery(document.getElementById(self.inputName + '_ac_div')).animate(fade, 500, unfade);
+			}
+		})();
+		break;
+	default:
+		throw 'Invalid parameter specification: unknown input type "' + self.type + '"';
 	}
 };
 
@@ -769,6 +787,7 @@ var ParamInput = function (sourceType, opts) {
 			self.cgiValue = opts.cgi.value;
 
 			filterOpts.paramName = self.cgiName; // TODO: Remove after self.filter is gone.
+			filterOpts.defaultValue = self.cgiValue;
 
 			break;
 		case 'json_where':
