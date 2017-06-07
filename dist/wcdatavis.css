@@ -100,6 +100,10 @@
     text-align: justify !important;
 }
 
+/*
+ * The "show more rows" button, shown when using the "more" limit method.
+ */
+
 tr.wcdvgrid_more {
 	background-color: #F6F6F9;
 	border-top: 3px double #808080;
@@ -116,6 +120,19 @@ tr.wcdvgrid_more td {
 	text-transform: uppercase;
 	vertical-align: bottom;
 	cursor: pointer;
+}
+
+/*
+ * Fix for the Chosen dropdown, to keep it from getting cut off by TableTool's floating header.
+ * Suggested by Dan in #57907.
+ *
+ * HACK: It seems like you'd want to set this as high as possible, otherwise you're just guessing
+ * about how tall it might need to be.  However, if you set it too high (e.g. 9999) you get just
+ * blank space in the header.
+ */
+
+.ttsticky .thead .inner {
+	height: 1000px;
 }
 
 /*

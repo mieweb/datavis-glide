@@ -897,12 +897,9 @@ GridTable.prototype.draw_header = function (columns, data, typeInfo) {
 								// keep the heights of the original and clone in sync on its own (using the `update`
 								// function only synchronizes the widths).
 
-								//var targetHeight = th.innerHeight();
 								var trHeight = tr.innerHeight();
 
-								//debug.info('GRID TABLE // ADD FILTER', 'Adjusting original table header height to ' + targetHeight + 'px to match floating header height');
 								debug.info('GRID TABLE // ADD FILTER', 'Adjusting original table header height to ' + trHeight + 'px to match floating header height');
-								//filterTh.innerHeight(targetHeight);
 								filterTr.innerHeight(trHeight);
 							}
 						};
@@ -1924,7 +1921,7 @@ var StringDropdownGridFilter = function () {
 					'value': val
 				}).text(val).appendTo(self.input);
 			});
-			self.input.chosen(/*{'width': '100%'}*/);
+			self.input.chosen({'width': self.div.innerWidth() - self.removeBtn.outerWidth()});
 		});
 	};
 };
