@@ -820,7 +820,9 @@ GridTable.prototype.draw_header = function (columns, data, typeInfo) {
 
 	var drawPlain = function () {
 		headingTr = jQuery('<tr>');
-		filterTr = jQuery('<tr>');
+		filterTr = jQuery('<tr>', {
+			'class': 'wcdv_grid_filterrow'
+		});
 
 		/*
 		 * Create the checkbox that allows the user to select all rows.
@@ -895,7 +897,7 @@ GridTable.prototype.draw_header = function (columns, data, typeInfo) {
 				// Unfortunately, the ID attribute is copied when using TableTool so this might mess us up.
 
 				var filterThId = gensym();
-				var filterTh = jQuery('<th>', { id: filterThId }).addClass('filter_col_' + colIndex).css(filterThCss);
+				var filterTh = jQuery('<th>', { id: filterThId }).addClass('wcdv_grid_filtercol filter_col_' + colIndex).css(filterThCss);
 				self.setCss(filterTh, field);
 				filterTr.append(filterTh);
 
@@ -1166,7 +1168,7 @@ GridTable.prototype.draw_body_plain = function (data, typeInfo, columns, cont) {
 					.append(fontAwesome('F13A'));
 
 				self.moreVisibleHandler = onVisibilityChange(td, function(isVisible) {
-					if (isVisible) {
+					if (isVisible && getProp(self.defn, 'table', 'limit', 'autoShowMore')) {
 						debug.info('GRID TABLE // MORE', '"Show More Rows" button scrolled into view');
 						showMore();
 					}
@@ -1723,6 +1725,10 @@ var GridFilter = (function () {
 				}
 			}
 		};
+
+		self.gridFilterSet.gridTable.on(GridTable.events.columnResize, function () {
+			self.adjustInputWidth({ useSizingElement: true, fromColumnResize: true });
+		});
 	};
 })();
 
@@ -1866,6 +1872,54 @@ GridFilter.prototype.remove = function () {
 
 GridFilter.prototype.isRange = function () {
 	return false;
+};
+
+// #adjustInputWidth {{{3
+
+GridFilter.prototype.adjustInputWidth = function (opts) {
+	var self = this;
+
+	if (opts === undefined) {
+		opts = {};
+	}
+	
+	// In case we're using TableTool, we need to carry around this idea of the sizing element.  At
+	// this point in the JS execution, TableTool hasn't caught up and correctly resized the floating
+	// header to match the original header column widths.  Therefore, we can't use `self.div` for
+	// determining the correct width (it's the wrong size, because it's still in a column which is the
+	// wrong size).  Instead, we need to use the sizing element - which is the original version of the
+	// TH containing `self.div` - to determine the correct size.  TableTool will catch up later,
+	// correctly resizing the column to align perfectly with what we set here.
+	//
+	// HACK: The fudge factor (subtract 14) is determined by experimentation to produce the correct
+	// look.  I'm not sure what padding or margin somewhere is causing that difference.
+	//
+	// FIXME: This is extremely tightly coupled to knowledge about how the grid table is laid out and
+	// what features it has (e.g. TableTool).  It would be better to pass in what the size of the
+	// column currently is with the event handler.
+
+	_.defaults(opts, {
+		useSizingElement: false,
+		input: self.input
+	});
+
+	console.log('         TARGET: %O', opts.input);
+
+	var targetWidth = opts.useSizingElement ? self.sizingElement.width() : self.div.width();
+	console.log('AVAILABLE SPACE: ' + targetWidth + 'px ' + (opts.useSizingElement ? '[sizing element]' : '[div]'));
+
+	targetWidth -= self.removeBtn.outerWidth();
+	console.log('  REMOVE BUTTON: ' + self.removeBtn.outerWidth() + 'px');
+
+
+	if (self.operatorDrop !== undefined) {
+		targetWidth -= self.operatorDrop.outerWidth();
+		console.log('  OPERATOR DROP: ' + self.operatorDrop.outerWidth() + 'px');
+	}
+
+	debug.info('GRID FILTER' + (opts.fromColumnResize ? ' // HANDLER (columnResize)' : ''), 'Adjusting ' + self.field + ' filter widget width to ' + targetWidth + 'px to match column width');
+
+	opts.input.outerWidth(targetWidth);
 };
 
 // StringTextboxGridFilter {{{2
@@ -2030,33 +2084,26 @@ var StringDropdownGridFilterSumo = function () {
 				okCancelInMulti: true,
 				isClickAwayOk: true
 			});
-			self.input.closest('div.SumoSelect').outerWidth(self.div.innerWidth() - self.removeBtn.outerWidth());
+			self.adjustInputWidth();
 		});
 	};
-
-	self.gridFilterSet.gridTable.on(GridTable.events.columnResize, function () {
-		// In case we're using TableTool, we need to carry around this idea of the sizing element.  At
-		// this point in the JS execution, TableTool hasn't caught up and correctly resized the floating
-		// header to match the original header column widths.  Therefore, we can't use `self.div` for
-		// determining the correct width (it's the wrong size, because it's still in a column which is
-		// the wrong size).  Instead, we need to use the sizing element - which is the original version
-		// of the TH containing `self.div` - to determine the correct size.  TableTool will catch up
-		// later, correctly resizing the column to align perfectly with what we set here.
-		//
-		// HACK: The fudge factor (subtract 14) is determined by experimentation to produce the correct
-		// look.  I'm not sure what padding or margin somewhere is causing that difference.
-		//
-		// FIXME: This is extremely tightly coupled to knowledge about how the grid table is laid out
-		// and what features it has (e.g. TableTool).  It would be better to pass in what the size of
-		// the column currently is with the event handler.
-
-		var targetWidth = self.sizingElement.innerWidth() - self.removeBtn.outerWidth() - 14;
-		debug.info('GRID FILTER // HANDLER (columnResize)', 'Adjusting SumoSelect widget width to ' + targetWidth + 'px to match column width');
-		self.input.closest('div.SumoSelect').innerWidth(targetWidth);
-	});
 };
 
 StringDropdownGridFilterSumo.prototype = Object.create(GridFilter.prototype);
+
+// #adjustInputWidth {{{3
+
+StringDropdownGridFilterSumo.prototype.adjustInputWidth = function (opts) {
+	var self = this;
+
+	if (opts === undefined) {
+		opts = {};
+	}
+
+	opts.input = self.input.closest('div.SumoSelect');
+
+	self.super.adjustInputWidth(opts);
+};
 
 // #getOperator {{{3
 
@@ -2389,6 +2436,8 @@ GridFilterSet.prototype.add = function (field, target, filterType, filterBtn, on
 	// Add the filter to the user interface.
 
 	target.append(filter.div);
+
+	filter.adjustInputWidth();
 
 	if (typeof filter.afterAdd === 'function') {
 		filter.afterAdd(target);
@@ -3049,12 +3098,32 @@ Grid.prototype._addCommonButtons = function (toolbar) {
 	var self = this;
 	var isVisible = true; // If true, the grid is not currently hidden.
 
-	self.ui.refreshLink = jQuery('<button type="button">')
+	self.ui.refreshLink = jQuery('<button>')
 		.append(fontAwesome('F021'))
-		.append(' Refresh')
+		.text('Refresh')
 		.on('click', function () {
 			self.refresh();
 		})
+		.appendTo(toolbar);
+
+	setPropDef(true, self.defn, 'table', 'limit', 'autoShowMore');
+
+	var showMoreRowsCheckbox = jQuery('<input>', {
+			'id': gensym(),
+			'type': 'checkbox',
+			'checked': self.defn.table.limit.autoShowMore
+		})
+		.on('change', function (evt) {
+			var isChecked = showMoreRowsCheckbox.prop('checked');
+			debug.info('GRID // TOOLBAR', 'Setting `table.limit.autoShowMore` to ' + isChecked);
+			self.defn.table.limit.autoShowMore = isChecked;
+		})
+		.appendTo(toolbar)
+
+	var showMoreRowsLabel = jQuery('<label>', {
+		'for': showMoreRowsCheckbox.attr('id')
+	})
+		.text('Show More Rows on Scroll')
 		.appendTo(toolbar);
 };
 
@@ -3069,21 +3138,21 @@ Grid.prototype._addCommonButtons = function (toolbar) {
 Grid.prototype._addPrefsButtons = function (toolbar) {
 	var self = this;
 
-	jQuery('<button type="button">')
+	jQuery('<button>')
 		.text('Clear Prefs')
 		.on('click', function () {
 			self.defn.prefs.save(null, false, function () {
 				self.refresh();
 			});
 		})
-		.appendTo(toolbar);
+		.appendTo(toolbar)
 
-	jQuery('<button type="button">')
+	jQuery('<button>')
 		.text('Set Defaults')
 		.on('click', function () {
 			self.defn.prefs.save(undefined, true, null);
 		})
-		.appendTo(toolbar);
+		.appendTo(toolbar)
 
 	var viewDropdown =
 		$('<select>')
@@ -3110,7 +3179,7 @@ Grid.prototype._addPrefsButtons = function (toolbar) {
 				self.defn.prefs.setView(viewName);
 				newView.hide();
 				curView.show();
-			});
+			})
 
 	var newViewCancel =
 		$('<button>', { 'type': 'button' })
@@ -3119,7 +3188,7 @@ Grid.prototype._addPrefsButtons = function (toolbar) {
 				newViewInput.val('');
 				newView.hide();
 				curView.show();
-			});
+			})
 
 	var newView =
 		$('<div>')

@@ -1254,6 +1254,10 @@ Source.prototype.getUniqueVals = function (cont) {
 			});
 		});
 
+		_.each(uniqElts, function (obj) {
+			obj.values.sort();
+		});
+
 		self.cache.uniqElts = uniqElts;
 		return cont(self.cache.uniqElts);
 	});

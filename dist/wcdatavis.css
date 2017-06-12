@@ -80,6 +80,10 @@
 	color: white;
 }
 
+tr.wcdv_grid_filterrow th.wcdv_grid_filtercol {
+	text-transform: none;
+}
+
 /*
  * Alignment classes.
  */

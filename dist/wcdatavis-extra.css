@@ -1,0 +1,223 @@
+/* TABLE STYLES */
+@media print {
+	table.newui.withtoolbars .toolbar {
+		display: none;
+	}
+}
+body {
+	font-family: sans-serif;
+}
+table.newui thead th {
+	color: #000;
+}
+.zebrastripe .dtinput > .fa,
+.zebrastripe .dateinput > .fa,
+.zebrastripe .date > .fa,
+.zebrastripe .fuzzyinput > .fa,
+.zebrastripe .clearableinput .fa,
+table.newui.zebra > tbody > tr:nth-child(even) .dtinput > .fa,
+table.newui.zebra > tbody > tr:nth-child(even) .dateinput > .fa,
+table.newui.zebra > tbody > tr:nth-child(even) .date > .fa,
+table.newui.zebra > tbody > tr:nth-child(even) .fuzzyinput > .fa,
+table.newui.zebra > tbody > tr:nth-child(even) .clearableinput .fa {
+	color: #808080;
+}
+table.newui {
+	background-color: white;
+	border: 0 !important;
+	border-collapse: collapse;
+	color: black;
+	line-height: 1.25em;
+	margin: 0;
+	padding: 0;
+	width: 100%;
+}
+table.newui th, table.newui td {
+	border: 0 !important;
+	padding: 4px 6px;
+	vertical-align: top;
+}
+table.newui table th, table.newui table td {
+	padding: 0;
+}
+table.newui thead {
+	background-color: #F6F6F9;
+	border-bottom: 3px double #808080;
+	font-weight: normal;
+}
+table.newui caption + thead {
+	border-top: 3px double #808080;
+}
+table.newui thead th {
+	color: #646464;
+	font-size: .85em;
+	font-weight: normal;
+	padding-bottom: 3px;
+	padding-top: 3px;
+	text-align: left;
+	text-transform: uppercase;
+	vertical-align: bottom;
+}
+table.newui thead th a.sorted {
+	display: inline-block;
+	padding-right: 9px;
+	position: relative;
+}
+table.newui thead th .sort {
+	bottom: 1px;
+	position: absolute;
+	right: -1px;
+}
+table.newui tbody {
+}
+table.newui > tbody > tr > th {
+	color: #414141;
+	font-weight: bold;
+	text-align: left;
+}
+table.newui .collapsed td {
+	padding-bottom: 1px;
+	padding-top: 1px;
+}
+table.newui .collapsed + .collapsed {
+	visibility: collapse;
+}
+table.newui .collapsed + .collapsed td {
+	padding-bottom: 0px;
+	padding-top: 0px;
+}
+table.newui > .collapsed:hover, table.newui > .collapsed :hover {
+	outline: none !important;
+}
+table.newui > tbody > tr {
+	background-color: white;
+}
+table.newui > tbody > tr:hover {
+	outline: 1px solid #999999;
+}
+table.newui > tbody.groupedRows:hover {
+	outline: 1px solid #999999;
+}
+table.newui > tbody > tr.nohover:hover {
+	outline: none !important;
+}
+table.newui tbody td {
+}
+table.newui tbody td.selected_row {
+	background-color: #B0D0FF;
+}
+table.newui tbody td a, table.newui tbody td .link {
+	text-decoration: none;
+}
+table.newui tbody td a:hover, table.newui tbody td .link:hover {
+	text-decoration: underline;
+}
+table.newui tbody td a.fa:hover, table.newui tbody td .link.fa:hover {
+	text-decoration: none;
+}
+table.newui tfoot {
+	background-color: #F6F6F9;
+	border-top: 3px double #808080;
+}
+table.newui tfoot td {
+	font-size: .85em;
+	padding-bottom: 3px;
+	padding-top: 3px;
+	text-transform: uppercase;
+}
+table.newui tfoot td[colspan] {
+	text-align: center;
+}
+table.newui .cell_date, table.newui .cell_center {
+	text-align: center;
+}
+table.newui .cell_date .date {
+	white-space: nowrap;
+}
+table.newui .cell_number {
+	text-align: right;
+}
+table.newui .cell_nowrap {
+	white-space: nowrap;
+}
+table.newui.zebra > tbody > tr:nth-child(even), table.newui.zebra > tbody > tr.even {
+	background-color: #F6F6F9;
+}
+table.newui.zebra > tbody > tr.odd {
+	background-color: white;
+}
+table.newui .header_nocase {
+	text-transform: none;
+}
+table.newui th.allow_wrap {
+	white-space: normal;
+}
+table.newui + table.newui {
+	margin-top: 1em;
+}
+table.newui .fa {
+	font-size: 1.2em;
+}
+table.newui .cell_links span {
+	cursor: pointer;
+	padding-right: .25em;
+}
+table.newui .cell_links span:last-child {
+	padding-right: 0;
+}
+table.newui caption {
+	background-color: white;
+	border-radius: 6px 6px 0 0;
+	color: #60881b;
+	font-size: 15px;
+	font-weight: bold;
+	padding: 4px 6px;
+	text-align: left;
+}
+table.newui caption.center {
+	text-align: center;
+}
+table.newui .hidden_row td {
+	display: none;
+}
+table.newui.withtoolbars {
+	position: relative;
+}
+table.newui.withtoolbars caption {
+	line-height: 19px;
+	max-height: 18px;
+	overflow: hidden;
+}
+table.newui.withtoolbars .toolbar {
+	background: linear-gradient(to right, rgba(255,255,255,0) 0, rgba(255,255,255,1) 12px);
+	background: -moz-linear-gradient(left, rgba(255,255,255,0) 0, rgba(255,255,255,1) 12px);
+	background: -ms-linear-gradient(left, rgba(255,255,255,0) 0, rgba(255,255,255,1) 12px);
+	background: -webkit-gradient(linear, center left, center right, color-stop(0, rgba(255,255,255,0)), color-stop(12px, rgba(255,255,255,1)));
+	background: -webkit-linear-gradient(left, rgba(255,255,255,0) 0, rgba(255,255,255,1) 12px);
+	background: white;
+	border: 0;
+	display: block;
+	position: absolute;
+	right: 0;
+	top: 0;
+}
+table.newui.withtoolbars .toolbar th {
+	display: block;
+	height: 19px;
+	line-height: 19px;
+	padding-left: 16px;
+	text-transform: none;
+}
+table.newui.withtoolbars .toolbar button {
+	background: white;
+	border: 1px solid #ccc;
+	border-radius: 2px;
+	color: #666;
+	cursor: pointer;
+	font-size: 1em;
+	line-height: 17px;
+	padding: 0 6px;
+}
+table.newui.withtoolbars .toolbar + thead {
+	border-top: 3px double #808080;
+}
