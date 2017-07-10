@@ -64,7 +64,16 @@ var getComparisonFn = (function () {
 	// Dates and times are stored as Moment instances, so we need to compare them accordingly.
 
 	cmpFn.date = function (a, b) {
-		return a.isBefore(b);
+		if (window.moment === undefined || (!moment.isMoment(a) && !moment.isMoment(b))) {
+			return a < b;
+		}
+		else if (moment.isMoment(a) && moment.isMoment(b)) {
+			return a.isBefore(b);
+		}
+		else {
+			log.warn('Cannot compare Moment w/ non-Moment');
+			return 0;
+		}
 	};
 	cmpFn.time = cmpFn.date;
 	cmpFn.datetime = cmpFn.date;
@@ -77,7 +86,24 @@ var getComparisonFn = (function () {
 	};
 
 	cmpFn.number = function (a, b) {
-		return a._value < b._value;
+		if (window.numeral === undefined) {
+			return a < b;
+		}
+
+		if (numeral.isNumeral(a)) {
+			if (numeral.isNumeral(b)) {
+				return a._value < b._value;
+			}
+			else {
+				return a._value < b;
+			}
+		}
+		else if (numeral.isNumeral(b)) {
+			return a < b._value;
+		}
+		else {
+			return a < b;
+		}
 	};
 	cmpFn.currency = cmpFn.number;
 
@@ -251,7 +277,7 @@ function isFloat(x) {
 }
 
 function toInt(x) {
-	return (typeof x === 'string') ? String(parseInt(x, 10)) : Math.floor(+x);
+	return (typeof x === 'string') ? parseInt(x, 10) : Math.floor(+x);
 }
 
 function toFloat(x) {
@@ -706,6 +732,7 @@ function needArg(val, varName) {
 		cmp = cmp || function (a, b) { return a < b };
 		var size = data.length;
 		var step = 0;
+		var stepsBeforeUpdate = Math.min(data.length / 50, 1000);
 
 		function merge(left, right) {
 			var result = []
@@ -732,7 +759,7 @@ function needArg(val, varName) {
 							return cont(merge(left, right, cont));
 						};
 						step += 1;
-						if (step % 100 === 0) {
+						if (step % stepsBeforeUpdate === 0) {
 							if (typeof update === 'function') {
 								update(step, size);
 							}
@@ -1034,25 +1061,24 @@ function fontAwesome(hex, cls, title) {
  *
  * @param {object} typeInfo
  *
- * @param {string|Numeral|Moment} value The true value, as used by the View to perform sorting and
+ * @param {Cell} cell The true value, as used by the View to perform sorting and
  * filtering.
- *
- * @param {string} [orig] A representation of the value which isn't the true value of the cell   For
- * example, this is used by Webchart's links:
- *
- * ```
- * value = William Hart
- * orig = William Hart{$p}18
- * ```
- *
- * Again, the value is used internally for sorting and filtering, but the original datum from the
- * source is maintained because it's needed by the renderer to construct the link.
- *
- * @param {function} [render]
  */
 
-function format(colConfig, typeInfo, value, orig, render, opts) {
-	var result = orig || value;
+function format(colConfig, typeInfo, cell, opts) {
+	if ((window.moment && window.moment.isMoment(cell))
+			|| (window.numeral && window.numeral.isNumeral(cell))
+			|| typeof cell !== 'object') {
+		cell = {
+			value: cell
+		};
+	}
+
+	if (cell.cachedRender !== undefined) {
+		return cell.cachedRender;
+	}
+
+	var result = cell.orig || cell.value;
 
 	opts = opts || {};
 
@@ -1061,33 +1087,76 @@ function format(colConfig, typeInfo, value, orig, render, opts) {
 	});
 
 	var t = opts.overrideType || typeInfo.type;
-
-	// For types that support formatting, use that instead of the value.
+	var updatedValue;
 
 	if (['date', 'datetime'].indexOf(t) >= 0
-			&& !value.isValid()) {
+			&& ((window.moment && window.moment.isMoment(cell.value) && !cell.value.isValid())
+					|| (typeof(cell.value) === 'string' && (cell.value === '0000-00-00' || cell.value === '0000-00-00 00:00:00')))) {
 
 		// Invalid dates (like our beloved 0000-00-00) show up as nothing.
 
 		result = '';
 	}
-	else if (['date', 'datetime', 'number', 'currency'].indexOf(t) >= 0
-					 && (colConfig.format !== undefined || opts.alwaysFormat)) {
+	else if (colConfig.format !== undefined || opts.alwaysFormat) {
+		switch (t) {
+		case 'date':
+		case 'datetime':
+			{
+				if (typeof cell.value === 'string' && typeInfo.needsDecoding) {
+					cell.value = moment(cell.value, typeInfo.format);
+				}
 
-		// The value here could be either from NumeralJS or from Moment, but fortunately it doesn't
-		// matter because they both have the format() method.
+				if (window.moment && window.moment.isMoment(cell.value)) {
+					result = cell.value.format(colConfig.format);
+				}
+				else {
+					result = moment(cell.value).format(colConfig.format);
+				}
+			}
+			break;
+		case 'number':
+		case 'currency':
+			{
+				if (typeof cell.value === 'string' && typeInfo.needsDecoding) {
+					if (isInt(cell.value)) {
+						cell.value = toInt(cell.value);
+					}
+					else if (isFloat(cell.value)) {
+						cell.value = toFloat(cell.value);
+					}
+					else {
+						cell.value = numeral(cell.value);
+					}
+				}
 
-		result = value.format(colConfig.format);
+				if (window.numeral && window.numeral.isNumeral(cell.value)) {
+					result = cell.value.format(colConfig.format);
+				}
+				else {
+					result = numeral(cell.value).format(colConfig.format);
+				}
+			}
+			break;
+		case 'string':
+			{
+				result = cell.value;
+			}
+		default:
+			log.error('FORMAT', 'Unable to format - unknown type: { field = "%s", type = "%s", value = "%s" }',
+								typeInfo.field, t, cell.value);
+		}
 	}
 
 	// If there's a rendering function, pass the (possibly formatted) value through it to get the new
 	// value to display.
 
-	if (typeof render === 'function') {
-		result = render(result);
+	if (typeof cell.render === 'function') {
+		result = cell.render(result);
 	}
 
-	return result;
+	cell.cachedRender = result;
+
+	return cell.cachedRender;
 };
 
 	// Date and Time Formatting {{{1

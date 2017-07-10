@@ -1100,6 +1100,11 @@ HttpSource.prototype.getTypeInfo = function (cont) {
  * }
  * ```
  *
+ * @param {object} opts
+ *
+ * @param {boolean} [opts.deferDecoding=false] If true, defer conversion of numeric and date types
+ * (using Numeral and Moment) until required (when displayed or upon sort).
+ *
  * @class
  * @property {string} name
  * @property {function} error
@@ -1111,7 +1116,7 @@ HttpSource.prototype.getTypeInfo = function (cont) {
  * @property {boolean} guessColumnTypes
  */
 
-var Source = function (spec, params, userTypeInfo) {
+var Source = function (spec, params, userTypeInfo, opts) {
 	var self = this;
 
 	self.name = spec.name; // The name of the data source, by which it can be addressed later.
@@ -1120,6 +1125,11 @@ var Source = function (spec, params, userTypeInfo) {
 	self.cache = {};
 	self.params = params;
 	self.locks = {};
+	self.opts = opts || {};
+
+	_.defaults(self.opts, {
+		deferDecoding: false
+	});
 
 	self.eventHandlers = {};
 	_.each(_.keys(Source.events), function (evt) {
@@ -1296,11 +1306,13 @@ Source.prototype.getTypeInfo = function (cont) {
 		// the 'type' property of the full object.
 
 		typeInfo.each(function (v, k) {
-			if (_.isString(v)) {
-				typeInfo.set(k, {
+			if (typeof v === 'string') {
+				v = {
 					'type': v
-				});
+				};
+				typeInfo.set(k, v);
 			}
+			v.field = k;
 		});
 
 		var typeInfoClone = jQuery.extend(true, {}, typeInfo);
@@ -1353,52 +1365,139 @@ Source.prototype.postProcess = function (data, cont) {
 	debug.info('DATA SOURCE // POST-PROCESSING', 'Beginning post-processing');
 
 	self.getTypeInfo(function (typeInfo) {
-		var convertFns = [];
 
-		_.each(self.conversion, function (c, i) {
-			if (typeof c === 'function') {
-				convertFns.push(c);
-			}
-			else if (typeof c === 'string') {
-				convertFns.push(Source.converters[c]);
-			}
-		});
+		// Gather the user's conversion functions, which will be applied on every row.
+
+		var conversionFuncs = self.getConversionFuncs();
+
+		// Update the type information with whether the internal representation (i.e. numeral or moment)
+		// conversion of a field should be deferred or not.
+
+		self.setConversionTypeInfo();
 
 		_.each(data, function (row, rowNum) {
 			_.each(row, function (val, field) {
+				var fti = typeInfo.get(field);
+
 				row[field] = {
 					value: val
 				};
 
+				// Go through all the user's conversion functions.
+
 				var i = 0;
-				while (i < convertFns.length) {
-					if (convertFns[i](row[field], field, typeInfo.get(field), row, self)) {
+				while (i < conversionFuncs.length) {
+					if (conversionFuncs[i](row[field], field, fti, row, self)) {
 						break;
 					}
 					i += 1;
 				}
 
-				switch (typeInfo.get(field).type) {
-				case 'number':
-				case 'currency':
-					if (row[field].orig === undefined) {
-						row[field].orig = row[field].value;
-					}
-					row[field].value = numeral(row[field].value);
-					break;
-				case 'date':
-				case 'time':
-				case 'datetime':
-					if (row[field].orig === undefined) {
-						row[field].orig = row[field].value;
-					}
-					row[field].value = moment(row[field].value, typeInfo.get(field).format);
-					break;
+				// Unless conversion has been deferred on this field, convert it into the appropriate
+				// internal representation (numeral or moment).
+
+				if (!fti.deferDecoding) {
+					self.convertCell(row, field);
 				}
 			});
 		});
 
 		return cont(data);
+	});
+};
+
+// #determineConversionFuncs {{{2
+
+Source.prototype.getConversionFuncs = function () {
+	var self = this
+		, conversionFuncs = [];
+
+	_.each(self.conversion, function (c, i) {
+		if (typeof c === 'function') {
+			conversionFuncs.push(c);
+		}
+		else if (typeof c === 'string') {
+			conversionFuncs.push(Source.converters[c]);
+		}
+	});
+
+	return conversionFuncs;
+};
+
+// #setConversionTypeInfo {{{2
+
+Source.prototype.setConversionTypeInfo = function () {
+	var self = this;
+
+	_.each(self.cache.typeInfo.asMap(), function (fti /* field type info */, f /* field */) {
+		if (self.opts.deferDecoding && ['number', 'currency', 'date', 'datetime'].indexOf(fti.type) >= 0) {
+			fti.deferDecoding = true;
+			if ((fti.type === 'date' && (fti.format !== undefined && fti.format !== 'YYYY-MM-DD'))
+					|| (fti.type === 'datetime' && (fti.format !== undefined && fti.format !== 'YYYY-MM-DD HH:mm:ss'))
+					|| (fti.type === 'number')
+					|| (fti.type === 'currency')) {
+				fti.needsDecoding = true;
+			}
+			debug.info('SOURCE // CONVERSION', 'Deferring conversion until <%s> { field = "%s", type = "%s", format = "%s" }',
+								 fti.needsDecoding ? 'SORT' : 'DISPLAY', f, fti.type, fti.format);
+		}
+	});
+};
+
+// #convertCell {{{2
+
+/**
+ * Converts a cell of data into an appropriate internal representation, regardless of whether
+ * conversion has been deferred on that field or not.
+ *
+ * @param {object} row The `rowData` property of a row object.
+ * @param {string} field Name of the field this data cell belongs to.
+ */
+
+Source.prototype.convertCell = function (row, field) {
+	var self = this
+		, fti = self.cache.typeInfo.get(field);
+
+	switch (fti.type) {
+	case 'number':
+	case 'currency':
+		if (row[field].orig === undefined) {
+			row[field].orig = row[field].value;
+		}
+		if (typeof row[field].value === 'string') {
+			if (isInt(row[field].value)) {
+				row[field].value = toInt(row[field].value);
+			}
+			else if (isFloat(row[field].value)) {
+				row[field].value = toFloat(row[field].value);
+			}
+			else {
+				row[field].value = numeral(row[field].value);
+			}
+		}
+		else if (typeof row[field].value !== 'number') {
+			log.error('Unable to convert cell value: { field = "%s", type = "%s", valueTypeOf = "%s" }',
+								field, fti.type, typeof(row[field].value));
+		}
+		break;
+	case 'date':
+	case 'time':
+	case 'datetime':
+		if (row[field].orig === undefined) {
+			row[field].orig = row[field].value;
+		}
+		row[field].value = moment(row[field].value, fti.format);
+		break;
+	}
+};
+
+// #convertAll {{{2
+
+Source.prototype.convertAll = function (data, field) {
+	var self = this;
+
+	_.each(data, function (row) {
+		self.convertCell(row.rowData, field);
 	});
 };
 
@@ -1746,29 +1845,38 @@ View.prototype.sort = function (cont) {
 		return cont(self.data.data);
 	}
 
+	var fti = self.typeInfo.get(self.sortSpec.col);
+
 	// Check to make sure we have enough information about the type of the field that the user wants
 	// us to sort by.
 
-	if (!self.typeInfo.isSet(self.sortSpec.col)) {
+	if (fti === undefined) {
 		throw new ViewError('Unable to sort by field "' + self.sortSpec.col + '" - no type information available');
 	}
 
-	if (self.typeInfo.get(self.sortSpec.col).type === undefined) {
+	if (fti.type === undefined) {
 		throw new ViewError('Unable to sort by field "' + self.sortSpec.col + '" - type is not provided');
 	}
 
-	var fieldType = self.typeInfo.get(self.sortSpec.col).type;
-	var cmp = getComparisonFn.byType(fieldType);
+	if (fti.needsDecoding) {
+		debug.info('VIEW // SORT', 'Decoding data before sorting: { field = "%s", type = "%s" }',
+							 fti.field, fti.type);
+		self.source.convertAll(self.data.data, fti.field);
+		fti.deferDecoding = false;
+		fti.needsDecoding = false;
+	}
+
+	var cmp = getComparisonFn.byType(fti.type);
 
 	// Check to make sure that we have a valid function registered to use for comparing values in the
 	// domain of the type of the field that the user wants us to sort by.
 
 	if (cmp === undefined) {
-		throw new ViewError('Unable to sort by field "' + self.sortSpec.col + '" - no function registered to compare values of type "' + fieldType + '"');
+		throw new ViewError('Unable to sort by field "' + self.sortSpec.col + '" - no function registered to compare values of type "' + fti.type + '"');
 	}
 
 	if (typeof cmp !== 'function') {
-		throw new ViewError('Unable to sort by field "' + self.sortSpec.col + '" - function registered to compare values of type "' + fieldType + '" is not actually a function');
+		throw new ViewError('Unable to sort by field "' + self.sortSpec.col + '" - function registered to compare values of type "' + fti.type + '" is not actually a function');
 	}
 
 	// Start the timer for the sort.

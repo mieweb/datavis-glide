@@ -43,6 +43,8 @@ $(document).ready(function () {
 		type: 'http',
 		url: 'data.xml',
 		conversion: [bbcode]
+	}, undefined, undefined, {
+		deferConversion: true
 	});
 	var tagOpts = {
 		runImmediately: true,

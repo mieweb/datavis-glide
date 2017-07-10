@@ -31,11 +31,25 @@ value is displayed, sorted, or filtered.
 
 The type information for each field indicates the following:
 
-* The type (e.g. number, string, date).  This affects how filtering and sorting works, e.g. dates
+``field``
+  Name of the field.
+
+``type``
+  The type (e.g. number, string, date).  This affects how filtering and sorting works, e.g. dates
   can be sorted chronologically instead of alphabetically.
 
-* The format (e.g. "MM-DD-YYYY") — used for dates, times, and datetimes.  This is needed to prevent
+``format``
+  The format (e.g. "MM-DD-YYYY") — used for dates, times, and datetimes.  This is needed to prevent
   misinterpretation of ambiguous dates like "01/02/03."
+
+``deferDecoding``
+  If this is true, then type decoding of the raw data into an internal representation (e.g. from a
+  string or number into a Moment or Numeral object) is deferred until needed (e.g. for sorting,
+  filtering, or display).
+
+``needsDecoding``
+  If this is true, then type decoding of the raw data into an internal representation is not
+  necessary for sorting.
 
 .. table:: Available types
 

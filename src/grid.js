@@ -457,7 +457,7 @@ GridTable.prototype.draw = function (container, tableDone) {
 			self.timing.start(['Grid Table', 'Draw']);
 
 			debug.info('GRID TABLE // DRAW', 'Data = %O', data);
-			debug.info('GRID TABLE // DRAW', 'TypeInfo = %O', typeInfo.toMap());
+			debug.info('GRID TABLE // DRAW', 'TypeInfo = %O', typeInfo.asMap());
 
 			var tr
 				, srcIndex = 0;
@@ -1131,7 +1131,7 @@ GridTable.prototype.draw_footer = function (columns, data, typeInfo) {
 
 			aggFun = agg.fun({field: field, type: colTypeInfo.type});
 			aggType = agg.type;
-			aggResult = format(colConfig, typeInfo.get(field), aggFun(data.data), undefined, undefined, {
+			aggResult = format(colConfig, typeInfo.get(field), aggFun(data.data), {
 				alwaysFormat: true,
 				overrideType: aggType
 			});
@@ -1351,7 +1351,7 @@ GridTable.prototype.draw_body_plain = function (data, typeInfo, columns, cont) {
 					var cell = row.rowData[field];
 
 					var td = jQuery('<td>');
-					var value = format(colConfig, typeInfo.get(field), cell.value, cell.orig, cell.render);
+					var value = format(colConfig, typeInfo.get(field), cell);
 
 					if (value instanceof Element || value instanceof jQuery) {
 						td.append(value);
@@ -1511,7 +1511,7 @@ GridTable.prototype.draw_body_group = function (data, typeInfo, columns) {
 
 				_.each(rowGroup, function (row) {
 					var cell = row.rowData[field];
-					var value = format(colConfig, typeInfo.get(field), cell.value, cell.orig, cell.render);
+					var value = format(colConfig, typeInfo.get(field), cell);
 					uniqueVals.push(value);
 				});
 

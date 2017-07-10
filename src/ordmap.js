@@ -120,6 +120,12 @@ OrdMap.prototype.keys = function () {
 	return result;
 };
 
-OrdMap.prototype.toMap = function () {
+/**
+ * Returns the internal representation of this ordered map as a regular JS object (a map with no
+ * way to tell the order).  Changing the return value will change the internal representation of
+ * this ordered map, so adding/removing keys will completely screw the `OrdMap` instance up!
+ */
+
+OrdMap.prototype.asMap = function () {
 	return this._map;
 };
