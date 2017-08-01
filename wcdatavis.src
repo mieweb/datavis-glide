@@ -98,6 +98,8 @@
 	$INCLUDE('src/source.js');
 	$INCLUDE('src/view.js');
 	$INCLUDE('src/graph.js');
+	$INCLUDE('src/grid_filter.js');
+	$INCLUDE('src/grid_table.js');
 	$INCLUDE('src/grid.js');
 
 	window.MIE        = window.MIE || {};

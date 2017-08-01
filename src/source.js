@@ -980,6 +980,16 @@ HttpSource.parseData = function (data) {
 			throw new SourceError('HTTP Data Source / JSON Parser / Missing (typeInfo) property');
 		}
 
+		var typeInfo = new MIE.OrdMap();
+
+		_.each(data.typeInfo, function (fti) {
+			var field = fti.field;
+			delete fti.field;
+			typeInfo.set(field, fti);
+		});
+
+		data.typeInfo = typeInfo;
+
 		result = data;
 	}
 
@@ -1145,35 +1155,42 @@ var Source = function (spec, params, userTypeInfo, opts) {
 
 	self.source = new Source.sources[self.type](spec, params);
 
-	if (!isNothing(spec.conversion) && !_.isArray(spec.conversion)) {
-		throw new SourceError('Invalid Source config: `.conversion` must be an array');
+	var checkConversionArray = function (convs, field) {
+		// Check the validity of all the specified conversions.
+		//
+		//   * If identified by name:
+		//
+		//     1. The name must already be registered in `Source.converters`
+		//     2. The registered converter must be a function
+		//
+		//   * Otherwise it needs to be a function.
+
+		_.each(convs, function (c, i) {
+			if (typeof c === 'string') {
+				if (Source.converters[c] === undefined) {
+					throw new SourceError('Conversion' + (field ? ' for field "' + field + '", ' : '') + ' #' + i + ': Named converter "' + c + '" not registered');
+				}
+
+				if (typeof Source.converters[c] !== 'function') {
+					throw new SourceError('Conversion' + (field ? ' for field "' + field + '", ' : '') + ' #' + i + ': Named converter "' + c + '" is not a function');
+				}
+			}
+			else if (typeof c !== 'function') {
+				throw new SourceError('Invalid Source config: `.conversion' + (field ? '[' + field + ']' : '') + '[' + i + ']` must be a function or string');
+			}
+		});
+	};
+
+	if (_.isArray(spec.conversion)) {
+		checkConversionArray(spec.conversion);
+	}
+	else {
+		_.each(spec.conversion, function (convs, field) {
+			checkConversionArray(convs, field);
+		});
 	}
 
-	// Check the validity of all the specified conversions.
-	//
-	//   * If identified by name:
-	//
-	//     1. The name must already be registered in `Source.converters`
-	//     2. The registered converter must be a function
-	//
-	//   * Otherwise it needs to be a function.
-
-	_.each(spec.conversion, function (c, i) {
-		if (typeof c === 'string') {
-			if (Source.converters[c] === undefined) {
-				throw new SourceError('Conversion #' + i + ': Named converter "' + c + '" not registered');
-			}
-
-			if (typeof Source.converters[c] !== 'function') {
-				throw new SourceError('Conversion #' + i + ': Named converter "' + c + '" is not a function');
-			}
-		}
-		else if (typeof c !== 'function') {
-			throw new SourceError('Invalid Source config: `.conversion[' + i + ']` must be a function or string');
-		}
-	});
-
-	self.conversion = spec.conversion || [];
+	self.conversion = spec.conversion;
 
 	self.locks.getData = new Lock();
 };
@@ -1372,9 +1389,14 @@ Source.prototype.postProcess = function (data, cont) {
 
 	self.getTypeInfo(function (typeInfo) {
 
-		// Gather the user's conversion functions, which will be applied on every row.
+		// Gather the user's conversion functions, which will be applied on every row.  Conversion
+		// functions can be applied across all fields (specified as an array), or on a per-field basis
+		// (specified as an object with field name keys and array values).
 
-		var conversionFuncs = self.getConversionFuncs();
+		var conversionFuncs = {};
+		typeInfo.each(function (fti, fieldName) {
+			conversionFuncs[fieldName] = self.getConversionFuncs(fieldName);
+		});
 
 		// Update the type information with whether the internal representation (i.e. numeral or moment)
 		// conversion of a field should be deferred or not.
@@ -1392,8 +1414,8 @@ Source.prototype.postProcess = function (data, cont) {
 				// Go through all the user's conversion functions.
 
 				var i = 0;
-				while (i < conversionFuncs.length) {
-					if (conversionFuncs[i](row[field], field, fti, row, self)) {
+				while (i < conversionFuncs[field].length) {
+					if (conversionFuncs[field][i](row[field], field, fti, row, self)) {
 						break;
 					}
 					i += 1;
@@ -1414,18 +1436,27 @@ Source.prototype.postProcess = function (data, cont) {
 
 // #determineConversionFuncs {{{2
 
-Source.prototype.getConversionFuncs = function () {
+Source.prototype.getConversionFuncs = function (fieldName) {
 	var self = this
 		, conversionFuncs = [];
 
-	_.each(self.conversion, function (c, i) {
-		if (typeof c === 'function') {
-			conversionFuncs.push(c);
-		}
-		else if (typeof c === 'string') {
-			conversionFuncs.push(Source.converters[c]);
-		}
-	});
+	var addConversionFuncs = function (convs) {
+		_.each(convs, function (c, i) {
+			if (typeof c === 'function') {
+				conversionFuncs.push(c);
+			}
+			else if (typeof c === 'string') {
+				conversionFuncs.push(Source.converters[c]);
+			}
+		});
+	};
+
+	if (_.isArray(self.conversion)) {
+		addConversionFuncs(self.conversion);
+	}
+	else if (self.conversion[fieldName] !== undefined) {
+		addConversionFuncs(self.conversion[fieldName]);
+	}
 
 	return conversionFuncs;
 };
@@ -1436,24 +1467,35 @@ Source.prototype.setConversionTypeInfo = function (data) {
 	var self = this;
 
 	_.each(self.cache.typeInfo.asMap(), function (fti /* field type info */, f /* field */) {
-		if (self.opts.deferDecoding && ['number', 'currency', 'date', 'datetime'].indexOf(fti.type) >= 0) {
-			fti.deferDecoding = true;
-
-			if ((fti.type === 'date' && (fti.format !== undefined && fti.format !== 'YYYY-MM-DD'))
-					|| (fti.type === 'datetime' && (fti.format !== undefined && fti.format !== 'YYYY-MM-DD HH:mm:ss'))) {
-
-				// This is a date that can't be sorted lexicographically, so it needs to be stored and
-				// processed using Moment.
-
-				fti.needsDecoding = true;
-				fti.internalType = 'moment';
+		if (['number', 'currency', 'date', 'datetime'].indexOf(fti.type) >= 0) {
+			if (self.opts.deferDecoding) {
+				fti.deferDecoding = true;
 			}
-			else if (fti.type === 'number' || fti.type === 'currency') {
+
+			if (fti.type === 'number' || fti.type === 'currency') {
 				fti.needsDecoding = true;
 				fti.internalType = 'numeral';
 
 				if (data.length > 0 && (isInt(data[0][f]) || isFloat(data[0][f]))) {
+
+					// Looks like it can be decoded into a primitive number, so there's no need for Numeral's
+					// advanced parsing.
+
 					fti.internalType = 'primitive';
+				}
+			}
+			else if (fti.type === 'date' || fti.type === 'datetime') {
+				if ((fti.type === 'date' && (fti.format === undefined || fti.format === 'YYYY-MM-DD'))
+						|| (fti.type === 'datetime' && (fti.format === undefined || fti.format === 'YYYY-MM-DD HH:mm:ss'))) {
+					fti.internalType = 'string';
+				}
+				else {
+
+					// This is a date that can't be sorted lexicographically, so it needs to be stored and
+					// processed using Moment.
+
+					fti.needsDecoding = true;
+					fti.internalType = 'moment';
 				}
 			}
 
@@ -1517,6 +1559,9 @@ Source.prototype.convertCell = function (row, field) {
 			switch (fti.internalType) {
 			case 'moment':
 				cell.value = moment(cell.value, fti.format);
+				break;
+			case 'string':
+				/* NOTHING */
 				break;
 			default:
 				log.error('Unable to convert cell value, invalid internal type "%s": { field = "%s", type = "%s", valueTypeOf = "%s" }',

@@ -27,57 +27,51 @@ There are two ways that grid tables are used within the wcgraph library:
 Features
 ========
 
-Sorting
+All features default to being off.
+
+Custom Column Footers (``footer``)
+  When enabled, show a footer at the bottom of the grid which can display custom aggregates in each
+  column.  Only for plain grids.
+
+Sorting (``sort``)
   When this feature is enabled, the column heading becomes clickable to allow sorting by that
   column.  When you click a column which is already sorted, the sort direction is reversed.  You
   cannot sort by more than one column (i.e. sort by visit type, then by date).
 
-  Sorting is allowed when the data is grouped, and when it is pivotted.
+  Works for plain fields, group fields, pivot fields, and pivot values.
 
-Filtering
+Filtering (``filter``)
   When this feature is enabled, a button labelled "add filter" is added to the right of the column
   header.  When you click this, a user interface element appears which can be used to set a filter
   on that column.
 
-  Filtering is disabled *in the grid table* when it's used for group or pivot output.  The filtering
-  is coordinated by the ``PivotControl`` instead.
+  Works for plain fields, group fields, and pivot fields.
 
-Row selection
+Grouping (``group``)
+  When enabled, data can be grouped.
+
+Pivotting (``pivot``)
+  When enabled, data can be pivotted.
+
+Row Selection (``rowSelect``)
   When this feature is enabled, an extra column is added on the far left, which contains a checkbox
   - checking it selects the row.  There are API for getting and setting the selected rows.
 
   Row selection is not allowed when grouping or pivotting.
 
-Row reordering
+Row Reordering (``rowReorder``)
   When this feature is enabled, an extra column is added on the far right, which contains a button
   that can be used as a handle for dragging and dropping rows.
 
   Row reordering is not allowed when grouping or pivotting.
 
-Editing
-  When this feature is enabled, rows can be edited (details coming later).
-
-  Editing is not allowed when grouping or pivotting.
-
-Feature Flags
-=============
-
-All features default to being off.
-
-* ``footer``
-* ``sort``
-* ``filter``
-* ``group``
-* ``pivot``
-* ``rowSelect``
-* ``rowReorder``
-* ``add``
-* ``edit``
-* ``delete``
-* ``limit``
-* ``tabletool``
-* ``blockUI``
-* ``progress``
+``add``
+``edit``
+``delete``
+``limit``
+``tabletool``
+``blockUI``
+``progress``
 
 Feature Configuration
 =====================

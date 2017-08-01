@@ -1,5 +1,48 @@
 // Determine Columns {{{1
 
+function validateUserColumnSpec(defn, data, typeInfo) {
+
+	// Error checking for `defn.table.columns` to make sure it:
+	//
+	//   1. Has the correct format.
+	//   2. Only defines fields which actually exist.
+
+	if (defn.table.columns !== undefined) {
+		if (!_.isArray(defn.table.columns)) {
+			throw new GridTablePlainError('Determine Columns / (table.columns) must be an array');
+		}
+
+		_.each(defn.table.columns, function (elt, i) {
+			if (elt.field === undefined) {
+				throw new GridTablePlainError('Determine Columns / Missing (table.columns[' + i + '].field)');
+			}
+		});
+
+		// Check the user's column specification against the data, if it's available.
+
+		if (!isNothing(data)) {
+			if ((data.isPivot && (data.data.length === 0 || data.data[0].length === 0 || data.data[0][0].length === 0))
+					|| (!data.isPivot && data.isGroup && (data.data.length === 0 || data.data[0].length === 0))
+					|| (data.isPlain && (data.data.length === 0))) {
+				log.warn('Unable to check column configuration using data with no rows');
+				return false;
+			}
+			else {
+				_.each(defn.table.columns, function (elt, i) {
+					if ((data.isPivot && data.data[0][0][0].rowData[elt.field] === undefined)
+							|| (!data.isPivot && data.isGroup && data.data[0][0].rowData[elt.field] === undefined)
+							|| (data.isPlain && data.data[0].rowData[elt.field] === undefined)) {
+						log.warn('Column configuration refers to field "' + elt.field + '" which does not exist in the data');
+						return false;
+					}
+				});
+			}
+		}
+	}
+
+	return true;
+}
+
 /**
  * Determine which columns should be shown in plain or grouped output, based on information from
  * several sources.
@@ -23,37 +66,7 @@
 function determineColumns(defn, data, typeInfo) {
 	var columns = [];
 
-	// Error checking for `defn.table.columns` to make sure it:
-	//
-	//   1. Has the correct format.
-	//   2. Only defines fields which actually exist.
-
-	if (defn.table.columns !== undefined) {
-		if (!_.isArray(defn.table.columns)) {
-			throw new GridTableError('Determine Columns / (table.columns) must be an array');
-		}
-
-		_.each(defn.table.columns, function (elt, i) {
-			if (elt.field === undefined) {
-				throw new GridTableError('Determine Columns / Missing (table.columns[' + i + '].field)');
-			}
-		});
-
-		if ((data.isPivot && (data.data.length === 0 || data.data[0].length === 0 || data.data[0][0].length === 0))
-				|| (!data.isPivot && data.isGroup && (data.data.length === 0 || data.data[0].length === 0))
-				|| (data.isPlain && (data.data.length === 0))) {
-			log.warn('Unable to check column configuration using data with no rows');
-			return;
-		}
-
-		_.each(defn.table.columns, function (elt, i) {
-			if ((data.isPivot && data.data[0][0][0].rowData[elt.field] === undefined)
-					|| (!data.isPivot && data.isGroup && data.data[0][0].rowData[elt.field] === undefined)
-					|| (data.isPlain && data.data[0].rowData[elt.field] === undefined)) {
-				log.warn('Column configuration refers to field "' + elt.field + '" which does not exist in the data');
-			}
-		});
-	}
+	validateUserColumnSpec(defn, data, typeInfo);
 
 	if (defn.table.columns) {
 		columns = _.pluck(defn.table.columns, 'field');
@@ -67,6 +80,21 @@ function determineColumns(defn, data, typeInfo) {
 	debug.info('DETERMINE COLUMNS', 'Columns = %O', columns);
 
 	return columns;
+};
+
+function availableFields(defn, data, typeInfo) {
+	var fields = [];
+
+	if (defn.table.columns && validateUserColumnSpec()) {
+		fields = _.pluck(defn.table.columns, 'field');
+	}
+	else {
+		fields = _.reject(typeInfo.keys(), function (field) {
+			return field.charAt(0) === '_';
+		});
+	}
+
+	return fields;
 };
 
 // Server-Side Filter/Sort {{{1
@@ -332,2475 +360,6 @@ GridError.prototype = Object.create(Error.prototype);
 GridError.prototype.constructor = GridError;
 
 
-// GridTable {{{1
-
-// Constructor {{{2
-
-/**
- * The GridTable is in charge of displaying the HTML table of data.
- *
- * @param {object} defn
- *
- * @param {Grid~Features} features
- *
- * @param {Timing} timing
- *
- * @class
- *
- * @property {Grid~Features} features
- *
- * @property {object} defn
- *
- * @property {View} view
- *
- * @property {Element} container
- *
- * @property {object} colConfig Map associating field name with the configuration of the
- * corresponding column in this grid table.
- *
- * @property {Timing} timing
- *
- * @property {boolean} needsRedraw True if the grid needs to redraw itself when the view is done
- * working.
- */
-
-var GridTable = function (defn, view, features, timing, id) {
-	var self = this;
-
-	self.id = id;
-	self.defn = defn;
-	self.view = view;
-	self.features = features;
-	self.timing = timing;
-
-	self.needsRedraw = false;
-
-	self.validateLimit();
-
-	self.colConfig = {};
-
-	_.each(self.defn.table.columns, function (col) {
-		self.colConfig[col.field] = col;
-	});
-
-	if (self.features.limit && self.defn.table.limit.method === 'more') {
-		jQuery(window).on('DOMContentLoaded load resize scroll', function () {
-			if (typeof self.moreVisibleHandler === 'function') {
-				self.moreVisibleHandler();
-			}
-		});
-	}
-};
-
-GridTable.prototype = Object.create(Object.prototype);
-GridTable.prototype.constructor = GridTable;
-
-// .events {{{2
-
-GridTable.events = objFromArray([
-		'columnResize' // Fired when a column is resized.
-]);
-
-mixinEventHandling(GridTable, 'GridTable', GridTable.events);
-
-// #validateLimit {{{2
-
-/**
- * Make sure the limit configuration is good.  If there's anything wrong, the limit feature is
- * disabled automatically.
- */
-
-GridTable.prototype.validateLimit = function () {
-	var self = this;
-
-	if (self.features.limit) {
-		if (self.defn.table.limit.threshold === undefined) {
-			debug.info('GRID TABLE // DRAW', 'Disabling limit feature because no limit threshold was provided');
-			self.features.limit = false;
-		}
-	}
-};
-
-// #clear {{{2
-
-/**
- * Remove the table from page.
- */
-
-GridTable.prototype.clear = function () {
-	var self = this;
-
-	self.view.off('*', self);
-
-	self.container.children().remove();
-};
-
-// #draw {{{2
-
-/**
- * Render the table within the page.
- *
- * @param {jQuery} container An element to append the result to.
- *
- * @param {function} tableDone A function to call once the table has been added to the page.  Useful
- * if you want to do something like select some rows after it has been created.
- *
- * @returns {undefined} Nothing.  This function is asynchronous, as rendering the table may require
- * obtaining data from the source.
- */
-
-GridTable.prototype.draw = function (container, tableDone) {
-	var self = this;
-
-	self.container = container;
-
-	return self.view.getData(function (data) {
-		return self.view.getTypeInfo(function (typeInfo) {
-			self.timing.start(['Grid Table', 'Draw']);
-
-			debug.info('GRID TABLE // DRAW', 'Data = %O', data);
-			debug.info('GRID TABLE // DRAW', 'TypeInfo = %O', typeInfo.asMap());
-
-			var tr
-				, srcIndex = 0;
-
-			self.ui = {
-				tbl: jQuery('<table>'),
-				thead: jQuery('<thead>'),
-				tbody: jQuery('<tbody>'),
-				tfoot: jQuery('<tfoot>'),
-				thMap: {},
-				tr: [],
-				progress: jQuery('<div>')
-			};
-
-			if (self.features.block) {
-				var blockConfig = {
-					overlayCSS: {
-						opacity: 0.9,
-						backgroundColor: '#FFF'
-					}
-				};
-
-				if (self.features.progress && getProp(self.defn, 'table', 'progress', 'method') === 'jQueryUI') {
-					blockConfig.message = jQuery('<div>')
-						.append(jQuery('<h1>').text('Working...'))
-						.append(self.ui.progress);
-				}
-			}
-
-			self.view.on(View.events.workBegin, function () {
-				if (self.features.block) {
-					debug.info('GRID TABLE // HANDLER (View.workBegin)', 'Blocking table body');
-					if (getProp(self.defn, 'table', 'block', 'wholePage')) {
-						jQuery.blockUI(blockConfig);
-					}
-					else {
-						self.ui.tbl.block(blockConfig);
-					}
-				}
-				if (self.features.tabletool) {
-					TableTool.update();
-				}
-			}, self);
-
-			self.view.on(View.events.workEnd, function () {
-				if (self.features.block) {
-					debug.info('GRID TABLE // HANDLER (View.workEnd)', 'Unblocking table body');
-					if (getProp(self.defn, 'table', 'block', 'wholePage')) {
-						jQuery.unblockUI();
-					}
-					else {
-						self.ui.tbl.unblock();
-					}
-				}
-				if (self.features.tabletool) {
-					TableTool.update();
-				}
-			}, self);
-
-			/*
-			 * Determine what columns will be in the table.  This comes from the user, or from the data
-			 * itself.  We may then add columns for extra features (like row selection or reordering).
-			 */
-
-			var columns = determineColumns(self.defn, data, typeInfo)
-				, numCols = columns.length;
-
-			if (self.features.rowSelect) {
-				numCols += 1; // Add a column for the row selection checkbox.
-			}
-
-			if (self.features.rowReorder) {
-				numCols += 1; // Add a column for the reordering button.
-			}
-
-			self.draw_header(columns, data, typeInfo);
-
-			if (self.features.footer) {
-				self.draw_footer(columns, data, typeInfo);
-			}
-
-			/*
-			 * Draw the body.
-			 */
-
-			self.draw_body(data, typeInfo, columns, function () {
-				if (getProp(self.defn, 'table', 'incremental', 'appendBodyLast')) {
-					self.ui.tbl.append(self.ui.tbody);
-				}
-
-				self.timing.stop(['Grid Table', 'Draw']);
-
-				if (typeof tableDone === 'function') {
-					window.setTimeout(function () {
-						tableDone();
-					});
-				}
-			});
-
-			self.addSortHandler();
-			self.addFilterHandler();
-
-			// Sets up callbacks responsible for correctly redrawing the grid when the view has done work
-			// (e.g. sorting or filtering) that will change what is displayed.  This is only needed when
-			// limiting output because otherwise, sort and filter callbacks don't need to redraw the whole
-			// grid, and they are taken care of by the 'sort' and 'filter' events on a row-by-row basis.
-
-			if (self.features.limit) {
-				self.addWorkHandler();
-			}
-
-			if (self.features.rowReorder) {
-				configureRowReordering(self.defn, self.ui.tbody);
-			}
-
-			self.ui.tbl.attr('class', 'newui zebra');
-
-			self.ui.tbl.append(self.ui.thead);
-
-			if (!getProp(self.defn, 'table', 'incremental', 'appendBodyLast')) {
-				self.ui.tbl.append(self.ui.tbody);
-			}
-
-			if (self.features.footer) {
-				self.ui.tbl.append(self.ui.tfoot);
-			}
-
-			container.append(self.ui.tbl);
-
-			// Activate TableTool using this attribute, if the user asked for it.
-
-			if (self.features.tabletool) {
-				debug.info('GRID TABLE // DRAW', 'Enabling TableTool');
-				self.ui.tbl.attr('data-tttype', 'sticky');
-			}
-		});
-	});
-};
-
-// #addSortHandler {{{2
-
-GridTable.prototype.addSortHandler = function () {
-	var self = this;
-
-	// Register the event handler for when a sort occurs in the view.  The way this works is that
-	// the view will invoke the callback for each row in order.  We just append them to the table
-	// body in that same order, and boom: all the rows are sorted.
-	//
-	// However, we DON'T want to do this if we're limiting the output because we're currently only
-	// showing part of the data.  So, when we sort, we need to completely redraw the window (e.g.
-	// rows 21-40) that we're showing.
-	//
-	// FIXME - This will cause problems with multiple grids (some supporting sorting, some not)
-	// using the same view.
-
-	self.view.off('sort');
-
-	if (self.features.sort) {
-		if (self.features.limit) {
-			self.view.on('sortEnd', function () {
-				debug.info('GRID TABLE // HANDLER (View.sortEnd)', 'Marking table to be redrawn');
-				self.needsRedraw = true;
-			}, self);
-		}
-		else {
-			self.view.on('sort', function (rowNum, position) {
-				var elt = jQuery(document.getElementById(self.defn.table.id + '_' + rowNum));
-
-				// Add one to the position (which is 0-based) to match the 1-based row number in CSS.
-
-				elt.removeClass('even odd');
-				elt.addClass((position + 1) % 2 === 0 ? 'even' : 'odd');
-				self.ui.tbody.append(elt);
-			}, self);
-		}
-	}
-};
-
-// #addFilterHandler {{{2
-
-GridTable.prototype.addFilterHandler = function () {
-	var self = this;
-
-	// Register the event handler for when a filter occurs in the view.  The way this works is that
-	// the view will invoke the callback for each row and indicate if it should be shown or hidden.
-	//
-	// However, we DON'T want to do this if we're limiting the output because we're currently only
-	// showing part of the data.  So, when we filter, we need to completely redraw the window (e.g.
-	// rows 21-40) that we're showing.
-	//
-	// FIXME - This will cause problems with multiple grids (some supporting filtering, some not)
-	// using the same view.
-
-	self.view.off('filter');
-
-	if (self.features.filter) {
-		if (self.features.limit) {
-			self.view.on(View.events.filterEnd, function () {
-				debug.info('GRID TABLE // HANDLER (View.filterEnd)', 'Marking table to be redrawn');
-				self.needsRedraw = true;
-			}, self);
-		}
-		else {
-			var even = false; // Rows are 1-based to match our CSS zebra-striping.
-
-			self.view.on(View.events.filter, function (rowNum, hide) {
-				self.ui.tr[rowNum].removeClass('even odd');
-				if (hide) {
-					self.ui.tr[rowNum].hide();
-				}
-				else {
-					self.ui.tr[rowNum].show();
-					self.ui.tr[rowNum].addClass(even ? 'even' : 'odd');
-					even = !even;
-				}
-			}, self);
-		}
-	}
-};
-
-// #addWorkHandler {{{2
-
-GridTable.prototype.addWorkHandler = function () {
-	var self = this;
-
-	self.view.on(View.events.workEnd, function () {
-		debug.info('GRID TABLE // HANDLER (View.workEnd)', 'View has finished doing work');
-
-		if (self.needsRedraw) {
-			debug.info('GRID TABLE // HANDLER (View.workEnd)', 'Redrawing because the view has done work');
-
-			self.needsRedraw = false;
-
-			return self.view.getData(function (data) {
-				return self.view.getTypeInfo(function (typeInfo) {
-					self.timing.start(['Grid Table', 'Redraw triggered by view']);
-
-					// Determine what columns will be in the table.  This comes from the user, or from the
-					// data itself.  We may then add columns for extra features (like row selection or
-					// reordering).
-
-					var columns = determineColumns(self.defn, data, typeInfo);
-
-					// Draw the body.
-
-					self.draw_body(data, typeInfo, columns, function () {
-						self.timing.stop(['Grid Table', 'Redraw triggered by view']);
-
-						// Potentially the columns resized as a result of sorting, filtering, or adding new data.
-						self.fire(GridTable.events.columnResize);
-					});
-				});
-			});
-		}
-		else {
-			// Potentially the columns resized as a result of sorting, filtering, or adding new data.
-			self.fire(GridTable.events.columnResize);
-		}
-	}, self);
-};
-
-// #draw_header {{{2
-
-/**
- * Render the header columns of a GridTable.
- *
- * @param {Array.<string>} columns A list of the fields that are to be included as columns within
- * the GridTable.
- *
- * @param {View~Data} data
- *
- * @param {Source~TypeInfo} typeInfo
- */
-
-GridTable.prototype.draw_header = function (columns, data, typeInfo) {
-	var self = this;
-
-	var headingTr, headingSpan, headingTh;
-
-	var headingThCss = {
-		'white-space': 'nowrap',
-		'padding-bottom': 0
-	};
-
-	var filterThCss = {
-		'white-space': 'nowrap',
-		'padding-top': 4,
-		'padding-bottom': 0,
-		'vertical-align': 'top'
-	};
-
-	// Pivot Headers (Column Values) {{{3
-
-	var drawPivot = function () {
-		// This produces separate rows in the header for each pivot field.  That's what allows you to
-		// see the combinations of column values, like this:
-		//
-		// Example
-		// -------
-		//
-		//   pivotFields = ["Last Name", "First Name"]
-		//   colVals = [["Kennedy", "John"], ["Kennedy", "Robert"], ["Kennedy", "Ted"],
-		//              ["Roosevelt", "Franklin"], ["Roosevelt", "Teddy"]]
-		//
-		// +---------------------+------------------+
-		// | Kennedy             | Roosevelt        |
-		// +------+--------+-----+----------+-------+
-		// | John | Robert | Ted | Franklin | Teddy |
-		// +------+--------+-----+----------+-------+
-
-		var pivotFieldNum, colValNum;
-		var lastColVal = null, lastColValCount = 0, colVal;
-
-		for (pivotFieldNum = 0; pivotFieldNum < data.pivotFields.length; pivotFieldNum += 1) {
-			headingTr = jQuery('<tr>'); // Create the row for the pivot field.
-
-			// Create dummy cells to take up the columns that will be used below by the headers for the
-			// group fields.
-
-			_.each(data.groupFields, function () {
-				jQuery('<td>').appendTo(headingTr);
-			});
-
-			lastColVal = null;
-			lastColValCount = 0;
-			for (colValNum = 0; colValNum < data.colVals.length; colValNum += 1) {
-				colVal = data.colVals[colValNum][pivotFieldNum];
-				if (colVal !== lastColVal || pivotFieldNum === data.pivotFields.length - 1) {
-					if (lastColVal !== null) {
-						// The we've hit a different colVal so count up how many of the last one we had to
-						// determine the column span.  In the above example, there are three "Kennedy" and two
-						// "Roosevelt" so those are the colspans that we would set.
-
-						headingTh.attr('colspan', lastColValCount);
-						headingTr.append(headingTh);
-					}
-
-					// Update the tracking information and reset the counter to one.
-
-					lastColVal = colVal;
-					lastColValCount = 1;
-
-					headingSpan = jQuery('<span>').text(colVal);
-
-					headingTh = jQuery('<th>')
-						.css(headingThCss)
-						.append(headingSpan);
-
-					self._addSortingToHeader(colVal, headingSpan, headingTh);
-
-					self.setCss(headingTh, colVal);
-					// REMOVED: I'm not sure how this would function in the pivot table.
-					// self.ui.thMap[colName] = headingTh;
-				}
-				else {
-					lastColValCount += 1;
-				}
-			}
-
-			// Same logic as when the colVal changes.
-
-			headingTh.attr('colspan', lastColValCount);
-			headingTr.append(headingTh);
-
-			// Add the row for this pivot field to the THEAD.
-			self.ui.thead.append(headingTr);
-		}
-	};
-
-	// Group Headers (Row Values) {{{3
-
-	var drawGroup = function () {
-		headingTr = jQuery('<tr>');
-
-		_.each(data.groupFields, function (fieldName) {
-			headingSpan = jQuery('<span>').text(fieldName);
-
-			headingTh = jQuery('<th>')
-				.css(headingThCss)
-				.append(headingSpan);
-
-			self._addSortingToHeader(fieldName, headingSpan, headingTh);
-
-			self.setCss(headingTh, fieldName);
-
-			self.ui.thMap[fieldName] = headingTh;
-			headingTr.append(headingTh);
-		});
-
-		if (!data.isPivot) {
-			_.each(columns, function (colName) {
-				headingSpan = jQuery('<span>').text(colName);
-
-				headingTh = jQuery('<th>')
-					.css(headingThCss)
-					.append(headingSpan);
-
-				self._addSortingToHeader(colName, headingSpan, headingTh);
-
-				self.setCss(headingTh, colName);
-
-				self.ui.thMap[colName] = headingTh;
-				headingTr.append(headingTh);
-			});
-		}
-
-		self.ui.thead.append(headingTr);
-	};
-
-	// Plain Headers (Column Fields) {{{3
-
-	var drawPlain = function () {
-		headingTr = jQuery('<tr>');
-		filterTr = jQuery('<tr>', {
-			'class': 'wcdv_grid_filterrow'
-		});
-
-		/*
-		 * Create the checkbox that allows the user to select all rows.
-		 */
-
-		if (self.features.rowSelect) {
-			self.ui.checkAll_thead = jQuery('<input>', { 'name': 'checkAll', 'type': 'checkbox' })
-				.on('change', function (evt) {
-					rowSelect_checkAll.call(this, evt, self.ui);
-				});
-			headingTr.append(jQuery('<th>').append(self.ui.checkAll_thead));
-			if (self.features.filter) {
-				filterTr.append(jQuery('<th>').css(filterThCss));
-			}
-		}
-
-		var progress = self.makeProgress('Filter');
-
-		/*
-		 * Set up the GridFilterSet instance that manages the (potentially multiple) filters on each
-		 * column of the View that belongs to this GridTable.
-		 */
-
-		if (self.features.filter) {
-			self.defn.gridFilterSet = new GridFilterSet(self.defn, self.view, self, progress);
-		}
-
-		/*
-		 * Configure every column which comes from the data (i.e. not the "select all" checkbox, and not
-		 * the editing "options" column).
-		 */
-
-		_.each(columns, function (field, colIndex) {
-			var colConfig = self.defn.table.columns[colIndex] || {};
-
-			if (self.features.rowSelect) {
-				colIndex += 1; // Add a column for the row selection checkbox.
-			}
-
-			var headingSpan = jQuery('<span>').text(colConfig.displayText || field);
-
-			var headingTh = jQuery('<th>', { id: gensym() })
-				.css(headingThCss)
-				.append(headingSpan);
-
-			self._addSortingToHeader(field, headingSpan, headingTh);
-
-			/*
-			 * Configure filtering for this column.  This mainly involves creating a button, which when
-			 * clicked adds (for this column) a filter to the GridFilterSet instance.
-			 */
-
-			if (self.features.filter) {
-
-				// Add a TH to the TR that will contain the filters.  Every filter will actually be a DIV
-				// inside this TH.
-				//
-				// The ID attribute here is used to provide a selector to NProgress, so the progress bar
-				// will be drawn in the header cell for the column we're filtering by.  You can't pass an
-				// element to NProgress for this, it needs to be a selector string.  Passing ('#' + id) was
-				// the easiest way to do it.
-				//
-				// Unfortunately, the ID attribute is copied when using TableTool so this might mess us up.
-
-				var filterThId = gensym();
-				var filterTh = jQuery('<th>', { id: filterThId }).addClass('wcdv_grid_filtercol filter_col_' + colIndex).css(filterThCss);
-				self.setCss(filterTh, field);
-				filterTr.append(filterTh);
-
-				// Create the "button" (really a SPAN) that will add the filter to the grid, and stick it
-				// onto the end of the column heading TH.
-
-				jQuery(fontAwesome('F0B0', null, 'Click to add a filter on this column'))
-					.css({'cursor': 'pointer', 'margin-left': '0.5ex'})
-					.on('click', function () {
-						// When using TableTool, we need to put the filter UI into the floating (clone) header,
-						// instead of the original (variable `filterTh` holds the original).  This jQuery will
-						// always do the right thing.
-
-						var thead = $(this).closest('thead');
-						var tr = thead.children('tr:eq(1)');
-						var th = tr.children('th.filter_col_' + colIndex);
-
-						var adjustTableToolHeight = function () {
-							if (self.features.tabletool) {
-								// Update the height of the original, non-floating header to be the same as that of
-								// the floating header.  This is needed because otherwise the floating header will
-								// cover up the first rows of the table body as we add filters.  TableTool does not
-								// keep the heights of the original and clone in sync on its own (using the `update`
-								// function only synchronizes the widths).
-
-								var trHeight = tr.innerHeight();
-
-								debug.info('GRID TABLE // ADD FILTER', 'Adjusting original table header height to ' + trHeight + 'px to match floating header height');
-								filterTr.innerHeight(trHeight);
-							}
-						};
-
-						var onRemove = adjustTableToolHeight;
-
-						self.defn.gridFilterSet.add(field, th, colConfig.filter, jQuery(this), onRemove, filterTh);
-
-						adjustTableToolHeight();
-					})
-					.appendTo(headingTh);
-			}
-
-			self.setCss(headingTh, field);
-			self.setAlignment(headingTh, colConfig, typeInfo, field);
-
-			self.ui.thMap[field] = headingTh;
-			headingTr.append(headingTh);
-		});
-
-		/*
-		 * Create a column with buttons that allows the user to reorder the rows.
-		 */
-
-		if (self.features.rowReorder) {
-			headingTr.append(jQuery('<th>').text('Options'));
-			if (self.features.filter) {
-				filterTr.append(jQuery('<th>').css(filterThCss));
-			}
-		}
-
-		self.ui.thead.append(headingTr);
-
-		if (self.features.filter) {
-			self.ui.thead.append(filterTr);
-		}
-	};
-
-	if (self.features.pivot && data.isPivot) {
-		drawPivot();
-	}
-
-	if (self.features.group) {
-		drawGroup();
-	}
-	else {
-		drawPlain();
-	}
-};
-
-// #makeProgress {{{2
-
-GridTable.prototype.makeProgress = function (thing) {
-	var self = this;
-
-	if (!self.features.progress) {
-		return;
-	}
-
-	if (getProp(self.defn, 'table', 'progress', 'method') === 'NProgress') {
-		return {
-			begin: function () {
-				debug.info('GRID TABLE // PROGRESS (' + thing + ')', 'Begin');
-				if (window.NProgress !== undefined) {
-					window.NProgress.start();
-				}
-			},
-			update: function (amount, estTotal) {
-				debug.info('GRID TABLE // PROGRESS (' + thing + ')', sprintf('Update: %d / %d = %.0f%%', amount, estTotal, (amount / estTotal) * 100));
-				if (window.NProgress !== undefined) {
-					window.NProgress.set(amount / estTotal);
-				}
-			},
-			end: function () {
-				debug.info('GRID TABLE // PROGRESS (' + thing + ')', 'End');
-				if (window.NProgress !== undefined) {
-					window.NProgress.done();
-					jQuery('.nprogress-custom-parent').removeClass('nprogress-custom-parent');
-				}
-			}
-		};
-	}
-	else if (getProp(self.defn, 'table', 'progress', 'method') === 'jQueryUI') {
-		return {
-			begin: function () {
-				debug.info('GRID TABLE // PROGRESS (' + thing + ')', 'Begin');
-				self.ui.progress.progressbar({
-					'classes': {
-						'ui-progressbar': 'wcdvgrid_progressbar',
-						'ui-progressbar-value': 'wcdvgrid_progressbar'
-					}
-				});
-			},
-			update: function (amount, estTotal) {
-				debug.info('GRID TABLE // PROGRESS (' + thing + ')', sprintf('Update: %d / %d = %.0f%%', amount, estTotal, (amount / estTotal) * 100));
-				self.ui.progress.progressbar('value', (amount / estTotal) * 100);
-			},
-			end: function () {
-				debug.info('GRID TABLE // PROGRESS (' + thing + ')', 'End');
-				self.ui.progress.progressbar('destroy');
-			}
-		};
-	}
-};
-
-// #draw_footer {{{2
-
-GridTable.prototype.draw_footer = function (columns, data, typeInfo) {
-	var self = this
-		, tr = jQuery('<tr>');
-
-	if (self.features.rowSelect) {
-		self.ui.checkAll_tfoot = jQuery('<input>', { 'name': 'checkAll', 'type': 'checkbox' })
-			.on('change', function (evt) {
-				rowSelect_checkAll.call(this, evt, self.ui);
-			});
-		tr.append(jQuery('<td>').append(self.ui.checkAll_tfoot));
-	}
-
-	tr.append(_.map(columns, function (field, colIndex) {
-		var colConfig = self.defn.table.columns[colIndex] || {}
-			, colTypeInfo = typeInfo.get(field)
-			, td = jQuery('<td>')
-			, footerConfig = getProp(self.defn, 'table', 'footer', field)
-			, agg
-			, aggFun
-			, aggResult
-			, footerVal;
-
-		self.setCss(td, field);
-		self.setAlignment(td, colConfig, typeInfo, field);
-
-		if (footerConfig !== undefined) {
-			debug.info('GRID TABLE // FOOTER { field = "' + field + '" }', 'Creating footer using config: %O', footerConfig);
-			switch (typeof footerConfig.aggregate) {
-			case 'function':
-				agg = footerConfig.aggregate;
-				break;
-			case 'string':
-				if (typeof AGGREGATES[footerConfig.aggregate] === undefined) {
-					throw new Error('Footer config for field "' + field + '": requested aggregate function "' + footerConfig.aggregate + '" does not exist; supported aggregates are: ' + JSON.stringify(_.keys(AGGREGATES)));
-				}
-				else {
-					agg = AGGREGATES[footerConfig.aggregate];
-				}
-				break;
-			default:
-				throw new Error('Footer config for field "' + field + '": `aggregate` must be a function or string');
-			}
-
-			aggFun = agg.fun({field: field, type: colTypeInfo.type});
-			aggType = agg.type;
-			aggResult = format(colConfig, typeInfo.get(field), aggFun(data.data), {
-				alwaysFormat: true,
-				overrideType: aggType
-			});
-
-			switch (typeof footerConfig.format) {
-			case 'function':
-				footerVal = footerConfig.format(aggResult);
-				break;
-			case 'string':
-				footerVal = sprintf(footerConfig.format, aggResult);
-				break;
-			default:
-				throw new Error('Footer config for field "' + field + '": `format` must be a function or a string');
-			}
-
-			if (footerVal instanceof Element || footerVal instanceof jQuery) {
-				td.append(footerVal);
-			}
-			else {
-				td.text(footerVal);
-			}
-		}
-
-		return td;
-	}));
-
-	if (self.features.rowReorder) {
-		tr.append(jQuery('<td>').text('Options'));
-	}
-
-	self.ui.tfoot.append(tr);
-};
-
-// #makeRowReorderBtn {{{2
-
-GridTable.prototype.makeRowReorderBtn = function () {
-	return jQuery('<button type="button" class="drag-handle fa">')
-		.html(fontAwesome('f07d',null,'Drag or press up/down arrows to move'))
-	// When the drag button has focus, add the keydown handler
-	// to allow up/down arrows to work!
-		.focus( function() {
-			jQuery(this).on('keydown', function(event) {
-				var jobj = jQuery(event.currentTarget).closest('tr'),
-					oldIndex = jobj.index(),
-					newIndex = oldIndex;
-
-				// Reposition if one of the directional keys is pressed
-				switch (event.keyCode) {
-				case 38: // Up
-					if (jobj.prev().length) {
-						jobj.insertBefore(jobj.prev());
-					} else {
-						// already at the top so exit
-						return true;
-					}
-					break;
-				case 40: // Down
-					if (jobj.next().length) {
-						jobj.insertAfter(jobj.next());
-					} else {
-						// already at the bottom so exit
-						return true;
-					}
-					break;
-				default:
-					return true; // Exit
-				}
-				newIndex = jobj.index();
-				if (oldIndex !== newIndex) {
-					rowSwapIndex(self.defn, oldIndex, newIndex);
-				}
-				// keep focus on the button after move
-				jQuery(event.currentTarget).focus();
-			});
-		})
-	// Remove the keydown handler when focus is lost
-		.focusout( function() {
-			jQuery(this).off('keydown');
-		});
-};
-
-// #draw_body_plain {{{2
-
-GridTable.prototype.draw_body_plain = function (data, typeInfo, columns, cont) {
-	var self = this;
-
-	var check_handler = function () {
-		var tds = jQuery(jQuery(this).parents('tr').get(0)).children('td');
-		if (this.checked) {
-			tds.addClass('selected_row');
-		}
-		else {
-			tds.removeClass('selected_row');
-		}
-	};
-
-	var useLimit = self.features.limit;
-	var limitConfig = getPropDef({}, self.defn, 'table', 'limit');
-
-	if (self.features.limit && limitConfig && data.data.length > limitConfig.threshold) {
-		debug.info('GRID TABLE // DRAW', 'Limiting output to first ' + limitConfig.threshold + ' rows');
-	}
-
-	/*
-	 * Check to see if we should be rendering incrementally (add a few rows at a time).
-	 */
-
-	var useIncremental = false;
-	var incrementalConfig;
-
-	if (self.defn.table.incremental) {
-		useIncremental = true;
-		incrementalConfig = self.defn.table.incremental;
-	}
-
-	// Clear out the body of the table.  We do this in case somebody invokes this function multiple
-	// times.  This function draws the entirety of the data, we certainly don't want to just tack rows
-	// on to the end.
-
-	self.ui.tbody.children().remove();
-
-	var render = function (startIndex, howMany, nextChunk) {
-		var atLimit = false;
-
-		if (isNothing(startIndex)) {
-			startIndex = 0;
-		}
-
-		if (isNothing(howMany)) {
-			howMany = data.data.length;
-		}
-
-		debug.info('GRID TABLE // DRAW', 'Rendering rows '
-							 + startIndex
-							 + ' - '
-							 + Math.min(useLimit && startIndex === 0 ? limitConfig.threshold - 1 : Number.POSITIVE_INFINITY
-													, startIndex + howMany - 1
-													, data.data.length - 1)
-							 + ' '
-							 + (data.data.length - 1 <= startIndex + howMany - 1
-									? '[END]'
-									: ('/ ' + data.data.length - 1)));
-
-		for (var rowNum = startIndex; rowNum < data.data.length && rowNum < startIndex + howMany && !atLimit; rowNum += 1) {
-			var row = data.data[rowNum];
-			var tr;
-
-			if (useLimit
-					&& limitConfig.method === 'more'
-					&& ((startIndex === 0 && rowNum === limitConfig.threshold - 1) // [1]
-							|| (startIndex > 0 && rowNum === startIndex + limitConfig.chunkSize - 1))) { // [2]
-
-				// Condition [1]: We've reached the initial threshold for showing the more button.
-				// Condition [2]: We're showing additional rows because they clicked the more button.
-
-				atLimit = true;
-
-				tr = jQuery('<tr>').addClass('wcdvgrid_more');
-
-				var colSpan = columns.length
-					+ (self.features.rowSelect ? 1 : 0)
-					+ (self.features.rowReorder ? 1 : 0);
-
-				var showMore = function () {
-					tr.remove(); // Eliminate the "more" row.
-					render(rowNum, limitConfig.chunkSize, nextChunk);
-				};
-
-				var td = jQuery('<td>', {
-					colspan: colSpan
-				})
-					.on('click', showMore)
-					.append(fontAwesome('F13A'))
-					.append(jQuery('<span>Showing rows '
-												 + '1–'
-												 + rowNum
-												 + ' of '
-												 + (data.data.length + 1)
-												 + '.</span>')
-									.css({
-										'padding-left': '0.5em',
-									}))
-					.append(jQuery('<span>Click to load ' + limitConfig.chunkSize + ' more rows.</span>')
-									.css({
-										'padding-left': '0.5em',
-										'padding-right': '0.5em'
-									}))
-					.append(fontAwesome('F13A'));
-
-				self.moreVisibleHandler = onVisibilityChange(td, function(isVisible) {
-					if (isVisible && getProp(self.defn, 'table', 'limit', 'autoShowMore')) {
-						debug.info('GRID TABLE // MORE', '"Show More Rows" button scrolled into view');
-						showMore();
-					}
-				});
-
-				tr.append(td);
-			}
-			else {
-				tr = jQuery('<tr>', {id: self.defn.table.id + '_' + rowNum});
-
-				// Create the check box which selects the row.
-
-				if (self.features.rowSelect) {
-					var checkbox = jQuery('<input>', {
-						'type': 'checkbox',
-						'data-row-num': rowNum
-					})
-						.on('change', check_handler);
-					tr.append(jQuery('<td>').append(checkbox));
-				}
-
-				// Create the data cells.
-
-				_.each(columns, function (field, colIndex) {
-					var colConfig = self.defn.table.columns[colIndex] || {};
-					var cell = row.rowData[field];
-
-					var td = jQuery('<td>');
-					var value = format(colConfig, typeInfo.get(field), cell);
-
-					if (value instanceof Element || value instanceof jQuery) {
-						td.append(value);
-					}
-					else {
-						td.text(value);
-					}
-
-					self.setCss(td, field);
-					self.setAlignment(td, colConfig, typeInfo, field);
-
-					tr.append(td);
-				});
-
-				// Create button used as the "handle" for dragging/dropping rows.
-
-				if (self.features.rowReorder) {
-					tr.append(jQuery('<td>').append(self.makeRowReorderBtn()));
-				}
-			}
-
-			self.ui.tr.push(tr);
-			self.ui.tbody.append(tr);
-		}
-
-		if (self.features.tabletool && window.TableTool !== undefined) {
-			TableTool.update();
-		}
-
-		if (rowNum === data.data.length) {
-			// All rows have been produced, so we're done!
-
-			//self.ui.tbl.css({'table-layout': 'auto'}); // XXX - Does nothing?!
-
-			if (typeof cont === 'function') {
-				return cont();
-			}
-
-			// Nothing to do next, but we're done here.
-
-			return;
-		}
-		else if (typeof nextChunk === 'function') {
-			return nextChunk(startIndex, howMany);
-		}
-
-		if (typeof cont === 'function') {
-			return cont();
-		}
-
-		// Nothing to do next, but we're done here.
-
-		return;
-	};
-
-	if (useIncremental) {
-		if (incrementalConfig.method === 'setTimeout') {
-			var nextChunk = function (startIndex, howMany) {
-				window.setTimeout(function () {
-					render(startIndex + howMany, howMany, nextChunk);
-				}, incrementalConfig.delay);
-			};
-
-			// Kick off the initial render starting at index 0.
-
-			window.setTimeout(function () {
-				render(0, incrementalConfig.chunkSize, nextChunk);
-			}, incrementalConfig.delay);
-		}
-		else if (incrementalConfig.method === 'requestAnimationFrame') {
-			var nextChunk = function (startIndex, howMany) {
-				window.requestAnimationFrame(function () {
-					render(startIndex + howMany, howMany, nextChunk);
-				});
-			};
-
-			// Kick off the initial render starting at index 0.
-
-			window.requestAnimationFrame(function () {
-				render(0, incrementalConfig.chunkSize, nextChunk);
-			});
-		}
-		else {
-			throw new GridTableError('Invalid value for `table.incremental.method` (' + incrementalConfig.method + ') - must be either "setTimeout" or "requestAnimationFrame"');
-		}
-	}
-	else {
-		render();
-	}
-
-	//self.ui.tbl.css({'table-layout': 'fixed'}); // XXX - Does nothing?!
-};
-
-// #draw_body_group {{{2
-
-GridTable.prototype.draw_body_group = function (data, typeInfo, columns) {
-	var self = this;
-
-	_.each(data.data, function (rowGroup, groupNum) {
-		var tr = jQuery('<tr>');
-
-		// Create the cells that show the values of the grouped columns.
-		//
-		// EXAMPLE
-		// -------
-		//
-		//   groupFields = ["First Name", "Last Name"]
-		//   rowVals = [["Luke", "Skywalker"], ...]
-		//
-		// <tr>
-		//   <th>Luke</th>
-		//   <th>Skywalker</th>
-		//   ... row[col] | col ∉ groupFields ...
-		// </tr>
-
-		_.each(data.rowVals[groupNum], function (rowVal) {
-			jQuery('<th>').text(rowVal).appendTo(tr);
-		});
-
-		if (data.isPivot) {
-
-			// Create the cells that show the result of the aggregate function for all rows matching the
-			// column values at the same index.
-			//
-			// EXAMPLE
-			// -------
-			//
-			//   pivotFields = ["State"]
-			//   colVals = ["IL", "IN", "MI", "OH"]
-			//
-			// Column #1: agg(rowGroup[0]) - rows in the group w/ State = "IL"
-			// Column #2: agg(rowGroup[1]) - rows in the group w/ State = "IN"
-			// Column #3: agg(rowGroup[2]) - rows in the group w/ State = "MI"
-			// Column #4: agg(rowGroup[3]) - rows in the group w/ State = "OH"
-
-			_.each(rowGroup, function (colGroup) {
-				var td = jQuery('<td>').text(colGroup.length);
-				// REMOVED: How do we let the user set sizes &c. when doing a pivot table?
-				// self.setCss(td, col);
-				td.appendTo(tr);
-			});
-		}
-		else {
-			var hrefTextVal = function (x) {
-				x = x instanceof Element ? jQuery(x) : x;
-
-				if (!(x instanceof jQuery)) {
-					return x;
-				}
-
-				return x.attr('href') || x.text();
-			};
-
-			_.each(columns, function (field, colIndex) {
-				var uniqueVals = [];
-				var colConfig = self.defn.table.columns[colIndex] || {};
-
-				_.each(rowGroup, function (row) {
-					var cell = row.rowData[field];
-					var value = format(colConfig, typeInfo.get(field), cell);
-					uniqueVals.push(value);
-				});
-
-				// Sort the values - we need to be careful of when they're elements (e.g. links) instead of
-				// just plain old text.
-
-				uniqueVals = _.sortBy(uniqueVals, function (x) {
-					return x instanceof Element ? jQuery(x).text() : x instanceof jQuery ? x.text() : x;
-				});
-
-				// Make sure we get rid of any duplicates.
-
-				uniqueVals = _.uniq(uniqueVals, true, hrefTextVal);
-
-				var td = jQuery('<td>');
-
-				_.each(uniqueVals, function (x, i) {
-					if (i > 0) {
-						td.append(', ');
-					}
-					td.append(x);
-				});
-
-				self.setCss(td, field);
-				td.appendTo(tr);
-			});
-		}
-
-		self.ui.tr.push(tr);
-		self.ui.tbody.append(tr);
-	});
-};
-
-// #draw_body {{{2
-
-GridTable.prototype.draw_body = function (data, typeInfo, columns, cont) {
-	var self = this;
-
-	if (self.features.group && data.isGroup) {
-		self.draw_body_group(data, typeInfo, columns);
-		if (typeof cont === 'function') {
-			cont();
-		}
-	}
-	else {
-		self.draw_body_plain(data, typeInfo, columns, cont);
-	}
-};
-
-// #_addSortingToHeader {{{2
-
-GridTable.prototype._addSortingToHeader = function (colName, headingSpan, headingTh) {
-	var self = this;
-
-	if (!self.features.sort) {
-		return;
-	}
-
-	var sortSpan = jQuery('<span>').css({'font-size': '1.2em'});
-
-	var onClick = function () {
-		var cloneSortSpan = $(this).siblings('span.sort_indicator');
-		jQuery('span.sort_indicator').hide();
-		cloneSortSpan.show();
-
-		if (self.defn.sortSpec === undefined) {
-			self.defn.sortSpec = {
-				col: null,
-				asc: false
-			};
-		}
-
-		// Save the sort spec.  If we're resorting a column (i.e. we just sorted it) then
-		// reverse the sort direction.  Otherwise, start in ascending order.
-
-		self.defn.sortSpec.asc = (self.defn.sortSpec.col === colName ? !self.defn.sortSpec.asc : true);
-		self.defn.sortSpec.col = colName;
-
-		debug.info('SORTING', 'Column = ' + self.defn.sortSpec.col + ' ; Direction = ' + (self.defn.sortSpec.asc ? 'ASC' : 'DESC'));
-
-		cloneSortSpan.html(fontAwesome(self.defn.sortSpec.asc ? 'F0D7' : 'F0D8'));
-
-		self.view.setSort(self.defn.sortSpec.col,
-											self.defn.sortSpec.asc ? 'ASC' : 'DESC',
-											false,
-											self.makeProgress('Sort'));
-	};
-
-	sortSpan.addClass('sort_indicator');
-	sortSpan.css({'cursor': 'pointer'});
-	sortSpan.on('click', onClick);
-
-	headingSpan.css({'cursor': 'pointer', 'margin-left': '0.5ex'});
-	headingSpan.on('click', onClick);
-
-	headingTh.prepend(sortSpan);
-};
-
-// #setCss {{{2
-
-GridTable.prototype.setCss = function (elt, colName) {
-	var self = this;
-
-	if (self.colConfig[colName] === undefined) {
-		return;
-	}
-
-	var css = [
-		{ configName: 'width'        , cssName: 'width'      },
-		{ configName: 'minWidth'     , cssName: 'min-width'  },
-		{ configName: 'maxWidth'     , cssName: 'max-width'  },
-		{ configName: 'cellAlignment', cssName: 'text-align' }
-	];
-
-	for (var i = 0; i < css.length; i += 1) {
-		if (self.colConfig[css[i].configName] !== undefined) {
-			elt.css(css[i].cssName, self.colConfig[css[i].configName]);
-		}
-	}
-};
-
-// #setAlignment {{{2
-
-GridTable.prototype.setAlignment = function (elt, colConfig, typeInfo, field) {
-	var alignment = colConfig.cellAlignment;
-
-	if (alignment === undefined
-			&& (typeInfo.get(field).type === 'number'
-					|| typeInfo.get(field).type === 'currency')) {
-		alignment = 'right';
-	}
-
-	switch (alignment) {
-	case 'left':
-		elt.addClass('wcdvgrid_textLeft');
-		break;
-
-	case 'right':
-		elt.addClass('wcdvgrid_textRight');
-		break;
-
-	case 'center':
-		elt.addClass('wcdvgrid_textCenter');
-		break;
-
-	case 'justify':
-		elt.addClass('wcdvgrid_textJustify');
-		break;
-
-	default:
-		// We don't have a class for every possible value, so just set the style rule on the
-		// element in those cases.
-
-		elt.css('text-align', alignment);
-	}
-};
-
-// #getSelectedRows {{{2
-
-/**
- * Find what rows were selected in the grid.
- *
- * @method
- * @memberof GridTable
- *
- * @param {function} cb If present, this function is called for each row that was selected.  It
- * receives the row data (as an object), and the row index.
- *
- * @returns {number | Array<Object>} If `cb` is provided, the return value is the number of selected
- * rows.  Otherwise, the return value is an array of objects representing the row data.
- *
- * @example <caption>Retrieve data on the rows selected.</caption>
- * > window.wcgrid.example.getSelectedRows()
- * ==> [{a: 1, b: 2}, {a: 3, b: 4}]
- *
- * @example <caption>Get information on row data and row number selected.</caption>
- * > var obj = {};
- * > window.wcgrid.example.getSelectedRows((data, index) => {
- *     obj["IDX" + index] = data;
- *   });
- * ==> 2
- *
- * > obj.IDX1
- * ==> {a: 1, b: 2}
- *
- * > obj.IDX2
- * ==> {a: 3, b: 4}
- */
-
-GridTable.prototype.getSelectedRows = function (f) {
-	var self = this
-		, selectedIndices = []
-		, selectedRowData = []
-		, table = jQuery(document.getElementById(self.defn.table.id));
-
-	selectedIndices = table
-		.find('table tbody input[type="checkbox"]:checked')
-		.map(function () {
-			return +this.dataset.rowNum;
-		})
-		.get();
-	_.each(selectedIndices, function (i) {
-		selectedRowData.push(self.defn._data[0][i]);
-	});
-
-	if (typeof f === 'function') {
-		_.each(selectedIndices, function (i) {
-			f(selectedRowData[i], i);
-		});
-		return selectedIndices.length;
-	}
-	else {
-		return selectedRowData;
-	}
-};
-
-// #setSelectedRows {{{2
-
-GridTable.prototype.setSelectedRows = function (r) {
-	var self = this;
-
-	throw new NotImplementedError();
-};
-
-// #updateFeatures {{{2
-
-GridTable.prototype.updateFeatures = function (f) {
-	var self = this;
-
-	_.each(f, function (v, k) {
-		self.features[k] = v;
-	});
-
-	self.clear();
-	self.draw(self.container);
-};
-
-// #toString {{{2
-
-GridTable.prototype.toString = function () {
-	var self = this;
-
-	return 'GridTable{id="' + self.id + '"}';
-};
-
-// GridFilterError {{{1
-
-/**
- * Represents an error that occurs when creating or using a grid filter.
- *
- * @memberof wcgraph_int
- * @class
- *
- * @param {string} msg The error message.
- */
-
-function GridFilterError(msg) {
-	this.name = 'GridFilterError';
-	this.stack = (new Error()).stack;
-	this.message = msg;
-}
-
-GridFilterError.prototype = Object.create(Error.prototype);
-GridFilterError.prototype.constructor = GridError;
-
-// GridFilter {{{1
-
-// Superclass {{{2
-
-/**
- * Base class for all grid filter widgets.
- *
- * @class
- *
- * @property {string} field
- *
- * @property {string} filterType
- *
- * @property {string} filterBtn
- *
- * @property {GridFilterSet} gridFilterSet
- *
- * @property {number} limit
- *
- * @property {boolean} applyImmediately
- *
- * @property {jQuery} div
- *
- * @property {jQuery} input
- *
- * @property {jQuery} removeBtn
- *
- * @property {string} id
- *
- */
-
-var GridFilter = (function () {
-	var id = 0;
-
-	var genId = function () {
-		return 'GridFilter_' + id++;
-	};
-
-	return function (field, filterType, filterBtn, gridFilterSet, th, onRemove, sizingElement) {
-		var self = this;
-
-		self.field = field;
-		self.filterType = filterType;
-		self.filterBtn = filterBtn;
-		self.gridFilterSet = gridFilterSet;
-		self.limit = 0;
-		self.applyImmediately = false;
-		self.div = jQuery('<div>')
-			.css({'white-space': 'nowrap', 'padding-top': 2, 'padding-bottom': 2});
-		self.removeBtn = self.makeRemoveBtn();
-		self.onRemove = onRemove;
-		self.id = genId();
-		self.sizingElement = sizingElement;
-
-		self.gridFilterSet.gridTable.on(GridTable.events.columnResize, function () {
-			self.adjustInputWidth({ useSizingElement: true, fromColumnResize: true });
-		});
-	};
-})();
-
-GridFilter.prototype = Object.create(Object.prototype);
-GridFilter.prototype.constructor = GridFilter;
-
-// #getValue {{{3
-
-/**
- * This represents an exact value to use with a filter operator to decide what to show in the grid.
- *
- * @typedef {string|Moment|Numeral} GridFilter~Value
- */
-
-/**
- * This represents a range of allowed values; anything within the range should be shown in the grid.
- *
- * @typedef {Object} GridFilter~RangeValue
- *
- * @property {GridFilter~Value} start The starting number / date in the range (inclusive).
- * @property {GridFilter~Value} end The ending number / date in the range (inclusive).
- */
-
-/**
- * Gives the value that should be used when building the filters for the View from the user's
- * input in the GridFilter.  A GridFilter can return either a single value (which should be combined
- * with the operator, e.g. "greater than 40") or a range value (where the operators are implicitly
- * greater-than-or-equal and less-than-or-equal, e.g. "between January 1st and March 31st").
- *
- * @returns {GridFilter~Value|GridFilter~RangeValue} The value of the filter; you can tell whether
- * or not it will be a range by checking the result of #isRange().
- */
-
-GridFilter.prototype.getValue = function () {
-	var self = this
-		fti = self.gridFilterSet.view.typeInfo.get(self.field);
-
-	switch (fti.type) {
-	case 'date':
-	case 'time':
-	case 'datetime':
-		return fti.internalType === 'moment' ? moment(this.input.val()) : this.input.val();
-	case 'number':
-	case 'currency':
-		switch (fti.internalType) {
-		case 'numeral':
-			return numeral(this.input.val());
-		case 'primitive':
-			return isInt(this.input.val()) ? toInt(this.input.val())
-				: isFloat(this.input.val()) ? toFloat(this.input.val())
-				: this.input.val();
-		default:
-			return this.input.val();
-		}
-	case 'string':
-	default:
-		return this.input.val();
-	}
-};
-
-// #getOperator {{{3
-
-GridFilter.prototype.getOperator = function () {
-	return this.operatorDrop.val();
-};
-
-// #getId {{{3
-
-GridFilter.prototype.getId = function () {
-	return this.id;
-};
-
-// #makeOperatorDrop {{{3
-
-/**
- * Construct a SELECT that allows the user to pick the operator.
- *
- * @param {Array<string>} include If present, only include operators that correspond to those
- * operations requested.  This should be an array like ``['$eq', '$ne']`` to only show equality and
- * inequality operators.
- */
-
-GridFilter.prototype.makeOperatorDrop = function (include) {
-	var self = this;
-
-	// These are all the operators that are possible.
-
-	var operators = [['$contains', '∈'], ['$notcontains', '∉'], ['$eq', '='], ['$ne', '≠'], ['$gt', '>'], ['$gte', '≥'], ['$lt', '<'], ['$lte', '≤']];
-
-	// Remove anything that user didn't ask for.
-
-	if (include !== undefined && _.isArray(include)) {
-		operators = _.reject(operators, function (elt) {
-			return include.indexOf(elt[0]) < 0;
-		});
-	}
-
-	var operatorDrop = jQuery('<select>');
-
-	operatorDrop.css({'margin-right': '0.5em'});
-
-	// Add all the operators as options within the <SELECT>.
-
-	_.each(operators, function (op) {
-		var value = op[0]
-			, name = op[1];
-		operatorDrop.append(jQuery('<option>', { value: value }).text(name));
-	});
-
-	// Hook up the event to update the filter when the operator is changed.
-
-	operatorDrop.on('change', function () {
-		if (self.getValue() !== '') {
-			self.gridFilterSet.update(false);
-		}
-	});
-
-	// Return the <SELECT> so that the caller can put it where they want.
-
-	return operatorDrop;
-};
-
-// #makeRemoveBtn {{{3
-
-GridFilter.prototype.makeRemoveBtn = function () {
-	var self = this;
-
-	var removeBtn = jQuery(fontAwesome('F00D', null, 'Click to remove filter'));
-
-	removeBtn.css({'cursor': 'pointer', 'margin-left': '0.5em'})
-	removeBtn.on('click', function () {
-		self.gridFilterSet.remove(self.getId(), self.filterBtn);
-		if (typeof self.onRemove === 'function') {
-			self.onRemove();
-		}
-	});
-
-	return removeBtn;
-};
-
-// #remove {{{3
-
-GridFilter.prototype.remove = function () {
-	var self = this;
-
-	self.div.remove();
-	self.gridFilterSet.update(false);
-};
-
-// #isRange {{{3
-
-GridFilter.prototype.isRange = function () {
-	return false;
-};
-
-// #adjustInputWidth {{{3
-
-GridFilter.prototype.adjustInputWidth = function (opts) {
-	var self = this;
-
-	if (opts === undefined) {
-		opts = {};
-	}
-
-	// In case we're using TableTool, we need to carry around this idea of the sizing element.  At
-	// this point in the JS execution, TableTool hasn't caught up and correctly resized the floating
-	// header to match the original header column widths.  Therefore, we can't use `self.div` for
-	// determining the correct width (it's the wrong size, because it's still in a column which is the
-	// wrong size).  Instead, we need to use the sizing element - which is the original version of the
-	// TH containing `self.div` - to determine the correct size.  TableTool will catch up later,
-	// correctly resizing the column to align perfectly with what we set here.
-	//
-	// FIXME: This is extremely tightly coupled to knowledge about how the grid table is laid out and
-	// what features it has (e.g. TableTool).  It would be better to pass in what the size of the
-	// column currently is with the event handler.
-
-	_.defaults(opts, {
-		useSizingElement: false,
-		input: self.input
-	});
-
-	debug.info('GRID FILTER // ADJUST INPUT WIDTH', '         Target: %O', opts.input);
-
-	var targetWidth = opts.useSizingElement ? self.sizingElement.width() : self.div.width();
-	debug.info('GRID FILTER // ADJUST INPUT WIDTH', 'Available Space: ' + targetWidth + 'px ' + (opts.useSizingElement ? '[sizing element]' : '[div]'));
-
-	targetWidth -= self.removeBtn.outerWidth();
-	debug.info('GRID FILTER // ADJUST INPUT WIDTH', '  Remove Button: ' + self.removeBtn.outerWidth() + 'px');
-
-
-	if (self.operatorDrop !== undefined) {
-		targetWidth -= self.operatorDrop.outerWidth();
-		debug.info('GRID FILTER // ADJUST INPUT WIDTH', '  Operator Drop: ' + self.operatorDrop.outerWidth() + 'px');
-	}
-
-	debug.info('GRID FILTER' + (opts.fromColumnResize ? ' // HANDLER (columnResize)' : ''), 'Adjusting ' + self.field + ' filter widget width to ' + targetWidth + 'px to match column width');
-
-	opts.input.outerWidth(targetWidth);
-
-	if (typeof opts.callback === 'function') {
-		opts.callback(targetWidth);
-	}
-};
-
-// StringTextboxGridFilter {{{2
-
-/**
- * Represents a filter on a single string.
- *
- * @class
- * @extends GridFilter
- */
-
-var StringTextboxGridFilter = function () {
-	var self = this;
-
-	GridFilter.apply(self, arguments);
-
-	self.input = jQuery('<input type="text">');
-	self.input.on('change', function (evt) {
-		self.gridFilterSet.update(false);
-	});
-
-	self.operatorDrop = self.makeOperatorDrop(/*['$eq', '$ne']*/);
-
-	/*
-	self.strictChkbox = jQuery('<input>', {id: gensym(), type: 'checkbox'})
-		.on('change', function () {
-			self.gridFilterSet.update();
-		});
-		*/
-
-	self.div
-		.append(self.operatorDrop)
-		.append(self.input)
-		.append(self.removeBtn);
-};
-
-StringTextboxGridFilter.prototype = Object.create(GridFilter.prototype);
-
-/*
-StringTextboxGridFilter.prototype.getOperator = function () {
-	var self = this;
-
-	var op = GridFilter.prototype.getOperator.call(self);
-
-	if (self.strictChkbox[0].checked) {
-		return op;
-	}
-	else {
-		switch (op) {
-		case '$eq':
-			return '$contains';
-		case '$ne':
-			return '$notcontains';
-		default:
-			throw new GridFilterError('<< TSNH >> Unable to determine corresponding non-strict operator for ' + op);
-		}
-	}
-}
-*/
-
-// StringDropdownGridFilterChosen {{{2
-
-/**
- * Represents a filter for multiple strings.
- *
- * @class
- * @extends GridFilter
- */
-
-var StringDropdownGridFilterChosen = function () {
-	var self = this;
-
-	GridFilter.apply(self, arguments);
-
-	self.super = makeSuper(self, GridFilter);
-	self.limit = 1;
-	self.input = jQuery('<select>').attr({
-		'multiple': true
-	});
-	self.input.on('change', function (evt) {
-		self.gridFilterSet.update(false);
-	});
-
-	self.div
-		.append(self.input)
-		.append(self.removeBtn);
-
-	self.afterAdd = function (target) {
-		self.gridFilterSet.view.getUniqueVals(function (uniqueVals) {
-			_.each(uniqueVals[self.field].values, function (val) {
-				jQuery('<option>').attr({
-					'value': val
-				}).text(val).appendTo(self.input);
-			});
-			self.input.chosen({'width': self.div.innerWidth() - self.removeBtn.outerWidth()});
-			self.chosen = self.input.next('div.chosen-container');
-		});
-	};
-
-	self.gridFilterSet.gridTable.on(GridTable.events.columnResize, function () {
-		var targetWidth = self.sizingElement.innerWidth() - self.removeBtn.outerWidth() - 14;
-		debug.info('GRID FILTER // HANDLER (GridTable.columnResize)', 'Adjusting Chosen widget width to ' + targetWidth + 'px to match column width');
-		self.chosen.innerWidth(targetWidth);
-	});
-};
-
-StringDropdownGridFilterChosen.prototype = Object.create(GridFilter.prototype);
-
-// #getOperator {{{3
-
-StringDropdownGridFilterChosen.prototype.getOperator = function () {
-	return '$in';
-};
-
-// #getValue {{{3
-
-StringDropdownGridFilterChosen.prototype.getValue = function () {
-	var self = this
-		, val = self.super.getValue(self);
-
-	return val === null ? undefined : val;
-};
-
-// StringDropdownGridFilterSumo {{{2
-
-/**
- * Represents a filter for multiple strings.
- *
- * @class
- * @extends GridFilter
- */
-
-var StringDropdownGridFilterSumo = function () {
-	var self = this;
-
-	GridFilter.apply(self, arguments);
-
-	self.super = makeSuper(self, GridFilter);
-	self.limit = 1;
-	self.minDropdownWidth = 200;
-	self.input = jQuery('<select>').attr({
-		'multiple': true
-	})
-		.on('change', function (evt) {
-			self.gridFilterSet.update(false);
-		});
-
-	self.div
-		.append(self.input)
-		.append(self.removeBtn);
-
-	self.afterAdd = function (target) {
-		self.gridFilterSet.view.getUniqueVals(function (uniqueVals) {
-			_.each(uniqueVals[self.field].values, function (val) {
-				jQuery('<option>').attr({
-					'value': val
-				}).text(val).appendTo(self.input);
-			});
-			var sumo = self.input.SumoSelect({
-				triggerChangeCombined: true,
-				selectAll: true,
-				search: true,
-				okCancelInMulti: true,
-				isClickAwayOk: true
-			});
-			self.optWrapper = self.input.closest('div.SumoSelect').find('div.optWrapper');
-			/*
-			optWrapper.resizable({
-				helper: 'ui-resizable-helper'
-			});
-			*/
-			//self.adjustInputWidth();
-		});
-	};
-};
-
-StringDropdownGridFilterSumo.prototype = Object.create(GridFilter.prototype);
-
-// #adjustInputWidth {{{3
-
-StringDropdownGridFilterSumo.prototype.adjustInputWidth = function (opts) {
-	var self = this;
-
-	if (opts === undefined) {
-		opts = {};
-	}
-
-	opts.input = self.input.closest('div.SumoSelect');
-	opts.callback = function (width) {
-		self.optWrapper.outerWidth(Math.max(width, self.minDropdownWidth));
-	};
-
-	self.super.adjustInputWidth(opts);
-};
-
-// #getOperator {{{3
-
-StringDropdownGridFilterSumo.prototype.getOperator = function () {
-	return '$in';
-};
-
-// #getValue {{{3
-
-StringDropdownGridFilterSumo.prototype.getValue = function () {
-	var self = this
-		, val = self.super.getValue();
-
-	return val === null ? undefined : val;
-};
-
-// StringCheckedListGridFilter {{{2
-
-var StringCheckedlistGridFilter = function () {
-};
-
-// NumberTextboxGridFilter {{{2
-
-var NumberTextboxGridFilter = function () {
-	var self = this;
-
-	GridFilter.apply(self, arguments);
-
-	self.input = jQuery('<input type="text">');
-	self.input.on('change', function (evt) {
-		self.gridFilterSet.update(false);
-	});
-
-	self.operatorDrop = self.makeOperatorDrop(['$eq', '$ne', '$lt', '$lte', '$gt', '$gte']);
-
-	self.div
-		.append(self.operatorDrop)
-		.append(self.input)
-		.append(self.removeBtn);
-};
-
-NumberTextboxGridFilter.prototype = Object.create(GridFilter.prototype);
-
-// NumberCheckboxGridFilter {{{2
-
-var NumberCheckboxGridFilter = function () {
-	var self = this;
-
-	GridFilter.apply(self, arguments);
-
-	self.input = jQuery('<input>', {'id': gensym(), 'type': 'checkbox'});
-	self.input.on('change', function () {
-		self.gridFilterSet.update(false);
-	});
-
-	self.div
-		.append(jQuery('<label>')
-						.append(self.input)
-						.append(' Filter'))
-		.append(self.removeBtn);
-
-	self.applyImmediately = true;
-	self.limit = 1;
-};
-
-NumberCheckboxGridFilter.prototype = Object.create(GridFilter.prototype);
-
-NumberCheckboxGridFilter.prototype.getValue = function () {
-	return this.input[0].checked ? 1 : 0;
-};
-
-NumberCheckboxGridFilter.prototype.getOperator = function () {
-	return '$eq';
-};
-
-// DateSingleGridFilter {{{2
-
-/**
- * Represents a filter for a single date.
- *
- * @class
- * @extends GridFilter
- */
-
-var DateSingleGridFilter = function () {
-	var self = this;
-
-	GridFilter.apply(self, arguments);
-
-	self.input = jQuery('<input>').attr({
-		'type': 'text',
-		'placeholder': 'Select date...'
-	});
-
-	self.input.flatpickr({
-		'altInput': false,
-		'onChange': function (selectedDates, dateStr, instance) {
-			console.log(selectedDates, dateStr);
-			//self.gridFilterSet.update();
-		}
-	});
-
-	self.div
-		.append(self.input)
-		.append(self.removeBtn);
-};
-
-DateSingleGridFilter.prototype = Object.create(GridFilter.prototype);
-
-// DateRangeGridFilter {{{2
-
-/**
- * Represents a filter for a range of dates.
- *
- * @class
- * @extends GridFilter
- */
-
-var DateRangeGridFilter = function () {
-	var self = this;
-
-	GridFilter.apply(self, arguments);
-
-	self.limit = 1;
-
-	self.input = jQuery('<input>').attr({
-		'type': 'text',
-		'placeholder': 'Click here; pick start/end dates.',
-		'size': 28
-	});
-
-	self.widget = self.input.flatpickr({
-		'altInput': false,
-		'mode': 'range',
-		'onChange': function (selectedDates, dateStr, instance) {
-			self.gridFilterSet.update(false);
-		}
-	});
-
-	self.div
-		.append(self.input)
-		.append(self.removeBtn);
-};
-
-DateRangeGridFilter.prototype = Object.create(GridFilter.prototype);
-
-// #getValue {{{3
-
-/**
- * Get the value(s) for this date range filter.  After you bring up the calendar, when you select
- * the start date, the "onChange" event handler is run.  When you select the end date, the event is
- * fired again.  So, we use #isRange() to decide if you've only selected one date, or if you've just
- * picked the second.  When it's a range, we need to produce an object, instead of a simple value.
- *
- * @returns {GridFilter~Value|GridFilter~RangeValue} The value that should be used for filtering all
- * the data in the grid.
- */
-
-DateRangeGridFilter.prototype.getValue = function () {
-	var self = this;
-
-	if (self.isRange()) {
-		return {
-			'start': moment(self.widget.selectedDates[0]),
-			'end': moment(self.widget.selectedDates[1])
-		};
-	}
-	else {
-		return moment(self.widget.selectedDates[0]);
-	}
-};
-
-// #getOperator {{{3
-
-DateRangeGridFilter.prototype.getOperator = function () {
-	var self = this;
-
-	if (self.isRange()) {
-		log.error('<< TSNH >> GridFilterSet called #getOperator() on a range');
-	}
-
-	return '$gte';
-};
-
-// #isRange {{{3
-
-DateRangeGridFilter.prototype.isRange = function () {
-	var self = this;
-
-	return self.widget.selectedDates.length > 1;
-};
-
-// BooleanCheckboxGridFilter {{{2
-
-BooleanCheckboxGridFilter = function (field, gridFilter) {
-};
-
-BooleanCheckboxGridFilter.prototype.getValue = function () {
-	return this.input.val();
-};
-
-BooleanCheckboxGridFilter.prototype.getOperator = function () {
-	return '$eq';
-};
-
-BooleanCheckboxGridFilter.prototype.getId = function () {
-	return this.input.attr('id');
-};
-
-
-// Widget Map {{{2
-
-// Type -> Filter Widget -> Constructor
-
-GridFilter.widgets = {
-	'string': {
-		'textbox': StringTextboxGridFilter,
-		'dropdown': StringDropdownGridFilterSumo
-	},
-	'number': {
-		'textbox': NumberTextboxGridFilter
-	},
-	'currency': {
-		'textbox': NumberTextboxGridFilter
-	},
-	'date': {
-		'single': DateSingleGridFilter,
-		'range': DateRangeGridFilter
-	}
-};
-
-GridFilter.defaultWidgets = {
-	'string': 'dropdown',
-	'number': 'textbox',
-	'currency': 'textbox',
-	'date': 'range'
-};
-
-// GridFilterSet {{{1
-// Constructor {{{2
-
-/**
- * @memberof wcgraph_int
- *
- * @class
- * @property {object} defn
- *
- * @property {View} view
- *
- * @property {Element} thead
- *
- * @property {Object} filters Stores the filters that are within this set, with different properties
- * to facilitate different lookup methods.
- *
- * @property {Array} filters.all An array of all the filters.
- *
- * @property {Object} filters.byId An object indexing all the filters by its internal ID.
- *
- * @property {Object.<Array>} filters.byCol An object indexing all the filters by the column that
- * they're filtering.
- *
- * @property {boolean} delayUpdate If true, calls to the update() method do nothing.  This is used
- * internally when loading preferences to avoid updating for every single filter.
- */
-
-var GridFilterSet = function (defn, view, gridTable, progress) {
-	var self = this;
-
-	if (defn === undefined) {
-		throw new Error('GridFilterSet(): Missing required argument: defn');
-	}
-
-	self.defn = defn;
-	self.view = view;
-	self.gridTable = gridTable;
-	self.progress = progress;
-
-	self.filters = {
-		all: [],
-		byId: {},
-		byCol: {}
-	};
-
-	self.delayUpdate = false;
-};
-
-// .events {{{2
-
-GridFilterSet.events = objFromArray([
-	'filterAdded'
-	, 'filterRemoved'
-]);
-
-mixinEventHandling(GridFilterSet, 'GridFilterSet', GridFilterSet.events);
-
-// #add {{{2
-
-/**
- * Add a new filter to this set.  This creates the user interface elements and places them in the
- * appropriate place in the grid.
- *
- * @param {string} field Name of the column to filter on.
- *
- * @param {Element} target Where to place the filter widget.
- *
- * @param {string} [filterType] The developer's requested filter type.  If missing, we use the first
- * one from the "allowed" list.  If present, and not in the allowed list, you'll get an error.
- *
- * @param {Element} filterBtn The "add filter" button from the column header.  Needed so we can hide
- * it, if we've reached the maximum number of filters allowed on the column.
- */
-
-GridFilterSet.prototype.add = function (field, target, filterType, filterBtn, onRemove, sizingElement) {
-	var self = this
-		, filter;
-
-	filter = self.build(field, filterType, filterBtn, target, onRemove, sizingElement);
-
-	// Make sure that requisite data structures are there.
-
-	if (self.filters.byCol[field] === undefined) {
-		self.filters.byCol[field] = [];
-	}
-
-	// Add the filter to all of our data structures.
-
-	self.filters.all.push(filter);
-	self.filters.byCol[field].push(filter);
-	self.filters.byId[filter.getId()] = filter;
-
-	// Add the filter to the user interface.
-
-	target.append(filter.div);
-
-	if (typeof filter.afterAdd === 'function') {
-		filter.afterAdd(target);
-	}
-
-	filter.adjustInputWidth();
-
-	// Hide the "add filter" button if we've reached the limit of the number of filters we're allowed
-	// to have for this column.
-
-	if (self.filters.byCol[field].length === filter.limit) {
-		filterBtn.hide();
-	}
-
-	self.fire(GridFilterSet.events.filterAdded);
-
-	// Check to see if this filter should take effect as soon as it is created.
-
-	if (filter.applyImmediately) {
-		self.update();
-	}
-};
-
-// #build {{{2
-
-GridFilterSet.prototype.build = function (field, filterType, filterBtn, target, onRemove, sizingElement) {
-	var self = this
-		, colType
-		, ctor;
-
-	// We use a data source to get the type information, so if the grid was built without a data
-	// source, this isn't going to work.
-
-	if (!(self.defn.source instanceof Source)) {
-		throw new GridFilterError('This can only be used with a Source');
-	}
-
-	colType = self.defn.source.cache.typeInfo.get(field).type;
-
-	// Make sure that we are able to get the column type.
-
-	if (isNothing(colType)) {
-		throw new GridFilterError('Unable to determine type of column "' + field + '"');
-	}
-
-	// Make sure that we know what kinds of filters are allowed for the column type.
-
-	if (GridFilter.widgets[colType] === undefined) {
-		throw new GridFilterError('Unknown type "' + colType + '" for column "' + field + '"');
-	}
-
-	// When the user didn't request a filter type, just use the first one in the allowed list.
-	// Otherwise, make sure that the filter type they asked for makes sense for the column type.
-
-	if (isNothing(filterType)) {
-		filterType = GridFilter.defaultWidgets[colType];
-		ctor = GridFilter.widgets[colType][filterType];
-	}
-	else {
-		ctor = GridFilter.widgets[colType][filterType];
-	}
-
-	if (ctor === undefined) {
-		throw new GridFilterError('Invalid filter type "' + filterType + '" for type "' + colType + '" of column "' + field + '"');
-	}
-
-	debug.info('GRID FILTER', 'Creating new widget: column type = "' + colType + '" ; filter type = "' + filterType + '"');
-
-	return new ctor(field, filterType, filterBtn, self, target, onRemove, sizingElement);
-};
-
-// #remove {{{2
-
-GridFilterSet.prototype.remove = function (id, filterBtn) {
-	var self = this
-		, filter = self.filters.byId[id];
-
-	// Make sure that a filter with that ID exists.
-
-	if (filter === undefined) {
-		log.warn('Attempted to remove filter with ID "' + id + '" from the grid, but it doesn\'t exist');
-		return;
-	}
-
-	var sameId = function (elt) { return elt.getId() === id };
-	var allIndex = _.findIndex(self.filters.all, sameId);
-	var colIndex = _.findIndex(self.filters.byCol[filter.field], sameId);
-
-	delete self.filters.byId[id];
-	self.filters.all.splice(allIndex, 1);
-	self.filters.byCol[filter.field].splice(colIndex, 1);
-
-	filter.remove();
-
-	// Show the "add filter" button if we're below the limit of the number of filters we're allowed to
-	// have for this column.
-
-	if (self.filters.byCol[filter.field].length < filter.limit) {
-		filterBtn.show();
-	}
-
-	self.fire(GridFilterSet.events.filterRemoved);
-};
-
-// #reset {{{2
-
-GridFilterSet.prototype.reset = function () {
-	var self = this;
-
-	// Remove every filter from the user interface.
-
-	_.each(self.filters.all, function (filter) {
-		filter.remove();
-	});
-
-	// Reset our internal data structures.
-
-	self.filters = {
-		all: [],
-		byId: {},
-		byCol: {}
-	};
-
-	self.view.clearFilter();
-};
-
-// #update {{{2
-
-/**
- * @param {boolean} dontSavePrefs If true, don't save preferences.
- */
-
-GridFilterSet.prototype.update = function (dontSavePrefs) {
-	var self = this
-		, spec = {};
-
-	// Check for the "don't actually update" property, set when we're loading prefs to prevent any
-	// `applyImmediately` filters from causing unnecessary updates until we're done.
-
-	if (self.delayUpdate) {
-		return;
-	}
-
-	if (self.filters.all.length === 0) {
-		self.view.setFilter(null);
-		return;
-	}
-
-	_.each(self.filters.byCol, function (filterList, field) {
-		_.each(filterList, function (filter) {
-			var value = filter.getValue();
-
-			if (value === undefined) {
-				return;
-			}
-
-			if (spec[field] === undefined) {
-				spec[field] = {};
-			}
-
-			if (filter.isRange()) {
-				spec[field]['$gte'] = value.start;
-				spec[field]['$lte'] = value.end;
-			}
-			else {
-				var operator = filter.getOperator();
-
-				if (spec[field][operator] === undefined) {
-					spec[field][operator] = value;
-				}
-				else if (_.isArray(spec[field][operator])) {
-					spec[field][operator].push(value);
-				}
-				else if (['$eq', '$ne', '$contains'].indexOf(operator) >= 0) {
-					spec[field][operator] = [spec[field][operator], value];
-				}
-				else {
-					spec[field][operator] = value;
-				}
-			}
-		});
-	});
-
-	debug.info('GRID FILTER SET', 'Updating with ' + self.filters.all.length + ' filters: ', spec);
-
-	self.view.setFilter(spec, false, self.progress);
-
-	if (getProp(self.defn, 'table', 'prefs', 'enableSaving') && !dontSavePrefs) {
-		self.savePrefs();
-	}
-};
-
-// #savePrefs {{{2
-
-/**
- * Store preferences for the filters on this grid.
- */
-
-GridFilterSet.prototype.savePrefs = function () {
-	var self = this
-		, filters = [];
-
-	// Make sure that there's a way to save prefs.
-
-	if (isNothing(self.defn.prefs)) {
-		log.error('Unable to save prefs: [defn.prefs] does not exist');
-		return;
-	}
-
-	// Make sure the API we're expecting is going to be there.
-
-	if (!(self.defn.prefs instanceof Prefs)) {
-		log.error('Unable to save prefs: [defn.prefs] is not a Prefs instance');
-		return;
-	}
-
-	_.each(self.filters.all, function (filter) {
-		var filterPref = {};
-
-		filterPref.field = filter.field;
-		filterPref.filterType = filter.filterType;
-		filterPref.operator = filter.getOperator();
-		filterPref.value = filter.getValue();
-
-		filters.push(filterPref);
-	});
-
-	self.defn.prefs.setUserData('html/filters', filters);
-	self.defn.prefs.save();
-};
-
-// #loadPrefs {{{2
-
-/**
- * Load filter data from preferences and apply it to the grid.
- *
- * @param {object} prefs The whole preferences object.
- */
-
-GridFilterSet.prototype.loadPrefs = function (prefs) {
-	_.each(prefs.filters, function (filterPref) {
-		self.add();
-	});
-
-	self.update(true); // No need to save prefs, we just loaded them!
-};
-
 // Grid {{{1
 // JSDoc Types {{{2
 
@@ -2900,11 +459,9 @@ GridFilterSet.prototype.loadPrefs = function (prefs) {
  * @property {Timing} timing
  */
 
-var Grid = function (id, view, source, defn, tagOpts, cb) {
+var Grid = function (id, view, defn, tagOpts, cb) {
 	var self = this;
 
-	var tagContainer = null; // Container div for the contents of the whole tag.
-	var gridContainer = null; // Container div for the grid.
 	var rowCount = null; // Container span for the row counter.
 	var clearFilter = null; // Container span for the "clear filter" link.
 	var gridToolBar = null;
@@ -2941,7 +498,6 @@ var Grid = function (id, view, source, defn, tagOpts, cb) {
 	self.grid = null; // List of all grids generated as a result.
 	self.ui = {}; // User interface elements.
 	self.selected = {}; // Information about what rows are selected.
-	self.source = source;
 	self.view = view;
 
 	self.defn.grid = self;
@@ -2953,19 +509,15 @@ var Grid = function (id, view, source, defn, tagOpts, cb) {
 	 * Set up other container elements.
 	 */
 
-	tagContainer = jQuery(document.getElementById(id));
-	self.ui.grid = jQuery('<div>');
-	self.ui.gridContainer = jQuery('<div>', {
-		id: defn.table.id
-	});
-	tagContainer.addClass('gridwrapper');
-	tagContainer.attr('data-title', id + '_title');
+	self.ui.root = jQuery(document.getElementById(id))
+		.addClass('gridwrapper')
+		.attr('data-title', id + '_title');
 
 	if (tagOpts.title) {
 		if (!_.isString(tagOpts.title)) {
 			throw '<tagOpts.title> is not a string';
 		}
-		gridToolBar = jQuery('<div class="gridtoolbar">').appendTo(tagContainer);
+		gridToolBar = jQuery('<div class="gridtoolbar">').appendTo(self.ui.root);
 		gridToolBarHeading = jQuery('<div class="heading">')
 			.attr('title', MIE.trans('SHOWHIDE'))
 			.on('click', function (evt) {
@@ -2983,7 +535,16 @@ var Grid = function (id, view, source, defn, tagOpts, cb) {
 		}
 	}
 
-	self.ui.gridContainer.appendTo(self.ui.grid);
+	self.ui.gridControl = jQuery('<div>');
+	self.ui.pivotControl = jQuery('<div>');
+	self.ui.groupControl = jQuery('<div>');
+	self.ui.grid = jQuery('<div>', { id: defn.table.id });
+
+	self.ui.gridControl
+		.append(self.ui.pivotControl)
+		.append(self.ui.groupControl)
+		.append(self.ui.grid)
+		.appendTo(self.ui.root);
 
 	if (document.getElementById(id + '_footer')) {
 		// There was a footer which was printed out by dashboard.c which we are now going to move
@@ -2991,10 +552,8 @@ var Grid = function (id, view, source, defn, tagOpts, cb) {
 
 		self.ui.footer = jQuery(document.getElementById(id + '_footer'))
 			.css('display', 'block')
-			.appendTo(self.ui.grid);
+			.appendTo(self.ui.gridControl);
 	}
-
-	self.ui.grid.appendTo(tagContainer);
 
 	var initialRender = true;
 
@@ -3224,6 +783,15 @@ Grid.prototype._addCommonButtons = function (toolbar) {
 	var self = this;
 	var isVisible = true; // If true, the grid is not currently hidden.
 
+	var makeCheckbox = function (init, onClick, text, parent) {
+		var checkbox = jQuery('<input>', { 'id': gensym(), 'type': 'checkbox', 'checked': init })
+			.on('change', onClick)
+			.appendTo(parent);
+		jQuery('<label>', { 'for': checkbox.attr('id') })
+			.text(text)
+			.appendTo(parent);
+	};
+
 	self.ui.refreshLink = jQuery('<button>')
 		.append(fontAwesome('F021'))
 		.text('Refresh')
@@ -3234,25 +802,13 @@ Grid.prototype._addCommonButtons = function (toolbar) {
 
 	setPropDef(true, self.defn, 'table', 'limit', 'autoShowMore');
 
-	var showMoreRowsCheckbox = jQuery('<input>', {
-		'id': gensym(),
-		'type': 'checkbox',
-		'checked': self.defn.table.limit.autoShowMore
-	})
-		.on('change', function (evt) {
-			var isChecked = showMoreRowsCheckbox.prop('checked');
-			debug.info('GRID // TOOLBAR', 'Setting `table.limit.autoShowMore` to ' + isChecked);
-			self.defn.table.limit.autoShowMore = isChecked;
-		})
-		.appendTo(toolbar);
+	makeCheckbox(self.defn.table.limit.autoShowMore, function () {
+		var isChecked = showMoreRowsCheckbox.prop('checked');
+		debug.info('GRID // TOOLBAR', 'Setting `table.limit.autoShowMore` to ' + isChecked);
+		self.defn.table.limit.autoShowMore = isChecked;
+	}, 'Show More Rows on Scroll', toolbar);
 
-	var showMoreRowsLabel = jQuery('<label>', {
-		'for': showMoreRowsCheckbox.attr('id')
-	})
-		.text('Show More Rows on Scroll')
-		.appendTo(toolbar);
-
-	var showAllRowsButton = jQuery('<button>')
+	jQuery('<button>')
 		.on('click', function (evt) {
 			self.gridTable.updateFeatures({
 				'blockUI': true,
@@ -3262,6 +818,24 @@ Grid.prototype._addCommonButtons = function (toolbar) {
 		})
 		.text('Show All Rows')
 		.appendTo(toolbar);
+
+	makeCheckbox(self.features.group, function () {
+		if (jQuery(this).prop('checked')) {
+			self.enableGroup();
+		}
+		else {
+			self.disableGroup();
+		}
+	}, 'Enable Grouping', toolbar);
+
+	makeCheckbox(self.features.pivot, function () {
+		if (jQuery(this).prop('checked')) {
+			self.enablePivot();
+		}
+		else {
+			self.disablePivot();
+		}
+	}, 'Enable Pivot', toolbar);
 };
 
 // #addPrefsButtons {{{2
@@ -3385,6 +959,7 @@ Grid.prototype._addPrefsButtons = function (toolbar) {
 	};
 };
 
+// #addGroupDiv
 // #refresh {{{2
 
 /**
@@ -3402,6 +977,8 @@ Grid.prototype.refresh = function () {
 		return;
 	}
 
+	debug.info('GRID', 'Refreshing...');
+
 	if (self.tagOpts.title) {
 		self.setSpinner('loading');
 		self.showSpinner();
@@ -3414,26 +991,32 @@ Grid.prototype.refresh = function () {
 		self.tagOpts.filterInput.store();
 	}
 
+	if (self.features.group) {
+		self.groupControl = new GroupControl(self.defn, self.view, self.timing);
+		self.ui.groupControl.children().remove();
+		self.ui.groupControl.append(self.groupControl.draw()).show();
+	}
+
 	if (self.features.pivot) {
-		if (self.pivotControl !== undefined) {
-			self.pivotControl.clear();
-		}
-		else {
-			debug.info('GRID', 'Creating PivotControl for pivot table output');
-			self.pivotControl = new PivotControl(self.defn, self.view, self.features, self.timing, self.id);
-		}
-		self.pivotControl.draw(self.ui.gridContainer, self.tableDoneCont);
+		self.pivotControl = new PivotControl(self.defn, self.view, self.timing);
+		self.ui.pivotControl.children().remove();
+		self.ui.pivotControl.append(self.pivotControl.draw()).show();
+	}
+
+	if (self.features.pivot) {
+		debug.info('GRID', 'Creating GridTablePivot for pivot table output');
+		self.gridTable = new GridTablePivot(self.defn, self.view, self.features, self.timing, self.id);
+	}
+	else if (self.features.group) {
+		debug.info('GRID', 'Creating GridTableGroup for group table output');
+		self.gridTable = new GridTableGroup(self.defn, self.view, self.features, self.timing, self.id);
 	}
 	else {
-		if (self.gridTable !== undefined) {
-			self.gridTable.clear();
-		}
-		else {
-			debug.info('GRID', 'Creating GridTable for normal output');
-			self.gridTable = new GridTable(self.defn, self.view, self.features, self.timing, self.id);
-		}
-		self.gridTable.draw(self.ui.gridContainer, self.tableDoneCont); // TODO load prefs
+		debug.info('GRID', 'Creating GridTablePlain for plain table output');
+		self.gridTable = new GridTablePlain(self.defn, self.view, self.features, self.timing, self.id);
 	}
+
+	self.gridTable.draw(self.ui.grid, self.tableDoneCont); // TODO load prefs
 };
 
 // #redraw {{{2
@@ -3522,7 +1105,10 @@ Grid.prototype.updateRowCount = function (numRows, totalRows) {
 
 Grid.prototype.hideGrid = function () {
 	var self = this;
-	self.ui.grid.slideUp({
+
+	debug.info('GRID', 'Hiding...');
+
+	self.ui.gridControl.slideUp({
 		done: function () {
 			if (self.tagOpts.title) {
 				self.ui.showHideButton.removeClass('open').html(fontAwesome('f078'));
@@ -3542,7 +1128,10 @@ Grid.prototype.hideGrid = function () {
 
 Grid.prototype.showGrid = function () {
 	var self = this;
-	self.ui.grid.slideDown({
+
+	debug.info('GRID', 'Showing...');
+
+	self.ui.gridControl.slideDown({
 		done: function () {
 			if (self.tagOpts.title) {
 				self.ui.showHideButton.addClass('open').html(fontAwesome('f077'));
@@ -3626,6 +1215,39 @@ Grid.prototype.hideSpinner = function () {
 	}
 };
 
+// #enableGroup {{{2
+
+Grid.prototype.enableGroup = function () {
+	var self = this;
+
+	if (self.features.group) {
+		return;
+	}
+
+	self.toggleGroup();
+};
+
+// #disableGroup {{{2
+
+Grid.prototype.disableGroup = function () {
+	var self = this;
+
+	if (!self.features.group) {
+		return;
+	}
+
+	self.toggleGroup();
+};
+
+// #toggleGroup {{{2
+
+Grid.prototype.toggleGroup = function () {
+	var self = this;
+
+	self.features.group = !self.features.group;
+	self.refresh();
+};
+
 // #enablePivot {{{2
 
 Grid.prototype.enablePivot = function () {
@@ -3659,26 +1281,26 @@ Grid.prototype.togglePivot = function () {
 	self.refresh();
 };
 
-// #drawPivotControl {{{2
-
-/**
- * Draw the areas at the top and left of the data table which allow the user to manipulate the data
- * table as a pivot table.
- */
-
-Grid.prototype.drawPivotControl = function () {
-};
-
 // PivotControl {{{1
 
+// Constructor {{{2
+
 /**
- * @class PivotControl
+ * Part of the user interface which governs: (1) the fields that are part of the pivot, including
+ * filtering; (2) the aggregate function [and potentially its arguments] that produces the values in
+ * the pivot table.
+ *
+ * @param {Object} defn
+ *
+ * @param {Element} container
+ *
+ * @param {View} view
  *
  * @property {Object} defn
  *
  * @property {View} view
  *
- * @property {GridTable} gridTable
+ * @property {GridTablePlain} gridTable
  *
  * @property {GridFilterSet} gridFilterSet The set of all filters applied to the data before
  * performing the pivot operation.  The view takes care of doing this in the right order, but we
@@ -3690,7 +1312,7 @@ Grid.prototype.drawPivotControl = function () {
  *
  * @property {Array.<PivotControlFields>} pivotFields A list of all fields that we are pivotting by.
  *
- * @property {Object} ui
+ * @property {Object} ui Tracks user interface elements created by this instance.
  *
  * @property {Element} ui.container 
  *
@@ -3702,54 +1324,16 @@ Grid.prototype.drawPivotControl = function () {
  * @property {Element} ui.cols A DIV that contains all fields which are being pivotted by.
  */
 
-// Constructor {{{2
-
-/**
- * The part of the user interface that constructs a pivot table, and allows the user to interact
- * with it (e.g. changing what rows/columns are in the pivot, filtering data).
- *
- * @param {Object} defn
- *
- * @param {Element} container
- *
- * @param {View} view
- */
-
-function PivotControl(defn, view, features, timing, id) {
+function PivotControl(defn, view, features, timing) {
 	var self = this;
-
-	if (defn === undefined) {
-		throw new Error('PivotControl(): Missing required argument: defn');
-	}
-
-	if (view === undefined) {
-		throw new Error('PivotControl(): Missing required argument: view');
-	}
-	else if (!(view instanceof View)) {
-		throw new Error('PivotControl(): Argument "view" must be an instance of View');
-	}
-
-	if (features === undefined) {
-		throw new Error('PivotControl(): Missing required argument: features');
-	}
 
 	self.defn = defn;
 	self.view = view;
-	self.features = features;
 	self.timing = timing;
-
-	// Create a new grid table to show the pivotted data.  Make sure that we disable some of the
-	// features that don't make sense when showing a pivot table.
-
-	self.gridTable = new GridTable(self.defn, self.view, _.extend({}, self.features, {
-		filter: false,
-		rowSelect: false,
-		rowReorder: false
-	}), self.timing, id);
+	self.ui = {};
 
 	self.gridFilterSet = new GridFilterSet(self.defn, self.view);
 	self.fields = [];
-	self.groupFields = [];
 	self.pivotFields = [];
 }
 
@@ -3757,244 +1341,202 @@ PivotControl.prototype = Object.create(Object.prototype);
 PivotControl.prototype.name = 'PivotControl';
 PivotControl.prototype.constructor = PivotControl;
 
-// #addGroup {{{2
+// #draw {{{2
 
 /**
- * Add a field to the current list of fields to group by.
+ * Create a DIV element that can be placed within the Grid instance to hold the user interface for
+ * the PivotControl.  The caller must add the result to the DOM somewhere.
  *
- * @param {PivotControlField} pcf
+ * @returns {jQuery} The DIV element that holds the entire UI.
  */
 
-PivotControl.prototype.addGroup = function (pcf) {
+PivotControl.prototype.draw = function () {
 	var self = this;
 
-	self.groupFields.push(pcf.fieldName);
-	self.ui.rows.append(pcf.div);
-	self.updateGroup();
-};
+	self.ui.root = jQuery('<div>');
+	self.ui.pivotFields = jQuery('<ul>').appendTo(self.ui.root);
 
-// #removeGroup {{{2
+	var dropdownContainer = jQuery('<div>').appendTo(self.ui.root);
+	self.ui.dropdown = jQuery('<select>').appendTo(dropdownContainer);
+	var addButton = jQuery('<button>')
+		.text('+')
+		.appendTo(dropdownContainer)
+		.on('click', function () {
+			self.addPivot(self.ui.dropdown.val());
+			// TODO: Remove from the dropdown.
+		});
 
-PivotControl.prototype.removeGroup = function (pcf) {
-	var self = this
-		, index = self.groupFields.indexOf(pcf.fieldName);
+	self.view.getTypeInfo(function (typeInfo) {
+		_.each(availableFields(defn, null, typeInfo), function (fieldName) {
+			jQuery('<option>').text(fieldName).appendTo(self.ui.dropdown);
+		});
+	});
 
-	if (index < 0) {
-		log.error('Tried to remove field "' + pcf.fieldName + '" from the group, but we\'re not using it!');
-		return;
-	}
-
-	self.groupFields.splice(index, 1);
-	self.ui.available.append(pcf.div);
-	self.updateGroup();
-};
-
-// #updateGroup {{{2
-
-PivotControl.prototype.updateGroup = function () {
-	var self = this;
-
-	self.gridTable.clear();
-
-	if (self.groupFields.length > 0) {
-		self.view.setGroup({fieldNames: self.groupFields});
-	}
-	else {
-		self.view.clearGroup();
-	}
-
-	self.gridTable.draw(self.ui.table); // TODO load prefs
+	return self.ui.root;
 };
 
 // #addPivot {{{2
 
-PivotControl.prototype.addPivot = function (pcf) {
-	var self = this;
+PivotControl.prototype.addPivot = function (field) {
+	var self = this
+		, pcf = new PivotControlField(self, field);
 
-	self.pivotFields.push(pcf.fieldName);
-	self.ui.cols.append(pcf.div);
-	self.updatePivot();
+	jQuery('<li>').append(pcf.draw()).appendTo(self.ui.groupFields); // Add it to the DOM.
+	self.groupFields.push(field); // Add it to the groupFields array.
+	// TODO: Update the view.
 };
 
 // #removePivot {{{2
 
-PivotControl.prototype.removePivot = function (pcf) {
+PivotControl.prototype.removeGroup = function (pcf) {
 	var self = this
-		, index = self.pivotFields.indexOf(pcf.fieldName);
+		, fieldIndex = self.groupFields.indexOf(pcf.field);
 
-	if (index < 0) {
-		log.error('Tried to remove field "' + pcf.fieldName + '" from the pivot, but we\'re not using it!');
-		return;
-	}
-
-	self.pivotFields.splice(index, 1);
-	self.ui.available.append(pcf.div);
-	self.updatePivot();
-};
-
-// #updatePivot {{{2
-
-PivotControl.prototype.updatePivot = function () {
-	var self = this;
-
-	self.gridTable.clear();
-
-	if (self.pivotFields.length > 0) {
-		self.view.setPivot({fieldNames: self.pivotFields});
-	}
-	else {
-		self.view.clearPivot();
-	}
-
-	self.gridTable.draw(self.ui.table); // TODO load prefs
-};
-
-// #draw {{{2
-
-/**
- * Create the user interface.
- */
-
-PivotControl.prototype.draw = function (container, tableDoneCont) {
-	var self = this;
-
-	self.ui = {};
-
-	self.ui.container = container;
-	self.ui.container.children().remove(); // Remove existing content.
-	self.ui.available = jQuery('<div>').text('AVAILABLE').appendTo(self.ui.container);
-	self.ui.rows = jQuery('<div>').text('ROWS').appendTo(self.ui.container);
-	self.ui.cols = jQuery('<div>').text('COLS').appendTo(self.ui.container);
-	self.ui.table = jQuery('<div>').text('TABLE').appendTo(self.ui.container);
-
-	self.view.getData(function (data) {
-		self.view.getTypeInfo(function (typeInfo) {
-			var cols = determineColumns(self.defn, data, typeInfo);
-
-			_.each(cols, function (fieldName) {
-				self.fields[fieldName] = new PivotControlField(self, fieldName, self.features);
-				self.fields[fieldName].appendTo(self.ui.available);
-			});
-			self.gridTable.draw(self.ui.table, tableDoneCont); // TODO load prefs
-		});
-	});
-};
-
-// #update {{{2
-
-/**
- * Called when a pivot control field is moved to/from either the "group by" or "pivot by" areas.
- * This function updates the view with the new group and/or pivot configuration.
- */
-
-PivotControl.prototype.update = function () {
-	var self = this;
-
-	self.view.setGroup();
-	self.view.setPivot();
+	pcf.getElement().remove(); // Remove it from the DOM.
+	self.pivotFields.splice(fieldIndex, 1); // Remove it from the groupFields array.
+	// TODO: Update the view.
 };
 
 // PivotControlField {{{1
 
-/**
- * @class PivotControlField
- *
- * @property {PivotControl} pivotControl
- *
- * @property {string} fieldName Name of the field which this widget controls.
- *
- * @property {Element} div Contains all elements that make up this widget.
- *
- * @property {Element} addGroupBtn
- *
- * @property {Element} addPivotBtn
- *
- * @property {Element} removeGroupBtn
- *
- * @property {Element} removePivotBtn
- */
+function PivotControlField(groupControl, field) {
+	var self = this;
+
+	self.groupControl = groupControl;
+	self.field = field;
+};
+
+// #draw {{{2
+
+PivotControlField.prototype.draw = function () {
+	var self = this;
+
+	self.ui.root = jQuery('<div>')
+		.append(jQuery('<span>').text(self.field))
+		.append(jQuery('<button>').text('X').on('click', function () {
+			self.groupControl.removePivot(self);
+		}));
+
+	return self.ui.root;
+};
+
+// #getElement {{{2
+
+PivotControlField.prototype.getElement = function () {
+	var self = this;
+
+	return self.ui.root;
+};
+
+// GroupControl {{{1
 
 // Constructor {{{2
 
-function PivotControlField(pivotControl, fieldName, features) {
+/**
+ * Part of the user interface which governs the fields that are part of the group, including
+ * filtering.
+ *
+ * @param {object} defn
+ *
+ * @param {View} view
+ *
+ * @param {Grid~Features} features
+ *
+ * @param {object} timing
+ */
+
+function GroupControl (defn, view, features, timing) {
 	var self = this;
 
-	self.pivotControl = pivotControl;
-	self.fieldName = fieldName;
-
-	self.div = jQuery('<div>').css({
-		'display': 'inline-block',
-		'border': 'dotted 2px black',
-		'background-color': '#CCC',
-		'margin': '2px',
-		'padding': '4px'
-	});
-
-	self.addGroupBtn = jQuery('<button>')
-		.text('G')
-		.on('click', function () {
-			self.pivotControl.addGroup(self);
-			self.removeGroupBtn.show();
-			self.addGroupBtn.hide();
-			self.addPivotBtn.hide();
-		})
-		.appendTo(self.div);
-
-	self.removeGroupBtn = jQuery('<button>', {
-		title: 'Remove from grouping'
-	})
-		.text('X')
-		.on('click', function () {
-			self.pivotControl.removeGroup(self);
-			self.addGroupBtn.show();
-			self.addPivotBtn.show();
-			self.removeGroupBtn.hide();
-		})
-		.appendTo(self.div)
-		.hide();
-
-	self.addPivotBtn = jQuery('<button>')
-		.text('P')
-		.on('click', function () {
-			self.pivotControl.addPivot(self);
-			self.removePivotBtn.show();
-			self.addGroupBtn.hide();
-			self.addPivotBtn.hide();
-		})
-		.appendTo(self.div);
-
-	self.removePivotBtn = jQuery('<button>')
-		.text('X')
-		.on('click', function () {
-			self.pivotControl.removePivot(self);
-			self.addGroupBtn.show();
-			self.addPivotBtn.show();
-			self.removePivotBtn.hide();
-		})
-		.appendTo(self.div)
-		.hide();
-
-	self.label = jQuery('<span>').text(fieldName).appendTo(self.div);
-
-	if (features.filtering) {
-		jQuery(fontAwesome('F0B0', null, 'Click to add a filter on this field'))
-			.css({'cursor': 'pointer', 'margin-left': '0.5ex'})
-			.on('click', function () {
-				var filterType = getProp(self.pivotControl.defn, 'table', 'columnConfig', fieldName, 'filter');
-				self.pivotControl.gridFilterSet.add(fieldName, self.div, filterType, jQuery(this));
-			})
-			.appendTo(self.div);
-	}
+	self.defn = defn;
+	self.view = view;
+	self.timing = timing;
+	self.ui = {};
 }
 
-PivotControlField.prototype = Object.create(Object.prototype);
-PivotControlField.prototype.name = 'PivotControlField';
-PivotControlField.prototype.constructor = PivotControlField;
+// #draw {{{2
 
-// #appendTo {{{2
+/**
+ * Create a DIV element that can be placed within the Grid instance to hold the user interface for
+ * the GroupControl.  The caller must add the result to the DOM somewhere.
+ *
+ * @returns {jQuery} The DIV element that holds the entire UI.
+ */
 
-PivotControlField.prototype.appendTo = function (elt) {
+GroupControl.prototype.draw = function () {
 	var self = this;
 
-	elt.append(self.div);
+	self.ui.root = jQuery('<div>');
+	self.ui.groupFields = jQuery('<ul>').appendTo(self.ui.root);
+
+	var dropdownContainer = jQuery('<div>').appendTo(self.ui.root);
+	self.ui.dropdown = jQuery('<select>').appendTo(dropdownContainer);
+	var addButton = jQuery('<button>')
+		.text('+')
+		.appendTo(dropdownContainer)
+		.on('click', function () {
+			self.addGroup(self.ui.dropdown.val());
+			// TODO: Remove from the dropdown.
+		});
+
+	self.view.getTypeInfo(function (typeInfo) {
+		_.each(availableFields(defn, null, typeInfo), function (fieldName) {
+			jQuery('<option>').text(fieldName).appendTo(self.ui.dropdown);
+		});
+	});
+
+	return self.ui.root;
+};
+
+// #addGroup {{{2
+
+GroupControl.prototype.addGroup = function (field) {
+	var self = this
+		, gcf = new GroupControlField(self, field);
+
+	jQuery('<li>').append(gcf.draw()).appendTo(self.ui.groupFields); // Add it to the DOM.
+	self.groupFields.push(field); // Add it to the groupFields array.
+	// TODO: Update the view.
+};
+
+// #removeGroup {{{2
+
+GroupControl.prototype.removeGroup = function (gcf) {
+	var self = this
+		, fieldIndex = self.groupFields.indexOf(gcf.field);
+
+	gcf.getElement().remove(); // Remove it from the DOM.
+	self.groupFields.splice(fieldIndex, 1); // Remove it from the groupFields array.
+	// TODO: Update the view.
+};
+
+// GroupControlField {{{1
+
+function GroupControlField(groupControl, field) {
+	var self = this;
+
+	self.groupControl = groupControl;
+	self.field = field;
+};
+
+// #draw {{{2
+
+GroupControlField.prototype.draw = function () {
+	var self = this;
+
+	self.ui.root = jQuery('<div>')
+		.append(jQuery('<span>').text(self.field))
+		.append(jQuery('<button>').text('X').on('click', function () {
+			self.groupControl.removeGroup(self);
+		}));
+
+	return self.ui.root;
+};
+
+// #getElement {{{2
+
+GroupControlField.prototype.getElement = function () {
+	var self = this;
+
+	return self.ui.root;
 };

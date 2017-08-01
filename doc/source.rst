@@ -53,8 +53,9 @@ The type information for each field indicates the following:
 
 ``internalType``
   The type of the data when stored internally.  For dates, can be "moment" to indicate that the
-  value is wrapped by Moment.  For numbers, can be "numeral" to indicate that the value is wrapped
-  by Numeral, or "primitive_number" to indicate that a raw JS number is used.
+  value is wrapped by Moment, or "string" to indicate that the dates are represented only as
+  strings.  For numbers, can be "numeral" to indicate that the value is wrapped by Numeral, or
+  "primitive" to indicate that a raw JS number is used.
 
 .. table:: Available types
 
@@ -82,14 +83,16 @@ The type information for each field indicates the following:
 Conversion
 ==========
 
-The data source can be passed an array of functions which can process the data however they like.
-For each row, for each cell within that row, the data source goes through the list of conversion
-functions.  You don't want to do too much work in these functions, because they're going to get
-called a lot.
+After retrieving the data, it can be converted by user-specified functions.  These are allowed to
+completely change the data and the type information.  There are two ways to specify conversion
+functions: (1) across all fields, and (2) on a per-field basis.
+
+To specify some conversion functions that will run for all fields, you can simply provide an array
+of conversion functions.  For each row, for each cell within that row, the data source goes through
+the list of conversion functions.  You don't want to do too much work in these functions, because
+they're going to get called a lot.
 
 **Example**
-
-.. todo:: Update conversion function example!
 
 .. code-block:: javascript
 
@@ -97,11 +100,31 @@ called a lot.
    var tryFloat = function (val) { return _.isFloat(val) ? parseFloat(val) : null; }
    var tryDate = function (val) { return new Date(val); }
 
-   var dataSource = new MIE.DataSource({
+   var source = new MIE.WC_DataVis.Source({
      type: 'http',
      url: 'data.json',
      conversion: [tryInt, tryFloat, tryDate]
    });
+
+To specify conversion functions on a per-field basis, use an object.  Field names are the keys, and
+the conversion function arrays are the values — just as above.
+
+**Example**
+
+.. code-block:: javascript
+
+   var source = new MIE.WC_DataVis.Source({
+     type: 'http',
+     url: 'data.json',
+     conversion: {
+       'Signature': [bbcode],
+       'Birthday': [tryDate]
+     }
+   });
+
+Conversion functions can either be plain old JavaScript functions, or they can be strings which
+refer to properties of ``Source.converters`` — which allows you to reference a conversion function
+by name, for the sake of convenience.
 
 Type Decoding
 =============
@@ -111,6 +134,17 @@ This process transforms the data row's field values into appropriate internal re
 according to the type information for that field (e.g. a string containing a date gets transformed
 into a Moment instance when the type info indicates the field should be treated as a date).  The
 internal representation is used when sorting and filtering.
+
+Since type decoding can be expensive (e.g. converting millions of numbers using Numeral takes time),
+it can be deferred until needed.  Here are some examples of when type decoding is required:
+
+* At display time (e.g. formatting a number as currency)
+* At sort time (e.g. parsing dates where the lexicographic ordering isn't chronological)
+
+If your data has thousands of values where type decoding has been deferred, the first time the user
+sorts by that column can take a great deal of time, because all values must be decoded before they
+can be sorted correctly.  Operations after that will all be fast, since type decoding never has to
+occur again.
 
 Internal Format
 ===============

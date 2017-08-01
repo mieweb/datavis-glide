@@ -51,3 +51,22 @@ Definition Object
          threshold               - how many total rows trigger limiting
        columns
        [columnConfig]
+
+Grouping
+========
+
+Grouped output consists of two main parts: the group itself, and the data within the group.  These
+sort independently, so you can actually sort by two different columns in grouped output mode: one
+column must be a group field, and the other must be a non-group field.
+
+Sorting Group Fields
+--------------------
+
+Sorting group fields causes the groups to be reordered according to the sort.  It does not affect
+the ordering of the data within the groups.
+
+Sorting Non-Group Fields
+------------------------
+
+Sorting non-group fields causes a sort to occur within each group.  It does not affect the ordering
+of the groups themselves.
