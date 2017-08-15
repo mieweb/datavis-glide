@@ -113,6 +113,7 @@
 	window.MIE.WC_DataVis.Source     = Source;
 	window.MIE.WC_DataVis.View       = View;
 	window.MIE.WC_DataVis.Grid       = Grid;
+	window.MIE.WC_DataVis.Graph      = Graph;
 })(jQuery);
 
 // vim:set ft=javascript:

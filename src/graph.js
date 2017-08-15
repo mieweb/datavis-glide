@@ -1818,49 +1818,6 @@ WCGraph.prototype.isGraphVisible = function () {
 	return this.ui.graphContainer.css('display') !== 'none';
 };
 
-// Normalization {{{1
-
-function normalizeColumns(defn) {
-	_.each(getPropDef([], defn, 'table', 'columnConfig'), function (colConfig, colName) {
-
-		// When you want to show a checkbox to represent the value, it only makes sense to have a
-		// checkbox for the filter widget.
-
-		if (colConfig.widget === 'checkbox') {
-			if (colConfig.filter !== undefined && colConfig.filter !== 'checkbox') {
-				log.warn('Overriding configuration to use filter type "' + colConfig.filter + '" for checkbox widgets.');
-			}
-			colConfig.filter = 'checkbox';
-		}
-	});
-}
-
-/**
- * The point of "normalizing" a definition is to expand shortcut configurations.  For example, lots
- * of properties can be a string (the shortcut) or an object which contains the same info plus some
- * additional configuration.  This function would convert the string into the object.  This way,
- * later code only has to check for the object version.  It also adds a layer of backwards
- * compatibility.
- *
- * You only need to normalize a definition once; after doing so, we flag it so we won't mess with it
- * again, even though it should be possible to normalize something that's already been done.
- */
-
-function normalizeDefn(defn) {
-	if (defn.normalized) {
-		return;
-	}
-	defn.normalized = true;
-	defn.prefs = new Prefs(defn);
-	if (typeof getProp(defn, 'table', 'output') === 'string') {
-		var method = defn.table.output;
-		defn.table.output = {
-			method: method
-		};
-	}
-	normalizeColumns(defn);
-}
-
 	// Other Stuff {{{1
 
 	/**
@@ -1999,8 +1956,442 @@ function normalizeDefn(defn) {
 		}
 	}
 
-// Exports {{{1
+// Graph {{{1
 
-window.MIE = window.MIE || {};
+var Graph = function (id, view, opts) {
+	var self = this;
 
-window.MIE.WCGraph = WCGraph;
+	self.normalize(opts);
+	
+	debug.info('GRAPH', 'opts = %O', opts);
+
+	if (window.google) {
+		self.renderer = new GraphRendererGoogle(id, view, opts);
+	}
+	else if (window.$jit) {
+		self.renderer = new GraphRendererJit(id, view, opts);
+	}
+
+	self.draw();
+};
+
+Graph.prototype = Object.create(Object.prototype);
+Graph.prototype.constructor = Graph;
+
+// #draw {{{2
+
+Graph.prototype.draw = function () {
+	var self = this;
+
+	self.renderer.draw();
+}
+
+// #normalize {{{2
+
+Graph.prototype.normalize = function (opts) {
+	if (opts.type === undefined) {
+		throw new Error('Graph config error: missing `type`');
+	}
+
+	if (!_.isString(opts.type)) {
+		throw new Error('Graph config error: `type` must be a string');
+	}
+
+	if (['area', 'bar', 'column'].indexOf(opts.type) === -1) {
+		throw new Error('Graph config error: invalid `type`: ' + opts.type);
+	}
+
+	switch (opts.type) {
+	case 'area':
+	case 'bar':
+	case 'column':
+		if (opts.valueField !== undefined && opts.valueFields !== undefined) {
+			throw new Error('Graph config error: can\'t define both `valueField` and `valueFields`');
+		}
+
+		if (opts.valueField !== undefined) {
+			if (!_.isString(opts.valueField)) {
+				throw new Error('Graph config error: `valueField` must be a string');
+			}
+			opts.valueFields = [opts.valueField];
+			delete opts.valueField;
+		}
+
+		if (!_.isArray(opts.valueFields)) {
+			throw new Error('Graph config error: `valueFields` must be an array');
+		}
+
+		_.each(opts.valueFields, function (f, i) {
+			if (!_.isString(f)) {
+				throw new Error('Graph config error: `valueFields[' + i + ']` must be a string');
+			}
+		});
+	}
+};
+
+// GraphRenderer {{{1
+
+GraphRenderer = function () {
+};
+
+GraphRenderer.prototype = Object.create(Object.prototype);
+GraphRenderer.prototype.constructor = GraphRenderer;
+
+// #init {{{2
+
+GraphRenderer.prototype.init = function (id, view, opts) {
+	var self = this;
+
+	self.id = id;
+	self.view = view;
+	self.opts = opts;
+	self.addRedrawHandlers();
+};
+
+// #addRedrawHandlers {{{2
+
+GraphRenderer.prototype.addRedrawHandlers = function () {
+	var self = this;
+
+	self.view.on(View.events.workEnd, function () {
+		debug.info('GRAPH RENDERER // HANDLER (View.workEnd)',
+							 'Redrawing graph because the view has finished doing work');
+		self.draw();
+	}, {
+		who: self
+	});
+};
+
+// GraphRendererGoogle {{{1
+
+GraphRendererGoogle = function (id, view, opts) {
+	var self = this;
+
+	self.super = makeSuper(self, GraphRenderer);
+	self.super.init.apply(self, arguments);
+};
+
+GraphRendererGoogle.prototype = Object.create(GraphRenderer.prototype);
+GraphRendererGoogle.prototype.constructor = GraphRendererGoogle;
+
+// #draw {{{2
+
+GraphRendererGoogle.prototype.draw = function () {
+	var self = this;
+
+	jQuery(document.getElementById(self.id)).children().remove();
+
+	self.view.getData(function (data) {
+		self.view.getTypeInfo(function (typeInfo) {
+			var graphConfig = {};
+
+			if (data.isPlain) {
+				if (self.opts.whenPlain === undefined) {
+					debug.info('GRAPH RENDERER', 'No graph configuration defined for plain data');
+					return;
+				}
+				graphConfig = self.opts.whenPlain;
+			}
+			else if (data.isGroup) {
+				graphConfig = self.opts.whenGroup || {};
+				jQuery.extend(true, graphConfig, {
+					categoryField: data.groupFields[0],
+					valueFields: [{
+						name: 'Count',
+						aggFun: 'count'
+					}]
+				});
+			}
+			else if (data.isPivot) {
+				graphConfig = self.opts.whenPivot || {};
+				jQuery.extend(true, graphConfig, {
+					categoryField: data.groupFields[0],
+					valueFields: data.pivotFields
+				});
+			}
+
+			var dt = new google.visualization.DataTable();
+
+			var ctor = {
+				area: 'AreaChart',
+				bar: 'BarChart',
+				column: 'ColumnChart'
+			};
+
+			dt.addColumn(typeInfo.get(graphConfig.categoryField).type, graphConfig.categoryField);
+
+			_.each(graphConfig.valueFields, function (f) {
+				var agg, aggType;
+
+				if (typeof f === 'string') {
+					dt.addColumn(typeInfo.get(f).type, f);
+				}
+				else if (typeof f === 'object') {
+					if (f.aggFun) {
+						agg = AGGREGATES[f.aggFun];
+
+						if (agg.type) {
+							aggType = agg.type;
+						}
+						else if (f.aggField) {
+							aggType = typeInfo.get(f.aggField).type;
+						}
+						else {
+							// Aggregate function doesn't have a specified type, but it isn't being applied to a
+							// specific field, so there's no way to tell what the output type is going to be.
+							//
+							// TODO Choose a default type like 'string' instead of throwing.
+
+							throw new Error('Unable to determine type of value aggregate');
+						}
+
+						dt.addColumn(aggType, f.aggFun + '(' + (f.aggField || '') + ')');
+					}
+					else {
+						// The only configuration allowed when not a string is to specify an aggregate function,
+						// which they didn't do.
+
+						throw new Error('Invalid value specification');
+					}
+				}
+				else {
+					// Not a string (field name) and not an object (aggregate function), so it's some other
+					// weird thing that we don't know what to do with.
+
+					throw new Error('Invalid value specification');
+				}
+			});
+
+			if (data.isPlain) {
+				_.each(data.data, function (row) {
+					var newRow;
+
+					newRow = [row.rowData[graphConfig.categoryField].value];
+					newRow = newRow.concat(_.map(graphConfig.valueFields, function (f) {
+						return row.rowData[f].value;
+					}));
+
+					dt.addRow(newRow);
+				});
+			}
+			else if (data.isGroup) {
+				_.each(data.data, function (row) {
+					var newRow;
+
+					newRow = [row.rowData[graphConfig.categoryField].value];
+					newRow = newRow.concat(_.map(graphConfig.valueFields, function (f) {
+						if (typeof f === 'string') {
+							// FIXME
+							throw new Error('Not sure what to do here');
+						}
+						else if (typeof f === 'object') {
+							var agg = AGGREGATES[f.aggFun];
+							var aggFun = agg.fun({field: f.aggField});
+							var aggType = agg.type;
+							var aggResult = format(colConfig, colTypeInfo, aggFun(colGroup), {
+								alwaysFormat: true,
+								overrideType: aggType
+							});
+							// Calculate the aggregate function result from the data in the group.
+							//
+						}
+						else {
+							// Not a string (field name) and not an object (aggregate function), so it's some other
+							// weird thing that we don't know what to do with.
+
+							throw new Error('Invalid value specification');
+						}
+					}));
+
+					dt.addRow(newRow);
+				});
+			}
+
+			var options = {
+				title: self.opts.title,
+				width: self.opts.width,
+				height: self.opts.height,
+				isStacked: graphConfig.stacked,
+				hAxis: {
+					title: graphConfig.categoryField
+				},
+				vAxis: {
+					title: graphConfig.valueFields[0]
+				}
+			};
+
+			jQuery.extend(true, options, graphConfig.options);
+
+			console.log(options);
+
+			var chart = new google.visualization[ctor[graphConfig.type]](document.getElementById(self.id));
+			chart.draw(dt, options);
+		});
+	});
+};
+
+// GraphRendererJit {{{1
+
+GraphRendererJit = function (id, view, opts) {
+	var self = this;
+
+	self.super = makeSuper(self, GraphRenderer);
+	self.super.init.apply(self, arguments);
+};
+
+GraphRendererJit.prototype = Object.create(GraphRenderer.prototype);
+GraphRendererJit.prototype.constructor = GraphRendererJit;
+
+// #draw {{{2
+
+GraphRendererJit.prototype.draw = function () {
+	var self = this;
+
+	jQuery(document.getElementById(self.id)).children().remove();
+
+	self.view.getData(function (data) {
+		self.view.getTypeInfo(function (typeInfo) {
+			var ctor = {
+				area: 'AreaChart',
+				bar: 'BarChart'
+			};
+
+			var json = {
+				label: [],
+				values: []
+			};
+
+			_.each(self.opts.valueFields, function (f) {
+				json.label.push(f);
+			});
+
+			_.each(data.data, function (row) {
+				var newRow = {};
+				newRow.label = row.rowData[self.opts.categoryField].value;
+				newRow.values = _.map(self.opts.valueFields, function (f) {
+					return row.rowData[f].value;
+				});
+				json.values.push(newRow);
+			});
+
+			var options = {
+				injectInto: self.id
+			};
+
+			jQuery.extend(true, options, self.opts.options);
+
+			console.log(options);
+
+			var chart = new $jit[ctor[self.opts.type]](options);
+			chart.loadJSON(json);
+		});
+	});
+};
+
+// GraphControl {{{1
+
+var GraphControl = function () {
+	var self = this;
+
+	self.ui = {};
+};
+
+GraphControl.prototype = Object.create(Object.prototype);
+GraphControl.prototype.constructor = GraphControl;
+
+// #draw {{{2
+
+GraphControl.prototype.draw = function () {
+	var self = this;
+
+	self.view.on('getTypeInfo', function (typeInfo) {
+		var fields = [];
+
+		_.each(availableFields(self.defn, null, typeInfo), function (fieldName) {
+			var text = getProp(self.colConfig, fieldName, 'displayText') || fieldName;
+			fields.push({ fieldName: fieldName, displayText: text });
+		});
+
+		// Graph Type Dropdown
+
+		var graphTypes = {
+			'area': 'Area Chart',
+			'bar': 'Bar Chart',
+			'column': 'Column Chart'
+		};
+
+		self.ui.graphType = jQuery('<select>');
+
+		_.each(graphTypes, function (graphType, graphTypeName) {
+			self.ui.graphType.append(jQuery('<option>', { 'value': graphType }).text(graphTypeName));
+		});
+
+		self.ui.root.append(jQuery('<div>').append(self.ui.graphType));
+
+		// Plain Data Configuration
+
+		self.ui.plainCheckbox = jQuery('<input>', { 'type': 'checkbox', 'checked': 'checked' })
+			.on('change', function () {
+				if (self.ui.plainCheckbox.prop('checked')) {
+					self.ui.plainConfig.show();
+				}
+				else {
+					self.ui.plainConfig.hide();
+				}
+			});
+
+		self.ui.root.append(
+			jQuery('<span>', { 'class': 'wcdv_title' })
+			.append(plainCheckbox)
+			.append('Plain Data')
+		);
+
+		self.ui.plainCategoryField = jQuery('<select>')
+			.on('change', function () {
+				self.defn.whenPlain.categoryField = self.ui.plainCategoryField.val();
+			});
+		self.ui.plainValueField = jQuery('<select>')
+			.on('change', function () {
+				self.defn.whenPlain.valueField = self.ui.plainValueField.val();
+			});
+
+		_.each(fields, function (f) {
+			self.ui.plainCategoryField.append(
+				jQuery('<option>', { 'value': f.fieldName }).text(f.displayText)
+			);
+			self.ui.plainValueField.append(
+				jQuery('<option>', { 'value': f.fieldName }).text(f.displayText)
+			);
+		});
+
+		self.ui.plainConfig = jQuery('<div>')
+			.append(
+				jQuery('<div>')
+				.append('Category Field: ')
+				.append(self.ui.plainCategoryField)
+			)
+			.append(
+				jQuery('<div>')
+				.append('Value Field: ')
+				.append(self.ui.plainValueField)
+			)
+			.appendTo(self.ui.root);
+
+		// Group Data Configuration
+
+
+
+		// Pivot Data Configuration
+	}, { limit: 1 });
+};
+
+// GraphControlField {{{1
+
+var GraphControlField = function () {
+	var self = this;
+
+	self.ui = {};
+};
+
+GraphControlField.prototype = Object.create(Object.prototype);
+GraphControlField.prototype.constructor = GraphControlField;

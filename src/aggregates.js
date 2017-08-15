@@ -134,6 +134,9 @@ function getRealValueAsKey(cell) {
 	else if (window.moment && window.moment.isMoment(val)) {
 		return val.unix();
 	}
+	else {
+		return val;
+	}
 }
 
 /**
@@ -248,6 +251,8 @@ AGGREGATES.count = {
 			return numeral(data.length);
 		};
 	},
+	canBePivotCell: true,
+	needsField: false,
 	type: 'number'
 };
 
@@ -261,7 +266,7 @@ AGGREGATES.countDistinct = {
 		}
 		return function (data) {
 			return invokeAggregate(data, makeAggregate({}, function (acc, next, _1, _2, set) {
-				var key = getRealValueAsKey(next[opts.field]);
+				var key = getRealValueAsKey(next[opts.field].value);
 				if (set[key]) {
 					return acc;
 				}
@@ -272,6 +277,8 @@ AGGREGATES.countDistinct = {
 			}), numeral(0));
 		};
 	},
+	canBePivotCell: true,
+	needsField: true,
 	type: 'number'
 };
 
@@ -304,17 +311,21 @@ AGGREGATES.sum = {
 						val = toFloat(val);
 					}
 					else {
-						throw 'sum aggregate: field ' + opts.field + ' cannot be interpreted as a number (value = ' + JSON.stringify(val) + ')';
+						//log.error('Unable to interpret value as a number: { field = "%s", value = "%s" }', opts.field, JSON.stringify(val));
+						val = 0;
 					}
 				}
-				else {
-						throw 'sum aggregate: field ' + opts.field + ' cannot be interpreted as a number (value = ' + JSON.stringify(val) + ')';
+
+				if (!_.isNumber(val)) {
+					log.error('Unable to interpret value as a number: { field = "%s", value = "%s" }', opts.field, JSON.stringify(val));
 				}
 
 				return acc.add(val);
 			}, numeral(0));
 		};
 	},
+	canBePivotCell: true,
+	needsField: true,
 	type: 'number'
 };
 
@@ -330,6 +341,8 @@ AGGREGATES.average = {
 			return numeral(AGGREGATES.sum.fun(opts)(data).value() / data.length);
 		};
 	},
+	canBePivotCell: true,
+	needsField: true,
 	type: 'number'
 };
 
@@ -349,10 +362,16 @@ AGGREGATES.groupConcat = {
 		}
 		return function (data) {
 			return invokeAggregate(data, function (acc, next) {
-				return acc === null ? next[opts.field].value : acc + opts.separator + next[opts.field].value;
-			}, null);
+				var str = format(opts.colConfig, null, next[opts.field], {
+					alwaysFormat: true,
+					overrideType: opts.type
+				});
+				return acc === '' ? str : acc + opts.separator + str;
+			}, '');
 		};
 	},
+	canBePivotCell: true,
+	needsField: true,
 	type: 'string'
 };
 
@@ -372,16 +391,22 @@ AGGREGATES.groupConcatDistinct = {
 		}
 		return function (data) {
 			return invokeAggregate(data, makeAggregate({}, function (acc, next, _1, _2, set) {
-				if (set[next[opts.field].value]) {
+				var str = format(opts.colConfig, null, next[opts.field], {
+					alwaysFormat: true,
+					overrideType: opts.type
+				});
+				if (set[str]) {
 					return acc;
 				}
 				else {
-					set[next[opts.field].value] = true;
-					return acc === null ? next[opts.field].value : acc + opts.separator + next[opts.field].value;
+					set[str] = true;
+					return acc === '' ? str : acc + opts.separator + str;
 				}
-			}), null);
+			}), '');
 		};
 	},
+	canBePivotCell: true,
+	needsField: true,
 	type: 'string'
 };
 
@@ -397,6 +422,8 @@ AGGREGATES.first = {
 			return getRealValue(data[0].rowData[opts.field]);
 		};
 	},
+	canBePivotCell: true,
+	needsField: true,
 	type: undefined
 };
 
@@ -409,9 +436,11 @@ AGGREGATES.last = {
 			throw 'last aggregate: missing [field] property';
 		}
 		return function (data) {
-			return getRealValue(data[data.length].rowData[opts.field]);
+			return getRealValue(data[data.length - 1].rowData[opts.field]);
 		};
 	},
+	canBePivotCell: true,
+	needsField: true,
 	type: undefined
 };
 
@@ -433,6 +462,7 @@ AGGREGATES.nth = {
 			return opts.index >= data.length ? (opts.nonExistent || '[ERROR:OUT-OF-RANGE]') : getRealValue(data[opts.index].rowData[opts.field]);
 		};
 	},
+	needsField: true,
 	type: undefined
 };
 
@@ -467,6 +497,8 @@ AGGREGATES.min = {
 			}, getRealValue(data[0].rowData[opts.field]));
 		};
 	},
+	canBePivotCell: true,
+	needsField: true,
 	type: undefined
 };
 
@@ -501,6 +533,8 @@ AGGREGATES.max = {
 			}, getRealValue(data[0].rowData[opts.field]));
 		};
 	},
+	canBePivotCell: true,
+	needsField: true,
 	type: undefined
 };
 

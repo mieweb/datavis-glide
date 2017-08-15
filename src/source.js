@@ -853,8 +853,8 @@ var LocalSource = function (spec) {
 	var self = this;
 
 	self.varName = spec.varName;
-	self.cache = window[self.varName];
 
+	/*
 	if (isNothing(self.cache)) {
 		throw new InvalidSourceError('Local variable "' + self.varName + '" does not exist.');
 	}
@@ -866,6 +866,16 @@ var LocalSource = function (spec) {
 	if (isNothing(self.cache.typeInfo)) {
 		self.warning('No type information found in local data (' + self.varName + '.typeInfo is missing).');
 	}
+	*/
+
+	self.cache = {
+		data: jQuery.extend(true, {}, window[self.varName].data),
+		typeInfo: new OrdMap()
+	};
+
+	_.each(window[self.varName].typeInfo, function (fti) {
+		self.cache.typeInfo.set(fti.field, fti);
+	});
 };
 
 // #getData {{{2
@@ -990,6 +1000,16 @@ HttpSource.parseData = function (data) {
 
 		data.typeInfo = typeInfo;
 
+		for (var rowNum = 0; rowNum < data.data.length; rowNum += 1) {
+			if (_.isArray(data.data[rowNum])) {
+				var newRow = {};
+				typeInfo.each(function (fti, field, i) {
+					newRow[field] = data.data[rowNum][i];
+				});
+				data.data[rowNum] = newRow;
+			}
+		}
+
 		result = data;
 	}
 
@@ -1023,7 +1043,7 @@ HttpSource.prototype.getTypeInfo = function (cont) {
 	var self = this;
 
 	if (self.cache === null) {
-		return self.getData(function () {
+		return self.getData(undefined, function () {
 			return self.getTypeInfo(cont);
 		});
 	}
@@ -1411,14 +1431,16 @@ Source.prototype.postProcess = function (data, cont) {
 					value: val
 				};
 
-				// Go through all the user's conversion functions.
+				if (conversionFuncs[field] !== undefined) {
+					// Go through all the user's conversion functions.
 
-				var i = 0;
-				while (i < conversionFuncs[field].length) {
-					if (conversionFuncs[field][i](row[field], field, fti, row, self)) {
-						break;
+					var i = 0;
+					while (i < conversionFuncs[field].length) {
+						if (conversionFuncs[field][i](row[field], field, fti, row, self)) {
+							break;
+						}
+						i += 1;
 					}
-					i += 1;
 				}
 
 				// Unless conversion has been deferred on this field, convert it into the appropriate
@@ -1451,11 +1473,13 @@ Source.prototype.getConversionFuncs = function (fieldName) {
 		});
 	};
 
-	if (_.isArray(self.conversion)) {
-		addConversionFuncs(self.conversion);
-	}
-	else if (self.conversion[fieldName] !== undefined) {
-		addConversionFuncs(self.conversion[fieldName]);
+	if (self.conversion !== undefined) {
+		if (_.isArray(self.conversion)) {
+			addConversionFuncs(self.conversion);
+		}
+		else if (self.conversion[fieldName] !== undefined) {
+			addConversionFuncs(self.conversion[fieldName]);
+		}
 	}
 
 	return conversionFuncs;

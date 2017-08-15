@@ -12,6 +12,7 @@
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/nprogress/0.2.0/nprogress.js"></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/sprintf/1.0.3/sprintf.js"></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.sumoselect/3.0.2/jquery.sumoselect.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/jit/2.0.2/jit.js"></script>
 		<script src="tabletool.js"></script>
 		<script src="wcdatavis.js"></script>
 		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"/>
@@ -26,58 +27,46 @@
 $(document).ready(function () {
 	MIE.DEBUGGING = true;
 
-	var bbcode = function (cell, field, typeInfo, row) {
-		var m = cell.value.match(/\[url=([^\]]+)\]([^\[]+)\[\/url\]/);
-		if (m !== null) {
-			cell.render = function (value) {
-				return jQuery('<a>', { href: m[1] }).text(value);
-			};
-			cell.orig = cell.value;
-			cell.value = m[2];
-			return true;
-		}
-		return false;
-	};
-
 	var source = new MIE.WC_DataVis.Source({
 		type: 'http',
-		url: 'data500.json',
-		conversion: {
-			date_link: [bbcode]
+		url: 'redmine1.json'
+	});
+	var view = new MIE.WC_DataVis.View(source, 'Example');
+	new MIE.WC_DataVis.Graph('graph', view, {
+		title: 'JavaScript InfoVis Toolkit Example',
+		type: 'bar',
+		categoryField: 'Employee',
+		valueField: 'Hours Reported',
+		height: 600,
+		options: {
+			orientation: 'vertical'
 		}
 	});
-	var view = new MIE.WC_DataVis.View(source);
-	var defn = {
-		id: 'example',
+	new MIE.WC_DataVis.Grid('grid', view, {
+		id: 'grid',
 		table: {
 			features: {
 				sort: true,
 				filter: true,
 				group: true,
-				pivot: true
+				pivot: true,
+				limit: true
 			},
-			columns: [
-				{ field: 'first_name', displayText: 'First Name' },
-				{ field: 'last_name', displayText: 'Last Name' },
-				{ field: 'state', displayText: 'State' },
-				{ field: 'sex', displayText: 'Sex' },
-				{ field: 'random_date', displayText: 'Random Date', format: 'MM/DD/YYYY' },
-				{ field: 'random_int', displayText: 'Random Int' },
-				{ field: 'random_float', displayText: 'Random Float' },
-				{ field: 'random_money', displayText: 'Random Money' },
-				{ field: 'date_link', displayText: 'Date Link', format: 'MMM Do, YYYY' }
-			]
+			limit: {
+				threshold: 100,
+				chunkSize: 50
+			}
 		},
 		source: source
-	};
-	new MIE.WC_DataVis.Grid('example', view, defn, {
-		runImmediately: true,
-		title: 'Basic Example'
+	}, {
+		title: 'Example Data',
+		runImmediately: true
 	});
 });
 		</script>
 	</head>
 	<body>
-		<div id="example"></div>
+		<div id="graph" style="height: 600px; background-color: #000"></div>
+		<div id="grid"></div>
 	</body>
 </html>

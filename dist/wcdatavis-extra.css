@@ -104,7 +104,7 @@ table.newui > tbody > tr.nohover:hover {
 table.newui tbody td {
 }
 table.newui tbody td.selected_row {
-	background-color: #B0D0FF;
+	background-color: #FFA;
 }
 table.newui tbody td a, table.newui tbody td .link {
 	text-decoration: none;

@@ -85,7 +85,7 @@ function determineColumns(defn, data, typeInfo) {
 function availableFields(defn, data, typeInfo) {
 	var fields = [];
 
-	if (defn.table.columns && validateUserColumnSpec()) {
+	if (defn.table.columns && validateUserColumnSpec(defn, data, typeInfo)) {
 		fields = _.pluck(defn.table.columns, 'field');
 	}
 	else {
@@ -510,14 +510,14 @@ var Grid = function (id, view, defn, tagOpts, cb) {
 	 */
 
 	self.ui.root = jQuery(document.getElementById(id))
-		.addClass('gridwrapper')
+		.addClass('wcdv_grid')
 		.attr('data-title', id + '_title');
 
 	if (tagOpts.title) {
 		if (!_.isString(tagOpts.title)) {
 			throw '<tagOpts.title> is not a string';
 		}
-		gridToolBar = jQuery('<div class="gridtoolbar">').appendTo(self.ui.root);
+		gridToolBar = jQuery('<div>').addClass('wcdv_grid_toolbar').appendTo(self.ui.root);
 		gridToolBarHeading = jQuery('<div class="heading">')
 			.attr('title', MIE.trans('SHOWHIDE'))
 			.on('click', function (evt) {
@@ -535,16 +535,19 @@ var Grid = function (id, view, defn, tagOpts, cb) {
 		}
 	}
 
-	self.ui.gridControl = jQuery('<div>');
-	self.ui.pivotControl = jQuery('<div>');
-	self.ui.groupControl = jQuery('<div>');
-	self.ui.grid = jQuery('<div>', { id: defn.table.id });
+	self.ui.gridControl = jQuery('<div>', { 'class': 'wcdv_grid_control' });
+	self.ui.groupControl = jQuery('<div>', { 'class': 'wcdv_group_control' });
+	self.ui.filterControl = jQuery('<div>', { 'class': 'wcdv_filter_control' });
+	self.ui.pivotControl = jQuery('<div>', { 'class': 'wcdv_pivot_control' });
+	self.ui.grid = jQuery('<div>', { 'id': defn.table.id, 'class': 'wcdv_grid_table' });
 
 	self.ui.gridControl
-		.append(self.ui.pivotControl)
 		.append(self.ui.groupControl)
-		.append(self.ui.grid)
-		.appendTo(self.ui.root);
+		.append(self.ui.filterControl)
+		.append(self.ui.pivotControl)
+		.appendTo(gridToolBarButtons);
+
+	self.ui.grid.appendTo(self.ui.root);
 
 	if (document.getElementById(id + '_footer')) {
 		// There was a footer which was printed out by dashboard.c which we are now going to move
@@ -583,9 +586,9 @@ var Grid = function (id, view, defn, tagOpts, cb) {
 		self.showSpinner();
 	});
 
-	self.view.on(View.events.workEnd, function (rowCount, totalRowCount) {
+	self.view.on(View.events.workEnd, function (info, ops) {
 		self.hideSpinner();
-		self.updateRowCount(rowCount, totalRowCount);
+		self.updateRowCount(info, ops);
 	});
 
 	self.view.on(View.events.dataUpdated, function () {
@@ -607,6 +610,9 @@ var Grid = function (id, view, defn, tagOpts, cb) {
 	window.MIE.WC_DataVis.grids = window.MIE.WC_DataVis.grids || {};
 	window.MIE.WC_DataVis.grids[id] = self;
 };
+
+Grid.prototype = Object.create(Object.prototype);
+Grid.prototype.constructor = Grid;
 
 // #_validateFeatures {{{2
 
@@ -766,7 +772,7 @@ Grid.prototype._addHeaderWidgets = function (header, doingServerFilter, runImmed
 		.attr('title', MIE.trans('SHOWHIDEOPTS'))
 		.click(function (evt) {
 			evt.stopPropagation();
-			jQuery(this).parents('.gridwrapper').find('.buttons').toggle();
+			jQuery(this).parents('.wcdv_grid').find('.buttons').toggle();
 		})
 		.appendTo(header);
 };
@@ -784,11 +790,10 @@ Grid.prototype._addCommonButtons = function (toolbar) {
 	var isVisible = true; // If true, the grid is not currently hidden.
 
 	var makeCheckbox = function (init, onClick, text, parent) {
-		var checkbox = jQuery('<input>', { 'id': gensym(), 'type': 'checkbox', 'checked': init })
-			.on('change', onClick)
-			.appendTo(parent);
-		jQuery('<label>', { 'for': checkbox.attr('id') })
-			.text(text)
+		jQuery('<label>')
+			.append(jQuery('<input>', { 'type': 'checkbox', 'checked': init })
+							.on('change', onClick))
+			.append(text)
 			.appendTo(parent);
 	};
 
@@ -819,6 +824,7 @@ Grid.prototype._addCommonButtons = function (toolbar) {
 		.text('Show All Rows')
 		.appendTo(toolbar);
 
+	/*
 	makeCheckbox(self.features.group, function () {
 		if (jQuery(this).prop('checked')) {
 			self.enableGroup();
@@ -836,6 +842,7 @@ Grid.prototype._addCommonButtons = function (toolbar) {
 			self.disablePivot();
 		}
 	}, 'Enable Pivot', toolbar);
+	*/
 };
 
 // #addPrefsButtons {{{2
@@ -959,7 +966,6 @@ Grid.prototype._addPrefsButtons = function (toolbar) {
 	};
 };
 
-// #addGroupDiv
 // #refresh {{{2
 
 /**
@@ -992,17 +998,48 @@ Grid.prototype.refresh = function () {
 	}
 
 	if (self.features.group) {
-		self.groupControl = new GroupControl(self.defn, self.view, self.timing);
+		self.groupControl = new GroupControl(self.defn, self.view, self.features, self.timing);
 		self.ui.groupControl.children().remove();
 		self.ui.groupControl.append(self.groupControl.draw()).show();
 	}
+	else {
+		self.ui.groupControl.hide();
+	}
+
+	if (false && self.features.filter) { // XXX
+		self.filterControl = new FilterControl(self.defn, self.view, self.features, self.timing);
+		self.ui.filterControl.children().remove();
+		self.ui.filterControl.append(self.filterControl.draw()).show();
+	}
+	else {
+		self.ui.filterControl.hide();
+	}
 
 	if (self.features.pivot) {
-		self.pivotControl = new PivotControl(self.defn, self.view, self.timing);
+		self.pivotControl = new PivotControl(self.defn, self.view, self.features, self.timing, {
+			onAggregateChange: function (aggFun, aggField) {
+				if (!(self.gridTable instanceof GridTablePivot)) {
+					return;
+				}
+
+				debug.info('GRID // ON AGGREGATE CHANGE', 'Redrawing pivot table: { aggFun = "%s", aggField = "%s" }', aggFun, aggField);
+				self.gridTable.clear();
+				self.gridTable.draw(self.ui.grid, self.tableDoneCont, {
+					pivotConfig: {
+						aggFun: aggFun,
+						aggField: aggField
+					}
+				});
+			}
+		});
 		self.ui.pivotControl.children().remove();
 		self.ui.pivotControl.append(self.pivotControl.draw()).show();
 	}
+	else {
+		self.ui.pivotControl.hide();
+	}
 
+	/*
 	if (self.features.pivot) {
 		debug.info('GRID', 'Creating GridTablePivot for pivot table output');
 		self.gridTable = new GridTablePivot(self.defn, self.view, self.features, self.timing, self.id);
@@ -1015,8 +1052,22 @@ Grid.prototype.refresh = function () {
 		debug.info('GRID', 'Creating GridTablePlain for plain table output');
 		self.gridTable = new GridTablePlain(self.defn, self.view, self.features, self.timing, self.id);
 	}
+	*/
 
-	self.gridTable.draw(self.ui.grid, self.tableDoneCont); // TODO load prefs
+	var makeGridTable = function (viewOps) {
+		debug.info('GRID', 'Creating grid table to handle the data: { group = %s, pivot = %s }', viewOps.group, viewOps.pivot);
+		var ctor = viewOps.pivot ? GridTablePivot : viewOps.group ? GridTableGroup : GridTablePlain;
+
+		if (self.gridTable) {
+			self.gridTable.clear();
+		}
+
+		self.gridTable = new ctor(self.defn, self.view, self.features, self.timing, self.id);
+		self.gridTable.on(GridTable.events.unableToRender, makeGridTable);
+		self.gridTable.draw(self.ui.grid, self.tableDoneCont); // TODO load prefs
+	};
+
+	makeGridTable(false, false);
 };
 
 // #redraw {{{2
@@ -1045,14 +1096,14 @@ Grid.prototype.redraw = function () {
  *
  * @method
  * @memberof Grid
- *
- * @param {number} numRows The number of rows, filtered.
- * @param {number} totalRows The total number of rows.
  */
 
-Grid.prototype.updateRowCount = function (numRows, totalRows) {
+Grid.prototype.updateRowCount = function (info, ops) {
 	var self = this
 		, doingServerFilter = getProp(self.defn, 'server', 'filter') && getProp(self.defn, 'server', 'limit') !== -1;
+
+	console.log(info);
+	console.log(ops);
 
 	debug.info('GRID', 'Updating row count');
 	self.setSpinner('working');
@@ -1065,33 +1116,29 @@ Grid.prototype.updateRowCount = function (numRows, totalRows) {
 
 	self.hideSpinner();
 
-	// When arguments are provided, use those instead of trying to figure out the number of rows
-	// ourselves.  This makes life a lot easier.
-	//
-	//   - If we only get one value, there's no filtering going on and that's just the number of
-	//     rows there are.  The reset link should not be shown.
-	//
-	//   - If we get both values, then a filter is in effect and we need to show the reset link.
-
-	if (!isNothing(numRows)) {
-		if (!isNothing(totalRows) && totalRows !== numRows) {
-			self.ui.rowCount.text(numRows + ' / ' + totalRows + ' row(s), filtered');
-
-			if (self.ui.clearFilter) {
-				self.ui.clearFilter.show();
-			}
+	if (info.isPlain) {
+		if (info.totalRows) {
+			self.ui.rowCount.text(info.numRows + ' / ' + info.totalRows + ' row(s), filtered');
 		}
 		else {
-			self.ui.rowCount.text(numRows + ' row(s)');
-
-			if (self.ui.clearFilter) {
-				self.ui.clearFilter.hide();
-			}
+			self.ui.rowCount.text(info.numRows + ' row(s)');
 		}
-		return;
+	}
+	else if (info.isGroup) {
+		self.ui.rowCount.text(info.numGroups + ' group(s)');
+	}
+	else if (info.isPivot) {
+		self.ui.rowCount.text('Pivotted');
 	}
 
-	self.ui.rowCount.text(self.defn._data[0].length + ' row(s)');
+	if (self.ui.clearFilter) {
+		if (info.totalRows) {
+			self.ui.clearFilter.show();
+		}
+		else {
+			self.ui.clearFilter.hide();
+		}
+	}
 };
 
 // #hideGrid {{{2
@@ -1154,7 +1201,7 @@ Grid.prototype.showGrid = function () {
  */
 
 Grid.prototype.toggleGrid = function () {
-	if (this.ui.grid.css('display') === 'none') {
+	if (this.ui.gridControl.css('display') === 'none') {
 		this.showGrid();
 	}
 	else {
@@ -1245,6 +1292,11 @@ Grid.prototype.toggleGroup = function () {
 	var self = this;
 
 	self.features.group = !self.features.group;
+
+	if (!self.features.group) {
+		self.view.clearGroup();
+	}
+
 	self.refresh();
 };
 
@@ -1278,154 +1330,47 @@ Grid.prototype.togglePivot = function () {
 	var self = this;
 
 	self.features.pivot = !self.features.pivot;
+
+	if (!self.features.group) {
+		self.view.clearGroup();
+	}
+
 	self.refresh();
 };
 
-// PivotControl {{{1
+// GridControl {{{1
 
-// Constructor {{{2
+function GridControl() {
+}
 
-/**
- * Part of the user interface which governs: (1) the fields that are part of the pivot, including
- * filtering; (2) the aggregate function [and potentially its arguments] that produces the values in
- * the pivot table.
- *
- * @param {Object} defn
- *
- * @param {Element} container
- *
- * @param {View} view
- *
- * @property {Object} defn
- *
- * @property {View} view
- *
- * @property {GridTablePlain} gridTable
- *
- * @property {GridFilterSet} gridFilterSet The set of all filters applied to the data before
- * performing the pivot operation.  The view takes care of doing this in the right order, but we
- * need to have this for the sake of handling the user interface (i.e. adding filters).
- *
- * @property {Array.<PivotControlField>} fields A list of all pivot control fields.
- *
- * @property {Array.<PivotControlFields>} groupFields A list of all fields that we are grouping by.
- *
- * @property {Array.<PivotControlFields>} pivotFields A list of all fields that we are pivotting by.
- *
- * @property {Object} ui Tracks user interface elements created by this instance.
- *
- * @property {Element} ui.container 
- *
- * @property {Element} ui.available A DIV that contains all available fields (those which haven't
- * been assigned to be grouped or pivotted by).
- *
- * @property {Element} ui.rows A DIV that contains all fields which are being grouped by.
- *
- * @property {Element} ui.cols A DIV that contains all fields which are being pivotted by.
- */
+GridControl.prototype = Object.create(Object.prototype);
+GridControl.prototype.constructor = GridControl;
 
-function PivotControl(defn, view, features, timing) {
+// #init {{{2
+
+GridControl.prototype.init = function (defn, view, features, timing) {
 	var self = this;
 
 	self.defn = defn;
 	self.view = view;
+	self.features = features;
 	self.timing = timing;
 	self.ui = {};
+	self.colConfig = _.indexBy(getPropDef({}, self.defn, 'table', 'columns'), 'field');
+};
 
-	self.gridFilterSet = new GridFilterSet(self.defn, self.view);
-	self.fields = [];
-	self.pivotFields = [];
-}
+// #makeAddButton {{{2
 
-PivotControl.prototype = Object.create(Object.prototype);
-PivotControl.prototype.name = 'PivotControl';
-PivotControl.prototype.constructor = PivotControl;
-
-// #draw {{{2
-
-/**
- * Create a DIV element that can be placed within the Grid instance to hold the user interface for
- * the PivotControl.  The caller must add the result to the DOM somewhere.
- *
- * @returns {jQuery} The DIV element that holds the entire UI.
- */
-
-PivotControl.prototype.draw = function () {
+GridControl.prototype.makeAddButton = function (target) {
 	var self = this;
 
-	self.ui.root = jQuery('<div>');
-	self.ui.pivotFields = jQuery('<ul>').appendTo(self.ui.root);
-
-	var dropdownContainer = jQuery('<div>').appendTo(self.ui.root);
-	self.ui.dropdown = jQuery('<select>').appendTo(dropdownContainer);
-	var addButton = jQuery('<button>')
-		.text('+')
-		.appendTo(dropdownContainer)
+	jQuery(fontAwesome('F0FE'))
+		.addClass('wcdv_button')
+		.css({'margin-left': '4px'})
 		.on('click', function () {
-			self.addPivot(self.ui.dropdown.val());
-			// TODO: Remove from the dropdown.
-		});
-
-	self.view.getTypeInfo(function (typeInfo) {
-		_.each(availableFields(defn, null, typeInfo), function (fieldName) {
-			jQuery('<option>').text(fieldName).appendTo(self.ui.dropdown);
-		});
-	});
-
-	return self.ui.root;
-};
-
-// #addPivot {{{2
-
-PivotControl.prototype.addPivot = function (field) {
-	var self = this
-		, pcf = new PivotControlField(self, field);
-
-	jQuery('<li>').append(pcf.draw()).appendTo(self.ui.groupFields); // Add it to the DOM.
-	self.groupFields.push(field); // Add it to the groupFields array.
-	// TODO: Update the view.
-};
-
-// #removePivot {{{2
-
-PivotControl.prototype.removeGroup = function (pcf) {
-	var self = this
-		, fieldIndex = self.groupFields.indexOf(pcf.field);
-
-	pcf.getElement().remove(); // Remove it from the DOM.
-	self.pivotFields.splice(fieldIndex, 1); // Remove it from the groupFields array.
-	// TODO: Update the view.
-};
-
-// PivotControlField {{{1
-
-function PivotControlField(groupControl, field) {
-	var self = this;
-
-	self.groupControl = groupControl;
-	self.field = field;
-};
-
-// #draw {{{2
-
-PivotControlField.prototype.draw = function () {
-	var self = this;
-
-	self.ui.root = jQuery('<div>')
-		.append(jQuery('<span>').text(self.field))
-		.append(jQuery('<button>').text('X').on('click', function () {
-			self.groupControl.removePivot(self);
-		}));
-
-	return self.ui.root;
-};
-
-// #getElement {{{2
-
-PivotControlField.prototype.getElement = function () {
-	var self = this;
-
-	return self.ui.root;
+			self.add(self.ui.dropdown.val());
+		})
+		.appendTo(target);
 };
 
 // GroupControl {{{1
@@ -1445,14 +1390,17 @@ PivotControlField.prototype.getElement = function () {
  * @param {object} timing
  */
 
-function GroupControl (defn, view, features, timing) {
+function GroupControl() {
 	var self = this;
 
-	self.defn = defn;
-	self.view = view;
-	self.timing = timing;
-	self.ui = {};
+	self.super = makeSuper(self, GridControl);
+	self.super.init.apply(self, arguments);
+
+	self.groupFields = [];
 }
+
+GroupControl.prototype = Object.create(GridControl.prototype);
+GroupControl.prototype.constructor = GroupControl;
 
 // #draw {{{2
 
@@ -1467,76 +1415,362 @@ GroupControl.prototype.draw = function () {
 	var self = this;
 
 	self.ui.root = jQuery('<div>');
+	self.ui.title = jQuery('<span>', { 'class': 'wcdv_title' }).text('Group Fields').appendTo(self.ui.root);
 	self.ui.groupFields = jQuery('<ul>').appendTo(self.ui.root);
 
 	var dropdownContainer = jQuery('<div>').appendTo(self.ui.root);
 	self.ui.dropdown = jQuery('<select>').appendTo(dropdownContainer);
-	var addButton = jQuery('<button>')
-		.text('+')
-		.appendTo(dropdownContainer)
-		.on('click', function () {
-			self.addGroup(self.ui.dropdown.val());
-			// TODO: Remove from the dropdown.
-		});
+	self.makeAddButton(dropdownContainer);
 
-	self.view.getTypeInfo(function (typeInfo) {
-		_.each(availableFields(defn, null, typeInfo), function (fieldName) {
-			jQuery('<option>').text(fieldName).appendTo(self.ui.dropdown);
+	self.view.on('getTypeInfo', function (typeInfo) {
+		self.ui.dropdown.children().remove();
+		_.each(availableFields(self.defn, null, typeInfo), function (fieldName) {
+			var text = getProp(self.colConfig, fieldName, 'displayText') || fieldName;
+			jQuery('<option>', { 'value': fieldName }).text(text).appendTo(self.ui.dropdown);
 		});
-	});
+	}, { limit: 1 });
 
 	return self.ui.root;
 };
 
-// #addGroup {{{2
+// #add {{{2
 
-GroupControl.prototype.addGroup = function (field) {
+GroupControl.prototype.add = function (field) {
 	var self = this
-		, gcf = new GroupControlField(self, field);
+		, gcf = new GroupControlField(self, field, self.colConfig[field] || {});
 
 	jQuery('<li>').append(gcf.draw()).appendTo(self.ui.groupFields); // Add it to the DOM.
 	self.groupFields.push(field); // Add it to the groupFields array.
-	// TODO: Update the view.
+	self.updateView();
 };
 
-// #removeGroup {{{2
+// #remove {{{2
 
-GroupControl.prototype.removeGroup = function (gcf) {
+GroupControl.prototype.remove = function (gcf) {
 	var self = this
 		, fieldIndex = self.groupFields.indexOf(gcf.field);
 
-	gcf.getElement().remove(); // Remove it from the DOM.
+	gcf.getElement().parent('li').remove(); // Remove it from the DOM.
 	self.groupFields.splice(fieldIndex, 1); // Remove it from the groupFields array.
-	// TODO: Update the view.
+	self.updateView();
 };
 
-// GroupControlField {{{1
+// #updateView {{{2
 
-function GroupControlField(groupControl, field) {
+GroupControl.prototype.updateView = function () {
 	var self = this;
 
-	self.groupControl = groupControl;
+	if (self.groupFields.length > 0) {
+		self.view.setGroup({fieldNames: self.groupFields});
+	}
+	else {
+		self.view.clearGroup();
+	}
+};
+
+// PivotControl {{{1
+
+// Constructor {{{2
+
+/**
+ * Part of the user interface which governs: (1) the fields that are part of the pivot, including
+ * filtering; (2) the aggregate function [and potentially its arguments] that produces the values in
+ * the pivot table.
+ */
+
+function PivotControl() {
+	var self = this
+		, args = Array.prototype.slice.call(arguments)
+		, opts = args.pop();
+
+	self.super = makeSuper(self, GridControl);
+	self.super.init.apply(self, args);
+	self.opts = opts;
+
+	self.pivotFields = [];
+}
+
+PivotControl.prototype = Object.create(GridControl.prototype);
+PivotControl.prototype.constructor = PivotControl;
+
+// #draw {{{2
+
+/**
+ * Create a DIV element that can be placed within the Grid instance to hold the user interface for
+ * the PivotControl.  The caller must add the result to the DOM somewhere.
+ *
+ * @returns {jQuery} The DIV element that holds the entire UI.
+ */
+
+PivotControl.prototype.draw = function () {
+	var self = this;
+
+	self.ui.root = jQuery('<div>');
+
+	self.ui.aggContainer = jQuery('<div>', { 'class': 'wcdv_aggregate_container' }).appendTo(self.ui.root).hide();
+	self.ui.aggregateTitle = jQuery('<span>', { 'class': 'wcdv_title' }).text('Pivot Aggregate').appendTo(self.ui.aggContainer);
+	self.ui.aggFun = jQuery('<div>').css({'margin-top': '7px'}).appendTo(self.ui.aggContainer);
+	jQuery('<label>').text('Function:').appendTo(self.ui.aggFun);
+	self.ui.aggFunDropdown = jQuery('<select>')
+		.appendTo(self.ui.aggFun)
+		.on('change', function () {
+			self.triggerAggChange();
+		})
+	;
+
+	_.each(AGGREGATES, function (aggObj, aggFunName) {
+		if (aggObj.canBePivotCell) {
+			jQuery('<option>').text(aggFunName).appendTo(self.ui.aggFunDropdown);
+		}
+	});
+
+	self.ui.aggField = jQuery('<div>').css({'margin-top': '4px'}).appendTo(self.ui.aggContainer).hide();
+	jQuery('<label>').text('Field:').appendTo(self.ui.aggField);
+	self.ui.aggFieldDropdown = jQuery('<select>')
+		.appendTo(self.ui.aggField)
+		.on('change', function () {
+			self.triggerAggChange();
+		})
+	;
+	
+	self.ui.pivotFieldsContainer = jQuery('<div>', { 'class': 'wcdv_pivot_fields_container' }).appendTo(self.ui.root);
+	self.ui.pivotFieldsTitle = jQuery('<span>', { 'class': 'wcdv_title' }).text('Pivot Fields').appendTo(self.ui.pivotFieldsContainer);
+	self.ui.pivotFields = jQuery('<ul>').appendTo(self.ui.pivotFieldsContainer);
+
+	var dropdownContainer = jQuery('<div>').appendTo(self.ui.pivotFieldsContainer);
+	self.ui.dropdown = jQuery('<select>').appendTo(dropdownContainer);
+	self.makeAddButton(dropdownContainer);
+
+	self.view.on('getTypeInfo', function (typeInfo) {
+		self.ui.dropdown.children().remove();
+		_.each(availableFields(self.defn, null, typeInfo), function (fieldName) {
+			var text = getProp(self.colConfig, fieldName, 'displayText') || fieldName;
+			jQuery('<option>', { 'value': fieldName }).text(text).appendTo(self.ui.aggFieldDropdown);
+			jQuery('<option>', { 'value': fieldName }).text(text).appendTo(self.ui.dropdown);
+		});
+	}, { limit: 1 });
+
+	return self.ui.root;
+};
+
+// #add {{{2
+
+PivotControl.prototype.add = function (field) {
+	var self = this
+		, pcf = new PivotControlField(self, field, self.colConfig[field] || {});
+
+	jQuery('<li>').append(pcf.draw()).appendTo(self.ui.pivotFields); // Add it to the DOM.
+	self.pivotFields.push(field); // Add it to the pivotFields array.
+	self.updateView();
+};
+
+// #remove {{{2
+
+PivotControl.prototype.remove = function (pcf) {
+	var self = this
+		, fieldIndex = self.pivotFields.indexOf(pcf.field);
+
+	pcf.getElement().parent('li').remove(); // Remove it from the DOM.
+	self.pivotFields.splice(fieldIndex, 1); // Remove it from the pivotFields array.
+	self.updateView();
+};
+
+// #updateView {{{2
+
+PivotControl.prototype.updateView = function () {
+	var self = this;
+
+	if (self.pivotFields.length > 0) {
+		self.ui.aggContainer.show();
+		self.view.setPivot({fieldNames: self.pivotFields});
+	}
+	else {
+		self.view.clearPivot();
+		self.ui.aggContainer.hide();
+	}
+};
+
+// #triggerAggChange {{{2
+
+PivotControl.prototype.triggerAggChange = function () {
+	var self = this
+		, agg = AGGREGATES[self.ui.aggFunDropdown.val()];
+
+	if (agg.needsField) {
+		self.ui.aggField.show();
+		if (typeof self.opts.onAggregateChange === 'function') {
+			self.opts.onAggregateChange(self.ui.aggFunDropdown.val(), self.ui.aggFieldDropdown.val());
+		}
+	}
+	else {
+		self.ui.aggField.hide();
+		if (typeof self.opts.onAggregateChange === 'function') {
+			self.opts.onAggregateChange(self.ui.aggFunDropdown.val());
+		}
+	}
+};
+
+// FilterControl {{{1
+
+// Constructor {{{2
+
+/**
+ * Part of the user interface which lets users filter columns.
+ *
+ * @param {object} defn
+ *
+ * @param {View} view
+ *
+ * @param {Grid~Features} features
+ *
+ * @param {object} timing
+ */
+
+function FilterControl() {
+	var self = this;
+
+	self.super = makeSuper(self, GridControl);
+	self.super.init.apply(self, arguments);
+}
+
+FilterControl.prototype = Object.create(GridControl.prototype);
+FilterControl.prototype.constructor = FilterControl;
+
+// #draw {{{2
+
+/**
+ * Create a DIV element that can be placed within the Grid instance to hold the user interface for
+ * the FilterControl.  The caller must add the result to the DOM somewhere.
+ *
+ * @returns {jQuery} The DIV element that holds the entire UI.
+ */
+
+FilterControl.prototype.draw = function () {
+	var self = this;
+
+	self.ui.root = jQuery('<div>');
+	self.ui.title = jQuery('<span>', { 'class': 'wcdv_title' }).text('Filter').appendTo(self.ui.root);
+	self.ui.groupFields = jQuery('<ul>').appendTo(self.ui.root);
+
+	var dropdownContainer = jQuery('<div>').appendTo(self.ui.root);
+	self.ui.dropdown = jQuery('<select>').appendTo(dropdownContainer);
+	self.makeAddButton(dropdownContainer);
+
+	self.view.on('getTypeInfo', function (typeInfo) {
+		self.ui.dropdown.children().remove();
+		_.each(availableFields(self.defn, null, typeInfo), function (fieldName) {
+			var text = getProp(self.colConfig, fieldName, 'displayText') || fieldName;
+			jQuery('<option>', { 'value': fieldName }).text(text).appendTo(self.ui.dropdown);
+		});
+	}, { limit: 1 });
+
+	return self.ui.root;
+};
+
+// #add {{{2
+
+FilterControl.prototype.add = function (field) {
+	var self = this
+		, gcf = new GroupControlField(self, field, self.colConfig[field] || {});
+
+	jQuery('<li>').append(gcf.draw()).appendTo(self.ui.groupFields); // Add it to the DOM.
+	self.groupFields.push(field); // Add it to the groupFields array.
+	self.updateView();
+};
+
+// #remove {{{2
+
+FilterControl.prototype.remove = function (gcf) {
+	var self = this
+		, fieldIndex = self.groupFields.indexOf(gcf.field);
+
+	gcf.getElement().parent('li').remove(); // Remove it from the DOM.
+	self.groupFields.splice(fieldIndex, 1); // Remove it from the groupFields array.
+	self.updateView();
+};
+
+// #updateView {{{2
+
+FilterControl.prototype.updateView = function () {
+	var self = this;
+
+	if (self.groupFields.length > 0) {
+		self.view.setGroup({fieldNames: self.groupFields});
+	}
+	else {
+		self.view.clearGroup();
+	}
+};
+
+// GridControlField {{{1
+
+function GridControlField() {
+}
+
+GridControlField.prototype = Object.create(Object.prototype);
+GridControlField.prototype.constructor = GridControlField;
+
+// #init {{{2
+
+GridControlField.prototype.init = function (control, field, colConfig) {
+	var self = this;
+
+	self.control = control;
 	self.field = field;
+	self.colConfig = colConfig;
+	self.ui = {};
 };
 
 // #draw {{{2
 
-GroupControlField.prototype.draw = function () {
+GridControlField.prototype.draw = function () {
 	var self = this;
 
-	self.ui.root = jQuery('<div>')
-		.append(jQuery('<span>').text(self.field))
-		.append(jQuery('<button>').text('X').on('click', function () {
-			self.groupControl.removeGroup(self);
-		}));
+	console.log(self);
+
+	self.ui.root = jQuery('<div>', { 'class': 'wcdv_field' })
+		.append(
+			jQuery(fontAwesome('F146'))
+			.attr('title', 'Remove')
+			.addClass('wcdv_button wcdv_remove')
+			.on('click', function () {
+				self.control.remove(self);
+			})
+		)
+		.append(jQuery('<span>').text(self.colConfig.displayText || self.field))
+	;
 
 	return self.ui.root;
 };
 
 // #getElement {{{2
 
-GroupControlField.prototype.getElement = function () {
+GridControlField.prototype.getElement = function () {
 	var self = this;
 
 	return self.ui.root;
 };
+
+// GroupControlField {{{1
+
+function GroupControlField() {
+	var self = this;
+
+	self.super = makeSuper(self, GridControlField);
+	self.super.init.apply(self, arguments);
+};
+
+GroupControlField.prototype = Object.create(GridControlField.prototype);
+GroupControlField.prototype.constructor = GroupControlField;
+
+// PivotControlField {{{1
+
+function PivotControlField() {
+	var self = this;
+
+	self.super = makeSuper(self, GridControlField);
+	self.super.init.apply(self, arguments);
+};
+
+PivotControlField.prototype = Object.create(GridControlField.prototype);
+PivotControlField.prototype.constructor = PivotControlField;

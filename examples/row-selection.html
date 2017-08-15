@@ -42,14 +42,10 @@ $(document).ready(function () {
 	var source = new MIE.WC_DataVis.Source({
 		type: 'http',
 		url: 'data500.json',
-		conversion: [bbcode]
-	}, undefined, undefined, {
-		deferConversion: true
+		conversion: {
+			date_link: [bbcode]
+		}
 	});
-	var tagOpts = {
-		runImmediately: true,
-		title: 'Basic Example'
-	};
 	var view = new MIE.WC_DataVis.View(source);
 	var defn = {
 		id: 'example',
@@ -57,27 +53,28 @@ $(document).ready(function () {
 			features: {
 				sort: true,
 				filter: true,
-				tabletool: true,
-				limit: true
-			},
-			limit: {
-				method: 'more',
-				threshold: 10,
-				chunkSize: 10
+				group: true,
+				pivot: true,
+				rowSelect: true
 			},
 			columns: [
-				{ field: "first_name", displayText: "First Name" },
-				{ field: "last_name", displayText: "Last Name" },
-				{ field: "random_date", displayText: "Random Date", format: "MM/DD/YYYY" },
-				{ field: "random_int", displayText: "Random Int" },
-				{ field: "random_float", displayText: "Random Float" },
-				{ field: "random_money", displayText: "Random Money" },
-				{ field: "date_link", displayText: "Date Link", format: "MMM Do, YYYY" }
+				{ field: 'first_name', displayText: 'First Name' },
+				{ field: 'last_name', displayText: 'Last Name' },
+				{ field: 'state', displayText: 'State' },
+				{ field: 'sex', displayText: 'Sex' },
+				{ field: 'random_date', displayText: 'Random Date', format: 'MM/DD/YYYY' },
+				{ field: 'random_int', displayText: 'Random Int' },
+				{ field: 'random_float', displayText: 'Random Float' },
+				{ field: 'random_money', displayText: 'Random Money' },
+				{ field: 'date_link', displayText: 'Date Link', format: 'MMM Do, YYYY' }
 			]
 		},
 		source: source
 	};
-	new MIE.WC_DataVis.Grid('example', view, defn, tagOpts);
+	new MIE.WC_DataVis.Grid('example', view, defn, {
+		runImmediately: true,
+		title: 'Basic Example'
+	});
 });
 		</script>
 	</head>

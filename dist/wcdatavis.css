@@ -1,20 +1,36 @@
 /* WC DATAVIS STYLES */
-.tabletool {
-	margin-top: 1px;
+
+span.wcdv_button {
+	cursor: pointer;
 }
-.gridwrapper {
+
+.wcdv_grid {
 	margin-top: 1em;
 }
-.gridwrapper:first-of-type {
+
+.wcdv_grid:first-of-type {
 	margin-top: 0;
 }
-.gridtoolbar {
-	background-color: white;
-	border: 1px solid #737373;
-	margin: 0 -2px -1px 0;
-	padding: 0;
+
+.wcdv_grid_toolbar {
+	border: solid 1px #666;
 }
-.gridtoolbar .buttons button {
+
+.wcdv_grid_toolbar .buttons {
+	font-size: 0.85em;
+	background-color: #EEE;
+}
+
+.wcdv_grid_toolbar .buttons button {
+	margin-right: 1em;
+}
+
+.wcdv_grid_toolbar .buttons label {
+	margin-right: 1em;
+}
+
+/*
+.wcdv_grid_toolbar .buttons button {
 	background-color: transparent;
 	border: 1px solid transparent;
 	border-radius: 2px;
@@ -27,22 +43,26 @@
 	padding: 2px 6px;
 	vertical-align: top;
 }
-.gridtoolbar .buttons button .fa {
+*/
+.wcdv_grid_toolbar .buttons button .fa {
 	color: #666;
 	font-size: 1.15em;
 	padding-right: 3px;
 }
-.gridtoolbar .buttons button:focus, .gridtoolbar .buttons button:hover {
+/*
+.wcdv_grid_toolbar .buttons button:focus, .wcdv_grid_toolbar .buttons button:hover {
 	background-color: #fff;
 	border-color: #B3B3B3;
 	box-shadow: 0 1px 3px -2px #132D44;
 	color: #000;
 	outline: 0;
 }
-.gridtoolbar .buttons button:focus .fa, .gridtoolbar .buttons button:hover .fa {
+*/
+.wcdv_grid_toolbar .buttons button:focus .fa, .wcdv_grid_toolbar .buttons button:hover .fa {
 	color: #2D6A9F;
 }
-.gridtoolbar .buttons button:active {
+/*
+.wcdv_grid_toolbar .buttons button:active {
 	background-color: white;
 	border-color: #B3B3B3;
 	box-shadow: inset 0 2px 3px -2px #808080;
@@ -50,25 +70,26 @@
 	padding-bottom: 1px;
 	padding-top: 3px;
 }
-.gridtoolbar .heading {
-	background-color: #737373;
+*/
+.wcdv_grid_toolbar .heading {
+	background-color: #666;
 	color: white;
 	cursor: pointer;
 	line-height: 29px;
-	padding-left: 8px;
+	padding-left: 0.5em;
 }
-.gridtoolbar .heading strong {
+.wcdv_grid_toolbar .heading strong {
 	font-size: 1.2em;
 }
-.gridtoolbar .heading .headingInfo {
+.wcdv_grid_toolbar .heading .headingInfo {
 	cursor: default;
 }
-.gridtoolbar .buttons {
+.wcdv_grid_toolbar .buttons {
 	border-top: 1px solid #737373;
 	display: none;
 	padding: 3px 4px;
 }
-.gridtoolbar .showhide {
+.wcdv_grid_toolbar .showhide {
 	background-color: transparent;
 	border: 0;
 	color: #CCC;
@@ -79,8 +100,87 @@
 	margin: 3px 4px;
 	padding: 0 4px;
 }
-.gridtoolbar .showhide:focus, .gridtoolbar .showhide:hover, .gridtoolbar .showhide:active {
+.wcdv_grid_toolbar .showhide:focus, .wcdv_grid_toolbar .showhide:hover, .wcdv_grid_toolbar .showhide:active {
 	color: white;
+}
+
+.wcdv_grid_control {
+	padding-top: 4px;
+	display: flex;
+	justify-content: space-between;
+}
+
+/*
+.wcdv_group_control,
+.wcdv_pivot_control {
+	font-size: 0.85em;
+}
+*/
+
+.wcdv_group_control .wcdv_title,
+.wcdv_pivot_control .wcdv_title {
+	color: #666;
+	text-transform: uppercase;
+	font-weight: bold;
+	border-bottom: solid 1px #888;
+	display: block;
+}
+
+.wcdv_group_control .wcdv_remove,
+.wcdv_pivot_control .wcdv_remove {
+	margin-right: 4px;
+}
+
+.wcdv_group_control ul,
+.wcdv_pivot_fields_container ul {
+	list-style-type: none;
+	padding: 0px;
+	margin-top: 1ex;
+	margin-bottom: 1ex;
+}
+
+.wcdv_group_control,
+.wcdv_pivot_control .wcdv_aggregate_container,
+.wcdv_pivot_control .wcdv_pivot_fields_container {
+	border: solid 1px #888;
+	background-color: #EEE;
+	padding: 4px;
+	border-radius: 4px;
+	display: inline-block;
+	vertical-align: top;
+}
+
+.wcdv_pivot_control .wcdv_aggregate_container {
+	margin-right: 4px;
+}
+
+.wcdv_group_control,
+.wcdv_pivot_control {
+	display: inline-block;
+	margin-bottom: 4px;
+}
+
+.wcdv_group_control ul li, /* HORIZONTAL */
+.wcdv_pivot_fields_container ul li {
+	display: inline-block;
+}
+
+.wcdv_group_control ul li .wcdv_field,
+.wcdv_pivot_fields_container ul li .wcdv_field {
+	border: solid 1px #444;
+	border-radius: 4px;
+	padding: 4px;
+}
+
+.wcdv_group_control ul li, /* HORIZONTAL */
+.wcdv_pivot_fields_container ul li .wcdv_field {
+	margin-right: 4px;
+}
+
+.wcdv_grid_table {
+	border-left: solid 1px #666;
+	border-right: solid 1px #666;
+	border-bottom: solid 1px #666;
 }
 
 tr.wcdv_grid_filterrow th.wcdv_grid_filtercol {
@@ -129,15 +229,15 @@ tr.wcdvgrid_more td {
 	cursor: pointer;
 }
 
-.gridwrapper .tabletool .thead {
+.wcdv_grid .tabletool .thead {
    overflow: initial;
 }
 
-.gridwrapper .tabletool .outer.thead {
+.wcdv_grid .tabletool .outer.thead {
 	overflow: initial;
 }
 
-.gridwrapper .tabletool.ttsticky .outer.thead .inner {
+.wcdv_grid .tabletool.ttsticky .outer.thead .inner {
 	overflow: initial;
 }
 
@@ -152,6 +252,10 @@ tr.wcdvgrid_more td {
 
 .ui-resizable-helper {
 	border: solid 2px dotted;
+}
+
+.wcdv_grid_table td.wcdv_selected_row {
+	background-color: #FFA;
 }
 
 /*

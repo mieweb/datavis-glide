@@ -88,14 +88,10 @@ var DATA_VIEW_ID = 1;
  *
  * @property {Array.<Function>} eventHandlers.sort
  *
- * @property {number} tryLimit Maximum number of tries for calling getData(), this is a safety valve
- * which is mostly useful while developing (it prevents your computer's memory from being completely
- * eaten by an infinite recursive loop).
- *
  * @property {Timing} timing For keeping track of how long it takes to do things in the view.
  */
 
-var View = function (source) {
+var View = function (source, name) {
 	var self = this;
 
 	if (!(source instanceof Source)) {
@@ -107,15 +103,17 @@ var View = function (source) {
 		self.clearCache();
 		self.fire(View.events.dataUpdated);
 	});
-	self.name = 'Data View #' + (DATA_VIEW_ID++);
+
+	self.name = name ||gensym();
 
 	self.eventHandlers = {};
 	_.each(_.keys(View.events), function (evt) {
 		self.eventHandlers[evt] = [];
 	});
 
-	self.tryLimit = 5;
 	self.timing = new Timing();
+
+	self.lock = new Lock('View Lock (' + self.name + ')');
 };
 
 View.prototype = Object.create(Error.prototype);
@@ -137,7 +135,9 @@ View.events = objFromArray([
 	, 'filterEnd'   // A filter operation has finished.
 ]);
 
-mixinEventHandling(View, 'View', View.events);
+mixinEventHandling(View, function (self) {
+	return 'VIEW (' + self.name + ')';
+}, View.events);
 
 // #getRowCount {{{2
 
@@ -247,7 +247,7 @@ View.prototype.sort = function (cont) {
 		, conv = I;
 
 	if (self.sortSpec === undefined) {
-		return cont(self.data.data);
+		return cont(false, self.data.data);
 	}
 
 	var fti = self.typeInfo.get(self.sortSpec.col);
@@ -264,7 +264,8 @@ View.prototype.sort = function (cont) {
 	}
 
 	if (fti.needsDecoding) {
-		debug.info('VIEW // SORT', 'Decoding data before sorting: { field = "%s", type = "%s" }',
+		debug.info('VIEW (' + self.name + ') // SORT',
+							 'Decoding data before sorting: { field = "%s", type = "%s" }',
 							 fti.field, fti.type);
 		self.source.convertAll(self.data.data, fti.field);
 		fti.deferDecoding = false;
@@ -299,38 +300,45 @@ View.prototype.sort = function (cont) {
 
 	self.fire(View.events.sortBegin);
 
-	// Actually perform the sort.
+	if (self.data.isPlain) {
+		mergeSort3(self.data.data,
+							 function (a, b) {
+								 return !!(cmp(a.rowData[self.sortSpec.col].value, b.rowData[self.sortSpec.col].value)
+													 ^ (self.sortSpec.dir === 'DESC'));
+							 },
+							 function (sorted) {
+								 _.each(sorted, function (row, position) {
+									 self.fireQuietly(View.events.sort, row.rowNum, position);
+								 });
 
-	mergeSort3(self.data.data,
-						 function (a, b) {
-							 return !!(cmp(a.rowData[self.sortSpec.col].value, b.rowData[self.sortSpec.col].value)
-												 ^ (self.sortSpec.dir === 'DESC'));
-						 },
-						 function (sorted) {
-							 _.each(sorted, function (row, position) {
-								 self.fireQuietly(View.events.sort, row.rowNum, position);
-							 });
+								 // If there's a progress callback, perform its done event.
 
-							 // If there's a progress callback, perform its done event.
+								 if (self.sortProgress
+										 && typeof self.sortProgress.end === 'function') {
+									 self.sortProgress.end();
+								 }
 
-							 if (self.sortProgress
-									 && typeof self.sortProgress.end === 'function') {
-								 self.sortProgress.end();
-							 }
+								 // Fire the event for finishing the sort.
 
-							 // Fire the event for finishing the sort.
+								 self.fire(View.events.sortEnd);
 
-							 self.fire(View.events.sortEnd);
+								 // Stop the timer for the sort.
 
-							 // Stop the timer for the sort.
+								 self.timing.stop(timingEvt);
 
-							 self.timing.stop(timingEvt);
+								 // Pass the sorted data to the continuation.
 
-							 // Pass the sorted data to the continuation.
-
-							 return cont(sorted);
-						 },
-						 self.sortProgress && self.sortProgress.update);
+								 return cont(true, sorted);
+							 },
+							 self.sortProgress && self.sortProgress.update);
+	}
+	else if (self.data.isGroup) {
+		// There are two ways to sort grouped data: by a field that is part of the group (changes the
+		// ordering of the groups), and by a field that isn't part of the group (changes the ordering of
+		// the rows within each group).
+	}
+	else if (self.data.isPivot) {
+	}
 };
 
 // #setFilter {{{2
@@ -419,7 +427,7 @@ View.prototype.filter = function (cont) {
 		, timingEvt = ['Data Source "' + self.source.name + '" : ' + self.name, 'Filtering'];
 
 	if (self.filterSpec === undefined) {
-		return cont(self.data.data);
+		return cont(false, self.data.data);
 	}
 
 	// Make sure that each column that we're filtering has been type decoded, if necessary.
@@ -439,7 +447,8 @@ View.prototype.filter = function (cont) {
 		}
 
 		if (fti.needsDecoding) {
-			debug.info('VIEW // SORT', 'Decoding data before filtering: { field = "%s", type = "%s" }',
+			debug.info('VIEW (' + self.name + ') // SORT',
+								 'Decoding data before filtering: { field = "%s", type = "%s" }',
 								 fti.field, fti.type);
 			self.source.convertAll(self.data.data, fti.field);
 			fti.deferDecoding = false;
@@ -455,7 +464,8 @@ View.prototype.filter = function (cont) {
 		// When there's no such column, automatically fail.
 
 		if (datum === undefined) {
-			debug.warn('DATA VIEW // FILTER', 'Attempted to filter by non-existent column: ' + field);
+			debug.warn('VIEW (' + self.name + ') // FILTER',
+								 'Attempted to filter by non-existent column: ' + field);
 			return false;
 		}
 
@@ -630,7 +640,7 @@ View.prototype.filter = function (cont) {
 			self.timing.stop(timingEvt);
 
 			// Pass the filtered data to the continuation.
-			return cont(newData);
+			return cont(true, newData);
 		}
 	};
 
@@ -694,7 +704,7 @@ View.prototype.group = function () {
 	var self = this;
 
 	if (self.groupSpec === undefined) {
-		return;
+		return false;
 	}
 
 	var groupFields = self.groupSpec.fieldNames;
@@ -750,7 +760,9 @@ View.prototype.group = function () {
 		return tmp;
 	})(self.groupSpec.fieldNames, self.data.data);
 
-	debug.info('DATA VIEW // GROUP', 'Tree Form: %O', tree);
+	debug.info('VIEW (' + self.name + ') // GROUP',
+						 'Tree Form: %O',
+						 tree);
 
 	var rowVals = [];
 	var newData = [];
@@ -789,20 +801,27 @@ View.prototype.group = function () {
 		}
 	})(tree, 1, []);
 
-	debug.info('DATA VIEW // GROUP', 'Row Vals: %O', rowVals);
-	debug.info('DATA VIEW // GROUP', 'New Data: %O', newData);
+	debug.info('VIEW (' + self.name + ') // GROUP', 'Row Vals: %O', rowVals);
+	debug.info('VIEW (' + self.name + ') // GROUP', 'New Data: %O', newData);
 
 	self.data.isPlain = false;
 	self.data.isGroup = true;
 	self.data.groupFields = groupFields;
 	self.data.rowVals = rowVals;
 	self.data.data = newData;
+
+	return true;
 };
 
 // #setPivot {{{2
 
 View.prototype.setPivot = function (spec) {
 	var self = this;
+
+	if (self.groupSpec === undefined) {
+		alert("Can't pivot without group yet, sorry!");
+		return;
+	}
 
 	self.clearCache();
 	self.pivotSpec = spec;
@@ -829,7 +848,7 @@ View.prototype.pivot = function () {
 	;
 
 	if (self.pivotSpec === undefined) {
-		return;
+		return false;
 	}
 
 	pivotFields = self.pivotSpec.fieldNames;
@@ -889,7 +908,6 @@ View.prototype.pivot = function () {
 			_.each(groupedRows, function (row) {
 				if (_.every(colVal, function (colValElt, colValNum) {
 					var pivotField = pivotFields[colValNum];
-					console.log(colValNum, pivotFields[colValNum], colValElt);
 					return colValElt === (row.rowData[pivotField].orig || row.rowData[pivotField].value);
 				})) {
 					tmp.push(row);
@@ -900,13 +918,15 @@ View.prototype.pivot = function () {
 		self.data.data[groupNum] = newData;
 	});
 
-	debug.info('DATA VIEW // PIVOT', 'Col Vals Tree: %O', colValsTree);
-	debug.info('DATA VIEW // PIVOT', 'Col Vals: %O', colVals);
-	debug.info('DATA VIEW // PIVOT', 'New Data: %O', self.data);
+	debug.info('VIEW (' + self.name + ') // PIVOT', 'Col Vals Tree: %O', colValsTree);
+	debug.info('VIEW (' + self.name + ') // PIVOT', 'Col Vals: %O', colVals);
+	debug.info('VIEW (' + self.name + ') // PIVOT', 'New Data: %O', self.data);
 
 	self.data.isPivot = true;
 	self.data.pivotFields = pivotFields;
 	self.data.colVals = colVals;
+
+	return true;
 };
 
 // #getData {{{2
@@ -917,52 +937,85 @@ View.prototype.pivot = function () {
  * @param {function} cont What to do next.
  */
 
-View.prototype.getData = function (cont, tries) {
+View.prototype.getData = function (cont) {
 	var self = this;
 
-	if (tries === undefined) {
-		tries = 1;
-	}
-
-	if (tries === 5) {
-		throw new ViewError('I appear to be stuck in an infinite loop (maximum try limit reached)');
-	}
-
-	if (self.data === undefined) {
-		self.fire('workBegin');
-		return self.source.getData(function (data) {
-			return self.source.getTypeInfo(function (typeInfo) {
-				self.data = {
-					isPlain: true,
-					isGroup: false,
-					isPivot: false,
-					data: _.map(data, function (rowData, rowNum) {
-						return {
-							rowNum: rowNum,
-							rowData: rowData
-						};
-					})
-				};
-				self.typeInfo = typeInfo;
-				return self.filter(function (filteredData) {
-					self.data.data = filteredData;
-					self.group();
-					self.pivot();
-					return self.sort(function (sortedData) {
-						self.data.data = sortedData;
-						self.fire('workEnd', self.getRowCount(), self.isFiltered() ? self.getTotalRowCount() : undefined);
-						return self.getData(cont, tries + 1);
-					});
-				});
-			});
+	if (self.lock.isLocked()) {
+		return self.lock.onUnlock(function () {
+			self.getData(cont);
 		});
 	}
 
-	debug.info('DATA VIEW', 'Got data: %O', self.data);
-
-	if (typeof cont === 'function') {
-		return cont(self.data);
+	if (self.data !== undefined) {
+		debug.info('VIEW (' + self.name + ')', 'Got cached data: %O', self.data);
+		if (typeof cont === 'function') {
+			return cont(self.data);
+		}
 	}
+
+	self.lock.lock();
+
+	self.fire(View.events.workBegin);
+	return self.source.getData(function (data) {
+		return self.source.getTypeInfo(function (typeInfo) {
+			var ops = {
+				filter: false,
+				group: false,
+				pivot: false,
+				sort: false
+			};
+
+			self.data = {
+				isPlain: true,
+				isGroup: false,
+				isPivot: false,
+				data: _.map(data, function (rowData, rowNum) {
+					return {
+						rowNum: rowNum,
+						rowData: rowData
+					};
+				})
+			};
+			self.typeInfo = typeInfo;
+			return self.filter(function (didFilter, filteredData) {
+				ops.filter = didFilter;
+				self.data.data = filteredData;
+				ops.group = self.group();
+				ops.pivot = self.pivot();
+				return self.sort(function (didSort, sortedData) {
+					ops.sort = didSort;
+					self.data.data = sortedData;
+
+					var workEndObj = {
+						isPlain: self.data.isPlain,
+						isGroup: self.data.isGroup,
+						isPivot: self.data.isPivot
+					};
+
+					if (self.data.isPlain) {
+						workEndObj.numRows = self.getRowCount();
+						if (self.isFiltered()) {
+							workEndObj.totalRows = self.getTotalRowCount();
+						}
+					}
+					else if (self.data.isGroup) {
+						workEndObj.numGroups = self.data.data.length;
+					}
+					else if (self.data.isPivot) {
+						workEndObj.numPivots = 0;
+					}
+
+					self.fire(View.events.workEnd, workEndObj, ops);
+
+					self.lock.unlock();
+					debug.info('VIEW (' + self.name + ')', 'Got new data: %O', self.data);
+					if (typeof cont === 'function') {
+						return cont(self.data);
+					}
+				});
+			});
+		});
+	});
 };
 
 // #getTypeInfo {{{2
@@ -992,8 +1045,9 @@ View.prototype.getTypeInfo = function (cont) {
 
 View.prototype.clearCache = function () {
 	this.data = undefined;
-	this.dataGrouped = undefined;
 	this.typeInfo = undefined;
+
+	debug.info('VIEW (' + self.name + ')', 'Cleared cache');
 };
 
 // #reset {{{2

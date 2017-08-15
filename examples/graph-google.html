@@ -12,6 +12,7 @@
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/nprogress/0.2.0/nprogress.js"></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/sprintf/1.0.3/sprintf.js"></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.sumoselect/3.0.2/jquery.sumoselect.min.js"></script>
+		<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
 		<script src="tabletool.js"></script>
 		<script src="wcdatavis.js"></script>
 		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"/>
@@ -26,62 +27,53 @@
 $(document).ready(function () {
 	MIE.DEBUGGING = true;
 
-	var bbcode = function (cell, field, typeInfo, row) {
-		var m = cell.value.match(/\[url=([^\]]+)\]([^\[]+)\[\/url\]/);
-		if (m !== null) {
-			cell.render = function (value) {
-				return jQuery('<a>', { href: m[1] }).text(value);
-			};
-			cell.orig = cell.value;
-			cell.value = m[2];
-			return true;
-		}
-		return false;
-	};
-
-	var source = new MIE.WC_DataVis.Source({
-		type: 'http',
-		url: 'data500.json',
-		conversion: [bbcode]
-	}, undefined, undefined, {
-		deferConversion: true
+	google.charts.load('current', {'packages':['corechart']});
+	google.charts.setOnLoadCallback(function () {
+		var source = new MIE.WC_DataVis.Source({
+			type: 'http',
+			url: 'redmine1.json'
+		});
+		var view = new MIE.WC_DataVis.View(source);
+		new MIE.WC_DataVis.Graph('graph', view, {
+			title: 'Google Charts Example',
+			type: 'column',
+			categoryField: 'Employee',
+			valueField: 'Hours Reported',
+			height: 600,
+			options: {
+				hAxis: {
+					slantedText: true,
+					slantedTextAngle: 90,
+					showTextEvery: 1
+				}
+			}
+		});
+		new MIE.WC_DataVis.Grid('grid', view, {
+			id: 'grid',
+			table: {
+				features: {
+					sort: true,
+					filter: true,
+					group: true,
+					pivot: true,
+					limit: true
+				},
+				limit: {
+					threshold: 100,
+					chunkSize: 50
+				}
+			},
+			source: source
+		}, {
+			title: 'Example Data',
+			runImmediately: true
+		});
 	});
-	var tagOpts = {
-		runImmediately: true,
-		title: 'Basic Example'
-	};
-	var view = new MIE.WC_DataVis.View(source);
-	var defn = {
-		id: 'example',
-		table: {
-			features: {
-				sort: true,
-				filter: true,
-				tabletool: true,
-				limit: true
-			},
-			limit: {
-				method: 'more',
-				threshold: 10,
-				chunkSize: 10
-			},
-			columns: [
-				{ field: "first_name", displayText: "First Name" },
-				{ field: "last_name", displayText: "Last Name" },
-				{ field: "random_date", displayText: "Random Date", format: "MM/DD/YYYY" },
-				{ field: "random_int", displayText: "Random Int" },
-				{ field: "random_float", displayText: "Random Float" },
-				{ field: "random_money", displayText: "Random Money" },
-				{ field: "date_link", displayText: "Date Link", format: "MMM Do, YYYY" }
-			]
-		},
-		source: source
-	};
-	new MIE.WC_DataVis.Grid('example', view, defn, tagOpts);
 });
 		</script>
 	</head>
 	<body>
-		<div id="example"></div>
+		<div id="graph"></div>
+		<div id="grid"></div>
 	</body>
 </html>

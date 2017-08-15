@@ -614,7 +614,6 @@ function needArgInst(val, varName, cls) {
 }
 
 function needArg(val, varName) {
-	console.log(arguments.callee.name);
 	var msg = arguments.callee.name + '(): Missing required argument "' + varName + '"';
 
 	if (isNothing(val)) {
@@ -873,6 +872,8 @@ function objFromArray(a) {
 // Object Orientation {{{1
 
 var makeSuper = function (me, parent) {
+	parent = parent || me.superclass;
+
 	return _.mapObject(parent.prototype, function (v, k) {
 		return _.bind(v, me);
 	});
@@ -1066,6 +1067,11 @@ function fontAwesome(hex, cls, title) {
  */
 
 function format(colConfig, typeInfo, cell, opts) {
+	//console.log('RENDERING: { colConfig = %O, typeInfo = %O, cell = %O, opts = %O }', colConfig, typeInfo, cell, opts);
+
+	colConfig = colConfig || {};
+	typeInfo = typeInfo || {};
+
 	if ((window.moment && window.moment.isMoment(cell))
 			|| (window.numeral && window.numeral.isNumeral(cell))
 			|| typeof cell !== 'object') {
@@ -1142,7 +1148,7 @@ function format(colConfig, typeInfo, cell, opts) {
 				result = cell.value;
 			}
 		default:
-			log.error('FORMAT', 'Unable to format - unknown type: { field = "%s", type = "%s", value = "%s" }',
+			log.error('Unable to format - unknown type: { field = "%s", type = "%s", value = "%s" }',
 								typeInfo.field, t, cell.value);
 		}
 	}
@@ -1826,9 +1832,11 @@ function mixinEventHandling(obj, name, events) {
 
 	// #on {{{2
 
-	obj.prototype.on = function (evt, cb, who) {
+	obj.prototype.on = function (evt, cb, opts) {
 		var self = this
 			, myName = typeof name === 'function' ? name(self) : name;
+
+		opts = opts || {};
 
 		self._initEventHandlers();
 
@@ -1837,8 +1845,9 @@ function mixinEventHandling(obj, name, events) {
 		}
 
 		self.eventHandlers[evt].push({
-			who: who,
-			cb: cb
+			who: opts.who,
+			cb: cb,
+			limit: opts.limit
 		});
 
 		return self;
@@ -1871,7 +1880,7 @@ function mixinEventHandling(obj, name, events) {
 
 		var endLen = self.eventHandlers[evt].length;
 
-		debug.info(myName.toUpperCase() + ' // OFF', 'Removed ' + (startLen - endLen) + ' handlers from ' + who + ' on "' + evt + '" event');
+		debug.info(myName + ' // OFF', 'Removed ' + (startLen - endLen) + ' handlers from ' + who + ' on "' + evt + '" event');
 	};
 
 	// #_fire {{{2
@@ -1890,12 +1899,22 @@ function mixinEventHandling(obj, name, events) {
 		}
 
 		if (!opts || !opts.silent) {
-			debug.info(myName.toUpperCase() + ' // FIRE', 'Triggering "' + evt + '" event on ' + self.eventHandlers[evt].length + ' handlers:', args);
+			debug.info(myName + ' // FIRE', 'Triggering "' + evt + '" event on ' + self.eventHandlers[evt].length + ' handlers:', args);
 		}
 
-		_.each(self.eventHandlers[evt], function (h) {
+		for (var i = 0; i < self.eventHandlers[evt].length; i += 1) {
+			var h = self.eventHandlers[evt][i];
 			h.cb.apply(null, args);
-		});
+			if (h.limit) {
+				h.limit -= 1;
+				if (h.limit <= 0) {
+					debug.info(myName + ' // FIRE', 'Removing "' + evt + '" event handler after reaching invocation limit');
+					self.eventHandlers[evt][i] = null;
+				}
+			}
+		}
+
+		self.eventHandlers[evt] = _.without(self.eventHandlers[evt], null);
 	};
 
 	// #fire {{{2
@@ -1919,4 +1938,65 @@ function mixinEventHandling(obj, name, events) {
 			}], args);
 		return self._fire.apply(self, pass);
 	};
+}
+
+// Normalization {{{1
+
+/**
+ * The point of "normalizing" a definition is to expand shortcut configurations.  For example, lots
+ * of properties can be a string (the shortcut) or an object which contains the same info plus some
+ * additional configuration.  This function would convert the string into the object.  This way,
+ * later code only has to check for the object version.  It also adds a layer of backwards
+ * compatibility.
+ *
+ * You only need to normalize a definition once; after doing so, we flag it so we won't mess with it
+ * again, even though it should be possible to normalize something that's already been done.
+ */
+
+function normalizeDefn(defn) {
+	if (defn.normalized) {
+		return;
+	}
+	defn.normalized = true;
+	defn.prefs = new Prefs(defn);
+	if (typeof getProp(defn, 'table', 'output') === 'string') {
+		var method = defn.table.output;
+		defn.table.output = {
+			method: method
+		};
+	}
+
+	normalizeLimit(defn);
+	normalizeColumns(defn);
+
+	if (getProp(defn, 'table', 'columns') !== undefined) {
+		defn.table.columns_map = _.indexBy(defn.table.columns, 'field');
+	}
+}
+
+function normalizeLimit(defn) {
+	if (defn.table.features.limit) {
+		defn.table.limit = defn.table.limit || {};
+
+		_.defaults(defn.table.limit, {
+			method: 'more',
+			threshold: 100,
+			chunkSize: 50
+		});
+	}
+};
+
+function normalizeColumns(defn) {
+	_.each(getPropDef([], defn, 'table', 'columnConfig'), function (colConfig, colName) {
+
+		// When you want to show a checkbox to represent the value, it only makes sense to have a
+		// checkbox for the filter widget.
+
+		if (colConfig.widget === 'checkbox') {
+			if (colConfig.filter !== undefined && colConfig.filter !== 'checkbox') {
+				log.warn('Overriding configuration to use filter type "' + colConfig.filter + '" for checkbox widgets.');
+			}
+			colConfig.filter = 'checkbox';
+		}
+	});
 }
