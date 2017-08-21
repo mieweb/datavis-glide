@@ -1415,6 +1415,7 @@ GridControl.prototype.addField = function (field) {
 	self.ui.dropdown.find('option').filter(function () {
 		return jQuery(this).val() === field;
 	}).prop('disabled', true);
+	self.ui.dropdown.val('');
 
 	self.fields.push(field); // Add it to the fields array.
 	self.updateView();
@@ -1447,7 +1448,9 @@ GridControl.prototype.clear = function () {
 
 	self.fields = [];
 	self.ui.fields.children().remove();
-	self.ui.dropdown.find('option:disabled').prop('disabled', false);
+	self.ui.dropdown.find('option:disabled').filter(function () {
+		return jQuery(this).val() !== '';
+	}).prop('disabled', false);
 	self.updateView();
 };
 
@@ -1520,8 +1523,11 @@ GroupControl.prototype.draw = function (parent) {
 	self.ui.dropdown = jQuery('<select>').appendTo(dropdownContainer);
 	self.makeAddButton(dropdownContainer);
 
+	jQuery('<option>', { 'value': '', 'disabled': true, 'selected': true })
+		.text('Select Field')
+		.appendTo(self.ui.dropdown);
+
 	self.view.on('getTypeInfo', function (typeInfo) {
-		self.ui.dropdown.children().remove();
 		_.each(availableFields(self.defn, null, typeInfo), function (fieldName) {
 			var text = getProp(self.colConfig, fieldName, 'displayText') || fieldName;
 			jQuery('<option>', { 'value': fieldName }).text(text).appendTo(self.ui.dropdown);
@@ -1675,8 +1681,11 @@ PivotControl.prototype.draw = function (parent) {
 	self.ui.dropdown = jQuery('<select>').appendTo(dropdownContainer);
 	self.makeAddButton(dropdownContainer);
 
+	jQuery('<option>', { 'value': '', 'disabled': true, 'selected': true })
+		.text('Select Field')
+		.appendTo(self.ui.dropdown);
+
 	self.view.on('getTypeInfo', function (typeInfo) {
-		self.ui.dropdown.children().remove();
 		_.each(availableFields(self.defn, null, typeInfo), function (fieldName) {
 			var text = getProp(self.colConfig, fieldName, 'displayText') || fieldName;
 			jQuery('<option>', { 'value': fieldName }).text(text).appendTo(self.ui.aggFieldDropdown);
