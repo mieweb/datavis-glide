@@ -1402,6 +1402,55 @@ GridControl.prototype.makeClearButton = function (target) {
 		.appendTo(target);
 };
 
+// #addField {{{2
+
+GridControl.prototype.addField = function (field) {
+	var self = this
+		, gcf = new self.controlFieldCtor(self, field, self.colConfig[field] || {});
+
+	self.ui.clearBtn.show();
+
+	jQuery('<li>').append(gcf.draw()).appendTo(self.ui.fields); // Add it to the DOM.
+
+	self.ui.dropdown.find('option').filter(function () {
+		return jQuery(this).val() === field;
+	}).prop('disabled', true);
+
+	self.fields.push(field); // Add it to the fields array.
+	self.updateView();
+};
+
+// #removeField {{{2
+
+GridControl.prototype.removeField = function (cf) {
+	var self = this
+		, fieldIndex = self.fields.indexOf(cf.field);
+
+	cf.getElement().parent('li').remove(); // Remove it from the DOM.
+	self.fields.splice(fieldIndex, 1); // Remove it from the fields array.
+
+	self.ui.dropdown.find('option').filter(function () {
+		return jQuery(this).val() === cf.field;
+	}).prop('disabled', false);
+
+	if (self.fields.length === 0) {
+		self.ui.clearBtn.hide();
+	}
+
+	self.updateView();
+};
+
+// #clear {{{2
+
+GridControl.prototype.clear = function () {
+	var self = this;
+
+	self.fields = [];
+	self.ui.fields.children().remove();
+	self.ui.dropdown.find('option:disabled').prop('disabled', false);
+	self.updateView();
+};
+
 // GroupControl {{{1
 
 // Constructor {{{2
@@ -1425,11 +1474,13 @@ function GroupControl() {
 	self.super = makeSuper(self, GridControl);
 	self.super.init.apply(self, arguments);
 
-	self.groupFields = [];
+	self.fields = [];
 }
 
 GroupControl.prototype = Object.create(GridControl.prototype);
 GroupControl.prototype.constructor = GroupControl;
+
+GroupControl.prototype.controlFieldCtor = GroupControlField;
 
 // #draw {{{2
 
@@ -1463,7 +1514,7 @@ GroupControl.prototype.draw = function (parent) {
 		.text('Group Fields')
 		.appendTo(self.ui.title);
 	self.ui.clearBtn = self.makeClearButton(self.ui.title);
-	self.ui.groupFields = jQuery('<ul>').appendTo(self.ui.root);
+	self.ui.fields = jQuery('<ul>').appendTo(self.ui.root);
 
 	var dropdownContainer = jQuery('<div>').appendTo(self.ui.root);
 	self.ui.dropdown = jQuery('<select>').appendTo(dropdownContainer);
@@ -1480,52 +1531,13 @@ GroupControl.prototype.draw = function (parent) {
 	return self.ui.root;
 };
 
-// #addField {{{2
-
-GroupControl.prototype.addField = function (field) {
-	var self = this
-		, gcf = new GroupControlField(self, field, self.colConfig[field] || {});
-
-	self.ui.clearBtn.show();
-
-	jQuery('<li>').append(gcf.draw()).appendTo(self.ui.groupFields); // Add it to the DOM.
-	self.groupFields.push(field); // Add it to the groupFields array.
-	self.updateView();
-};
-
-// #removeField {{{2
-
-GroupControl.prototype.removeField = function (gcf) {
-	var self = this
-		, fieldIndex = self.groupFields.indexOf(gcf.field);
-
-	gcf.getElement().parent('li').remove(); // Remove it from the DOM.
-	self.groupFields.splice(fieldIndex, 1); // Remove it from the groupFields array.
-
-	if (self.groupFields.length === 0) {
-		self.ui.clearBtn.hide();
-	}
-
-	self.updateView();
-};
-
-// #clear {{{2
-
-GroupControl.prototype.clear = function () {
-	var self = this;
-
-	self.groupFields = [];
-	self.ui.groupFields.children().remove();
-	self.updateView();
-};
-
 // #updateView {{{2
 
 GroupControl.prototype.updateView = function () {
 	var self = this;
 
-	if (self.groupFields.length > 0) {
-		self.view.setGroup({fieldNames: self.groupFields});
+	if (self.fields.length > 0) {
+		self.view.setGroup({fieldNames: self.fields});
 	}
 	else {
 		self.view.clearGroup();
@@ -1567,7 +1579,7 @@ GroupControl.prototype.updateView = function () {
  * If set, this function will be called when the aggregate configuration is changed.  It is
  * currently used to redraw the grid table with the new aggregate function results in its cells.
  *
- * @property {string[]} pivotFields
+ * @property {string[]} fields
  * Names of the fields 
  */
 
@@ -1580,11 +1592,13 @@ function PivotControl() {
 	self.super.init.apply(self, args);
 	self.opts = opts;
 
-	self.pivotFields = [];
+	self.fields = [];
 }
 
 PivotControl.prototype = Object.create(GridControl.prototype);
 PivotControl.prototype.constructor = PivotControl;
+
+PivotControl.prototype.controlFieldCtor = PivotControlField;
 
 // #draw {{{2
 
@@ -1632,7 +1646,7 @@ PivotControl.prototype.draw = function (parent) {
 		})
 	;
 	
-	self.ui.pivotFieldsContainer = jQuery('<div>')
+	self.ui.fieldsContainer = jQuery('<div>')
 		.droppable({
 			classes: {
 				'ui-droppable-hover': 'wcdv_drop_target_hover'
@@ -1646,18 +1660,18 @@ PivotControl.prototype.draw = function (parent) {
 		})
 		.addClass('wcdv_pivot_fields_container')
 		.appendTo(self.ui.root);
-	self.ui.pivotFieldsTitle = jQuery('<div>')
+	self.ui.fieldsTitle = jQuery('<div>')
 		.addClass('wcdv_control_title_bar')
-		.appendTo(self.ui.pivotFieldsContainer);
+		.appendTo(self.ui.fieldsContainer);
 	jQuery('<span>')
 		.addClass('wcdv_control_title')
 		.text('Pivot Fields')
-		.appendTo(self.ui.pivotFieldsTitle);
-	self.ui.clearBtn = self.makeClearButton(self.ui.pivotFieldsTitle);
-	self.ui.pivotFields = jQuery('<ul>')
-		.appendTo(self.ui.pivotFieldsContainer);
+		.appendTo(self.ui.fieldsTitle);
+	self.ui.clearBtn = self.makeClearButton(self.ui.fieldsTitle);
+	self.ui.fields = jQuery('<ul>')
+		.appendTo(self.ui.fieldsContainer);
 
-	var dropdownContainer = jQuery('<div>').appendTo(self.ui.pivotFieldsContainer);
+	var dropdownContainer = jQuery('<div>').appendTo(self.ui.fieldsContainer);
 	self.ui.dropdown = jQuery('<select>').appendTo(dropdownContainer);
 	self.makeAddButton(dropdownContainer);
 
@@ -1673,59 +1687,6 @@ PivotControl.prototype.draw = function (parent) {
 	return self.ui.root;
 };
 
-// #addField {{{2
-
-/**
- * Add a field to the pivot configuration.
- *
- * @param {string} field
- * Name of the field to add to the pivot.
- */
-
-PivotControl.prototype.addField = function (field) {
-	var self = this
-		, pcf = new PivotControlField(self, field, self.colConfig[field] || {});
-
-	self.ui.clearBtn.show();
-
-	jQuery('<li>').append(pcf.draw()).appendTo(self.ui.pivotFields); // Add it to the DOM.
-	self.pivotFields.push(field); // Add it to the pivotFields array.
-	self.updateView();
-};
-
-// #removeField {{{2
-
-/**
- * Remove a field from the pivot configuration.
- *
- * @param {PivotControlField} pcf
- * The control field to remove.
- */
-
-PivotControl.prototype.removeField = function (pcf) {
-	var self = this
-		, fieldIndex = self.pivotFields.indexOf(pcf.field);
-
-	pcf.getElement().parent('li').remove(); // Remove it from the DOM.
-	self.pivotFields.splice(fieldIndex, 1); // Remove it from the pivotFields array.
-
-	if (self.pivotFields.length === 0) {
-		self.ui.clearBtn.hide();
-	}
-
-	self.updateView();
-};
-
-// #clear {{{2
-
-PivotControl.prototype.clear = function () {
-	var self = this;
-
-	self.pivotFields = [];
-	self.ui.pivotFields.children().remove();
-	self.updateView();
-};
-
 // #updateView {{{2
 
 /**
@@ -1737,9 +1698,9 @@ PivotControl.prototype.clear = function () {
 PivotControl.prototype.updateView = function () {
 	var self = this;
 
-	if (self.pivotFields.length > 0) {
+	if (self.fields.length > 0) {
 		self.ui.aggContainer.show();
-		self.view.setPivot({fieldNames: self.pivotFields});
+		self.view.setPivot({fieldNames: self.fields});
 	}
 	else {
 		self.view.clearPivot();
@@ -1814,7 +1775,7 @@ FilterControl.prototype.draw = function () {
 
 	self.ui.root = jQuery('<div>');
 	self.ui.title = jQuery('<span>', { 'class': 'wcdv_title' }).text('Filter').appendTo(self.ui.root);
-	self.ui.groupFields = jQuery('<ul>').appendTo(self.ui.root);
+	self.ui.fields = jQuery('<ul>').appendTo(self.ui.root);
 
 	var dropdownContainer = jQuery('<div>').appendTo(self.ui.root);
 	self.ui.dropdown = jQuery('<select>').appendTo(dropdownContainer);
@@ -1831,35 +1792,14 @@ FilterControl.prototype.draw = function () {
 	return self.ui.root;
 };
 
-// #addField {{{2
-
-FilterControl.prototype.addField = function (field) {
-	var self = this
-		, fcf = new FieldControlField(self, field, self.colConfig[field] || {});
-
-	jQuery('<li>').append(gcf.draw()).appendTo(self.ui.groupFields); // Add it to the DOM.
-	self.groupFields.push(field); // Add it to the groupFields array.
-	self.updateView();
-};
-
-// #removeField {{{2
-
-FilterControl.prototype.removeField = function (fcf) {
-	var self = this
-		, fieldIndex = self.filterFields.indexOf(fcf.field);
-
-	gcf.getElement().parent('li').remove(); // Remove it from the DOM.
-	self.groupFields.splice(fieldIndex, 1); // Remove it from the groupFields array.
-	self.updateView();
-};
 
 // #updateView {{{2
 
 FilterControl.prototype.updateView = function () {
 	var self = this;
 
-	if (self.groupFields.length > 0) {
-		self.view.setGroup({fieldNames: self.groupFields});
+	if (self.fields.length > 0) {
+		self.view.setGroup({fieldNames: self.fields});
 	}
 	else {
 		self.view.clearGroup();
@@ -1889,8 +1829,6 @@ GridControlField.prototype.init = function (control, field, colConfig) {
 
 GridControlField.prototype.draw = function () {
 	var self = this;
-
-	console.log(self);
 
 	self.ui.root = jQuery('<div>', { 'class': 'wcdv_field' })
 		.append(

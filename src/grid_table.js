@@ -1310,7 +1310,6 @@ GridTableGroup.prototype.drawBody = function (data, typeInfo, columns, cont) {
 		//   ... row[col] | col ∉ groupFields ...
 		// </tr>
 
-		console.log(data);
 		_.each(data.rowVals[groupNum], function (colVal, colIdx) {
 			var attrs = {};
 
