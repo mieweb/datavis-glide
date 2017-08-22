@@ -1407,7 +1407,7 @@ GridControl.prototype.makeClearButton = function (target) {
 GridControl.prototype.addField = function (field) {
 	var self = this;
 
-	if (self.fields.indexOf(field) >= 0) {
+	if (isNothing(field) || field === '' || self.fields.indexOf(field) >= 0) {
 		return;
 	}
 
