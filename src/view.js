@@ -613,6 +613,9 @@ View.prototype.filter = function (cont) {
 	var newData = [];
 
 	var doFilter = function () {
+		debug.info('VIEW (' + self.name + ') // FILTER',
+							 'Filtering rows ' + i0.val + ' through ' + (i0.val + i_step));
+
 		for (i = i0.val; i < self.data.data.length && i < i0.val + i_step; i += 1) {
 			if (passesAllFilters(self.data.data[i])) {
 				newData.push(self.data.data[i]);

@@ -567,6 +567,7 @@ var DateSingleGridFilter = function () {
 
 	self.input.flatpickr({
 		'altInput': false,
+		'allowInput': true,
 		'onChange': function (selectedDates, dateStr, instance) {
 			console.log(selectedDates, dateStr);
 			//self.gridFilterSet.update();
@@ -604,6 +605,7 @@ var DateRangeGridFilter = function () {
 
 	self.widget = self.input.flatpickr({
 		'altInput': false,
+		'allowInput': true,
 		'mode': 'range',
 		'onChange': function (selectedDates, dateStr, instance) {
 			self.gridFilterSet.update(false);

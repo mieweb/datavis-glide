@@ -1,0 +1,95 @@
+<html>
+	<head>
+		<meta charset="utf-8"/>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/numeral.js/2.0.4/numeral.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.17.1/moment.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/chosen/1.6.2/chosen.jquery.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/3.0.7/flatpickr.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/progressbar.js/1.0.1/progressbar.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/nprogress/0.2.0/nprogress.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/sprintf/1.0.3/sprintf.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.sumoselect/3.0.2/jquery.sumoselect.min.js"></script>
+		<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/4.3.5/papaparse.min.js"></script>
+		<script src="tabletool.js"></script>
+		<script src="wcdatavis.js"></script>
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"/>
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/chosen/1.6.2/chosen.css"/>
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/3.0.7/flatpickr.css"/>
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/nprogress/0.2.0/nprogress.css"/>
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery.sumoselect/3.0.2/sumoselect.min.css"/>
+		<link rel="stylesheet" href="wcdatavis-extra.css"/>
+		<link rel="stylesheet" href="wcdatavis.css"/>
+		<link rel="stylesheet" href="tabletool.css"/>
+		<script>
+$(document).ready(function () {
+	MIE.DEBUGGING = true;
+
+	var source = new MIE.WC_DataVis.Source({
+		type: 'http',
+		url: 'fruit.csv'
+	}, null, [{
+		field: 'Order ID',
+		type: 'number'
+	}, {
+		field: 'Product',
+		type: 'string'
+	}, {
+		field: 'Category',
+		type: 'string'
+	}, {
+		field: 'Amount',
+		type: 'currency'
+	}, {
+		field: 'Date',
+		type: 'date',
+		format: 'M/D/YYYY'
+	}, {
+		field: 'Country',
+		type: 'string'
+	}]);
+	var view = new MIE.WC_DataVis.View(source);
+	new MIE.WC_DataVis.Grid('grid', view, {
+		id: 'grid',
+		table: {
+			features: {
+				sort: true,
+				filter: true,
+				group: true,
+				pivot: true,
+				limit: true,
+				rowSelect: true
+			},
+			limit: {
+				threshold: 100,
+				chunkSize: 50
+			},
+			columns: [{
+				field: 'Order ID'
+			}, {
+				field: 'Product'
+			}, {
+				field: 'Category'
+			}, {
+				field: 'Amount',
+				format: '$0,0.00'
+			}, {
+				field: 'Date'
+			}, {
+				field: 'Country'
+			}]
+		},
+		source: source
+	}, {
+		title: 'Fruit Sales',
+		runImmediately: true
+	});
+});
+		</script>
+	</head>
+	<body>
+		<div id="grid"></div>
+	</body>
+</html>
