@@ -1511,6 +1511,20 @@ GridTablePivot.prototype.drawHeader = function (columns, data, typeInfo) {
 		headingTh.attr('colspan', lastColValCount);
 		headingTr.append(headingTh);
 
+		// Render the user's custom-defined additional columns at the end of the first row of pivot
+		// field column values.
+
+		if (pivotFieldNum === 0 && self.opts.addCols) {
+			_.each(self.opts.addCols, function (addCol) {
+				headingSpan = jQuery('<span>')
+					.text(addCol.name);
+				jQuery('<th>')
+					.css(headingThCss)
+					.append(headingSpan)
+					.appendTo(headingTr);
+			});
+		}
+
 		// Add the row for this pivot field to the THEAD.
 		self.ui.thead.append(headingTr);
 	}
@@ -1554,6 +1568,8 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 			jQuery('<th>').text(rowVal).appendTo(tr);
 		});
 
+		var rowAgg = [];
+
 		// Create the cells that show the result of the aggregate function for all rows matching the
 		// column values at the same index.
 		//
@@ -1575,14 +1591,23 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 			var agg = AGGREGATES[opts.pivotConfig.aggFun || 'count'];
 			var aggFun = agg.fun({field: opts.pivotConfig.aggField, type: colTypeInfo.type, colConfig: colConfig});
 			var aggType = agg.type;
-			var aggResult = format(colConfig, colTypeInfo, aggFun(colGroup), {
+			var aggResult = aggFun(colGroup);
+			rowAgg.push(aggResult);
+			var text = format(colConfig, colTypeInfo, aggResult, {
 				alwaysFormat: true,
 				overrideType: aggType
 			});
-			var td = jQuery('<td>').text(aggResult);
+			var td = jQuery('<td>').text(text);
 			// REMOVED: How do we let the user set sizes &c. when doing a pivot table?
 			// self.setCss(td, col);
 			td.appendTo(tr);
+		});
+
+		// Generate the user's custom-defined additional columns.
+
+		_.each(self.opts.addCols, function (addCol) {
+			var addColResult = addCol.value(data.data, groupNum, rowAgg);
+			jQuery('<td>').append(addColResult).appendTo(tr);
 		});
 
 		self.ui.tbody.append(tr);
