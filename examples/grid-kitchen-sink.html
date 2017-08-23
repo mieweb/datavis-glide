@@ -81,16 +81,6 @@ $(document).ready(function () {
 				field: 'Country'
 			}]
 		},
-		whenPivot: {
-			addCols: [{
-				name: 'Total',
-				value: function (data, rowNum, rowAgg) {
-					return _.reduce(rowAgg, function (acc, cur) {
-						return numeral.isNumeral(cur) ? acc + cur._value : acc + cur;
-					}, 0);
-				}
-			}]
-		},
 		source: source
 	}, {
 		title: 'Fruit Sales',

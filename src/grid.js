@@ -514,7 +514,7 @@ var Grid = function (id, view, defn, tagOpts, cb) {
 		if (!_.isString(tagOpts.title)) {
 			throw '<tagOpts.title> is not a string';
 		}
-		
+
 		self.ui.gridToolBar = jQuery('<div>')
 			.addClass('wcdv_grid_toolbar')
 			.appendTo(self.ui.root)
@@ -539,8 +539,26 @@ var Grid = function (id, view, defn, tagOpts, cb) {
 			.appendTo(self.ui.gridToolBar);
 		self.ui.gridToolBarButtons = jQuery('<div class="buttons">').appendTo(self.ui.gridToolBar);
 
-		self._addHeaderWidgets(self.ui.gridToolBarHeading, doingServerFilter, !!self.tagOpts.runImmediately, id);
-		self._addCommonButtons(self.ui.gridToolBarButtons);
+		self.addHeaderWidgets(self.ui.gridToolBarHeading, doingServerFilter, !!self.tagOpts.runImmediately, id);
+		self.addCommonButtons(self.ui.gridToolBarButtons);
+
+		self.ui.toolbarPlain = jQuery('<div>')
+			.addClass('wcdv_toolbar_section')
+			.hide()
+			.appendTo(self.ui.gridToolBarButtons);
+		self.addPlainButtons(self.ui.toolbarPlain);
+
+		self.ui.toolbarGroup = jQuery('<div>')
+			.addClass('wcdv_toolbar_section')
+			.hide()
+			.appendTo(self.ui.gridToolBarButtons);
+		self.addGroupButtons(self.ui.toolbarGroup);
+
+		self.ui.toolbarPivot = jQuery('<div>')
+			.addClass('wcdv_toolbar_section')
+			.hide()
+			.appendTo(self.ui.gridToolBarButtons);
+		self.addPivotButtons(self.ui.toolbarPivot);
 
 		if (getProp(self.defn, 'table', 'prefs', 'enableSaving')) {
 			prefsCallback = self._addPrefsButtons(self.ui.gridToolBarButtons);
@@ -707,7 +725,7 @@ Grid.prototype._validateId = function (id) {
  * @param {string} id
  */
 
-Grid.prototype._addHeaderWidgets = function (header, doingServerFilter, runImmediately, id) {
+Grid.prototype.addHeaderWidgets = function (header, doingServerFilter, runImmediately, id) {
 	var self = this;
 	var notHeader = jQuery('<span>', {'class': 'headingInfo'})
 		.on('click', function (evt) {
@@ -798,17 +816,9 @@ Grid.prototype._addHeaderWidgets = function (header, doingServerFilter, runImmed
  * @private
  */
 
-Grid.prototype._addCommonButtons = function (toolbar) {
+Grid.prototype.addCommonButtons = function (toolbar) {
 	var self = this;
 	var isVisible = true; // If true, the grid is not currently hidden.
-
-	var makeCheckbox = function (init, onClick, text, parent) {
-		jQuery('<label>')
-			.append(jQuery('<input>', { 'type': 'checkbox', 'checked': init })
-							.on('change', onClick))
-			.append(text)
-			.appendTo(parent);
-	};
 
 	self.ui.refreshLink = jQuery('<button>')
 		.append(fontAwesome('F021'))
@@ -816,25 +826,6 @@ Grid.prototype._addCommonButtons = function (toolbar) {
 		.on('click', function () {
 			self.refresh();
 		})
-		.appendTo(toolbar);
-
-	setPropDef(true, self.defn, 'table', 'limit', 'autoShowMore');
-
-	makeCheckbox(self.defn.table.limit.autoShowMore, function () {
-		var isChecked = jQuery(this).prop('checked');
-		debug.info('GRID // TOOLBAR', 'Setting `table.limit.autoShowMore` to ' + isChecked);
-		self.defn.table.limit.autoShowMore = isChecked;
-	}, 'Show More Rows on Scroll', toolbar);
-
-	jQuery('<button>')
-		.on('click', function (evt) {
-			self.gridTable.updateFeatures({
-				'blockUI': true,
-				'progress': true,
-				'limit': false
-			});
-		})
-		.text('Show All Rows')
 		.appendTo(toolbar);
 
 	/*
@@ -856,6 +847,63 @@ Grid.prototype._addCommonButtons = function (toolbar) {
 		}
 	}, 'Enable Pivot', toolbar);
 	*/
+};
+
+// #addPlainButtons {{{2
+
+Grid.prototype.addPlainButtons = function (parent) {
+	var self = this;
+
+	makeToggleCheckbox(self.defn, ['table', 'limit', 'autoShowMore'], true, 'Show More on Scroll', parent);
+
+	jQuery('<button>')
+		.on('click', function (evt) {
+			self.gridTable.updateFeatures({
+				'blockUI': true,
+				'progress': true,
+				'limit': false
+			});
+		})
+		.text('Show All Rows')
+		.appendTo(parent);
+};
+
+// #addGroupButtons {{{2
+
+Grid.prototype.addGroupButtons = function (parent) {
+};
+
+// #addPivotButtons {{{2
+
+Grid.prototype.addPivotButtons = function (parent) {
+	var self = this;
+	var userAddCols = getPropDef([], self.defn, 'table', 'whenPivot', 'addCols');
+	var totalCol = {
+		name: 'Total',
+		value: function (data, rowNum, rowAgg) {
+			return _.reduce(rowAgg, function (acc, cur) {
+				return numeral.isNumeral(cur) ? acc + cur._value : acc + cur;
+			}, 0);
+		},
+		isTotalCol: true
+	};
+	var newAddCols = userAddCols.concat([totalCol]);
+
+	setProp(newAddCols, self.defn, 'table', 'whenPivot', 'addCols');
+	console.log(self.defn);
+
+	makeToggleCheckbox(
+		self.defn,
+		['table', 'whenPivot', 'showTotalCol'],
+		true,
+		'Total Column',
+		parent,
+		function (isChecked) {
+			setProp(isChecked ? newAddCols : userAddCols, self.defn, 'table', 'whenPivot', 'addCols');
+			self.gridTable.clear();
+			self.gridTable.draw(self.ui.grid, self.tableDoneCont);
+		}
+	);
 };
 
 // #addPrefsButtons {{{2
@@ -1078,15 +1126,27 @@ Grid.prototype.refresh = function () {
 
 		if (viewOps.pivot) {
 			gridTableCtor = GridTablePivot;
-			gridTableOpts = self.defn.whenPivot;
+			gridTableOpts = self.defn.table.whenPivot;
+
+			self.ui.toolbarPlain.hide();
+			self.ui.toolbarGroup.hide();
+			self.ui.toolbarPivot.show();
 		}
 		else if (viewOps.group) {
 			gridTableCtor = GridTableGroup;
-			gridTableOpts = self.defn.whenGroup;
+			gridTableOpts = self.defn.table.whenGroup;
+
+			self.ui.toolbarPlain.hide();
+			self.ui.toolbarGroup.show();
+			self.ui.toolbarPivot.hide();
 		}
 		else {
 			gridTableCtor = GridTablePlain;
-			gridTableOpts = self.defn.whenPlain;
+			gridTableOpts = self.defn.table.whenPlain;
+
+			self.ui.toolbarPlain.show();
+			self.ui.toolbarGroup.hide();
+			self.ui.toolbarPivot.hide();
 		}
 
 		if (self.gridTable) {
@@ -1668,7 +1728,7 @@ GroupControl.prototype.updateView = function () {
  * currently used to redraw the grid table with the new aggregate function results in its cells.
  *
  * @property {string[]} fields
- * Names of the fields 
+ * Names of the fields
  */
 
 function PivotControl() {
@@ -1733,7 +1793,7 @@ PivotControl.prototype.draw = function (parent) {
 			self.triggerAggChange();
 		})
 	;
-	
+
 	self.ui.fieldsContainer = jQuery('<div>')
 		.droppable({
 			classes: {

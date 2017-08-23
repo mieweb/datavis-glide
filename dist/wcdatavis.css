@@ -22,11 +22,19 @@ span.wcdv_button {
 }
 
 .wcdv_grid_toolbar .buttons button {
-	margin-right: 1em;
+	margin-left: 0.5em;
 }
 
 .wcdv_grid_toolbar .buttons label {
-	margin-right: 1em;
+	margin-left: 0.5em;
+}
+
+.wcdv_grid_toolbar .buttons button:first-child {
+	margin-left: 0;
+}
+
+.wcdv_grid_toolbar .buttons label:first-child {
+	margin-left: 0;
 }
 
 /*
@@ -212,6 +220,16 @@ tr.wcdv_grid_filterrow th.wcdv_grid_filtercol {
 	 */
 
 	margin: -10px;
+}
+
+.wcdv_toolbar_section {
+	display: inline-block;
+	padding-left: 0.5ex;
+	padding-right: 0.5ex;
+	margin-left: 0.5ex;
+	margin-right: 0.5ex;
+	border-right: solid 1px #666;
+	border-left: solid 1px #666;
 }
 
 /*

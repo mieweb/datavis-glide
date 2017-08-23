@@ -961,6 +961,29 @@ function fontAwesome(hex, cls, title) {
 	return span;
 };
 
+function makeCheckbox(startChecked, onChange, text, parent) {
+	return jQuery('<label>')
+		.append(jQuery('<input>', { 'type': 'checkbox', 'checked': startChecked })
+						.on('change', onChange))
+		.append(text)
+		.appendTo(parent);
+}
+
+function makeToggleCheckbox(rootObj, path, startChecked, text, parent, after) {
+	var args = ([rootObj]).concat(path);
+
+	setPropDef.apply(undefined, ([startChecked]).concat(args));
+
+	return makeCheckbox(getProp.apply(undefined, args), function () {
+		var isChecked = jQuery(this).prop('checked');
+		debug.info('GRID // TOOLBAR', 'Setting `' + path.join('.') + '` to ' + isChecked);
+		setProp.apply(undefined, ([isChecked]).concat(args));
+		if (typeof after === 'function') {
+			after(isChecked);
+		}
+	}, text, parent);
+};
+
 	// Input / Output {{{1
 
 	function valueInfo(value) {
