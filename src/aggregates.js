@@ -323,10 +323,7 @@ AGGREGATES.sum = {
 				return acc.add(val);
 			}, numeral(0));
 
-			return format(opts.colConfig, null, result, {
-				alwaysFormat: true,
-				overrideType: opts.type
-			});
+			return result;
 		};
 	},
 	canBePivotCell: true,

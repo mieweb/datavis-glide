@@ -1569,6 +1569,8 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 		});
 
 		var rowAgg = [];
+		var pivotAggColConfig = opts.pivotConfig.aggField ? self.colConfig[opts.pivotConfig.aggField] : {};
+		var pivotAggColTypeInfo = opts.pivotConfig.aggField ? typeInfo.get(opts.pivotConfig.aggField) : {};
 
 		// Create the cells that show the result of the aggregate function for all rows matching the
 		// column values at the same index.
@@ -1585,15 +1587,13 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 		// Column #4: agg(rowGroup[3]) - rows in the group w/ State = "OH"
 
 		_.each(rowGroup, function (colGroup) {
-			var colConfig = opts.pivotConfig.aggField ? self.colConfig[opts.pivotConfig.aggField] : {};
-			var colTypeInfo = opts.pivotConfig.aggField ? typeInfo.get(opts.pivotConfig.aggField) : {};
 
 			var agg = AGGREGATES[opts.pivotConfig.aggFun || 'count'];
-			var aggFun = agg.fun({field: opts.pivotConfig.aggField, type: colTypeInfo.type, colConfig: colConfig});
+			var aggFun = agg.fun({field: opts.pivotConfig.aggField, type: pivotAggColTypeInfo.type, colConfig: pivotAggColConfig});
 			var aggType = agg.type;
 			var aggResult = aggFun(colGroup);
 			rowAgg.push(aggResult);
-			var text = format(colConfig, colTypeInfo, aggResult, {
+			var text = format(pivotAggColConfig, pivotAggColTypeInfo, aggResult, {
 				alwaysFormat: true,
 				overrideType: aggType
 			});
@@ -1603,11 +1603,31 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 			td.appendTo(tr);
 		});
 
-		// Generate the user's custom-defined additional columns.
+		// Generate the user's custom-defined additional columns.  If the `value` function returns an
+		// Element or jQuery instance, we just put that in the <TD> that we make.  Otherwise (e.g. it
+		// returns a string or number) we format it according to the type of the field that the pivot
+		// function was operating on.
+		//
+		// EXAMPLE:
+		//
+		// Aggregate Function = sum
+		// Aggregate Field    = Amount : number -> $0,0.00
+		//
+		// If the `value` function adds up the sums, yielding a grand total of them all, then we format
+		// that using Numeral exactly as specified for the "Amount" field.
 
 		_.each(self.opts.addCols, function (addCol) {
 			var addColResult = addCol.value(data.data, groupNum, rowAgg);
-			jQuery('<td>').append(addColResult).appendTo(tr);
+
+			if (addColResult instanceof Element || addColResult instanceof jQuery) {
+				jQuery('<td>').append(addColResult).appendTo(tr);
+			}
+			else {
+				var addColText = format(pivotAggColConfig, pivotAggColTypeInfo, addColResult, {
+					alwaysFormat: true
+				});
+				jQuery('<td>').text(addColText).appendTo(tr);
+			}
 		});
 
 		self.ui.tbody.append(tr);
