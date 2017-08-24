@@ -2158,7 +2158,8 @@ GraphRendererGoogle.prototype.draw_group = function (data, typeInfo, dt) {
 		}]
 	});
 
-	dt.addColumn(typeInfo.get(graphConfig.categoryField).type, graphConfig.categoryField);
+	// dt.addColumn(typeInfo.get(graphConfig.categoryField).type, graphConfig.categoryField);
+	dt.addColumn('string', graphConfig.categoryField);
 
 	_.each(graphConfig.valueFields, function (f) {
 		var agg, aggType;
