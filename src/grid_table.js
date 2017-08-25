@@ -1237,11 +1237,16 @@ GridTableGroup.prototype.drawHeader = function (columns, data, typeInfo) {
 	headingTr = jQuery('<tr>');
 
 	_.each(data.groupFields, function (fieldName) {
-		headingSpan = jQuery('<span>').text(fieldName);
+		headingSpan = jQuery('<span>')
+			.attr('data-wcdv-field', fieldName)
+			.text(fieldName)
+			._makeDraggableField()
+		;
 
 		headingTh = jQuery('<th>')
 			.css(headingThCss)
-			.append(headingSpan);
+			.append(headingSpan)
+		;
 
 		self._addSortingToHeader(fieldName, headingSpan, headingTh);
 
@@ -1261,7 +1266,8 @@ GridTableGroup.prototype.drawHeader = function (columns, data, typeInfo) {
 		headingSpan = jQuery('<span>')
 			.attr('data-wcdv-field', field)
 			.text(field)
-			._makeDraggableField();
+			._makeDraggableField()
+		;
 
 		headingTh = jQuery('<th>')
 			.css(headingThCss)

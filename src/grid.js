@@ -561,7 +561,11 @@ var Grid = function (id, view, defn, tagOpts, cb) {
 		self.addPivotButtons(self.ui.toolbarPivot);
 
 		if (getProp(self.defn, 'table', 'prefs', 'enableSaving')) {
-			prefsCallback = self._addPrefsButtons(self.ui.gridToolBarButtons);
+			self.ui.toolbarPrefs = jQuery('<div>')
+				.addClass('wcdv_toolbar_section')
+				.appendTo(self.ui.gridToolBarButtons);
+
+			prefsCallback = self.addPrefsButtons(self.ui.toolbarPrefs);
 		}
 	}
 
@@ -923,7 +927,7 @@ Grid.prototype.addPivotButtons = function (parent) {
  * @private
  */
 
-Grid.prototype._addPrefsButtons = function (toolbar) {
+Grid.prototype.addPrefsButtons = function (toolbar) {
 	var self = this;
 
 	jQuery('<button>')
