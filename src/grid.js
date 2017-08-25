@@ -1102,13 +1102,6 @@ Grid.prototype.refresh = function () {
 
 				debug.info('GRID // ON AGGREGATE CHANGE', 'Redrawing pivot table: { aggFun = "%s", aggField = "%s" }', aggFun, aggField);
 
-				/*
-				self.pivotAggConfig = {
-					aggFun: aggFun,
-					aggField: aggField
-				};
-				*/
-
 				self.gridTable.setDrawOptions({
 					pivotConfig: {
 						aggFun: aggFun,

@@ -390,7 +390,6 @@ GridTable.prototype.draw = function (root, tableDoneCont, opts) {
 			}, opts);
 
 			self.addSortHandler();
-			self.addFilterHandler();
 
 			if (self.features.rowReorder) {
 				configureRowReordering(self.defn, self.ui.tbody);
@@ -547,6 +546,7 @@ var GridTablePlain = function (defn, view, features, opts, timing, id) {
 
 	self.super = makeSuper(self, GridTable);
 	self.super.init(defn, view, features, opts, timing, id);
+	self.addFilterHandler();
 };
 
 GridTablePlain.prototype = Object.create(GridTable.prototype);
