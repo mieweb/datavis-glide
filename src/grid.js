@@ -1550,6 +1550,10 @@ GridControl.prototype.addField = function (field, opts) {
 	var self = this
 		, opts = opts || {};
 
+	_.defaults(opts, {
+		noUpdate: false
+	});
+
 	if (isNothing(field) || field === '' || self.fields.indexOf(field) >= 0) {
 		return;
 	}
@@ -1567,7 +1571,7 @@ GridControl.prototype.addField = function (field, opts) {
 
 	self.fields.push(field); // Add it to the fields array.
 
-	if (!isNothing(opts.noUpdate) && opts.noUpdate) {
+	if (!opts.noUpdate) {
 		self.updateView();
 	}
 };
@@ -1701,6 +1705,8 @@ GroupControl.prototype.draw = function (parent) {
 
 GroupControl.prototype.updateView = function () {
 	var self = this;
+
+	debug.info('GRID // GROUP CONTROL', 'Setting group fields to: %O', self.fields);
 
 	if (self.fields.length > 0) {
 		self.view.setGroup({fieldNames: self.fields});
@@ -1865,6 +1871,8 @@ PivotControl.prototype.draw = function (parent) {
 PivotControl.prototype.updateView = function () {
 	var self = this;
 
+	debug.info('GRID // PIVOT CONTROL', 'Setting pivot fields to: %O', self.fields);
+
 	if (self.fields.length > 0) {
 		self.ui.aggContainer.show();
 		self.view.setPivot({fieldNames: self.fields});
@@ -1943,6 +1951,11 @@ FilterControl.prototype.controlFieldCtor = FilterControlField;
 FilterControl.prototype.draw = function (parent) {
 	var self = this;
 
+	parent.resizable({
+		handles: 'e',
+		minWidth: 100
+	});
+
 	self.ui.root = jQuery('<div>').appendTo(parent);
 	self.ui.title = jQuery('<div>')
 		.addClass('wcdv_control_title_bar')
@@ -1983,13 +1996,6 @@ FilterControl.prototype.addField = function (field) {
 
 FilterControl.prototype.updateView = function () {
 	var self = this;
-
-	if (self.fields.length > 0) {
-		self.view.setFilter();
-	}
-	else {
-		self.view.clearGroup();
-	}
 };
 
 // GridControlField {{{1

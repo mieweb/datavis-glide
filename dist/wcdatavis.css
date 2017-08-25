@@ -139,7 +139,7 @@ span.wcdv_button {
 }
 
 .wcdv_control_title_button {
-	flex: 0 0;
+	flex: none;
 }
 
 .wcdv_group_control .wcdv_remove,
@@ -186,11 +186,41 @@ span.wcdv_button {
 }
 
 .wcdv_group_control ul li .wcdv_field,
-.wcdv_filter_control ul li .wcdv_field,
 .wcdv_pivot_fields_container ul li .wcdv_field {
 	border: solid 1px #444;
 	border-radius: 4px;
 	padding: 4px;
+}
+
+.wcdv_filter_control ul li:first-child .wcdv_field {
+	border-top: none;
+}
+
+.wcdv_filter_control ul li .wcdv_field {
+	border-top: solid 1px #444;
+	padding: 4px;
+	display: flex;
+	align-items: center;
+}
+
+.wcdv_filter_control ul li .wcdv_field > * {
+	flex: none;
+}
+
+.wcdv_filter_control ul li .wcdv_field > .wcdv_filter_control_filter_container {
+	margin-left: 1ex;
+	flex: 1 1;
+}
+
+.wcdv_filter_control ul li .wcdv_field > .wcdv_filter_control_filter_container > div {
+	display: flex;
+}
+
+/* WARNING - MAY NEED TUNED IN THE FUTURE */
+
+.wcdv_filter_control ul li .wcdv_field > .wcdv_filter_control_filter_container > div > input,
+.wcdv_filter_control ul li .wcdv_field > .wcdv_filter_control_filter_container > div > div.SumoSelect {
+	flex: 1 1;
 }
 
 .wcdv_group_control ul li, /* HORIZONTAL */
