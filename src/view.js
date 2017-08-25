@@ -199,7 +199,14 @@ View.prototype.getTotalRowCount = function () {
  */
 
 View.prototype.setSort = function (col, dir, dontNotify, progress) {
-	var self = this;
+	var self = this
+		, args = Array.prototype.slice.call(arguments);
+
+	if (self.lock.isLocked()) {
+		return self.lock.onUnlock(function () {
+			self.setSort.apply(self, args);
+		}, 'Waiting to set sort: ' + col + ' (' + desc + ')');
+	}
 
 	self.clearCache();
 
@@ -214,9 +221,7 @@ View.prototype.setSort = function (col, dir, dontNotify, progress) {
 		self.sortProgress = progress;
 	}
 
-	window.setTimeout(function () {
-		self.getData();
-	});
+	self.getData();
 };
 
 // #clearSort {{{2
@@ -384,7 +389,14 @@ View.prototype.sort = function (cont) {
  */
 
 View.prototype.setFilter = function (spec, dontNotify, progress) {
-	var self = this;
+	var self = this
+		, args = Array.prototype.slice.call(arguments);
+
+	if (self.lock.isLocked()) {
+		return self.lock.onUnlock(function () {
+			self.setFilter.apply(self, args);
+		}, 'Waiting to set filter: ' + JSON.stringify(spec));
+	}
 
 	self.clearCache();
 	self.filterSpec = spec;
@@ -680,7 +692,14 @@ View.prototype.filter = function (cont) {
  */
 
 View.prototype.setGroup = function (spec) {
-	var self = this;
+	var self = this
+		, args = Array.prototype.slice.call(arguments);
+
+	if (self.lock.isLocked()) {
+		return self.lock.onUnlock(function () {
+			self.setGroup.apply(self, args);
+		}, 'Waiting to set group: ' + JSON.stringify(spec));
+	}
 
 	self.clearCache();
 	self.groupSpec = spec;
@@ -696,11 +715,7 @@ View.prototype.setGroup = function (spec) {
  */
 
 View.prototype.clearGroup = function () {
-	var self = this;
-
-	self.clearCache();
-	delete self.groupSpec;
-	self.getData();
+	return this.setGroup(null);
 };
 
 // #group {{{2
@@ -826,11 +841,18 @@ View.prototype.group = function () {
 // #setPivot {{{2
 
 View.prototype.setPivot = function (spec) {
-	var self = this;
+	var self = this
+		, args = Array.prototype.slice.call(arguments);
 
 	if (self.groupSpec === undefined) {
 		alert("Come on, you're just doing this on purpose now!");
 		return false;
+	}
+
+	if (self.lock.isLocked()) {
+		return self.lock.onUnlock(function () {
+			self.setPivot.apply(self, args);
+		}, 'Waiting to set pivot: ' + JSON.stringify(spec));
 	}
 
 	self.clearCache();
@@ -843,11 +865,7 @@ View.prototype.setPivot = function (spec) {
 // #clearPivot {{{2
 
 View.prototype.clearPivot = function () {
-	var self = this;
-
-	self.clearCache();
-	delete self.pivotSpec;
-	self.getData();
+	return this.setPivot(null);
 };
 
 // #pivot {{{2
@@ -955,7 +973,7 @@ View.prototype.getData = function (cont) {
 	if (self.lock.isLocked()) {
 		return self.lock.onUnlock(function () {
 			self.getData(cont);
-		});
+		}, 'Waiting to get data');
 	}
 
 	if (self.data !== undefined) {

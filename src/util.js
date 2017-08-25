@@ -1531,8 +1531,8 @@ Lock._id = 1;
  */
 
 Lock.prototype.lock = function () {
-	debug.info('LOCK // ' + this._name, 'Locking to level: ' + this._lockCount);
 	this._lockCount += 1;
+	debug.info('LOCK // ' + this._name, 'Locking to level: ' + this._lockCount);
 };
 
 // #unlock {{{2
@@ -1545,15 +1545,32 @@ Lock.prototype.lock = function () {
  */
 
 Lock.prototype.unlock = function () {
-	this._lockCount -= 1;
+	var self = this;
 
-	debug.info('LOCK // ' + this._name, 'Unlocking to level: ' + this._lockCount);
+	self._lockCount -= 1;
+	debug.info('LOCK // ' + self._name, 'Unlocking to level: ' + self._lockCount);
 
-	if (this._lockCount === 0) {
-		_.each(this._onUnlock, function (f) {
-			f();
-		});
-		this._onUnlock = [];
+	// If we're completely unlocked, start going through the functions that were registered to be run.
+	// The only problem is that these functions can cause us to be locked again.  If that happens, we
+	// abort.  The functions to run are a queue, and when we become unlocked we'll just resume running
+	// the functions in the queue.
+
+	var onUnlockLen = self._onUnlock.length;
+	var i = 0;
+
+	while (self._onUnlock.length > 0 && !self.isLocked()) {
+		i += 1;
+		var onUnlock = self._onUnlock.shift();
+
+		debug.info('LOCK // ' + self._name,
+							 'Running onUnlock function (#'
+							 + i
+							 + '/'
+							 + onUnlockLen
+							 + ') - '
+							 + (onUnlock.info || '[NO INFO]'));
+
+		onUnlock.f();
 	}
 };
 
@@ -1582,8 +1599,11 @@ Lock.prototype.isLocked = function () {
  * @param {function} f Function to call when the lock is disengaged.
  */
 
-Lock.prototype.onUnlock = function (f) {
-	this._onUnlock.push(f);
+Lock.prototype.onUnlock = function (f, info) {
+	this._onUnlock.push({
+		f: f,
+		info: info
+	});
 };
 
 	// Blocking {{{1
