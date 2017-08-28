@@ -114,7 +114,9 @@
 	window.MIE.WC_DataVis.Source     = Source;
 	window.MIE.WC_DataVis.View       = View;
 	window.MIE.WC_DataVis.Grid       = Grid;
+	window.MIE.WC_DataVis.grids      = [];
 	window.MIE.WC_DataVis.Graph      = Graph;
+	window.MIE.WC_DataVis.graphs     = [];
 })(jQuery);
 
 // vim:set ft=javascript:

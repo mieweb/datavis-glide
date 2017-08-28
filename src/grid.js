@@ -1480,6 +1480,8 @@ Grid.prototype.normalize = function (defn) {
 	}
 };
 
+// #normalizeLimit {{{2
+
 Grid.prototype.normalizeLimit = function (defn) {
 	var self = this;
 
@@ -1493,6 +1495,8 @@ Grid.prototype.normalizeLimit = function (defn) {
 		});
 	}
 };
+
+// #normalizeColumns {{{2
 
 Grid.prototype.normalizeColumns = function (defn) {
 	var self = this;
