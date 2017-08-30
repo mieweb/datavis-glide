@@ -1648,6 +1648,9 @@ Source.prototype.clearCachedData = function () {
 	}
 
 	self.cache = {};
+
+	debug.info('SOURCE (' + self.name + ')', 'Cleared cache');
+
 	self.fire(Source.events.dataUpdated);
 };
 

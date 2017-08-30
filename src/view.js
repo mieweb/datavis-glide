@@ -1035,6 +1035,7 @@ View.prototype.getData = function (cont) {
 						workEndObj.numPivots = 0;
 					}
 
+					self.lastOps = ops;
 					self.fire(View.events.workEnd, workEndObj, ops);
 
 					self.lock.unlock();
@@ -1073,9 +1074,11 @@ View.prototype.getTypeInfo = function (cont) {
 
 // #clearCache {{{2
 
-View.prototype.clearCache = function () {
-	this.data = undefined;
-	this.typeInfo = undefined;
+View.prototype.clearCache = function (clearSource) {
+	var self = this;
+
+	self.data = undefined;
+	self.typeInfo = undefined;
 
 	debug.info('VIEW (' + self.name + ')', 'Cleared cache');
 };
@@ -1109,3 +1112,10 @@ View.prototype.getUniqueVals = function (cont) {
 	return self.source.getUniqueVals(cont);
 };
 
+// #getLastOps {{{2
+
+View.prototype.getLastOps = function () {
+	var self = this;
+
+	return self.lastOps;
+};

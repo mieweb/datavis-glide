@@ -627,7 +627,7 @@ var Grid = function (id, view, defn, tagOpts, cb) {
 	});
 
 	self.view.on(View.events.dataUpdated, function () {
-		self.refresh();
+		self.redraw();
 	});
 
 	if (self.tagOpts.runImmediately) {
@@ -936,7 +936,7 @@ Grid.prototype.addPrefsButtons = function (toolbar) {
 		.text('Clear Prefs')
 		.on('click', function () {
 			self.defn.prefs.save(null, false, function () {
-				self.refresh();
+				self.redraw();
 			});
 		})
 		.appendTo(toolbar)
@@ -1042,17 +1042,24 @@ Grid.prototype.addPrefsButtons = function (toolbar) {
 	};
 };
 
-// #refresh {{{2
+// #clear {{{2
+
+Grid.prototype.clear = function () {
+	var self = this;
+
+	self.ui.root.children().remove();
+};
+// #redraw {{{2
 
 /**
- * Refresh the data shown in a grid.  If the grid is not visible, this function does nothing (i.e.
+ * Redraw the data shown in a grid.  If the grid is not visible, this function does nothing (i.e.
  * you cannot use it to retrieve data for an invisible grid).
  *
  * @method
  * @memberof Grid
  */
 
-Grid.prototype.refresh = function () {
+Grid.prototype.redraw = function () {
 	var self = this;
 
 	if (!self.isGridVisible()) {
@@ -1066,8 +1073,6 @@ Grid.prototype.refresh = function () {
 		self.showSpinner();
 		self.ui.rowCount.text('');
 	}
-
-	self.view.clearCache();
 
 	if (self.tagOpts.filterInput) {
 		self.tagOpts.filterInput.store();
@@ -1176,26 +1181,26 @@ Grid.prototype.refresh = function () {
 		self.gridTable.draw(self.ui.grid, self.tableDoneCont); // TODO load prefs
 	};
 
-	makeGridTable(false, false);
+	makeGridTable(self.view.getLastOps() || {});
 };
 
-// #redraw {{{2
+// #refresh {{{2
 
 /**
- * Redraws the data from the data view in the grid.
+ * Refreshes the data from the data view in the grid.
  *
  * @method
  * @memberof Grid
  */
 
-Grid.prototype.redraw = function () {
+Grid.prototype.refresh = function () {
 	var self = this;
 
 	if (!self.isGridVisible()) {
 		return;
 	}
 
-	generateTable(self.defn, false, self.tableDoneCont, self.allDoneCont);
+	self.view.source.clearCachedData();
 };
 
 // #updateRowCount {{{2
@@ -1291,7 +1296,7 @@ Grid.prototype.showGrid = function () {
 			}
 			if (! self.hasRun) {
 				self.hasRun = true;
-				self.refresh();
+				self.redraw();
 			}
 		}
 	});
@@ -1403,7 +1408,7 @@ Grid.prototype.toggleGroup = function () {
 		self.view.clearGroup();
 	}
 
-	self.refresh();
+	self.redraw();
 };
 
 // #enablePivot {{{2
@@ -1441,7 +1446,7 @@ Grid.prototype.togglePivot = function () {
 		self.view.clearGroup();
 	}
 
-	self.refresh();
+	self.redraw();
 };
 
 // normalize {{{2
