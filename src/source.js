@@ -1190,7 +1190,7 @@ var Source = function (spec, params, userTypeInfo, opts) {
 		throw new SourceError('Unsupported data source type: ' + self.type);
 	}
 
-	self.source = new Source.sources[self.type](spec, params, userTypeInfo);
+	self.origin = new Source.sources[self.type](spec, params, userTypeInfo);
 
 	var checkConversionArray = function (convs, field) {
 		// Check the validity of all the specified conversions.
@@ -1278,7 +1278,7 @@ Source.prototype.getData = function (cont) {
 	}
 
 	self.locks.getData.lock();
-	return self.source.getData(self.createParams(), function (data) {
+	return self.origin.getData(self.createParams(), function (data) {
 		if (self.type === 'local') {
 			self.cache.data = data;
 			self.locks.getData.unlock();
@@ -1355,7 +1355,7 @@ Source.prototype.getTypeInfo = function (cont) {
 		return cont(self.cache.typeInfo);
 	}
 
-	return self.source.getTypeInfo(function (typeInfo) {
+	return self.origin.getTypeInfo(function (typeInfo) {
 		// When the type information for a field is just a string, then that's the same as setting it as
 		// the 'type' property of the full object.
 
@@ -1398,8 +1398,8 @@ Source.prototype.getDisplayName = function (cont) {
 		return cont(self.cache.displayName);
 	}
 
-	if (!isNothing(self.source.getDisplayName)) {
-		return self.source.getDisplayName(function (displayName) {
+	if (!isNothing(self.origin.getDisplayName)) {
+		return self.origin.getDisplayName(function (displayName) {
 			self.cache.displayName = displayName;
 			return cont(self.cache.displayName);
 		});
@@ -1643,8 +1643,8 @@ Source.prototype.convertAll = function (data, field) {
 Source.prototype.clearCachedData = function () {
 	var self = this;
 
-	if (typeof self.source.clearCachedData === 'function') {
-		self.source.clearCachedData();
+	if (typeof self.origin.clearCachedData === 'function') {
+		self.origin.clearCachedData();
 	}
 
 	self.cache = {};
