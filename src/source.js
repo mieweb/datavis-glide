@@ -894,6 +894,14 @@ LocalSource.prototype.getTypeInfo = function (cont) {
 	return cont(self.cache.typeInfo);
 };
 
+// #clearCachedData {{{2
+
+LocalSource.prototype.clearCachedData = function () {
+	var self = this;
+
+	self.cache = null;
+};
+
 // HttpSource {{{1
 
 var HttpSource = function (spec, params, userTypeInfo) {
@@ -905,6 +913,8 @@ var HttpSource = function (spec, params, userTypeInfo) {
 	self.cache = null;
 	self.userTypeInfo = userTypeInfo;
 };
+
+// #parseData {{{2
 
 HttpSource.prototype.parseData = function (data) {
 	var self = this
@@ -1066,6 +1076,14 @@ HttpSource.prototype.getTypeInfo = function (cont) {
 	}
 
 	return cont(self.cache.typeInfo);
+};
+
+// #clearCachedData {{{2
+
+HttpSource.prototype.clearCachedData = function () {
+	var self = this;
+
+	self.cache = null;
 };
 
 // Source {{{1
