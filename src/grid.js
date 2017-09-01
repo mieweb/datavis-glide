@@ -1148,23 +1148,25 @@ Grid.prototype.redraw = function () {
 	}
 	*/
 
-	var makeGridTable = function (viewOps) {
+	var makeGridTable = function () {
 		var gridTableCtor
 			, gridTableOpts;
 
-		debug.info('GRID', 'Creating grid table to handle the data: { group = %s, pivot = %s }', viewOps.group, viewOps.pivot);
-
-		if (self.view.pivotSpec) { //FIXME -> viewOps.pivot) {
+		if (self.view.getPivot()) {
 			gridTableCtor = GridTablePivot;
 			gridTableOpts = self.defn.table.whenPivot;
+
+			debug.info('GRID', 'Creating pivot grid table');
 
 			self.ui.toolbarPlain.hide();
 			self.ui.toolbarGroup.hide();
 			self.ui.toolbarPivot.show();
 		}
-		else if (self.view.groupSpec) { //FIXME -> viewOps.group) {
+		else if (self.view.getGroup()) {
 			gridTableCtor = GridTableGroup;
 			gridTableOpts = self.defn.table.whenGroup;
+
+			debug.info('GRID', 'Creating group grid table');
 
 			self.ui.toolbarPlain.hide();
 			self.ui.toolbarGroup.show();
@@ -1173,6 +1175,8 @@ Grid.prototype.redraw = function () {
 		else {
 			gridTableCtor = GridTablePlain;
 			gridTableOpts = self.defn.table.whenPlain;
+
+			debug.info('GRID', 'Creating plain grid table');
 
 			self.ui.toolbarPlain.show();
 			self.ui.toolbarGroup.hide();
@@ -1729,7 +1733,7 @@ GridControl.prototype.destroy = function () {
 	self.ui.root.remove();
 };
 
-// #addViewConfigChangeHandler {{{
+// #addViewConfigChangeHandler {{{2
 
 GridControl.prototype.addViewConfigChangeHandler = function (kind) {
 	var self = this;
@@ -1752,7 +1756,7 @@ GridControl.prototype.addViewConfigChangeHandler = function (kind) {
 	}, { who: self });
 
 	var methodName = 'get' + kind.substr(0, 1).toUpperCase() + kind.substr(1);
-	synchronize(self.view[methodName]());
+	//synchronize(self.view[methodName]());
 };
 
 // GroupControl {{{1
@@ -1833,7 +1837,7 @@ GroupControl.prototype.draw = function (parent) {
 		});
 	}, { limit: 1 });
 
-	self.super.addViewConfigChangeHandler('group');
+	self.addViewConfigChangeHandler('group');
 
 	return self.ui.root;
 };
@@ -1994,7 +1998,7 @@ PivotControl.prototype.draw = function (parent) {
 		});
 	}, { limit: 1 });
 
-	self.super.addViewConfigChangeHandler('pivot');
+	self.addViewConfigChangeHandler('pivot');
 
 	return self.ui.root;
 };
@@ -2100,15 +2104,6 @@ var FilterControl = function () {
 	self.super = makeSuper(self, GridControl);
 	self.super.init.apply(self, arguments);
 	self.gfs = new GridFilterSet(self.view);
-
-	/*
-	self.view.on(View.events.filterSet, function (spec) {
-		_.each(spec, function (fieldSpec, field) {
-			self.addField(field, { noUpdate: true });
-			debug.info('GRID // FILTER CONTROL', 'View added a filter: %s = %O', field, fieldSpec);
-		});
-	}, { who: self });
-	*/
 };
 
 FilterControl.prototype = Object.create(GridControl.prototype);
@@ -2145,7 +2140,6 @@ FilterControl.prototype.draw = function (parent) {
 		}
 	});
 
-
 	self.ui.root = jQuery('<div>').appendTo(parent);
 	self.ui.title = jQuery('<div>')
 		.addClass('wcdv_control_title_bar')
@@ -2170,6 +2164,8 @@ FilterControl.prototype.draw = function (parent) {
 			jQuery('<option>', { 'value': fieldName }).text(text).appendTo(self.ui.dropdown);
 		});
 	}, { limit: 1 });
+
+	self.addViewConfigChangeHandler();
 
 	return self.ui.root;
 };
@@ -2196,7 +2192,7 @@ FilterControl.prototype.removeField = function (cf) {
 FilterControl.prototype.clear = function (opts) {
 	var self = this;
 
-	self.gfs.reset();
+	self.gfs.reset(opts);
 	self.super.clear(opts);
 };
 
@@ -2206,6 +2202,27 @@ FilterControl.prototype.updateView = function () {
 	var self = this;
 };
 
+// #addViewConfigChangeHandler {{{2
+
+FilterControl.prototype.addViewConfigChangeHandler = function (kind) {
+	var self = this;
+
+	var synchronize = function (spec) {
+		debug.info('GRID // FILTER CONTROL', 'View set filter to: %O', spec);
+
+		self.clear({ noUpdate: true });
+		_.each(spec, function (fieldSpec, field) {
+			self.addField(field, { noUpdate: true });
+			self.gfs.set(field, fieldSpec);
+		});
+	};
+
+	self.view.on(View.events.filterSet, function (spec) {
+		synchronize(spec)
+	}, { who: self });
+
+	synchronize(self.view.getFilter());
+};
 // GridControlField {{{1
 
 function GridControlField() {

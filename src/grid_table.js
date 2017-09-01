@@ -292,6 +292,15 @@ GridTable.prototype.draw = function (root, tableDoneCont, opts) {
 		return self.view.getTypeInfo(function (typeInfo) {
 			debug.info('GRID TABLE // DRAW', 'TypeInfo = %O', typeInfo.asMap());
 
+			if ((data.isPlain && !self.canRender('plain'))
+					|| (data.isGroup && !self.canRender('group'))
+					|| (data.isPivot && !self.canRender('pivot'))) {
+
+				debug.info('GRID TABLE // DRAW', 'Unable to render data using current grid table: { isPlain = %s ; isGroup = %s ; isPivot = %s }', data.isPlain, data.isGroup, data.isPivot);
+
+				return self.fire(GridTable.events.unableToRender);
+			}
+
 			self.timing.start(['Grid Table', 'Draw']);
 
 			var tr
@@ -572,6 +581,18 @@ GridTablePlain.prototype._validateLimit = function () {
 			debug.warn('GRID TABLE - PLAIN // DRAW', 'Disabling limit feature because no limit threshold was provided');
 			self.features.limit = false;
 		}
+	}
+};
+
+// #canRender {{{2
+
+GridTablePlain.prototype.canRender = function (what) {
+	switch (what) {
+	case 'plain':
+		return true;
+	case 'group':
+	case 'pivot':
+		return false;
 	}
 };
 
@@ -1268,6 +1289,18 @@ var GridTableGroup = function (defn, view, features, opts, timing, id) {
 GridTableGroup.prototype = Object.create(GridTable.prototype);
 GridTableGroup.prototype.constructor = GridTableGroup;
 
+// #canRender {{{2
+
+GridTableGroup.prototype.canRender = function (what) {
+	switch (what) {
+	case 'group':
+		return true;
+	case 'plain':
+	case 'pivot':
+		return false;
+	}
+};
+
 // #drawHeader {{{2
 
 GridTableGroup.prototype.drawHeader = function (columns, data, typeInfo, opts) {
@@ -1464,6 +1497,18 @@ var GridTablePivot = function (defn, view, features, opts, timing, id) {
 GridTablePivot.prototype = Object.create(GridTable.prototype);
 GridTablePivot.prototype.constructor = GridTablePivot;
 
+// #canRender {{{2
+
+GridTablePivot.prototype.canRender = function (what) {
+	switch (what) {
+	case 'pivot':
+		return true;
+	case 'plain':
+	case 'group':
+		return false;
+	}
+};
+
 // #drawHeader {{{2
 
 GridTablePivot.prototype.drawHeader = function (columns, data, typeInfo, opts) {
@@ -1612,7 +1657,7 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 	opts = opts || {};
 	opts.pivotConfig = opts.pivotConfig || {};
 
-	if (!data.isGroup) {
+	if (data.groupFields.length === 0) {
 		if (typeof cont === 'function') {
 			return cont();
 		}

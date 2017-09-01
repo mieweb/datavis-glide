@@ -42,35 +42,7 @@ Prefs.prototype.getCurrentPerspective = function () {
 	return self.perspective;
 };
 
-// #save {{{2
-
-/**
- * Save the grid preferences.  This grabs the prefs from the grid immediately, then sends them to
- * the server to be saved.  You can substitute your own preferences object if you want.
- *
- * @method
- *
- * @param {object} prefs An alternate preferences object, if you want to save that instead of what
- * we get from the jQWidgets grid.
- *
- * @param {object} prefs.sort
- *
- * @param {string} prefs.sort.col
- *
- * @param {string} prefs.sort.dir
- *
- * @param {object} prefs.filter
- *
- * @param {object} prefs.group
- *
- * @param {object} prefs.pivot
- *
- * @param {object} opts
- * Additional options that are accepted by the specific preferences implementation.
- *
- * @param {function} cont Continuation function to call after we're done.  It receives one
- * argument: true if we saved the preferences successfully, false if there was an error.
- */
+// #getPrefsFromView {{{2
 
 Prefs.prototype.getPrefsFromView = function () {
 	var self = this;
@@ -105,10 +77,12 @@ Prefs.prototype.getPrefsFromView = function () {
 /**
  * Apply preferences to the view.
  *
- * @param {object} prefs The preferences object to apply.
+ * @param {object} prefs
+ *
+ * @param {function} cont
  */
 
-Prefs.prototype.apply = function (prefs) {
+Prefs.prototype.apply = function (prefs, cont) {
 	var self = this;
 
 	if (isNothing(prefs.sort)) {
@@ -139,7 +113,13 @@ Prefs.prototype.apply = function (prefs) {
 		self.view.setPivot(prefs.pivot, true);
 	}
 
-	self.view.getData();
+	if (typeof cont === 'function') {
+		return cont();
+	}
+
+	return;
+
+	return self.view.getData();
 
 	// Now make the view fire the `dataUpdated` event, which will make all the grid tables and graphs
 	// using it try to redraw themselves.  This may cause those grid tables to issue `unableToRender`

@@ -929,7 +929,7 @@ HttpSource.prototype.parseData = function (data) {
 		});
 	}
 
-	debug.info('DATA SOURCE // HTTP // PARSER', 'Data = ' + ((data instanceof XMLDocument) ? '%o' : '%O'), data);
+	//debug.info('DATA SOURCE // HTTP // PARSER', 'Data = ' + ((data instanceof XMLDocument) ? '%o' : '%O'), data);
 
 	if (data instanceof XMLDocument) {
 		var root = jQuery(data).children('root');

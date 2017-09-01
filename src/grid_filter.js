@@ -141,29 +141,54 @@ GridFilter.prototype.getValue = function () {
 	case 'date':
 	case 'time':
 	case 'datetime':
-		return fti.internalType === 'moment' ? moment(this.input.val()) : this.input.val();
+		return fti.internalType === 'moment' ? moment(self.input.val()) : self.input.val();
 	case 'number':
 	case 'currency':
 		switch (fti.internalType) {
 		case 'numeral':
-			return numeral(this.input.val());
+			return numeral(self.input.val());
 		case 'primitive':
-			return isInt(this.input.val()) ? toInt(this.input.val())
-				: isFloat(this.input.val()) ? toFloat(this.input.val())
-				: this.input.val();
+			return isInt(self.input.val()) ? toInt(self.input.val())
+				: isFloat(self.input.val()) ? toFloat(self.input.val())
+				: self.input.val();
 		default:
-			return this.input.val();
+			return self.input.val();
 		}
 	case 'string':
 	default:
-		return this.input.val();
+		return self.input.val();
+	}
+};
+
+// #setValue {{{3
+
+GridFilter.prototype.setValue = function (val) {
+	var self = this;
+
+	if (numeral && numeral.isNumeral(val)) {
+		self.input.val(val._value);
+	}
+	else {
+		self.input.val(val);
 	}
 };
 
 // #getOperator {{{3
 
 GridFilter.prototype.getOperator = function () {
-	return this.operatorDrop.val();
+	var self = this;
+
+	return self.operatorDrop.val();
+};
+
+// #setOperator {{{3
+
+GridFilter.prototype.setOperator = function (op) {
+	var self = this;
+
+	if (self.operatorDrop) {
+		self.operatorDrop.val(op);
+	}
 };
 
 // #getId {{{3
@@ -430,6 +455,10 @@ var StringDropdownGridFilterSumo = function () {
 		'multiple': true
 	})
 		.on('change', function (evt) {
+			if (self.pleaseDontFireChangeEvent) {
+				delete self.pleaseDontFireChangeEvent;
+				return;
+			}
 			self.gridFilterSet.update(false);
 		});
 
@@ -446,7 +475,7 @@ var StringDropdownGridFilterSumo = function () {
 					'value': val
 				}).text(val).appendTo(self.input);
 			});
-			var sumo = self.input.SumoSelect({
+			self.input.SumoSelect({
 				triggerChangeCombined: true,
 				selectAll: true,
 				search: true,
@@ -498,6 +527,20 @@ StringDropdownGridFilterSumo.prototype.getValue = function () {
 	return val === null ? undefined : val;
 };
 
+// #setValue {{{3
+
+StringDropdownGridFilterSumo.prototype.setValue = function (val) {
+	var self = this;
+
+	if (!_.isArray(val)) {
+		throw new Error('Call Error: `val` must be an array');
+	}
+	
+	_.each(val, function (v) {
+		self.pleaseDontFireChangeEvent = true;
+		self.input.get(0).sumo.selectItem(v);
+	});
+};
 // StringCheckedListGridFilter {{{2
 
 var StringCheckedlistGridFilter = function () {
@@ -868,6 +911,8 @@ GridFilterSet.prototype.add = function (field, target, opts) {
 	if (filter.applyImmediately) {
 		self.update();
 	}
+
+	return filter;
 };
 
 // #build {{{2
@@ -997,8 +1042,10 @@ GridFilterSet.prototype.removeField = function (fieldName, filterBtn) {
  * Clear all filters.
  */
 
-GridFilterSet.prototype.reset = function () {
+GridFilterSet.prototype.reset = function (opts) {
 	var self = this;
+
+	opts = opts || {};
 
 	self.delayUpdate = true;
 
@@ -1016,7 +1063,9 @@ GridFilterSet.prototype.reset = function () {
 		byCol: {}
 	};
 
-	self.view.clearFilter();
+	if (!opts.noUpdate) {
+		self.view.clearFilter();
+	}
 
 	self.delayUpdate = false;
 };
@@ -1089,44 +1138,17 @@ GridFilterSet.prototype.update = function (dontSavePrefs) {
 	}
 };
 
-// #savePrefs {{{2
+// #set {{{2
 
-/**
- * Store preferences for the filters on this grid.
- */
+GridFilterSet.prototype.set = function (field, fieldSpec) {
+	var self = this;
 
-GridFilterSet.prototype.savePrefs = function () {
-	var self = this
-		, filters = [];
-
-	_.each(self.filters.all, function (filter) {
-		var filterPref = {};
-
-		filterPref.field = filter.field;
-		filterPref.filterType = filter.filterType;
-		filterPref.operator = filter.getOperator();
-		filterPref.value = filter.getValue();
-
-		filters.push(filterPref);
+	_.each(fieldSpec, function (val, op) {
+		debug.info('GRID FILTER SET',
+							 'Setting filter: { field = %s ; operator = %s ; value = %s }',
+							 field, op, typeof val === 'object' ? JSON.stringify(val) : val);
+		var filter = self.filters.byCol[field][0];
+		filter.setOperator(op);
+		filter.setValue(val);
 	});
-
-	self.prefs.setUserData('html/filters', filters);
-	self.prefs.save();
 };
-
-// #loadPrefs {{{2
-
-/**
- * Load filter data from preferences and apply it to the grid.
- *
- * @param {object} prefs The whole preferences object.
- */
-
-GridFilterSet.prototype.loadPrefs = function (prefs) {
-	_.each(prefs.filters, function (filterPref) {
-		self.add();
-	});
-
-	self.update(true); // No need to save prefs, we just loaded them!
-};
-

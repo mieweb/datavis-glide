@@ -114,9 +114,7 @@ var View = function (source, name) {
 	self.timing = new Timing();
 
 	self.lock = new Lock('View Lock (' + self.name + ')');
-
 	self.prefs = new LocalStoragePrefs(self);
-	self.prefs.load();
 };
 
 View.prototype = Object.create(Error.prototype);
@@ -898,15 +896,15 @@ View.prototype.setPivot = function (spec, noUpdate, dontTell) {
 	var self = this
 		, args = Array.prototype.slice.call(arguments);
 
-	if (!isNothing(spec) && isNothing(self.groupSpec)) {
-		alert('Pivot without grouping is not supported.');
-		return false;
-	}
-
 	if (self.lock.isLocked()) {
 		return self.lock.onUnlock(function () {
 			self.setPivot.apply(self, args);
 		}, 'Waiting to set pivot: ' + JSON.stringify(spec));
+	}
+
+	if (!isNothing(spec) && isNothing(self.groupSpec)) {
+		alert('Pivot without grouping is not supported.');
+		return false;
 	}
 
 	self.pivotSpec = spec;
@@ -1023,6 +1021,7 @@ View.prototype.pivot = function () {
 	debug.info('VIEW (' + self.name + ') // PIVOT', 'Col Vals: %O', colVals);
 	debug.info('VIEW (' + self.name + ') // PIVOT', 'New Data: %O', self.data);
 
+	self.data.isGroup = false;
 	self.data.isPivot = true;
 	self.data.pivotFields = pivotFields;
 	self.data.colVals = colVals;
@@ -1059,6 +1058,17 @@ View.prototype.getData = function (cont) {
 	self.fire(View.events.workBegin);
 	return self.source.getData(function (data) {
 		return self.source.getTypeInfo(function (typeInfo) {
+			self.typeInfo = typeInfo;
+
+			if (!self.prefsLoaded) {
+				self.prefs.load(function () {
+					self.prefsLoaded = true;
+					self.lock.unlock();
+					self.getData(cont);
+				});
+				return;
+			}
+
 			var ops = {
 				filter: false,
 				group: false,
@@ -1077,7 +1087,6 @@ View.prototype.getData = function (cont) {
 					};
 				})
 			};
-			self.typeInfo = typeInfo;
 			return self.filter(function (didFilter, filteredData) {
 				ops.filter = didFilter;
 				self.data.data = filteredData;
