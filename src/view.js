@@ -104,7 +104,7 @@ var View = function (source, name) {
 		self.fire(View.events.dataUpdated);
 	});
 
-	self.name = name ||gensym();
+	self.name = name || gensym();
 
 	self.eventHandlers = {};
 	_.each(_.keys(View.events), function (evt) {
@@ -114,10 +114,12 @@ var View = function (source, name) {
 	self.timing = new Timing();
 
 	self.lock = new Lock('View Lock (' + self.name + ')');
+
+	self.prefs = new LocalStoragePrefs(self);
+	self.prefs.load();
 };
 
 View.prototype = Object.create(Error.prototype);
-View.prototype.name = 'View';
 View.prototype.constructor = View;
 
 // .events {{{2
@@ -127,6 +129,12 @@ View.events = objFromArray([
 	, 'workBegin'   // ???
 	, 'workEnd'     // ???
 	, 'dataUpdated' // The data has changed in the source.
+
+	, 'sortSet'     // When the sort has been set.  Args: (field, direction)
+	, 'filterSet'   // When the filter has been set.  Args: (spec)
+	, 'groupSet'    // When the grouping has been set.  Args: (spec)
+	, 'pivotSet'    // When the pivot config has been set.  Args: (spec)
+
 	, 'sortBegin'   // A sort operation has started.
 	, 'sort'        // Sort information for a row is available.
 	, 'sortEnd'     // A sort operation has finished.
@@ -195,7 +203,7 @@ View.prototype.getTotalRowCount = function () {
  * @param {GridTable~Progress} progress
  */
 
-View.prototype.setSort = function (col, dir, progress, noUpdate) {
+View.prototype.setSort = function (col, dir, progress, noUpdate, dontTell) {
 	var self = this
 		, args = Array.prototype.slice.call(arguments);
 
@@ -216,6 +224,10 @@ View.prototype.setSort = function (col, dir, progress, noUpdate) {
 		self.sortProgress = progress;
 	}
 
+	self.fire(View.events.sortSet, {
+		notTo: dontTell
+	}, col, dir);
+
 	if (noUpdate) {
 		return true;
 	}
@@ -226,14 +238,22 @@ View.prototype.setSort = function (col, dir, progress, noUpdate) {
 	return true;
 };
 
+// #getSort {{{2
+
+View.prototype.getSort = function () {
+	var self = this;
+
+	return self.sortSpec;
+};
+
 // #clearSort {{{2
 
 /**
  * Clear the sort spec for the view.
  */
 
-View.prototype.clearSort = function (noUpdate) {
-	return this.setSort(null, null, null, noUpdate);
+View.prototype.clearSort = function (noUpdate, dontTell) {
+	return this.setSort(null, null, null, noUpdate, dontTell);
 };
 
 // #sort {{{2
@@ -389,7 +409,7 @@ View.prototype.sort = function (cont) {
  * @param {View_Filter_Spec} spec How to perform filtering.
  */
 
-View.prototype.setFilter = function (spec, progress, noUpdate) {
+View.prototype.setFilter = function (spec, progress, noUpdate, dontTell) {
 	var self = this
 		, args = Array.prototype.slice.call(arguments);
 
@@ -402,6 +422,10 @@ View.prototype.setFilter = function (spec, progress, noUpdate) {
 	self.filterSpec = spec;
 	self.filterProgress = progress;
 
+	self.fire(View.events.filterSet, {
+		notTo: dontTell
+	}, spec);
+
 	if (noUpdate) {
 		return true;
 	}
@@ -412,14 +436,22 @@ View.prototype.setFilter = function (spec, progress, noUpdate) {
 	return true;
 };
 
+// #getFilter {{{2
+
+View.prototype.getFilter = function () {
+	var self = this;
+
+	return self.filterSpec;
+};
+
 // #clearFilter {{{2
 
 /**
  * Clear the spec used to filter this view.
  */
 
-View.prototype.clearFilter = function (noUpdate) {
-	this.setFilter(null, null, noUpdate);
+View.prototype.clearFilter = function (noUpdate, dontTell) {
+	this.setFilter(null, null, noUpdate, dontTell);
 };
 
 // #isFiltered {{{2
@@ -696,7 +728,7 @@ View.prototype.filter = function (cont) {
  * @param {Function} spec.aggregate
  */
 
-View.prototype.setGroup = function (spec, noUpdate) {
+View.prototype.setGroup = function (spec, noUpdate, dontTell) {
 	var self = this
 		, args = Array.prototype.slice.call(arguments);
 
@@ -708,6 +740,10 @@ View.prototype.setGroup = function (spec, noUpdate) {
 
 	self.groupSpec = spec;
 
+	self.fire(View.events.groupSet, {
+		notTo: dontTell
+	}, spec);
+
 	if (noUpdate) {
 		return true;
 	}
@@ -718,14 +754,22 @@ View.prototype.setGroup = function (spec, noUpdate) {
 	return true;
 };
 
+// #getGroup {{{2
+
+View.prototype.getGroup = function () {
+	var self = this;
+
+	return self.groupSpec;
+};
+
 // #clearGroup {{{2
 
 /**
  * Remove any grouping that had been set.
  */
 
-View.prototype.clearGroup = function (noUpdate) {
-	return this.setGroup(null, noUpdate);
+View.prototype.clearGroup = function (noUpdate, dontTell) {
+	return this.setGroup(null, noUpdate, dontTell);
 };
 
 // #group {{{2
@@ -850,7 +894,7 @@ View.prototype.group = function () {
 
 // #setPivot {{{2
 
-View.prototype.setPivot = function (spec, noUpdate) {
+View.prototype.setPivot = function (spec, noUpdate, dontTell) {
 	var self = this
 		, args = Array.prototype.slice.call(arguments);
 
@@ -867,6 +911,10 @@ View.prototype.setPivot = function (spec, noUpdate) {
 
 	self.pivotSpec = spec;
 
+	self.fire(View.events.pivotSet, {
+		notTo: dontTell
+	}, spec);
+
 	if (noUpdate) {
 		return true;
 	}
@@ -877,10 +925,18 @@ View.prototype.setPivot = function (spec, noUpdate) {
 	return true;
 };
 
+// #getPivot {{{2
+
+View.prototype.getPivot = function () {
+	var self = this;
+
+	return self.pivotSpec;
+};
+
 // #clearPivot {{{2
 
-View.prototype.clearPivot = function (noUpdate) {
-	return this.setPivot(null, noUpdate);
+View.prototype.clearPivot = function (noUpdate, dontTell) {
+	return this.setPivot(null, noUpdate, dontTell);
 };
 
 // #pivot {{{2
@@ -1050,6 +1106,7 @@ View.prototype.getData = function (cont) {
 						workEndObj.numPivots = 0;
 					}
 
+					self.prefs.save();
 					self.lastOps = ops;
 					self.fire(View.events.workEnd, null, workEndObj, ops);
 

@@ -267,7 +267,7 @@ tr.wcdv_grid_filterrow th.wcdv_grid_filtercol {
 	display: inline-block;
 	padding-left: 0.5ex;
 	margin-left: 0.5ex;
-	border-left: dotted 4px #BBB;
+	border-left: solid 2px #BBB;
 }
 
 /*

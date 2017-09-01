@@ -1,245 +1,45 @@
 // Preferences {{{1
 
-/**
- * @typedef {object} Prefs_HTML
- *
- * @property {Array.<Object>} filters Describes the filters on the grid.
- * @property {string} filters[].colName Name of the column the filter applies to.
- * @property {string} filters[].filterType 
- * @property {string} filters[].operator
- * @property {any} filters[].value
- */
+// Constructor {{{2
 
 /**
- * Encapsulate the preference system, which provides all the configuration for <wcgrid> output.
- *
- * @memberof wcgraph_int
- * @class
- *
- * @property {object} defn The grid definition.
- *
- * @property {string} gridId The ID of the grid, as given by <wcgrid id>.
- *
- * @property {string} output The output mode of the grid.
- *
- * @property {string} view The current view for save/load operations.
- *
- * @property {object} cache Stores preferences locally, so switching views only needs to load the
- * view from the server once, after which it gets saved here.
- *
- * @property {object} userData Stores things that might be used by the different output plugins.
- * Basically, you can put whatever you want here.
- *
- * @property {Timing} timing Tracks how long it takes this preferences manager to do things.
+ * Encapsulate the preference system, which provides all the configuration for a view.
  */
 
-var Prefs = function (defn) {
-	this.defn = defn;
-	this.gridId = getProp(defn, 'table', 'prefs', 'gridId');
-	this.output = getProp(defn, 'table', 'output', 'method');
-	this.view = 'Main';
-	this.cache = {};
-	this.userData = {};
+var Prefs = function () {
+	throw new Error('Attempt to instantiate an abstract base class');
 };
 
-// #setUserData {{{2
+// #init {{{2
 
-/**
- * Set userdata.
- *
- * @method
- *
- * @param {string} k The key to use in the userdata object.
- * @param {any} v The value to store in the userdata object.
- */
+Prefs.prototype.init = function (view) {
+	var self = this;
 
-Prefs.prototype.setUserData = function (k, v) {
-	this.userData[k] = v;
+	self.view = view;
+
+	self.getInitialPerspective(function (initial) {
+		self.setCurrentPerspective(initial);
+	});
 };
 
-// #getUserData {{{2
-
-/**
- * Get userdata.
- *
- * @method
- *
- * @param {string} k The key to use in the userdata object.
- */
-
-Prefs.prototype.getUserData = function (k) {
-	return this.userData[k];
-};
-
-// #setView {{{2
+// #setCurrentPerspective {{{2
 
 /**
  * Set the current view.
- *
- * @method
- *
- * @param {string} viewName Name of the view to mark as current.
  */
 
-Prefs.prototype.setView = function (viewName) {
-	this.view = viewName;
-};
-
-// #loadInitial {{{2
-
-/**
- * Load the initial view for the grid.  The initial view is located by getting the preference
- * object for the grid by itself, that object will contain a property "initialView."  Then we
- * retrieve that view to get the actual preferences, and apply them to the grid.
- *
- * @method
- *
- * @param {function} cont Function to call after we're done.  Receives a single argument: true if
- * the preferences were retrieved OK, and false if there was an error.
- */
-
-Prefs.prototype.loadInitial = function (cont, dontReallyLoad) {
-	var self = this;
-	var timingEvt = [self.gridId, 'Preferences / Determine initial view'];
-
-	self.timing.start(timingEvt);
-
-	jQuery.ajax({
-		url: 'webchart.cgi',
-		method: 'GET',
-		dataType: 'json',
-		data: {
-			f: 'ajaxget',
-			s: 'grid_prefs',
-			response_format: 'json',
-			grid_id: self.gridId
-		},
-		error: function (xhr, status, e) {
-			self.timing.stop(timingEvt);
-			self.defn.error(e);
-		},
-		success: function (data) {
-			self.timing.stop(timingEvt);
-			data = data.results;
-			if (data.result === 'ok') {
-				if (!isNothing(data.pref.initialView)) {
-					debug.info('PREFS', 'Loading preferences from initial view:', data.pref.initialView);
-					return self.load(data.pref.initialView, cont, dontReallyLoad);
-				}
-			}
-			return self.load(self.view, cont, dontReallyLoad);
-		}
-	});
-};
-
-// #saveInitial {{{2
-
-/**
- * Save the name of the initial view.
- *
- * @method
- *
- * @param {boolean} setDefaults If true, set the initial view for all users (e.g. user_id = 0).
- *
- * @param {function} cont Function to call after we're done.  It receives one argument: true if we
- * were able to save the initial view correctly, false if there was an error.
- */
-
-Prefs.prototype.saveInitial = function (setDefaults, cont) {
+Prefs.prototype.setCurrentPerspective = function (perspective) {
 	var self = this;
 
-	jQuery.ajax({
-		url: 'webchart.cgi',
-		method: 'POST',
-		dataType: 'json',
-		data: {
-			f: 'ajaxpost',
-			s: 'grid_prefs',
-			set_defaults: setDefaults ? 1 : 0,
-			response_format: 'json',
-			grid_id: self.gridId,
-			pref: JSON.stringify({
-				initialView: self.view
-			})
-		},
-		error: function (jqXHR, status, error) {
-			jQuery.growl.error({title: 'Error Saving' + (setDefaults ? ' Default ' : ' ') + 'Initial View', message: error});
-
-			if (typeof cont === 'function') {
-				return cont(false);
-			}
-		},
-		success: function (response) {
-			if (response && response.result === 'error') {
-				jQuery.growl.error({title: 'Error Saving' + (setDefaults ? ' Default ' : ' ') + 'Initial View', message: response.message});
-			}
-
-			if (typeof cont === 'function') {
-				return cont(response && response.result === 'ok');
-			}
-		}
-	});
+	self.perspective = perspective;
 };
 
-// .getFrom {{{2
+// #getCurrentPerspective {{{2
 
-Prefs.getFrom = {};
+Prefs.prototype.getCurrentPerspective = function () {
+	var self = this;
 
-/**
- * Get preferences from a jQWidgets grid.
- *
- * @param {Prefs} self A preferences instance.
- * @param {string} id The ID of a div containing a grid.
- */
-
-// .getFrom.jQWidgets {{{3
-
-Prefs.getFrom.jqwidgets = function (self, id) {
-	var grid = jQuery(document.getElementById(id)).children('div[role="grid"]');
-	var prefs = grid.jqxGrid('getstate');
-
-	// Remove parts of the prefs that store what rows you have selected.  This is almost never
-	// useful, because in most use cases the grid will not show the exact same data twice.
-
-	delete prefs.selectedrowindex;
-	delete prefs.selectedrowindexes;
-
-	// BUG [jQWidgets 4.1.2] Can cause an error in jQWidgets when loading preferences that include a
-	// list of the columns we've grouped by.
-
-	// delete prefs.groups;
-
-	return {
-		jqxGrid: prefs
-	};
-};
-
-// .getFrom.pivot {{{3
-
-/**
- * The majority of this function comes from refreshDelayed() in the pivottable source code. It is
- * responsible for checking the user interface elements and building a configuration object from
- * them. We take that information and store it as the preferences instead.
- *
- * @param {Prefs} self A preferences instance.
- */
-
-Prefs.getFrom.pivot = function (self) {
-	var prefs = self.getUserData('pivot/prefs');
-	return {
-		pivot: prefs
-	};
-};
-
-// .getFrom.html {{{3
-
-Prefs.getFrom.html = function (self) {
-	return {
-		html: {
-			filters: self.getUserData('html/filters'),
-			sorting: self.getUserData('html/sorting')
-		}
-	};
+	return self.perspective;
 };
 
 // #save {{{2
@@ -253,313 +53,292 @@ Prefs.getFrom.html = function (self) {
  * @param {object} prefs An alternate preferences object, if you want to save that instead of what
  * we get from the jQWidgets grid.
  *
- * @param {boolean} setDefaults If true, save these preferences for all users (i.e. save under
- * user_id = 0).
+ * @param {object} prefs.sort
+ *
+ * @param {string} prefs.sort.col
+ *
+ * @param {string} prefs.sort.dir
+ *
+ * @param {object} prefs.filter
+ *
+ * @param {object} prefs.group
+ *
+ * @param {object} prefs.pivot
+ *
+ * @param {object} opts
+ * Additional options that are accepted by the specific preferences implementation.
  *
  * @param {function} cont Continuation function to call after we're done.  It receives one
  * argument: true if we saved the preferences successfully, false if there was an error.
  */
 
-Prefs.prototype.save = function (prefs, setDefaults, cont) {
+Prefs.prototype.getPrefsFromView = function () {
 	var self = this;
 
-	if (!getProp(self.defn, 'table', 'prefs', 'enableSaving')) {
-		if (typeof cont === 'function') {
-			return cont();
-		}
-		return;
+	var prefs = {};
+
+	var sortSpec = self.view.getSort();
+	if (sortSpec) {
+		prefs.sort = sortSpec;
 	}
 
-	if (isLocked(self.defn, 'prefs')) {
-		debug.info('PREFS', 'Unable to save prefs: they are locked');
-		return;
+	var filterSpec = self.view.getFilter();
+	if (filterSpec) {
+		prefs.filter = filterSpec;
 	}
 
-	if (prefs === null) {
-		debug.info('PREFS', 'Clearing out preferences');
-	}
-	else {
-		if (prefs === undefined) {
-			if (Prefs.getFrom[getProp(self.defn, 'table', 'output', 'method')] === undefined) {
-				debug.warn('Unable to obtain preferences');
-			}
-			else {
-				prefs = Prefs.getFrom[getProp(self.defn, 'table', 'output', 'method')](this, getProp(self.defn, 'table', 'id'));
-			}
-		}
-		debug.info('PREFS', 'Saving preferences: %O', prefs);
+	var groupSpec = self.view.getGroup();
+	if (groupSpec) {
+		prefs.group = groupSpec;
 	}
 
-	if (prefs === undefined) {
-		debug.info('No preferences to save');
-
-		if (typeof cont === 'function') {
-			return cont(false);
-		}
-
-		return;
+	var pivotSpec = self.view.getPivot();
+	if (pivotSpec) {
+		prefs.pivot = pivotSpec;
 	}
 
-	self.cache[self.view] = prefs;
-
-	jQuery.ajax({
-		url: 'webchart.cgi',
-		method: 'POST',
-		dataType: 'json',
-		data: {
-			f: 'ajaxpost',
-			s: 'grid_prefs',
-			set_defaults: setDefaults ? 1 : 0,
-			response_format: 'json',
-			grid_id: self.gridId + '.' + self.view,
-			pref: JSON.stringify(prefs)
-		},
-		error: function () {
-			if (typeof cont === 'function') {
-				return cont(false);
-			}
-		},
-		success: function (response) {
-			if (response && response.result === 'error') {
-				jQuery.growl.error({title: 'Error Saving' + (setDefaults ? ' Default ' : ' ') + 'Preferences', message: response.message});
-			}
-			self.saveInitial(setDefaults, cont);
-		}
-	});
-};
-
-// #load {{{2
-
-/**
- * Load preferences for a specified view.
- *
- * @method
- *
- * @param {string} viewName Name of the view to load.  If omitted, then use the current view.
- *
- * @param {function} cont Function to call when we're done.  Receives a single argument: true if
- * we retrieved and applied preferences successfully, false if an error occurred, or the
- * preferences object when `dontReallyLoad` is true.
- *
- * @param {boolean} dontReallyLoad If true, then don't load the preferences into a grid, just pass
- * them to `cont`.
- */
-
-Prefs.prototype.load = function (viewName, cont, dontReallyLoad) {
-	var self = this;
-	var timingEvt = [self.gridId, 'Preferences / Retrieving preferences'];
-
-	self.timing.start(timingEvt);
-
-	if (isNothing(viewName)) {
-		viewName = self.view;
-	}
-
-	self.view = viewName;
-
-	if (self.cache[viewName]) {
-		self.timing.stop(timingEvt);
-
-		if (dontReallyLoad) {
-			if (typeof cont === 'function') {
-				return cont(self.cache[viewName]);
-			}
-			return;
-		}
-
-		self.apply(self.cache[viewName], cont);
-		return;
-	}
-
-	jQuery.ajax({
-		url: 'webchart.cgi',
-		method: 'GET',
-		dataType: 'json',
-		data: {
-			f: 'ajaxget',
-			s: 'grid_prefs',
-			response_format: 'json',
-			grid_id: self.gridId + '.' + viewName
-		},
-		error: function (xhr, status, e) {
-			self.timing.stop(timingEvt);
-			self.defn.error(e);
-		},
-		success: function (data) {
-			self.timing.stop(timingEvt);
-			data = data.results;
-			if (data.result === 'ok') {
-				if (getProp(data, 'pref', 'jqxGrid') !== undefined) {
-					_.each(data.pref.jqxGrid.columns, function (col) {
-						delete col.hidden;
-					});
-
-					// Remove parts of the prefs that store what rows you have selected.  This is almost
-					// never useful, because in most use cases the grid will not show the exact same data
-					// twice.
-
-					delete data.pref.jqxGrid.selectedrowindex;
-					delete data.pref.jqxGrid.selectedrowindexes;
-
-					// BUG [jQWidgets 4.1.2] Can cause an error in jQWidgets when loading preferences that
-					// include a list of the columns we've grouped by.
-
-					// delete data.pref.jqxGrid.groups;
-				}
-
-				self.cache[viewName] = data.pref;
-
-				// If they don't really want us to load the preferences, try to pass them along to the
-				// continuation function.  But whatever you do, don't actually load the preferences.
-
-				if (dontReallyLoad) {
-					if (typeof cont === 'function') {
-						return cont(self.cache[viewName]);
-					}
-					return;
-				}
-
-				self.apply(self.cache[viewName], cont);
-			}
-			else {
-				if (typeof cont === 'function') {
-					return cont(false);
-				}
-			}
-		}
-	});
+	return prefs;
 };
 
 // #apply {{{2
 
 /**
- * Apply preferences to the grid.  Only works for the jQWidgets grid output right now.
- *
- * @method
+ * Apply preferences to the view.
  *
  * @param {object} prefs The preferences object to apply.
  */
 
-Prefs.prototype.apply = function (prefs, cont) {
+Prefs.prototype.apply = function (prefs) {
 	var self = this;
-	var output = getProp(self.defn, 'table', 'output', 'method');
-	var grid;
-	var timingEvt = [self.gridId, 'Preferences / Apply preferences'];
 
-	self.timing.start(timingEvt);
+	if (isNothing(prefs.sort)) {
+		self.view.clearSort(true);
+	}
+	else {
+		self.view.setSort(prefs.sort.col, prefs.sort.dir, null, true);
+	}
 
-	debug.info('PREFS', 'Applying preferences (grid = ' + self.gridId + ', output = ' + output + '): %O', prefs);
+	if (isNothing(prefs.filter)) {
+		self.view.clearFilter(true);
+	}
+	else {
+		self.view.setFilter(prefs.filter, null, true);
+	}
 
-	if (isNothing(prefs)) {
-		if (typeof cont === 'function') {
-			self.timing.stop(timingEvt);
-			return cont(false);
-		}
-		self.timing.stop(timingEvt);
+	if (isNothing(prefs.group)) {
+		self.view.clearGroup(true);
+	}
+	else {
+		self.view.setGroup(prefs.group, true);
+	}
+
+	if (isNothing(prefs.pivot)) {
+		self.view.clearPivot(true);
+	}
+	else {
+		self.view.setPivot(prefs.pivot, true);
+	}
+
+	self.view.getData();
+
+	// Now make the view fire the `dataUpdated` event, which will make all the grid tables and graphs
+	// using it try to redraw themselves.  This may cause those grid tables to issue `unableToRender`
+	// events of their own and forcing grids to create a different (plain, group, or pivot) grid table
+	// to handle the view's new configuration.
+
+	self.view.fire(View.events.dataUpdated);
+};
+
+// LocalStoragePrefs {{{1
+
+var LocalStoragePrefs = makeSubclass(Prefs, function () {
+	var self = this;
+
+	self.localStorageKey = 'WC_DataVis_Prefs';
+	self.super.init.apply(self, arguments);
+});
+
+// #save {{{2
+
+LocalStoragePrefs.prototype.save = function (opts, cont) {
+	var self = this
+		, prefs = self.getPrefsFromView();
+
+	debug.info('PREFS // LOCAL - (' + self.view.name + ' : ' + self.perspective + ')',
+						 'Saving preferences: %O', prefs);
+
+	var storedPrefData = JSON.parse(localStorage.getItem(self.localStorageKey) || '{}');
+	setProp(prefs, storedPrefData, self.view.name, self.perspective);
+	localStorage.setItem(self.localStorageKey, JSON.stringify(storedPrefData));
+
+	if (typeof cont === 'function') {
+		return cont(true);
+	}
+};
+
+// #load {{{2
+
+LocalStoragePrefs.prototype.load = function (cont) {
+	var self = this;
+
+	debug.info('PREFS // LOCAL - (' + self.view.name + ' : ' + self.perspective + ')',
+						 'Loading preferences...');
+
+	var storedPrefData = JSON.parse(localStorage.getItem(self.localStorageKey) || '{}');
+	var prefs = getPropDef({}, storedPrefData, self.view.name, self.perspective);
+
+	debug.info('PREFS // LOCAL - (' + self.view.name + ' : ' + self.perspective + ')',
+						 'Loaded preferences: %O', prefs);
+
+	self.apply(prefs, cont);
+};
+
+// #getPerspectives {{{2
+
+LocalStoragePrefs.prototype.getPerspectives = function (cont) {
+	var self = this;
+
+	if (typeof cont !== 'function') {
+		throw new Error('Call Error: `cont` must be a function');
+	}
+
+	var storedPrefData = JSON.parse(localStorage.getItem(self.localStorageKey) || '{}');
+	var perspectives = _.keys(getPropDef({}, storedPrefData, self.view.name));
+
+	if (perspectives.length === 0) {
+		perspectives = ['Main'];
+	}
+
+	debug.info('PREFS // LOCAL - (' + self.view.name + ' : ' + self.perspective + ')',
+						 'Found %d perspectives', perspectives.length);
+
+	return cont(perspectives);
+};
+
+// #getInitialPerspective {{{2
+
+LocalStoragePrefs.prototype.getInitialPerspective = function (cont) {
+	var self = this;
+
+	if (typeof cont !== 'function') {
+		throw new Error('Call Error: `cont` must be a function');
+	}
+
+	var storedPrefData = JSON.parse(localStorage.getItem(self.localStorageKey + '_Current') || '{}');
+	var initial = getPropDef('Main', storedPrefData, self.view.name)
+
+	debug.info('PREFS // LOCAL - (' + self.view.name + ' : ' + self.perspective + ')',
+						 'Initial perspective is "%s"', initial);
+
+	if (self.initialPerspective === undefined) {
+		self.initialPerspective = initial;
+	}
+
+	return cont(initial);
+};
+
+// #setCurrentPerspective {{{2
+
+LocalStoragePrefs.prototype.setCurrentPerspective = function (perspective) {
+	var self = this;
+
+	if (typeof perspective !== 'string') {
+		throw new Error('Call Error: `perspective` must be a string');
+	}
+
+	self.super.setCurrentPerspective(perspective);
+
+	debug.info('PREFS // LOCAL - (' + self.view.name + ' : ' + self.perspective + ')',
+						 'Setting current perspective to "%s"', self.perspective);
+
+	var storedPrefData = JSON.parse(localStorage.getItem(self.localStorageKey + '_Current') || '{}');
+	setProp(self.perspective, storedPrefData, self.view.name);
+	localStorage.setItem(self.localStorageKey + '_Current', JSON.stringify(storedPrefData));
+};
+
+// #renamePerspective {{{2
+
+LocalStoragePrefs.prototype.renamePerspective = function () {
+	var self = this
+		, args = Array.prototype.slice.call(arguments)
+		, oldName
+		, newName;
+
+	if (args.length === 1) {
+		oldName = self.getCurrentPerspective();
+		newName = args[0];
+	}
+	else if (args.length === 2) {
+		oldName = args[0];
+		newName = args[1];
+	}
+	else {
+		throw new Error('Usage: LocalStoragePrefs#renamePerspective([oldName], newName)');
+	}
+
+	if (typeof oldName !== 'string') {
+		throw new Error('Call Error: `oldName` must be a string');
+	}
+
+	if (typeof newName !== 'string') {
+		throw new Error('Call Error: `newName` must be a string');
+	}
+
+	if (oldName === 'Main') {
+		log.error('Not allowed to rename perspective "Main" for view "%s"', self.view.name);
+		return false;
+	}
+
+	debug.info('PREFS // LOCAL - (' + self.view.name + ' : ' + self.perspective + ')',
+						 'Renaming perspective "%s" to "%s"', oldName, newName);
+
+	var storedPrefData = JSON.parse(localStorage.getItem(self.localStorageKey) || '{}');
+	storedPrefData[self.view.name][newName] = storedPrefData[self.view.name][oldName];
+	delete storedPrefData[self.view.name][oldName];
+	localStorage.setItem(self.localStorageKey, JSON.stringify(storedPrefData));
+
+	if (self.getCurrentPerspective() === oldName) {
+		self.setCurrentPerspective(newName);
+	}
+
+	return true;
+};
+
+// #deletePerspective {{{2
+
+LocalStoragePrefs.prototype.deletePerspective = function (perspective) {
+	var self = this;
+
+	if (perspective === undefined) {
+		perspective = self.getCurrentPerspective();
+	}
+
+	if (typeof perspective !== 'string') {
+		throw new Error('Call Error: `perspective` must be a string');
+	}
+
+	if (perspective === 'Main') {
+		log.error('Not allowed to delete perspective "Main" for view "%s"', self.view.name);
 		return;
 	}
 
-	if (output === 'jqwidgets') {
-		grid = self.getUserData('grid') || jQuery(document.getElementById(self.defn.table.id)).children('div [role="grid"]');
-	}
+	debug.info('PREFS // LOCAL - (' + self.view.name + ' : ' + self.perspective + ')',
+						 'Deleting perspective "%s"', perspective);
 
-	var f = function () {
-		switch (output) {
-		case 'jqwidgets':
-			if (getPropDef(prefs, 'jqxGrid', 'filters', 'filterscount') > 0) {
+	var storedPrefData = JSON.parse(localStorage.getItem(self.localStorageKey) || '{}');
+	delete storedPrefData[self.view.name][perspective];
+	localStorage.setItem(self.localStorageKey, JSON.stringify(storedPrefData));
 
-				// Loading these prefs will cause the filter event handler to fire.  Don't lock up
-				// afterwards, because you're not going to get run again.  Is this horrible software
-				// design?  You betcha, but we have no other way to do it at this time, because of the
-				// way that jQWidgets works.
+	// When we've deleted the current perspective, we have to fall back to some other perspective.
+	// We'd prefer to use the one that we started with, but if that's not available we use Main.
 
-				self.defn._lockInfo = 'dontlock';
-			}
-
-			lock(self.defn, 'prefs');
-
-			// Unregister all event handlers so that nothing we're changing with preferences can fire
-			// the event handlers.  WHY DO THEY NOT HAVE AN OPTION TO DO THIS AUTOMATICALLY?
-
-			_.each(self.defn._events, function (handler, eventName) {
-				grid.off(eventName);
-			});
-
-			// ALTERNATIVELY, it seems (from the documentation) like you *should* be able to use this to
-			// suspend redrawing and event handlers while applying preferences, but it doesn't work.
-			// I'm leaving this here to let my future self know that it's not viable.
-
-			// grid.jqxGrid('beginupdate');
-
-			try {
-				grid.jqxGrid('loadstate', prefs.jqxGrid);
-			}
-			catch (e) {
-				log.warn('An exception occurred while loading preferences', e);
-			}
-
-			// Restore all event handlers now that preferences are applied.
-
-			_.each(self.defn._events, function (handler, eventName) {
-				grid.on(eventName, handler);
-			});
-
-			unlock(self.defn, 'prefs');
-
-			/* =================================================================================
-			 * THIS CODE ISN'T NECESSARY, BUT I DON'T WANT TO DELETE IT IN CASE I NEED IT LATER.
-			 * =================================================================================
-
-			self.timing.stop(timingEvt);
-
-			// Pause for a sec to allow the grid to fire all its event handlers for the things that
-			// changed as a result of applying the preferences (column resize, sort, etc.) - after that,
-			// we can unlock the preferences.  Otherwise, we might unlock them before the event handlers
-			// do their thing, and end up saving preferences unnecessarily.
-
-			return setTimeout(function () {
-				unlock(self.defn, 'prefs');
-				if (typeof cont === 'function') {
-					return cont(true);
-				}
-			}, 100);
-
-			 */
-
-			break;
-
-		case 'pivot':
-			$(document.getElementById(self.defn.table.id)).wcPivotUI(self.getUserData('pivot/data'), _.extend({}, self.getUserData('pivot/default'), getPropDef({}, prefs, 'pivot')), true);
-			break;
-
-		case 'html':
-
-			if (self.defn.gridFilterSet === undefined) {
-				log.warn('Filter preferences are not supported with HTML output unless using GridFilterSet');
-			}
-			else {
-				self.defn.gridFilterSet.loadPrefs(prefs);
-			}
-			break;
-
-		default:
-			log.warn('Preferences are not supported for output method "' + output + '".');
+	if (self.getCurrentPerspective() === perspective) {
+		if (self.initialPerspective && self.initialPerspective !== perspective) {
+			self.setCurrentPerspective(self.initialPerspective);
 		}
-
-		self.timing.stop(timingEvt);
-
-		if (typeof cont === 'function') {
-			return cont(true);
+		else {
+			self.setCurrentPerspective('Main');
 		}
-	};
-
-	// If we're loading into a grid and it's not yet visible, there's no reason to block it.  Just
-	// load the preferences and move on, somebody else will make it visible when they're ready.
-
-	if (output === 'jqwidgets' && !isVisible(grid)) {
-		return f();
-	}
-	else {
-		return withGridBlock(self.defn, f, 'LOADING PREFS');
+		self.load();
 	}
 };

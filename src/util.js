@@ -871,6 +871,21 @@ function objFromArray(a) {
 
 // Object Orientation {{{1
 
+var makeSubclass = function (parent, ctor) {
+	var subclass = function () {
+		var self = this;
+
+		self.super = makeSuper(self);
+		ctor.apply(self, arguments);
+	};
+
+	subclass.prototype = Object.create(parent.prototype);
+	subclass.prototype.constructor = subclass;
+	subclass.prototype.superclass = parent;
+
+	return subclass;
+};
+
 var makeSuper = function (me, parent) {
 	parent = parent || me.superclass;
 
@@ -1956,15 +1971,10 @@ function mixinEventHandling(obj, name, events) {
 			throw new Error('Illegal event: ' + evt);
 		}
 
-		// Print a debugging message unless invoked with the silent option (used internally to prevent
-		// spamming millions of messages, which slows down the console).
-
-		if (!opts.silent) {
-			debug.info(myName + ' // FIRE', 'Triggering "' + evt + '" event on ' + self.eventHandlers[evt].length + ' handlers:', args);
-		}
+		var handlers = [];
 
 		for (var i = 0; i < self.eventHandlers[evt].length; i += 1) {
-			var h = self.eventHandlers[evt][i];
+			var handler = self.eventHandlers[evt][i];
 
 			// Check to see if this handler is for someone we shouldn't be sending to.
 			//
@@ -1972,26 +1982,40 @@ function mixinEventHandling(obj, name, events) {
 			//   - `notTo` is a function returning true
 			//   - `notTo` is an object (direct comparison)
 
-			if (h.who && opts.notTo &&
-					((_.isArray(opts.notTo) && opts.notTo.indexOf(h.who) >= 0)
-						|| (typeof opts.notTo === 'function' && opts.notTo(h.who))
-						|| (typeof opts.notTo === 'object' && opts.notTo === h.who))) {
+			if (handler.who && opts.notTo &&
+					((_.isArray(opts.notTo) && opts.notTo.indexOf(handler.who) >= 0)
+						|| (typeof opts.notTo === 'function' && opts.notTo(handler.who))
+						|| (typeof opts.notTo === 'object' && opts.notTo === handler.who))) {
 				continue;
 			}
 
-			h.cb.apply(null, args);
+			handlers.push({
+				handler: handler,
+				index: i
+			});
+		}
+
+		// Print a debugging message unless invoked with the silent option (used internally to prevent
+		// spamming millions of messages, which slows down the console).
+
+		if (!opts.silent) {
+			debug.info(myName + ' // FIRE', 'Triggering "' + evt + '" event on ' + handlers.length + ' handlers:', args);
+		}
+
+		_.each(handlers, function (h) {
+			h.handler.cb.apply(null, args);
 
 			// Remove the handler if we've hit the limit of how many times we're supposed to invoke it.
 			// Actually we just set the handler to null and remove it below.
 
-			if (h.limit) {
-				h.limit -= 1;
-				if (h.limit <= 0) {
+			if (h.handler.limit) {
+				h.handler.limit -= 1;
+				if (h.handler.limit <= 0) {
 					debug.info(myName + ' // FIRE', 'Removing "' + evt + '" event handler after reaching invocation limit');
-					self.eventHandlers[evt][i] = null;
+					self.eventHandlers[evt][h.index] = null;
 				}
 			}
-		}
+		});
 
 		// Clean up handlers we removed (because they reached the limit).
 

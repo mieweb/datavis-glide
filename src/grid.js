@@ -466,7 +466,6 @@ var Grid = function (id, view, defn, tagOpts, cb) {
 	var clearFilter = null; // Container span for the "clear filter" link.
 	var doingServerFilter = getProp(defn, 'server', 'filter') && getProp(defn, 'server', 'limit') !== -1;
 	var viewDropdown = null;
-	var prefsCallback = null;
 
 	self.timing = new Timing();
 
@@ -485,7 +484,7 @@ var Grid = function (id, view, defn, tagOpts, cb) {
 	}
 
 	if (tagOpts === undefined) {
-		tagOpts = $.extend(true, {}, {
+		tagOpts = jQuery.extend(true, {}, {
 			runImmediately: true
 		});
 	}
@@ -542,6 +541,11 @@ var Grid = function (id, view, defn, tagOpts, cb) {
 		self.addHeaderWidgets(self.ui.gridToolBarHeading, doingServerFilter, !!self.tagOpts.runImmediately, id);
 		self.addCommonButtons(self.ui.gridToolBarButtons);
 
+		self.ui.toolbarPrefs = jQuery('<div>')
+			.addClass('wcdv_toolbar_section')
+			.appendTo(self.ui.gridToolBarButtons);
+		self.addPrefsButtons(self.ui.toolbarPrefs);
+
 		self.ui.toolbarPlain = jQuery('<div>')
 			.addClass('wcdv_toolbar_section')
 			.hide()
@@ -559,14 +563,6 @@ var Grid = function (id, view, defn, tagOpts, cb) {
 			.hide()
 			.appendTo(self.ui.gridToolBarButtons);
 		self.addPivotButtons(self.ui.toolbarPivot);
-
-		if (getProp(self.defn, 'table', 'prefs', 'enableSaving')) {
-			self.ui.toolbarPrefs = jQuery('<div>')
-				.addClass('wcdv_toolbar_section')
-				.appendTo(self.ui.gridToolBarButtons);
-
-			prefsCallback = self.addPrefsButtons(self.ui.toolbarPrefs);
-		}
 	}
 
 	self.ui.gridControl = jQuery('<div>', { 'class': 'wcdv_grid_control' });
@@ -894,7 +890,6 @@ Grid.prototype.addPivotButtons = function (parent) {
 	var newAddCols = userAddCols.concat([totalCol]);
 
 	setProp(newAddCols, self.defn, 'table', 'whenPivot', 'addCols');
-	console.log(self.defn);
 
 	makeToggleCheckbox(
 		self.defn,
@@ -929,117 +924,138 @@ Grid.prototype.addPivotButtons = function (parent) {
  * @private
  */
 
-Grid.prototype.addPrefsButtons = function (toolbar) {
+Grid.prototype.addPrefsButtons = function (parent) {
 	var self = this;
 
-	jQuery('<button>')
-		.text('Clear Prefs')
-		.on('click', function () {
-			self.defn.prefs.save(null, false, function () {
-				self.redraw();
-			});
-		})
-		.appendTo(toolbar)
-
-	jQuery('<button>')
-		.text('Set Defaults')
-		.on('click', function () {
-			self.defn.prefs.save(undefined, true, null);
-		})
-		.appendTo(toolbar)
-
-	var viewDropdown =
-		$('<select>')
-		.append($('<option>', { value: 'NEW' }).text('New View...'))
-		.append($('<option>', { value: 'Main' }).text('Main'));
-
-	var curView =
-		$('<div>')
-		.css({'display': 'inline-block'})
-		.appendTo(toolbar)
-		.append($('<span>').text('Current View: '))
-		.append(viewDropdown);
-
-	var newViewInput = $('<input>', { 'type': 'text' });
-
-	var newViewButton =
-		$('<button>', { 'type': 'button' })
-		.html(fontAwesome('F0FE'))
-		.on('click', function () {
-			var viewName = newViewInput.val();
-			newViewInput.val('');
-			viewDropdown.append($('<option>', { value: viewName }).text(viewName));
-			viewDropdown.val(viewName);
-			self.defn.prefs.setView(viewName);
-			newView.hide();
-			curView.show();
-		})
-
-	var newViewCancel =
-		$('<button>', { 'type': 'button' })
-		.html(fontAwesome('F05E'))
-		.on('click', function () {
-			newViewInput.val('');
-			newView.hide();
-			curView.show();
-		})
-
-	var newView =
-		$('<div>')
-		.css({'display': 'inline-block'})
-		.hide()
-		.appendTo(toolbar)
-		.append($('<span>').text('New View: '))
-		.append(newViewInput)
-		.append(newViewButton)
-		.append(newViewCancel);
-
-	viewDropdown.on('change', function () {
-		if (viewDropdown.val() === 'NEW') {
-			curView.hide();
-			newView.show();
+	var showHideBtns = function () {
+		if (dropdown.val() === 'Main') {
+			deleteBtn.hide();
+			renameBtn.hide();
 		}
 		else {
-			self.defn.prefs.load(viewDropdown.val(), function (prefsLoadedOk) {
-				if (prefsLoadedOk) {
-					self.defn.prefs.saveInitial();
-				}
-			});
+			deleteBtn.show();
+			renameBtn.show();
 		}
-	});
+	};
 
-	return function () {
-		debug.info('PREFS', 'Loading the names of all the views...');
+	var div = jQuery('<div>')
+		.css({'display': 'inline-block'})
+		.append(jQuery('<span>').text('View: '))
+		.appendTo(parent)
+	;
 
-		$.ajax({
-			url: 'webchart.cgi',
-			method: 'GET',
-			dataType: 'json',
-			data: {
-				f: 'ajaxget',
-				s: 'grid_views',
-				response_format: 'json',
-				grid_id: self.defn.table.prefs.gridId
-			},
-			error: self.defn.error,
-			success: function (response) {
-				response = response.results;
-				if (response.result === 'ok') {
-					_.each(response.views, function (viewName) {
-						if (viewName === self.id) {
-							return;
-						}
-						viewName = viewName.replace(/^[^.]+\./g, '');
-						if (viewName !== 'Main') {
-							viewDropdown.append($('<option>', {value: viewName}).text(viewName));
-						}
-					});
-					//debug.info('PREFS', 'Setting dropdown to reflect initial view:', self.defn.prefs.view);
-					viewDropdown.val(self.defn.prefs.view);
+	var dropdown = jQuery('<select>')
+		.append(jQuery('<option>', { value: 'NEW' }).text('New View...'))
+		.on('change', function (evt) {
+			if (dropdown.val() === 'NEW') {
+				var perspectiveName = prompt('Enter new view name', self.view.prefs.getCurrentPerspective());
+				if (perspectiveName) {
+					dropdown.append(jQuery('<option>', { value: perspectiveName }).text(perspectiveName));
+					dropdown.val(perspectiveName);
+					showHideBtns();
+					self.view.prefs.setCurrentPerspective(dropdown.val());
+					self.view.prefs.save();
+				}
+				else {
+					dropdown.val(self.view.prefs.getCurrentPerspective());
+				}
+				return;
+			}
+
+			showHideBtns();
+			self.view.prefs.setCurrentPerspective(dropdown.val());
+			self.view.prefs.load();
+		})
+		.appendTo(div)
+	;
+
+	var renameBtn = jQuery('<button>', { type: 'button' })
+		.text('Rename')
+		.on('click', function () {
+			var oldName = dropdown.val();
+
+			if (oldName === 'Main') {
+				alert('Cannot rename "Main" view!');
+			}
+			else {
+				var newName = prompt('Rename view "' + oldName + '" to what?');
+
+				if (newName) {
+					dropdown.children().filter(function (i, elt) {
+						return elt.value === oldName;
+					}).attr('value', newName).text(newName);
+					self.view.prefs.renamePerspective(oldName, newName);
 				}
 			}
+		})
+		.appendTo(div)
+	;
+
+	var deleteBtn = jQuery('<button>', { type: 'button' })
+		.text('Delete')
+		.on('click', function () {
+			if (dropdown.val() === 'Main') {
+				alert('Cannot delete "Main" view!');
+			}
+			else {
+				var toDelete = dropdown.val();
+				self.view.prefs.deletePerspective(toDelete);
+				dropdown.children().filter(function (i, elt) {
+					return elt.value === toDelete;
+				}).remove();
+				dropdown.val(self.view.prefs.getCurrentPerspective());
+			}
+		})
+		.appendTo(div)
+	;
+
+	/*
+	var newPerspectiveInput = jQuery('<input>', { 'type': 'text' });
+
+	var newPerspectiveButton =
+		jQuery('<button>', { 'type': 'button' })
+		.html(fontAwesome('F0FE'))
+		.on('click', function () {
+			var perspectiveName = newPerspectiveInput.val();
+			newPerspectiveInput.val('');
+			self.ui.newPerspective.hide();
+			self.ui.curPerspective.show();
+		})
+	;
+
+	var newPerspectiveCancel =
+		jQuery('<button>', { 'type': 'button' })
+		.html(fontAwesome('F05E'))
+		.on('click', function () {
+			newPerspectiveInput.val('');
+			self.ui.newPerspective.hide();
+			self.ui.curPerspective.show();
+		})
+	;
+
+	self.ui.newPerspective =
+		jQuery('<div>')
+		.css({'display': 'inline-block'})
+		.hide()
+		.appendTo(parent)
+		.append(jQuery('<span>').text('New Perspective: '))
+		.append(newPerspectiveInput)
+		.append(newPerspectiveButton)
+		.append(newPerspectiveCancel)
+	;
+	*/
+
+	self.view.prefs.getPerspectives(function (perspectives) {
+		self.view.prefs.getInitialPerspective(function (initial) {
+			_.each(perspectives.sort(), function (perspective) {
+				jQuery('<option>', { 'value': perspective })
+					.text(perspective)
+					.appendTo(dropdown);
+			});
+			dropdown.val(initial);
+			showHideBtns();
 		});
-	};
+	});
 };
 
 // #clear {{{2
@@ -1078,27 +1094,21 @@ Grid.prototype.redraw = function () {
 		self.tagOpts.filterInput.store();
 	}
 
-	if (self.features.group) {
+	if (self.groupControl === undefined) {
 		self.groupControl = new GroupControl(self.defn, self.view, self.features, self.timing);
 		self.ui.groupControl.children().remove();
 		self.groupControl.draw(self.ui.groupControl);
 		self.ui.groupControl.show();
 	}
-	else {
-		self.ui.groupControl.hide();
-	}
 
-	if (self.features.filter) {
+	if (self.filterControl === undefined) {
 		self.filterControl = new FilterControl(self.defn, self.view, self.features, self.timing);
 		self.ui.filterControl.children().remove();
 		self.filterControl.draw(self.ui.filterControl);
 		self.ui.filterControl.show();
 	}
-	else {
-		self.ui.filterControl.hide();
-	}
 
-	if (self.features.pivot) {
+	if (self.pivotControl === undefined) {
 		self.pivotControl = new PivotControl(self.defn, self.view, self.features, self.timing, {
 			onAggregateChange: function (aggFun, aggField) {
 				if (!(self.gridTable instanceof GridTablePivot)) {
@@ -1122,9 +1132,6 @@ Grid.prototype.redraw = function () {
 		self.pivotControl.draw(self.ui.pivotControl);
 		self.ui.pivotControl.show();
 	}
-	else {
-		self.ui.pivotControl.hide();
-	}
 
 	/*
 	if (self.features.pivot) {
@@ -1147,7 +1154,7 @@ Grid.prototype.redraw = function () {
 
 		debug.info('GRID', 'Creating grid table to handle the data: { group = %s, pivot = %s }', viewOps.group, viewOps.pivot);
 
-		if (viewOps.pivot) {
+		if (self.view.pivotSpec) { //FIXME -> viewOps.pivot) {
 			gridTableCtor = GridTablePivot;
 			gridTableOpts = self.defn.table.whenPivot;
 
@@ -1155,7 +1162,7 @@ Grid.prototype.redraw = function () {
 			self.ui.toolbarGroup.hide();
 			self.ui.toolbarPivot.show();
 		}
-		else if (viewOps.group) {
+		else if (self.view.groupSpec) { //FIXME -> viewOps.group) {
 			gridTableCtor = GridTableGroup;
 			gridTableOpts = self.defn.table.whenGroup;
 
@@ -1178,7 +1185,7 @@ Grid.prototype.redraw = function () {
 
 		self.gridTable = new gridTableCtor(self.defn, self.view, self.features, gridTableOpts, self.timing, self.id);
 		self.gridTable.on(GridTable.events.unableToRender, makeGridTable);
-		self.gridTable.draw(self.ui.grid, self.tableDoneCont); // TODO load prefs
+		self.gridTable.draw(self.ui.grid, self.tableDoneCont);
 	};
 
 	makeGridTable(self.view.getLastOps() || {});
@@ -1469,14 +1476,8 @@ Grid.prototype.normalize = function (defn) {
 	if (defn.normalized) {
 		return;
 	}
+
 	defn.normalized = true;
-	defn.prefs = new Prefs(defn);
-	if (typeof getProp(defn, 'table', 'output') === 'string') {
-		var method = defn.table.output;
-		defn.table.output = {
-			method: method
-		};
-	}
 
 	self.normalizeLimit(defn);
 	self.normalizeColumns(defn);
@@ -1641,12 +1642,9 @@ GridControl.prototype.makeClearButton = function (target) {
  */
 
 GridControl.prototype.addField = function (field, opts) {
-	var self = this
-		, opts = opts || {};
+	var self = this;
 
-	_.defaults(opts, {
-		noUpdate: false
-	});
+	opts = opts || {};
 
 	if (isNothing(field) || field === '' || self.fields.indexOf(field) >= 0) {
 		return;
@@ -1703,8 +1701,10 @@ GridControl.prototype.removeField = function (cf) {
  * Removes all fields from the control.  Automatically updates the view afterwards.
  */
 
-GridControl.prototype.clear = function (noUpdateView) {
+GridControl.prototype.clear = function (opts) {
 	var self = this;
+
+	opts = opts || {};
 
 	self.fields = [];
 	self.ui.fields.children().remove();
@@ -1713,9 +1713,46 @@ GridControl.prototype.clear = function (noUpdateView) {
 	}).prop('disabled', false);
 	self.ui.clearBtn.hide();
 
-	if (!noUpdateView) {
+	if (!opts.noUpdate) {
 		self.updateView();
 	}
+};
+
+// #destroy {{{2
+
+GridControl.prototype.destroy = function () {
+	var self = this;
+
+	debug.info('GRID // CONTROL', 'Good-bye, cruel world!');
+
+	self.view.off('*', self);
+	self.ui.root.remove();
+};
+
+// #addViewConfigChangeHandler {{{
+
+GridControl.prototype.addViewConfigChangeHandler = function (kind) {
+	var self = this;
+
+	var synchronize = function (spec) {
+		var fields = (spec && spec.fieldNames) || [];
+
+		self.clear({ noUpdate: true });
+
+		debug.info('GRID // ' + kind.toUpperCase() + ' CONTROL',
+							 'View set ' + kind + ' fields to: ' + JSON.stringify(fields));
+
+		_.each(fields, function (field) {
+			self.addField(field, { noUpdate: true });
+		});
+	};
+
+	self.view.on(View.events[kind + 'Set'], function (spec) {
+		synchronize(spec)
+	}, { who: self });
+
+	var methodName = 'get' + kind.substr(0, 1).toUpperCase() + kind.substr(1);
+	synchronize(self.view[methodName]());
 };
 
 // GroupControl {{{1
@@ -1796,6 +1833,8 @@ GroupControl.prototype.draw = function (parent) {
 		});
 	}, { limit: 1 });
 
+	self.super.addViewConfigChangeHandler('group');
+
 	return self.ui.root;
 };
 
@@ -1807,7 +1846,7 @@ GroupControl.prototype.updateView = function () {
 	debug.info('GRID // GROUP CONTROL', 'Setting group fields to: %O', self.fields);
 
 	if (self.fields.length > 0) {
-		self.view.setGroup({fieldNames: self.fields});
+		self.view.setGroup({fieldNames: self.fields}, false, self);
 	}
 	else {
 		self.view.clearGroup();
@@ -1955,16 +1994,18 @@ PivotControl.prototype.draw = function (parent) {
 		});
 	}, { limit: 1 });
 
+	self.super.addViewConfigChangeHandler('pivot');
+
 	return self.ui.root;
 };
 
 // #addField {{{2
 
-PivotControl.prototype.addField = function (field) {
+PivotControl.prototype.addField = function (field, opts) {
 	var self = this;
 
 	self.ui.aggContainer.show();
-	self.super.addField(field);
+	self.super.addField(field, opts);
 };
 
 // #removeField {{{2
@@ -1980,10 +2021,10 @@ PivotControl.prototype.removeField = function (cf) {
 
 // #clear {{{2
 
-PivotControl.prototype.clear = function (noUpdateView) {
+PivotControl.prototype.clear = function (opts) {
 	var self = this;
 
-	self.super.clear(noUpdateView);
+	self.super.clear(opts);
 	self.ui.aggContainer.hide();
 };
 
@@ -2001,8 +2042,8 @@ PivotControl.prototype.updateView = function () {
 	debug.info('GRID // PIVOT CONTROL', 'Setting pivot fields to: %O', self.fields);
 
 	if (self.fields.length > 0) {
-		if (!self.view.setPivot({fieldNames: self.fields})) {
-			self.clear(true);
+		if (!self.view.setPivot({fieldNames: self.fields}, false, self)) {
+			self.clear({ noUpdate: true });
 		}
 	}
 	else {
@@ -2053,13 +2094,22 @@ PivotControl.prototype.triggerAggChange = function () {
  * @param {object} timing
  */
 
-function FilterControl() {
+var FilterControl = function () {
 	var self = this;
 
 	self.super = makeSuper(self, GridControl);
 	self.super.init.apply(self, arguments);
 	self.gfs = new GridFilterSet(self.view);
-}
+
+	/*
+	self.view.on(View.events.filterSet, function (spec) {
+		_.each(spec, function (fieldSpec, field) {
+			self.addField(field, { noUpdate: true });
+			debug.info('GRID // FILTER CONTROL', 'View added a filter: %s = %O', field, fieldSpec);
+		});
+	}, { who: self });
+	*/
+};
 
 FilterControl.prototype = Object.create(GridControl.prototype);
 FilterControl.prototype.constructor = FilterControl;
@@ -2143,11 +2193,11 @@ FilterControl.prototype.removeField = function (cf) {
 
 // #clear {{{2
 
-FilterControl.prototype.clear = function () {
+FilterControl.prototype.clear = function (opts) {
 	var self = this;
 
 	self.gfs.reset();
-	self.super.clear();
+	self.super.clear(opts);
 };
 
 // #updateView {{{2
