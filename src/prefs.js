@@ -107,10 +107,10 @@ Prefs.prototype.apply = function (prefs, cont) {
 	}
 
 	if (isNothing(prefs.pivot)) {
-		self.view.clearPivot(true);
+		self.view.clearPivot();
 	}
 	else {
-		self.view.setPivot(prefs.pivot, true);
+		self.view.setPivot(prefs.pivot);
 	}
 
 	if (typeof cont === 'function') {
@@ -118,8 +118,6 @@ Prefs.prototype.apply = function (prefs, cont) {
 	}
 
 	return;
-
-	return self.view.getData();
 
 	// Now make the view fire the `dataUpdated` event, which will make all the grid tables and graphs
 	// using it try to redraw themselves.  This may cause those grid tables to issue `unableToRender`
