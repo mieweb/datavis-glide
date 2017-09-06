@@ -915,6 +915,9 @@ GridTablePlain.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 					if (value instanceof Element || value instanceof jQuery) {
 						td.append(value);
 					}
+					else if (colConfig.allowHtml && typeInfo.get(field).type === 'string') {
+						td.html(value);
+					}
 					else {
 						td.text(value);
 					}
@@ -1433,6 +1436,9 @@ GridTableGroup.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 
 				if (value instanceof Element || value instanceof jQuery) {
 					td.append(value);
+				}
+				else if (colConfig.allowHtml && typeInfo.get(field).type === 'string') {
+					td.html(value);
 				}
 				else {
 					td.text(value);
