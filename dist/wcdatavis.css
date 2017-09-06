@@ -6,6 +6,8 @@ span.wcdv_button {
 
 .wcdv_grid {
 	margin-top: 1em;
+	display: flex;
+	flex-direction: column;
 }
 
 .wcdv_grid:first-of-type {
@@ -14,6 +16,7 @@ span.wcdv_button {
 
 .wcdv_grid_toolbar {
 	border: solid 1px #666;
+	flex: 0 0;
 }
 
 .wcdv_grid_toolbar .buttons {
@@ -237,7 +240,8 @@ span.wcdv_button {
 	border-left: solid 1px #666;
 	border-right: solid 1px #666;
 	border-bottom: solid 1px #666;
-	overflow-x: scroll;
+	overflow: auto;
+	flex: 1 1;
 }
 
 tr.wcdv_grid_filterrow th.wcdv_grid_filtercol {
@@ -313,7 +317,7 @@ tr.wcdvgrid_more td {
 }
 
 .wcdv_grid .tabletool .thead {
-   overflow: initial;
+	overflow: initial;
 }
 
 .wcdv_grid .tabletool .outer.thead {

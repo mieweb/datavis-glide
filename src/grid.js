@@ -854,18 +854,20 @@ Grid.prototype.addCommonButtons = function (toolbar) {
 Grid.prototype.addPlainButtons = function (parent) {
 	var self = this;
 
-	makeToggleCheckbox(self.defn, ['table', 'limit', 'autoShowMore'], true, 'Show More on Scroll', parent);
+	if (self.features.limit) {
+		makeToggleCheckbox(self.defn, ['table', 'limit', 'autoShowMore'], true, 'Show More on Scroll', parent);
 
-	jQuery('<button>')
-		.on('click', function (evt) {
-			self.gridTable.updateFeatures({
-				'blockUI': true,
-				'progress': true,
-				'limit': false
-			});
-		})
-		.text('Show All Rows')
-		.appendTo(parent);
+		jQuery('<button>')
+			.on('click', function (evt) {
+				self.gridTable.updateFeatures({
+					'blockUI': true,
+					'progress': true,
+					'limit': false
+				});
+			})
+			.text('Show All Rows')
+			.appendTo(parent);
+	}
 };
 
 // #addGroupButtons {{{2
