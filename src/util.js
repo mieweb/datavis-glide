@@ -929,31 +929,45 @@ var makeSuper = function (me, parent) {
  *   https://stackoverflow.com/a/7557433/5628
  */
 
-function isElementInViewport (el) {
-
-	//special bonus for those using jQuery
-	if (typeof jQuery === "function" && el instanceof jQuery) {
-		el = el[0];
+function isElementInViewport (parent, elt) {
+	if (elt instanceof jQuery) {
+		elt = elt.get(0);
 	}
 
-	var rect = el.getBoundingClientRect();
+	var eltRect = elt.getBoundingClientRect();
 
-	return rect.top >= 0
-		&& rect.left >= 0
-		&& rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) /*or $(window).height() */
-		//&& rect.right <= (window.innerWidth || document.documentElement.clientWidth) /*or $(window).width() */
-	;
+	if (eltRect.top < 0 || eltRect.left < 0) {
+		return false;
+	}
+
+	if (parent !== window) {
+		if (parent instanceof Element) {
+			parent = jQuery(parent);
+		}
+
+		var parentRect = parent.get(0).getBoundingClientRect();
+		//console.log('top=' + eltRect.top + ', ' +
+		//						'left=' + eltRect.left + ', ' +
+		//						'bottom=' + eltRect.bottom + ', ' +
+		//						'height=' + (parent.innerHeight() + parentRect.top));
+		return eltRect.bottom <= parent.innerHeight() + parentRect.top;
+	}
+	else {
+		//console.log('top=' + eltRect.top + ', ' +
+		//						'left=' + eltRect.left + ', ' +
+		//						'bottom=' + eltRect.bottom + ', ' +
+		//						'height=' + window.innerHeight);
+		return eltRect.bottom <= window.innerHeight;
+	}
 }
 
-function onVisibilityChange(el, callback) {
+function onVisibilityChange(parent, elt, callback) {
 	var old_visible;
 	return function () {
-		var visible = isElementInViewport(el);
-		if (visible != old_visible) {
-			if (old_visible != undefined) {
-				if (typeof callback == 'function') {
-					callback(visible);
-				}
+		var visible = isElementInViewport(parent, elt);
+		if (visible !== old_visible) {
+			if (old_visible !== undefined && typeof callback == 'function') {
+				callback(visible);
 			}
 			old_visible = visible;
 		}

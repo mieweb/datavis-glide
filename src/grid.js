@@ -457,6 +457,11 @@ GridError.prototype.constructor = GridError;
  * @property {object} ui Contains various user interface components which are tracked for convenience.
  * @property {Grid~Features} features
  * @property {Timing} timing
+ *
+ * @property {boolean} rootHasFixedHeight
+ * If true, then the root DIV element has a fixed height (e.g. "600px") and the grid must fit within
+ * that size.  Basically, this controls the "overflow" CSS property of the grid table, and also the
+ * scroll handler for when a grid table automatically shows more rows.
  */
 
 var Grid = function (id, view, defn, tagOpts, cb) {
@@ -467,6 +472,7 @@ var Grid = function (id, view, defn, tagOpts, cb) {
 	var doingServerFilter = getProp(defn, 'server', 'filter') && getProp(defn, 'server', 'limit') !== -1;
 	var viewDropdown = null;
 
+	self.rootHasFixedHeight = false;
 	self.timing = new Timing();
 
 	// Clean up the inputs that we received.
@@ -508,6 +514,12 @@ var Grid = function (id, view, defn, tagOpts, cb) {
 	self.ui.root = jQuery(document.getElementById(id))
 		.addClass('wcdv_grid')
 		.attr('data-title', id + '_title');
+
+	self.ui.root.children().remove();
+
+	if (self.ui.root.height() !== 0) {
+		self.rootHasFixedHeight = true;
+	}
 
 	if (tagOpts.title) {
 		if (!_.isString(tagOpts.title)) {
@@ -570,6 +582,13 @@ var Grid = function (id, view, defn, tagOpts, cb) {
 	self.ui.filterControl = jQuery('<div>', { 'class': 'wcdv_filter_control' });
 	self.ui.pivotControl = jQuery('<div>', { 'class': 'wcdv_pivot_control' });
 	self.ui.grid = jQuery('<div>', { 'id': defn.table.id, 'class': 'wcdv_grid_table' });
+
+	// The user has fixed the height of the containing grid, so we will need to have the browser put
+	// in some scrollbars for the overflow.
+
+	if (self.rootHasFixedHeight) {
+		self.ui.grid.css({ 'overflow': 'auto' });
+	}
 
 	self.ui.gridControl
 		.append(self.ui.groupControl)
@@ -1176,7 +1195,8 @@ Grid.prototype.redraw = function () {
 		}
 		else {
 			gridTableCtor = GridTablePlain;
-			gridTableOpts = self.defn.table.whenPlain;
+			gridTableOpts = deepCopy(self.defn.table.whenPlain);
+			gridTableOpts.rootHasFixedHeight = self.rootHasFixedHeight;
 
 			debug.info('GRID', 'Creating plain grid table');
 

@@ -240,7 +240,6 @@ span.wcdv_button {
 	border-left: solid 1px #666;
 	border-right: solid 1px #666;
 	border-bottom: solid 1px #666;
-	overflow: auto;
 	flex: 1 1;
 }
 

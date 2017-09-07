@@ -35,36 +35,38 @@ GridTable.prototype = Object.create(Object.prototype);
 GridTable.prototype.constructor = GridTable;
 
 // #init {{{2
-GridTable.prototype.init = function (defn, view, features, opts, timing, id) {
-	var self = this;
+GridTable.prototype.init = (function () {
+	var UNIQUE_ID = 0;
 
-	self.id = id;
-	self.defn = defn;
-	self.view = view;
-	self.features = deepCopy(features);
-	self.opts = opts;
-	self.timing = timing;
+	return function (defn, view, features, opts, timing, id) {
+		var self = this;
 
-	self.needsRedraw = false;
+		self.UNIQUE_ID = UNIQUE_ID++;
 
-	if (self.features.limit) {
-		self._validateLimit();
-	}
+		self.id = id;
+		self.defn = defn;
+		self.view = view;
+		self.features = deepCopy(features);
+		self.opts = opts;
+		self.timing = timing;
 
-	self.colConfig = {};
+		self.needsRedraw = false;
 
-	_.each(self.defn.table.columns, function (col) {
-		self.colConfig[col.field] = col;
-	});
+		if (self.features.limit) {
+			self._validateLimit();
 
-	if (self.features.limit && self.defn.table.limit.method === 'more') {
-		jQuery(window).on('DOMContentLoaded load resize scroll', function () {
-			if (typeof self.moreVisibleHandler === 'function') {
-				self.moreVisibleHandler();
-			}
+			self.scrollEvents = ['DOMContentLoaded', 'load', 'resize', 'scroll'].map(function (x) {
+				return x + '.wcdv_gt_' + self.UNIQUE_ID;
+			}).join(' ');
+		}
+
+		self.colConfig = {};
+
+		_.each(self.defn.table.columns, function (col) {
+			self.colConfig[col.field] = col;
 		});
-	}
-};
+	};
+})();
 
 // #toString {{{2
 
@@ -286,6 +288,15 @@ GridTable.prototype.draw = function (root, tableDoneCont, opts) {
 
 	self.root = root;
 
+	if (self.features.limit && self.defn.table.limit.method === 'more') {
+		self.scrollEventElement = self.opts.rootHasFixedHeight ? self.root : window;
+		jQuery(self.scrollEventElement).on(self.scrollEvents, function () {
+			if (typeof self.moreVisibleHandler === 'function') {
+				self.moreVisibleHandler();
+			}
+		});
+	}
+
 	return self.view.getData(function (data) {
 		debug.info('GRID TABLE // DRAW', 'Data = %O', data);
 
@@ -441,6 +452,10 @@ GridTable.prototype.draw = function (root, tableDoneCont, opts) {
 
 GridTable.prototype.clear = function () {
 	var self = this;
+
+	if (self.features.limit && self.defn.table.limit.method === 'more') {
+		jQuery(self.scrollEventElement).off(self.scrollEvents);
+	}
 
 	self.view.off('*', self);
 
@@ -880,7 +895,7 @@ GridTablePlain.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 									}))
 					.append(fontAwesome('F13A'));
 
-				self.moreVisibleHandler = onVisibilityChange(td, function(isVisible) {
+				self.moreVisibleHandler = onVisibilityChange(self.scrollEventElement, td, function(isVisible) {
 					if (isVisible && getProp(self.defn, 'table', 'limit', 'autoShowMore')) {
 						debug.info('GRID TABLE - PLAIN // MORE', '"Show More Rows" button scrolled into view');
 						showMore();
@@ -945,6 +960,8 @@ GridTablePlain.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 
 		if (rowNum === data.data.length) {
 			// All rows have been produced, so we're done!
+
+			delete self.moreVisibleHandler;
 
 			//self.ui.tbl.css({'table-layout': 'auto'}); // XXX - Does nothing?!
 
