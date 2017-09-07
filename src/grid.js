@@ -792,9 +792,7 @@ Grid.prototype.addHeaderWidgets = function (header, doingServerFilter, runImmedi
 							.on('click', function (evt) {
 								evt.stopPropagation();
 								self.ui.clearFilter.hide();
-								if (self.defn.gridFilterSet !== undefined) {
-									self.defn.gridFilterSet.reset();
-								}
+								self.view.clearFilter({ notify: true });
 							})
 			)
 			.append(')')
