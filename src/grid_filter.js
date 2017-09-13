@@ -337,10 +337,10 @@ GridFilter.prototype.adjustInputWidth = function (opts) {
  * @extends GridFilter
  */
 
-var StringTextboxGridFilter = function () {
+var StringTextboxGridFilter = makeSubclass(GridFilter, function () {
 	var self = this;
 
-	GridFilter.apply(self, arguments);
+	self.ctor.apply(self, arguments);
 
 	self.input = jQuery('<input type="text">');
 	self.input.on('change', function (evt) {
@@ -363,9 +363,7 @@ var StringTextboxGridFilter = function () {
 	if (self.removeBtn) {
 		self.div.append(self.removeBtn);
 	}
-};
-
-StringTextboxGridFilter.prototype = Object.create(GridFilter.prototype);
+});
 
 // StringDropdownGridFilterChosen {{{2
 
@@ -376,7 +374,7 @@ StringTextboxGridFilter.prototype = Object.create(GridFilter.prototype);
  * @extends GridFilter
  */
 
-var StringDropdownGridFilterChosen = function () {
+var StringDropdownGridFilterChosen = makeSubclass(GridFilter, function () {
 	var self = this;
 
 	GridFilter.apply(self, arguments);
@@ -416,9 +414,7 @@ var StringDropdownGridFilterChosen = function () {
 			self.chosen.innerWidth(targetWidth);
 		});
 	}
-};
-
-StringDropdownGridFilterChosen.prototype = Object.create(GridFilter.prototype);
+});
 
 // #getOperator {{{3
 
@@ -444,7 +440,7 @@ StringDropdownGridFilterChosen.prototype.getValue = function () {
  * @extends GridFilter
  */
 
-var StringDropdownGridFilterSumo = function () {
+var StringDropdownGridFilterSumo = makeSubclass(GridFilter, function () {
 	var self = this;
 
 	GridFilter.apply(self, arguments);
@@ -492,9 +488,7 @@ var StringDropdownGridFilterSumo = function () {
 			//self.adjustInputWidth();
 		});
 	};
-};
-
-StringDropdownGridFilterSumo.prototype = Object.create(GridFilter.prototype);
+});
 
 // #adjustInputWidth {{{3
 
@@ -542,14 +536,10 @@ StringDropdownGridFilterSumo.prototype.setValue = function (val) {
 		self.input.get(0).sumo.selectItem(v);
 	});
 };
-// StringCheckedListGridFilter {{{2
-
-var StringCheckedlistGridFilter = function () {
-};
 
 // NumberTextboxGridFilter {{{2
 
-var NumberTextboxGridFilter = function () {
+var NumberTextboxGridFilter = makeSubclass(GridFilter, function () {
 	var self = this;
 
 	GridFilter.apply(self, arguments);
@@ -567,13 +557,11 @@ var NumberTextboxGridFilter = function () {
 	if (self.removeBtn) {
 		self.div.append(self.removeBtn);
 	}
-};
-
-NumberTextboxGridFilter.prototype = Object.create(GridFilter.prototype);
+});
 
 // NumberCheckboxGridFilter {{{2
 
-var NumberCheckboxGridFilter = function () {
+var NumberCheckboxGridFilter = makeSubclass(GridFilter, function () {
 	var self = this;
 
 	GridFilter.apply(self, arguments);
@@ -594,9 +582,9 @@ var NumberCheckboxGridFilter = function () {
 
 	self.applyImmediately = true;
 	self.limit = 1;
-};
+});
 
-NumberCheckboxGridFilter.prototype = Object.create(GridFilter.prototype);
+// #getValue {{{3
 
 NumberCheckboxGridFilter.prototype.getValue = function () {
 	return this.input[0].checked ? 1 : 0;
@@ -615,7 +603,7 @@ NumberCheckboxGridFilter.prototype.getOperator = function () {
  * @extends GridFilter
  */
 
-var DateSingleGridFilter = function () {
+var DateSingleGridFilter = makeSubclass(GridFilter, function () {
 	var self = this;
 
 	GridFilter.apply(self, arguments);
@@ -640,9 +628,7 @@ var DateSingleGridFilter = function () {
 	if (self.removeBtn) {
 		self.div.append(self.removeBtn);
 	}
-};
-
-DateSingleGridFilter.prototype = Object.create(GridFilter.prototype);
+});
 
 // DateRangeGridFilter {{{2
 
@@ -653,7 +639,7 @@ DateSingleGridFilter.prototype = Object.create(GridFilter.prototype);
  * @extends GridFilter
  */
 
-var DateRangeGridFilter = function () {
+var DateRangeGridFilter = makeSubclass(GridFilter, function () {
 	var self = this;
 
 	GridFilter.apply(self, arguments);
@@ -682,9 +668,7 @@ var DateRangeGridFilter = function () {
 	if (self.removeBtn) {
 		self.div.append(self.removeBtn);
 	}
-};
-
-DateRangeGridFilter.prototype = Object.create(GridFilter.prototype);
+});
 
 // #getValue {{{3
 
@@ -749,21 +733,26 @@ DateRangeGridFilter.prototype.isRange = function () {
 
 // BooleanCheckboxGridFilter {{{2
 
-BooleanCheckboxGridFilter = function (field, gridFilter) {
-};
+BooleanCheckboxGridFilter = makeSubclass(GridFilter, function (field, gridFilter) {
+});
+
+// #getValue {{{3
 
 BooleanCheckboxGridFilter.prototype.getValue = function () {
 	return this.input.val();
 };
 
+// #getOperator {{{3
+
 BooleanCheckboxGridFilter.prototype.getOperator = function () {
 	return '$eq';
 };
 
+// #getOperator {{{3
+
 BooleanCheckboxGridFilter.prototype.getId = function () {
 	return this.input.attr('id');
 };
-
 
 // Widget Map {{{2
 
@@ -862,16 +851,12 @@ var GridFilterSet = function (view, prefs, gridTable, progress) {
 GridFilterSet.prototype = Object.create(Object.prototype);
 GridFilterSet.prototype.constructor = GridFilterSet;
 
-// .events {{{2
-
-GridFilterSet.events = objFromArray([
+mixinEventHandling(GridFilterSet, 'GridFilterSet', [
 		'filterAdded'
 	, 'filterRemoved'
 	, 'widgetResizedHoriz'
 	, 'widgetResizedVert'
 ]);
-
-mixinEventHandling(GridFilterSet, 'GridFilterSet', GridFilterSet.events);
 
 // #add {{{2
 

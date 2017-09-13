@@ -1,6 +1,19 @@
 // GridTable {{{1
+// Constructor {{{2
 
 /**
+ * @param {object} defn
+ *
+ * @param {View} view
+ *
+ * @param {object} features
+ *
+ * @param {object} opts
+ *
+ * @param {Timing} timing
+ *
+ * @param {string} id
+ *
  * @class
  *
  * An abstract base class for all grid tables (which are responsible for building the DOM elements
@@ -10,6 +23,10 @@
  *   - `drawHeader(columns, data, typeInfo, opts)`
  *   - `drawBody(data, typeInfo, columns, cont, opts)`
  *   - `addWorkHandler()`
+ *   - `canRender()`
+ *
+ * @property {number} UNIQUE_ID
+ * A unique number for this grid table, used to generate namespaces for event handlers.
  *
  * @property {string} id
  *
@@ -24,18 +41,12 @@
  * @property {Timing} timing
  *
  * @property {boolean} needsRedraw
+ * If true, then the view has done something that requires us to be redrawn.
  *
  * @property {Object.<string, ColConfig>} colConfig
  */
 
-var GridTable = function () {
-};
-
-GridTable.prototype = Object.create(Object.prototype);
-GridTable.prototype.constructor = GridTable;
-
-// #init {{{2
-GridTable.prototype.init = (function () {
+var GridTable = (function () {
 	var UNIQUE_ID = 0;
 
 	return function (defn, view, features, opts, timing, id) {
@@ -68,6 +79,14 @@ GridTable.prototype.init = (function () {
 	};
 })();
 
+GridTable.prototype = Object.create(Object.prototype);
+GridTable.prototype.constructor = GridTable;
+
+mixinEventHandling(GridTable, 'GridTable', [
+		'columnResize' // Fired when a column is resized.
+	, 'unableToRender' // Fired when a grid table can't render the data in the view it's bound to.
+]);
+
 // #toString {{{2
 
 GridTable.prototype.toString = function () {
@@ -75,15 +94,6 @@ GridTable.prototype.toString = function () {
 
 	return 'GridTable{id="' + self.id + '"}';
 };
-
-// .events {{{2
-
-GridTable.events = objFromArray([
-		'columnResize' // Fired when a column is resized.
-	, 'unableToRender' // Fired when a grid table can't render the data in the view it's bound to.
-]);
-
-mixinEventHandling(GridTable, 'GridTable', GridTable.events);
 
 // #setCss {{{2
 
@@ -537,7 +547,6 @@ GridTable.prototype.clearDrawOptions = function () {
 };
 
 // GridTablePlain {{{1
-
 // Constructor {{{2
 
 /**
@@ -568,7 +577,7 @@ GridTable.prototype.clearDrawOptions = function () {
  * working.
  */
 
-var GridTablePlain = function (defn, view, features, opts, timing, id) {
+var GridTablePlain = makeSubclass(GridTable, function (defn, view, features, opts, timing, id) {
 	var self = this;
 
 	features = deepCopy(features);
@@ -577,12 +586,9 @@ var GridTablePlain = function (defn, view, features, opts, timing, id) {
 	debug.info('GRID TABLE - PLAIN', 'Constructing grid table; features = %O', features);
 
 	self.super = makeSuper(self, GridTable);
-	self.super.init(defn, view, features, opts, timing, id);
+	self.super.ctor(defn, view, features, opts, timing, id);
 	self.addFilterHandler();
-};
-
-GridTablePlain.prototype = Object.create(GridTable.prototype);
-GridTablePlain.prototype.constructor = GridTablePlain;
+});
 
 // #_validateLimit {{{2
 
@@ -603,6 +609,16 @@ GridTablePlain.prototype._validateLimit = function () {
 };
 
 // #canRender {{{2
+
+/**
+ * Responds whether or not this grid table can render the type of data requested.
+ *
+ * @param {string} what
+ * The kind of data the caller wants us to show.  Must be one of: plain, group, or pivot.
+ *
+ * @return {boolean}
+ * True if this grid table can render that kind of data, false if it can't.
+ */
 
 GridTablePlain.prototype.canRender = function (what) {
 	switch (what) {
@@ -1293,10 +1309,9 @@ GridTablePlain.prototype.addWorkHandler = function () {
 };
 
 // GridTableGroup {{{1
-
 // Constructor {{{2
 
-var GridTableGroup = function (defn, view, features, opts, timing, id) {
+var GridTableGroup = makeSubclass(GridTable, function (defn, view, features, opts, timing, id) {
 	var self = this;
 
 	features = deepCopy(features);
@@ -1306,13 +1321,20 @@ var GridTableGroup = function (defn, view, features, opts, timing, id) {
 	debug.info('GRID TABLE - GROUP', 'Constructing grid table; features = %O', features);
 
 	self.super = makeSuper(self, GridTable);
-	self.super.init(defn, view, features, opts, timing, id);
-};
-
-GridTableGroup.prototype = Object.create(GridTable.prototype);
-GridTableGroup.prototype.constructor = GridTableGroup;
+	self.super.ctor(defn, view, features, opts, timing, id);
+});
 
 // #canRender {{{2
+
+/**
+ * Responds whether or not this grid table can render the type of data requested.
+ *
+ * @param {string} what
+ * The kind of data the caller wants us to show.  Must be one of: plain, group, or pivot.
+ *
+ * @return {boolean}
+ * True if this grid table can render that kind of data, false if it can't.
+ */
 
 GridTableGroup.prototype.canRender = function (what) {
 	switch (what) {
@@ -1504,10 +1526,13 @@ GridTableGroup.prototype.addWorkHandler = function () {
 };
 
 // GridTablePivot {{{1
-
 // Constructor {{{2
 
-var GridTablePivot = function (defn, view, features, opts, timing, id) {
+/**
+ * A grid table used for showing data that's been pivotted by the view.
+ */
+
+var GridTablePivot = makeSubclass(GridTable, function (defn, view, features, opts, timing, id) {
 	var self = this;
 
 	features = deepCopy(features);
@@ -1517,13 +1542,20 @@ var GridTablePivot = function (defn, view, features, opts, timing, id) {
 	debug.info('GRID TABLE - GROUP', 'Constructing grid table; features = %O', features);
 
 	self.super = makeSuper(self, GridTable);
-	self.super.init(defn, view, features, opts, timing, id);
-};
-
-GridTablePivot.prototype = Object.create(GridTable.prototype);
-GridTablePivot.prototype.constructor = GridTablePivot;
+	self.super.ctor(defn, view, features, opts, timing, id);
+});
 
 // #canRender {{{2
+
+/**
+ * Responds whether or not this grid table can render the type of data requested.
+ *
+ * @param {string} what
+ * The kind of data the caller wants us to show.  Must be one of: plain, group, or pivot.
+ *
+ * @return {boolean}
+ * True if this grid table can render that kind of data, false if it can't.
+ */
 
 GridTablePivot.prototype.canRender = function (what) {
 	switch (what) {

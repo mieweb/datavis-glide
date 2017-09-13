@@ -1250,6 +1250,13 @@ var Source = function (spec, params, userTypeInfo, opts) {
 	self.locks.getData = new Lock();
 };
 
+Source.prototype = Object.create(Object.prototype);
+Source.prototype.constructor = Source;
+
+mixinEventHandling(Source, 'Source', [
+		'dataUpdated'
+]);
+
 // .sources {{{2
 
 /**
@@ -1264,12 +1271,6 @@ Source.sources = {
 // .converters {{{2
 
 Source.converters = {};
-
-// .events {{{2
-
-Source.events = objFromArray(['dataUpdated']);
-
-mixinEventHandling(Source, 'Source', Source.events);
 
 // #getData {{{2
 

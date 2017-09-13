@@ -889,9 +889,13 @@ var makeSubclass = function (parent, ctor) {
 var makeSuper = function (me, parent) {
 	parent = parent || me.superclass;
 
-	return _.mapObject(parent.prototype, function (v, k) {
+	var sup = _.mapObject(parent.prototype, function (v, k) {
 		return _.bind(v, me);
 	});
+
+	sup.ctor = _.bind(parent, me);
+
+	return sup;
 };
 
 	// HTML {{{1
@@ -1887,6 +1891,7 @@ Timing.prototype.dump = function (subject) {
 // Event Handling {{{1
 
 function mixinEventHandling(obj, name, events) {
+	obj.events = objFromArray(events);
 
 	// #_initEventHandlers {{{2
 
@@ -1896,7 +1901,7 @@ function mixinEventHandling(obj, name, events) {
 		if (self.eventHandlers === undefined) {
 			self.eventHandlers = {};
 
-			_.each(events, function (evt) {
+			_.each(obj.events, function (evt) {
 				self.eventHandlers[evt] = [];
 			});
 		}
@@ -1912,7 +1917,7 @@ function mixinEventHandling(obj, name, events) {
 
 		self._initEventHandlers();
 
-		if (events[evt] === undefined) {
+		if (obj.events[evt] === undefined) {
 			throw new Error('Unable to register handler on ' + myName + ' for "' + evt + '" event: no such event available');
 		}
 
@@ -1934,13 +1939,13 @@ function mixinEventHandling(obj, name, events) {
 		self._initEventHandlers();
 
 		if (evt === '*') {
-			_.each(events, function (e) {
+			_.each(obj.events, function (e) {
 				self.off(e, who);
 			});
 			return;
 		}
 
-		if (events[evt] === undefined) {
+		if (obj.events[evt] === undefined) {
 			throw new Error('Unable to register handler on ' + myName + ' for "' + evt + '" event: no such event available');
 		}
 
@@ -1981,7 +1986,7 @@ function mixinEventHandling(obj, name, events) {
 
 		self._initEventHandlers();
 
-		if (events[evt] === undefined) {
+		if (obj.events[evt] === undefined) {
 			throw new Error('Illegal event: ' + evt);
 		}
 

@@ -127,12 +127,12 @@ var View = function (source, name, opts) {
 	}
 };
 
-View.prototype = Object.create(Error.prototype);
+View.prototype = Object.create(Object.prototype);
 View.prototype.constructor = View;
 
-// .events {{{2
-
-View.events = objFromArray([
+mixinEventHandling(View, function (self) {
+	return 'VIEW (' + self.name + ')';
+}, [
 		'getTypeInfo' // Type information has been retrieved from the source.
 	, 'workBegin'   // ???
 	, 'workEnd'     // ???
@@ -150,10 +150,6 @@ View.events = objFromArray([
 	, 'filter'      // Filter information for a row is available.
 	, 'filterEnd'   // A filter operation has finished.
 ]);
-
-mixinEventHandling(View, function (self) {
-	return 'VIEW (' + self.name + ')';
-}, View.events);
 
 // #getRowCount {{{2
 

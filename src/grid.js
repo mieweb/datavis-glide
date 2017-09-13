@@ -1561,6 +1561,8 @@ Grid.prototype.normalizeColumns = function (defn) {
 
 // GridControl {{{1
 
+// Constructor {{{2
+
 /**
  * @class
  *
@@ -2244,6 +2246,8 @@ FilterControl.prototype.addViewConfigChangeHandler = function (kind) {
 };
 // GridControlField {{{1
 
+// Constructor {{{2
+
 function GridControlField() {
 }
 
@@ -2292,6 +2296,8 @@ GridControlField.prototype.getElement = function () {
 
 // GroupControlField {{{1
 
+// Constructor {{{2
+
 function GroupControlField() {
 	var self = this;
 
@@ -2304,6 +2310,8 @@ GroupControlField.prototype.constructor = GroupControlField;
 
 // PivotControlField {{{1
 
+// Constructor {{{2
+
 function PivotControlField() {
 	var self = this;
 
@@ -2314,6 +2322,7 @@ function PivotControlField() {
 PivotControlField.prototype = Object.create(GridControlField.prototype);
 PivotControlField.prototype.constructor = PivotControlField;
 // FilterControlField {{{1
+// Constructor {{{2
 
 function FilterControlField() {
 	var self = this;
