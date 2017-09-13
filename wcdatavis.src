@@ -102,12 +102,13 @@
 	$INCLUDE('src/grid_filter.js');
 	$INCLUDE('src/grid_table.js');
 	$INCLUDE('src/grid.js');
+	$INCLUDE('src/trans.js');
 
 	window.MIE              = window.MIE || {};
 	window.MIE.log          = log;
 	window.MIE.debug        = debug;
 	window.MIE.OrdMap       = OrdMap;
-	window.MIE.trans        = I;
+	window.MIE.trans        = trans;
 	window.MIE.makeSubclass = makeSubclass;
 
 	window.MIE.WC_DataVis            = window.MIE.WC_DataVis || {};
