@@ -775,6 +775,63 @@ function needArg(val, varName) {
 		return sort(data, cont);
 	}
 
+/**
+ * Non-recursive merge sort, mostly taken from: https://stackoverflow.com/questions/1557894/
+ * Breaks for update every "merge" which happens log_2(n) times.
+ */
+
+var mergeSort4 = function (data, cmp, cont, update) {
+	cmp = cmp || function (x, y) { return x < y };
+	var a = data;
+	var num = data.length;
+	var b = new Array(num);
+
+	var rght, wid, rend;
+	var i, j, m, t;
+
+	var sortWindow = function (k) {
+		for (var left=0; left+k < num; left += k*2 ) {
+			rght = left + k;
+			rend = rght + k;
+			if (rend > num) rend = num;
+			m = left; i = left; j = rght;
+			while (i < rght && j < rend) {
+				if (cmp(a[i], a[j])) {
+					b[m] = a[i]; i++;
+				} else {
+					b[m] = a[j]; j++;
+				}
+				m++;
+			}
+			while (i < rght) {
+				b[m]=a[i];
+				i++; m++;
+			}
+			while (j < rend) {
+				b[m]=a[j];
+				j++; m++;
+			}
+			for (m=left; m < rend; m++) {
+				a[m] = b[m];
+			}
+		}
+
+		if (k < num) {
+			if (typeof update === 'function') {
+				update(k, num);
+			}
+			return window.setTimeout(function () {
+				sortWindow(k * 2);
+			});
+		}
+		else {
+			return cont(a);
+		}
+	};
+
+	sortWindow(1);
+};
+
 	function objGetPath(obj, fieldPath) {
 		var i, len = fieldPath.length;
 		for (i = 0; i < len && obj !== undefined; i += 1) {

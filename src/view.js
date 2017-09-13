@@ -278,6 +278,10 @@ View.prototype.sort = function (cont) {
 		return cont(false, self.data.data);
 	}
 
+	debug.info('VIEW (' + self.name + ') // SORT',
+						 'Beginning sort: { field = "%s", direction = "%s" }',
+						 self.sortSpec.col, self.sortSpec.dir);
+
 	var fti = self.typeInfo.get(self.sortSpec.col);
 
 	// Check to make sure we have enough information about the type of the field that the user wants
@@ -329,7 +333,7 @@ View.prototype.sort = function (cont) {
 	self.fire(View.events.sortBegin);
 
 	if (self.data.isPlain) {
-		mergeSort3(self.data.data,
+		mergeSort4(self.data.data,
 							 function (a, b) {
 								 return !!(cmp(a.rowData[self.sortSpec.col].value, b.rowData[self.sortSpec.col].value)
 													 ^ (self.sortSpec.dir === 'DESC'));
