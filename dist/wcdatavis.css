@@ -4,6 +4,16 @@
 	cursor: pointer;
 }
 
+.wcdv_expand_button {
+	display: inline-block;
+	padding-right: 0.25em;
+	vertical-align: middle;
+}
+
+.wcdv_group_col_spacer {
+	width: 0.5em;
+}
+
 .wcdv_grid {
 	margin-top: 1em;
 	display: flex;

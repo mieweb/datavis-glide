@@ -1364,9 +1364,18 @@ GridTableGroup.prototype.drawHeader = function (columns, data, typeInfo, opts) {
 		'vertical-align': 'top'
 	};
 
-	headingTr = jQuery('<tr>');
+	_.each(data.groupFields, function (fieldName, fieldIdx) {
+		headingTr = jQuery('<tr>');
 
-	_.each(data.groupFields, function (fieldName) {
+		// Add spacers for the previous group fields.
+
+		for (var i = 0; i < fieldIdx; i += 1) {
+			jQuery('<th>')
+				.addClass('wcdv_group_col_spacer')
+				.appendTo(headingTr)
+			;
+		}
+
 		headingSpan = jQuery('<span>')
 			.attr('data-wcdv-field', fieldName)
 			.text(fieldName)
@@ -1374,6 +1383,7 @@ GridTableGroup.prototype.drawHeader = function (columns, data, typeInfo, opts) {
 		;
 
 		headingTh = jQuery('<th>')
+			.attr('colspan', columns.length - fieldIdx)
 			.css(headingThCss)
 			.append(headingSpan)
 		;
@@ -1383,8 +1393,23 @@ GridTableGroup.prototype.drawHeader = function (columns, data, typeInfo, opts) {
 		self.setCss(headingTh, fieldName);
 
 		self.ui.thMap[fieldName] = headingTh;
+
 		headingTr.append(headingTh);
+		self.ui.thead.append(headingTr);
 	});
+
+	headingTr = jQuery('<tr>');
+
+	// Add spacers for all the group fields.
+
+	for (var i = 0; i < data.groupFields.length; i += 1) {
+		jQuery('<th>')
+			.addClass('wcdv_group_col_spacer')
+			.appendTo(headingTr)
+		;
+	}
+
+	// Make headers for all the normal (non-grouped) columns.
 
 	_.each(columns, function (field, colIndex) {
 		var colConfig = getPropDef({}, self.defn, 'table', 'columns', colIndex)
@@ -1429,38 +1454,138 @@ GridTableGroup.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 		}
 	}
 
-	_.each(data.data, function (rowGroup, groupNum) {
-		var tr = jQuery('<tr>');
+	var groupIds = {};
+	var groupId = 0;
+	_.each(data.rowVals, function (rowVal) {
+		setProp(0, groupIds, rowVal, '_groupId');
+	});
 
-		// Create the cells that show the values of the grouped columns.
+	(function RECUR(o) {
+		_.each(o, function (v, k) {
+			if (typeof v === 'object') {
+				v._groupId = groupId++;
+				RECUR(v);
+			}
+		});
+	})(groupIds);
+
+	console.log(groupIds);
+
+	var lastRowVal = [];
+
+	var toggleGroup = function () {
+		var toggle = function (groupId, show) {
+			console.log('TOGGLING GROUP: ' + groupId);
+			self.ui.tbody
+				.find('tr')
+				.filter(function (i, elt) {
+					return elt.dataset.wcdvGroup === groupId;
+				})
+				.each(function (i, elt) {
+					if (elt.dataset.wcdvTogglesGroup) {
+						console.log(elt);
+						toggle(elt.dataset.wcdvTogglesGroup, show && elt.dataset.wcdvCollapsed === '0');
+					}
+					if (show) {
+						jQuery(elt).show();
+					}
+					else {
+						jQuery(elt).hide();
+					}
+				});
+		};
+
+		var elt = jQuery(this);
+		var tr = elt.closest('tr');
+		var wasCollapsed = tr.attr('data-wcdv-collapsed');
+
+		toggle(tr.attr('data-wcdv-toggles-group'), wasCollapsed === '1');
+
+		tr.attr('data-wcdv-collapsed', wasCollapsed === '1' ? '0' : '1');
+		elt.html(fontAwesome(wasCollapsed === '1' ? 'F147' : 'F196'));
+	};
+
+	_.each(data.data, function (rowGroup, groupNum) {
+		var tr;
+		var rowVal = data.rowVals[groupNum];
+
+		// Create the cells that show the rowVal for this group.
 		//
 		// EXAMPLE
 		// -------
 		//
 		//   groupFields = ["First Name", "Last Name"]
 		//   rowVals = [["Luke", "Skywalker"], ...]
+		//                ^^^^    ^^^^^^^^^ = rowValElt
+		//                0       1         = rowValIdx
 		//
 		// <tr>
-		//   <th>Luke</th>
-		//   <th>Skywalker</th>
+		//   <th colspan="N">Luke</th>
+		// </tr>
+		// <tr>
+		//   <td></td>
+		//   <th colspan="N-1">Skywalker</th>
+		// </tr>
+
+		_.each(rowVal, function (rowValElt, rowValIdx) {
+			if (lastRowVal[rowValIdx] === rowValElt) {
+				return;
+			}
+
+			console.log(rowVal.slice(0, rowValIdx + 1).join(', ')
+									+ ' { group = ' + getProp(groupIds, rowVal.slice(0, rowValIdx), '_groupId')
+									+ ' ; toggles = ' + getProp(groupIds, rowVal.slice(0, rowValIdx + 1), '_groupId') + ' }');
+
+			tr = jQuery('<tr>')
+				.attr('data-wcdv-group', getProp(groupIds, rowVal.slice(0, rowValIdx), '_groupId'))
+				.attr('data-wcdv-toggles-group', getProp(groupIds, rowVal.slice(0, rowValIdx + 1), '_groupId'))
+				.attr('data-wcdv-collapsed', '1')
+			;
+
+			if (rowValIdx > 0) {
+				tr.hide();
+			}
+
+			// Insert spacer columns for previous group fields.
+
+			for (var i = 0; i < rowValIdx; i += 1) {
+				tr.append('<td>');
+			}
+
+			var expandBtn = jQuery('<div>')
+				.addClass('wcdv_button wcdv_expand_button')
+				.html(fontAwesome('F196'))
+				.on('click', toggleGroup)
+			;
+
+			jQuery('<th>')
+				.attr('colspan', columns.length - rowValIdx)
+				.append(expandBtn)
+				.append(rowValElt + ' (' + getProp(data.groupMetadata, data.rowVals[groupNum].slice(0, rowValIdx + 1), '_count') + ' rows)')
+				.appendTo(tr)
+			;
+
+			self.ui.tbody.append(tr);
+		});
+
+		lastRowVal = arrayCopy(rowVal);
+
+		// Create the cells that show the rows in this group.
+		//
+		// EXAMPLE
+		// -------
+		//
+		// <tr>
+		//   <td colspan="2"></td>
 		//   ... row[col] | col ∉ groupFields ...
 		// </tr>
 
-		_.each(data.rowVals[groupNum], function (colVal, colIdx) {
-			var attrs = {};
-
-			if (colIdx === data.groupFields.length - 1) {
-				attrs.colspan = columns.length - data.groupFields.length + 1;
-			}
-
-			jQuery('<th>', attrs).text(colVal).appendTo(tr);
-		});
-
-		self.ui.tbody.append(tr);
-
 		_.each(rowGroup, function (row, rowNum) {
-			tr = jQuery('<tr>', {id: self.defn.table.id + '_' + rowNum});
-			tr.append(jQuery('<td>', { colspan: data.groupFields.length }));
+			tr = jQuery('<tr>', {id: self.defn.table.id + '_' + rowNum})
+				.attr('data-wcdv-group', getProp(groupIds, rowVal, '_groupId'))
+				.hide()
+				.append(jQuery('<td>', { colspan: data.groupFields.length }))
+			;
 
 			// Create the data cells.
 

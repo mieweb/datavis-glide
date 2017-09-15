@@ -444,6 +444,12 @@ function getProp() {
 		, i;
 
 	for (i = 0; o !== undefined && o !== null && i < args.length; i += 1) {
+		if (_.isArray(args[i])) {
+			Array.prototype.splice.apply(args, [i, 1].concat(args[i]));
+			i -= 1;
+			continue;
+		}
+
 		o = o[args[i]];
 	}
 
@@ -494,9 +500,16 @@ function setProp() {
 	var o = args.shift();
 
 	for (var i = 0; i < args.length - 1; i += 1) {
+		if (_.isArray(args[i])) {
+			Array.prototype.splice.apply(args, [i, 1].concat(args[i]));
+			i -= 1;
+			continue;
+		}
+
 		if (o[args[i]] === undefined) {
 			o[args[i]] = {};
 		}
+
 		o = o[args[i]];
 	}
 
@@ -509,16 +522,23 @@ function setPropDef() {
 	var o = args.shift();
 
 	for (var i = 0; i < args.length - 1; i += 1) {
+		if (_.isArray(args[i])) {
+			Array.prototype.splice.apply(args, [i, 1].concat(args[i]));
+			i -= 1;
+			continue;
+		}
+
 		if (o[args[i]] === undefined) {
 			o[args[i]] = {};
 		}
+
 		o = o[args[i]];
 	}
 
 	if (o[args[args.length - 1]] === undefined) {
 		o[args[args.length - 1]] = x;
 	}
-};
+}
 
 /**
  * Throw an exception if a property is missing.
@@ -1082,14 +1102,12 @@ function makeCheckbox(startChecked, onChange, text, parent) {
 }
 
 function makeToggleCheckbox(rootObj, path, startChecked, text, parent, after) {
-	var args = ([rootObj]).concat(path);
+	setPropDef(startChecked, rootObj, path);
 
-	setPropDef.apply(undefined, ([startChecked]).concat(args));
-
-	return makeCheckbox(getProp.apply(undefined, args), function () {
+	return makeCheckbox(getProp(rootObj, path), function () {
 		var isChecked = jQuery(this).prop('checked');
 		debug.info('GRID // TOOLBAR', 'Setting `' + path.join('.') + '` to ' + isChecked);
-		setProp.apply(undefined, ([isChecked]).concat(args));
+		setProp(isChecked, rootObj, path);
 		if (typeof after === 'function') {
 			after(isChecked);
 		}

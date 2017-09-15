@@ -838,7 +838,9 @@ View.prototype.group = function () {
 	// {C,D}[First Name] = Robert
 	// {E,F}[First Name] = Ted
 
-	var tree = (function RECUR(fieldNames, data) {
+	var metadata = {};
+
+	var tree = (function RECUR(fieldNames, data, metadata) {
 		var field = car(fieldNames)
 			, tmp = {};
 
@@ -854,18 +856,20 @@ View.prototype.group = function () {
 			tmp[value].push(row);
 		});
 
-		if (fieldNames.length > 1) {
-			_.each(tmp, function (groupedRows, value) {
-				tmp[value] = RECUR(cdr(fieldNames), groupedRows);
-			});
-		}
+		_.each(tmp, function (groupedRows, value) {
+			metadata[value] = {
+				_count: groupedRows.length
+			};
+			if (fieldNames.length > 1) {
+				tmp[value] = RECUR(cdr(fieldNames), groupedRows, metadata[value]);
+			};
+		});
 
 		return tmp;
-	})(self.groupSpec.fieldNames, self.data.data);
+	})(self.groupSpec.fieldNames, self.data.data, metadata);
 
-	debug.info('VIEW (' + self.name + ') // GROUP',
-						 'Tree Form: %O',
-						 tree);
+	debug.info('VIEW (' + self.name + ') // GROUP', 'Tree Form: %O', tree);
+	debug.info('VIEW (' + self.name + ') // GROUP', 'Metadata: %O', metadata);
 
 	var rowVals = [];
 	var newData = [];
@@ -910,6 +914,7 @@ View.prototype.group = function () {
 	self.data.isPlain = false;
 	self.data.isGroup = true;
 	self.data.groupFields = groupFields;
+	self.data.groupMetadata = metadata;
 	self.data.rowVals = rowVals;
 	self.data.data = newData;
 
