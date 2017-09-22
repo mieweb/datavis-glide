@@ -1730,10 +1730,18 @@ Lock.prototype.isLocked = function () {
  */
 
 Lock.prototype.onUnlock = function (f, info) {
-	this._onUnlock.push({
+	var self = this;
+
+	self._onUnlock.push({
 											f: f,
 											info: info
 	});
+
+	debug.info('LOCK // ' + self._name,
+						 'Saved onUnlock function (#'
+						 + self._onUnlock.length
+						 + ') - '
+						 + (info || '[NO INFO]'));
 };
 
 // Blocking {{{1

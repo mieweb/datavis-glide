@@ -281,27 +281,50 @@ View.prototype.sort = function (cont) {
 						 'Beginning sort: { field = "%s", direction = "%s" }',
 						 self.sortSpec.col, self.sortSpec.dir);
 
-	var fti = self.typeInfo.get(self.sortSpec.col);
+	var fti = self.data.isPlain ? self.typeInfo.get(self.sortSpec.col)
+		: self.data.isGroup ? undefined
+		: self.data.isPivot ? self.typeInfo.get(self.data.pivotFields[0])
+		: undefined;
 
 	// Check to make sure we have enough information about the type of the field that the user wants
 	// us to sort by.
 
 	if (fti === undefined) {
-		throw new ViewError('Unable to sort by field "' + self.sortSpec.col + '" - no type information available');
+		throw new Error('Unable to sort by field "' + self.sortSpec.col + '" - no type information available');
 	}
 
 	if (fti.type === undefined) {
-		throw new ViewError('Unable to sort by field "' + self.sortSpec.col + '" - type is not provided');
+		throw new Error('Unable to sort by field "' + self.sortSpec.col + '" - type is not provided');
 	}
+
+	// Check to see if values of that field need to be type-decoded.  If they do, perform
+	// type-decoding for all rows in the data set.
 
 	if (fti.needsDecoding) {
 		debug.info('VIEW (' + self.name + ') // SORT',
 							 'Decoding data before sorting: { field = "%s", type = "%s" }',
 							 fti.field, fti.type);
-		self.source.convertAll(self.data.data, fti.field);
+		if (self.data.isPlain) {
+			self.source.convertAll(self.data.data, fti.field);
+		}
+		else if (self.data.isGroup) {
+			_.each(self.data.data, function (groupedRows) {
+				self.source.convertAll(groupedRows, fti.field);
+			});
+		}
+		else if (self.data.isPivot) {
+			_.each(self.data.data, function (groupedRows) {
+				_.each(groupedRows, function (pivottedRows) {
+					self.source.convertAll(pivottedRows, fti.field);
+				});
+			});
+		}
+
 		fti.deferDecoding = false;
 		fti.needsDecoding = false;
 	}
+
+	// Get the standard comparison function for comparing values of that type.
 
 	var cmp = getComparisonFn.byType(fti.type);
 
@@ -309,12 +332,54 @@ View.prototype.sort = function (cont) {
 	// domain of the type of the field that the user wants us to sort by.
 
 	if (cmp === undefined) {
-		throw new ViewError('Unable to sort by field "' + self.sortSpec.col + '" - no function registered to compare values of type "' + fti.type + '"');
+		throw new Error('Unable to sort by field "' + self.sortSpec.col + '" - no function registered to compare values of type "' + fti.type + '"');
 	}
 
 	if (typeof cmp !== 'function') {
-		throw new ViewError('Unable to sort by field "' + self.sortSpec.col + '" - function registered to compare values of type "' + fti.type + '" is not actually a function');
+		throw new Error('Unable to sort by field "' + self.sortSpec.col + '" - function registered to compare values of type "' + fti.type + '" is not actually a function');
 	}
+
+	var makeFinishCb = function (next) {
+		return function (sorted) {
+			// For plain output, fire the "sort" event so that the rows (if the grid table is showing all
+			// of them) can just be shuffled around, and the table doesn't have to be recreated.
+
+			if (self.data.isPlain) {
+				_.each(sorted, function (row, position) {
+					self.fire(View.events.sort, {
+						silent: true
+					}, row.rowNum, position);
+				});
+			}
+
+			// If there's a progress callback, perform its done event.
+
+			if (self.sortProgress
+					&& typeof self.sortProgress.end === 'function') {
+				self.sortProgress.end();
+			}
+
+			// Store the sorted data.
+
+			self.data.data = sorted;
+
+			// Fire the event for finishing the sort.
+
+			self.fire(View.events.sortEnd);
+
+			// Stop the timer for the sort.
+
+			self.timing.stop(timingEvt);
+
+			// Run any function that might've been specified to manipulate the data after the fact.
+
+			if (typeof next === 'function') {
+				next(sorted);
+			}
+
+			return cont(true);
+		};
+	};
 
 	// Start the timer for the sort.
 
@@ -332,48 +397,59 @@ View.prototype.sort = function (cont) {
 	self.fire(View.events.sortBegin);
 
 	if (self.data.isPlain) {
-		mergeSort4(self.data.data,
-							 function (a, b) {
-								 return !!(cmp(a.rowData[self.sortSpec.col].value, b.rowData[self.sortSpec.col].value)
-													 ^ (self.sortSpec.dir === 'DESC'));
-							 },
-							 function (sorted) {
-								 _.each(sorted, function (row, position) {
-									 self.fire(View.events.sort, {
-										 silent: true
-									 }, row.rowNum, position);
-								 });
+		var comparison = function (a, b) {
+			return !!(cmp(a.rowData[self.sortSpec.col].value, b.rowData[self.sortSpec.col].value)
+								^ (self.sortSpec.dir === 'DESC'));
+		};
 
-								 // If there's a progress callback, perform its done event.
-
-								 if (self.sortProgress
-										 && typeof self.sortProgress.end === 'function') {
-									 self.sortProgress.end();
-								 }
-
-								 // Fire the event for finishing the sort.
-
-								 self.fire(View.events.sortEnd);
-
-								 // Stop the timer for the sort.
-
-								 self.timing.stop(timingEvt);
-
-								 // Pass the sorted data to the continuation.
-
-								 return cont(true, sorted);
-							 },
-							 self.sortProgress && self.sortProgress.update);
+		mergeSort4(self.data.data, comparison, makeFinishCb());
 	}
 	else if (self.data.isGroup) {
 		// There are two ways to sort grouped data: by a field that is part of the group (changes the
 		// ordering of the groups), and by a field that isn't part of the group (changes the ordering of
 		// the rows within each group).
 
-		return cont(false, self.data.data);
+		return cont(false);
 	}
 	else if (self.data.isPivot) {
-		return cont(false, self.data.data);
+		// There are two ways to sort pivot data, vertically (re-arranging by the group val) and
+		// horizontally (re-arranging by the pivot val).
+
+		var sortIdx = _.map(self.data.colVals, function (x) { return x[0]; }).indexOf(self.sortSpec.col);
+		if (sortIdx >= 0) {
+			var comparison = function (a, b) {
+				return !!(cmp(a[1][sortIdx].length, b[1][sortIdx].length)
+									^ (self.sortSpec.dir === 'DESC'));
+			};
+
+			var zippedData = _.zip(self.data.rowVals, self.data.data);
+
+			var finish = function () {
+				var x = _.unzip(self.data.data);
+				self.data.rowVals = x[0];
+				self.data.data = x[1];
+			};
+
+			return mergeSort4(zippedData, comparison, makeFinishCb(finish), self.sortProgress && self.sortProgress.update);
+		}
+		else {
+			var sortIdx = _.map(self.data.rowVals, function (x) { return x[0]; }).indexOf(self.sortSpec.col);
+			if (sortIdx >= 0) {
+				// TODO: Implement sort on group field.
+
+				return cont(false);
+			}
+			else {
+				log.error('Tried to sort pivotted data by a col val which does not exist '
+									+ '(i.e. there is no row having %s = %s); colVals = %O',
+									self.data.pivotFields[0], self.sortSpec.col, self.data.colVals);
+				log.error('Tried to sort pivotted data by a row val which does not exist '
+									+ '(i.e. there is no row having %s = %s); rowVals = %O',
+									self.data.groupFields[0], self.sortSpec.col, self.data.rowVals);
+
+				return cont(false);
+			}
+		}
 	}
 };
 
@@ -1124,9 +1200,8 @@ View.prototype.getData = function (cont) {
 				self.data.data = filteredData;
 				ops.group = self.group();
 				ops.pivot = self.pivot();
-				return self.sort(function (didSort, sortedData) {
+				return self.sort(function (didSort) {
 					ops.sort = didSort;
-					self.data.data = sortedData;
 
 					var workEndObj = {
 						isPlain: self.data.isPlain,

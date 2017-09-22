@@ -1772,11 +1772,11 @@ GridTablePivot.prototype.drawHeader = function (columns, data, typeInfo, opts) {
 		// Create headers for the fields that we've grouped by.  The headers are the names of those
 		// fields.  We only do this for the last row of the header, i.e. the final pivot field.
 		//
-		// +---------------------------+-----------------------------------------------------+
-		// | ( not here )              | PIVOT COLVAL 1                    | PIVOT COLVAL 2  |
-		// +-------------+-------------+-----------------+-----------------+-----------------+
-		// | GROUP FIELD | GROUP FIELD | PIVOT COLVAL 1A | PIVOT COLVAL 1B | PIVOT COLVAL 2A |
-		// +-------------+-------------+-----------------+-----------------+-----------------+
+		// +---------------------------+--------------------------------------------------+
+		// | ( not here )              | PIVOT COLVAL 1                  | PIVOT COLVAL 2 |
+		// +-------------+-------------+----------------+----------------+----------------+
+		// | GROUP FIELD | GROUP FIELD | PIVOT COLVAL A | PIVOT COLVAL B | PIVOT COLVAL A |
+		// +-------------+-------------+----------------+----------------+----------------+
 
 		if (pivotFieldNum === data.pivotFields.length - 1) {
 			_.each(data.groupFields, function (field) {
@@ -1830,6 +1830,8 @@ GridTablePivot.prototype.drawHeader = function (columns, data, typeInfo, opts) {
 					.append(headingSpan);
 
 				self.setCss(headingTh, colVal);
+
+				self._addSortingToHeader(colVal, headingSpan, headingTh);
 
 				if (getProp(opts, 'pivotConfig', 'aggField')) {
 					self.setAlignment(headingTh, self.colConfig[opts.pivotConfig.aggField], typeInfo, opts.pivotConfig.aggField);
