@@ -170,31 +170,33 @@ GridTable.prototype._addSortingToHeader = function (colName, headingSpan, headin
 		jQuery('span.sort_indicator').hide();
 		cloneSortSpan.show();
 
-		if (self.defn.sortSpec === undefined) {
-			self.defn.sortSpec = {
-				col: null,
-				asc: false
-			};
-		}
+		var sortSpec = self.view.sortSpec || {};
 
 		// Save the sort spec.  If we're resorting a column (i.e. we just sorted it) then
 		// reverse the sort direction.  Otherwise, start in ascending order.
 
-		self.defn.sortSpec.asc = (self.defn.sortSpec.col === colName ? !self.defn.sortSpec.asc : true);
-		self.defn.sortSpec.col = colName;
+		sortSpec.dir = sortSpec.col !== colName ? 'ASC' : sortSpec.dir === 'ASC' ? 'DESC' : 'ASC';
+		sortSpec.col = colName;
 
-		debug.info('SORTING', 'Column = ' + self.defn.sortSpec.col + ' ; Direction = ' + (self.defn.sortSpec.asc ? 'ASC' : 'DESC'));
+		debug.info('GRID TABLE // SORT',
+							 'Setting to sort by "%s" (%s)', sortSpec.col, sortSpec.dir);
 
-		cloneSortSpan.html(fontAwesome(self.defn.sortSpec.asc ? 'F0D7' : 'F0D8'));
+		cloneSortSpan.html(fontAwesome(sortSpec.dir === 'ASC' ? 'F0D7' : 'F0D8'));
 
-		self.view.setSort(self.defn.sortSpec.col,
-											self.defn.sortSpec.asc ? 'ASC' : 'DESC',
+		self.view.setSort(sortSpec.col,
+											sortSpec.dir,
 											self.makeProgress('Sort'));
 	};
+
+	self.ui.sortArrow[colName] = sortSpan;
 
 	sortSpan.addClass('sort_indicator');
 	sortSpan.css({'cursor': 'pointer', 'margin-right': '0.5ex'});
 	sortSpan.on('click', onClick);
+
+	if (self.view.sortSpec && self.view.sortSpec.col === colName) {
+		sortSpan.html(fontAwesome(self.view.sortSpec.dir === 'ASC' ? 'F0D7' : 'F0D8'));
+	}
 
 	headingSpan.css({'cursor': 'pointer'});
 	headingSpan.on('click', onClick);
@@ -336,7 +338,8 @@ GridTable.prototype.draw = function (root, tableDoneCont, opts) {
 				tfoot: jQuery('<tfoot>'),
 				thMap: {},
 				tr: {},
-				progress: jQuery('<div>')
+				progress: jQuery('<div>'),
+				sortArrow: {}
 			};
 
 			if (self.features.block) {
