@@ -443,13 +443,9 @@ function getProp() {
 		, o = args.shift()
 		, i;
 
-	for (i = 0; o !== undefined && o !== null && i < args.length; i += 1) {
-		if (_.isArray(args[i])) {
-			Array.prototype.splice.apply(args, [i, 1].concat(args[i]));
-			i -= 1;
-			continue;
-		}
+	args = _.flatten(args);
 
+	for (i = 0; o !== undefined && o !== null && i < args.length; i += 1) {
 		o = o[args[i]];
 	}
 
@@ -499,13 +495,9 @@ function setProp() {
 	var x = args.shift();
 	var o = args.shift();
 
-	for (var i = 0; i < args.length - 1; i += 1) {
-		if (_.isArray(args[i])) {
-			Array.prototype.splice.apply(args, [i, 1].concat(args[i]));
-			i -= 1;
-			continue;
-		}
+	args = _.flatten(args);
 
+	for (var i = 0; i < args.length - 1; i += 1) {
 		if (o[args[i]] === undefined) {
 			o[args[i]] = {};
 		}
@@ -521,13 +513,9 @@ function setPropDef() {
 	var x = args.shift();
 	var o = args.shift();
 
-	for (var i = 0; i < args.length - 1; i += 1) {
-		if (_.isArray(args[i])) {
-			Array.prototype.splice.apply(args, [i, 1].concat(args[i]));
-			i -= 1;
-			continue;
-		}
+	args = _.flatten(args);
 
+	for (var i = 0; i < args.length - 1; i += 1) {
 		if (o[args[i]] === undefined) {
 			o[args[i]] = {};
 		}
@@ -1102,6 +1090,7 @@ function makeCheckbox(startChecked, onChange, text, parent) {
 }
 
 function makeToggleCheckbox(rootObj, path, startChecked, text, parent, after) {
+	console.log('Setting %O [%O] checked = %s', rootObj, path, startChecked);
 	setPropDef(startChecked, rootObj, path);
 
 	return makeCheckbox(getProp(rootObj, path), function () {

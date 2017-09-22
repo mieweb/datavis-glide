@@ -1,6 +1,6 @@
 SOURCE=$(wildcard src/*.js)
 
-.PHONY:	doc examples clean jsdoc sphinx
+.PHONY:	doc examples clean jsdoc sphinx tags
 
 all:	dist/wcdatavis.js examples
 
@@ -21,6 +21,9 @@ jsdoc:
 
 sphinx:
 	$(MAKE) -C doc html
+
+tags:
+	/usr/bin/ctags -R -f TAGS --languages=JavaScript --sort=foldcase src
 
 examples/wcdatavis.js:	dist/wcdatavis.js
 	cp $^ $@
