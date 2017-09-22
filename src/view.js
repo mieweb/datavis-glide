@@ -282,7 +282,7 @@ View.prototype.sort = function (cont) {
 						 self.sortSpec.col, self.sortSpec.dir);
 
 	var fti = self.data.isPlain ? self.typeInfo.get(self.sortSpec.col)
-		: self.data.isGroup ? undefined
+		: self.data.isGroup ? self.typeInfo.get(self.sortSpec.col)
 		: self.data.isPivot ? self.typeInfo.get(self.data.pivotFields[0])
 		: undefined;
 
@@ -433,19 +433,29 @@ View.prototype.sort = function (cont) {
 			return mergeSort4(zippedData, comparison, makeFinishCb(finish), self.sortProgress && self.sortProgress.update);
 		}
 		else {
-			var sortIdx = _.map(self.data.rowVals, function (x) { return x[0]; }).indexOf(self.sortSpec.col);
+			var sortIdx = self.data.groupFields.indexOf(self.sortSpec.col);
 			if (sortIdx >= 0) {
-				// TODO: Implement sort on group field.
+				var comparison = function (a, b) {
+					return !!(cmp(a[0][sortIdx], b[0][sortIdx])
+										^ (self.sortSpec.dir === 'DESC'));
+				};
 
-				return cont(false);
+				var zippedData = _.zip(self.data.rowVals, self.data.data);
+
+				var finish = function () {
+					var x = _.unzip(self.data.data);
+					self.data.rowVals = x[0];
+					self.data.data = x[1];
+				};
+
+				return mergeSort4(zippedData, comparison, makeFinishCb(finish), self.sortProgress && self.sortProgress.update);
 			}
 			else {
-				log.error('Tried to sort pivotted data by a col val which does not exist '
-									+ '(i.e. there is no row having %s = %s); colVals = %O',
-									self.data.pivotFields[0], self.sortSpec.col, self.data.colVals);
-				log.error('Tried to sort pivotted data by a row val which does not exist '
-									+ '(i.e. there is no row having %s = %s); rowVals = %O',
-									self.data.groupFields[0], self.sortSpec.col, self.data.rowVals);
+				log.error('Tried to sort pivotted data by a pivot column value "%s" which does not exist '
+									+ '(i.e. there is no row having "%s" = "%s"); colVals = %O',
+									self.sortSpec.col, self.data.pivotFields[0], self.sortSpec.col, self.data.colVals);
+				log.error('Tried to sort pivotted data by a group field "%s" which does not exist; rowVals = %O',
+									self.sortSpec.col, self.data.groupFields);
 
 				return cont(false);
 			}
