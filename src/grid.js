@@ -898,10 +898,26 @@ Grid.prototype.addPivotButtons = function (parent) {
 	var userAddCols = getPropDef([], self.defn, 'table', 'whenPivot', 'addCols');
 	var totalCol = {
 		name: 'Total',
-		value: function (data, rowNum, rowAgg) {
+		value: function (data, rowNum, rowAgg, aggType) {
 			return _.reduce(rowAgg, function (acc, cur) {
-				return numeral.isNumeral(cur) ? acc + cur._value : acc + cur;
-			}, 0);
+				if (aggType === 'string') {
+					if (acc === '') {
+						return cur;
+					}
+					else if (cur === '') {
+						return acc;
+					}
+					else {
+						return acc + ', ' + cur;
+					}
+				}
+				else if (numeral.isNumeral(cur)) {
+					return acc + cur._value;
+				}
+				else {
+					return acc + cur;
+				}
+			}, aggType === 'string' ? '' : 0);
 		},
 		isTotalCol: true
 	};

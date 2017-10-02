@@ -1951,8 +1951,21 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 		});
 
 		var rowAgg = [];
-		var pivotAggColConfig = opts.pivotConfig.aggField ? self.colConfig[opts.pivotConfig.aggField] : {};
-		var pivotAggColTypeInfo = opts.pivotConfig.aggField ? typeInfo.get(opts.pivotConfig.aggField) : {};
+		var pivotAggColConfig;
+		var pivotAggColTypeInfo;
+		
+		if (opts.pivotConfig.aggField) {
+			pivotAggColConfig = self.colConfig[opts.pivotConfig.aggField];
+			pivotAggColTypeInfo = typeInfo.get(opts.pivotConfig.aggField);
+		}
+		else {
+			pivotAggColConfig = {};
+			pivotAggColTypeInfo = {};
+		}
+
+		var agg = AGGREGATES[opts.pivotConfig.aggFun || 'count'];
+		var aggFun = agg.fun({field: opts.pivotConfig.aggField, type: pivotAggColTypeInfo.type, colConfig: pivotAggColConfig});
+		var aggType = agg.type || pivotAggColTypeInfo.type;
 
 		// Create the cells that show the result of the aggregate function for all rows matching the
 		// column values at the same index.
@@ -1969,18 +1982,26 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 		// Column #4: agg(rowGroup[3]) - rows in the group w/ State = "OH"
 
 		_.each(rowGroup, function (colGroup) {
-
-			var agg = AGGREGATES[opts.pivotConfig.aggFun || 'count'];
-			var aggFun = agg.fun({field: opts.pivotConfig.aggField, type: pivotAggColTypeInfo.type, colConfig: pivotAggColConfig});
-			var aggType = agg.type;
 			var aggResult = aggFun(colGroup);
+
 			rowAgg.push(aggResult);
 
 			if (data.pivotFields.length > 0) {
-				var text = format(pivotAggColConfig, pivotAggColTypeInfo, aggResult, {
-					alwaysFormat: true,
-					overrideType: aggType
-				});
+				var text;
+
+				if (agg.inheritFormatting) {
+					text = format(pivotAggColConfig, pivotAggColTypeInfo, aggResult, {
+						alwaysFormat: true,
+						overrideType: aggType
+					});
+				}
+				else {
+					text = format(null, null, aggResult, {
+						alwaysFormat: true,
+						overrideType: aggType
+					});
+				}
+
 				var td = jQuery('<td>').text(text);
 				// REMOVED: How do we let the user set sizes &c. when doing a pivot table?
 				// self.setCss(td, col);
@@ -2007,15 +2028,24 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 		// that using Numeral exactly as specified for the "Amount" field.
 
 		_.each(self.opts.addCols, function (addCol) {
-			var addColResult = addCol.value(data.data, groupNum, rowAgg);
+			var addColResult = addCol.value(data.data, groupNum, rowAgg, aggType);
 
 			if (addColResult instanceof Element || addColResult instanceof jQuery) {
 				var td = jQuery('<td>').append(addColResult);
 			}
 			else {
-				var addColText = format(pivotAggColConfig, pivotAggColTypeInfo, addColResult, {
-					alwaysFormat: true
-				});
+				var addColText;
+
+				if (agg.inheritFormatting) {
+					addColText = format(pivotAggColConfig, pivotAggColTypeInfo, addColResult, {
+						alwaysFormat: true
+					});
+				}
+				else {
+					addColText = format(null, null, addColResult, {
+						alwaysFormat: true
+					});
+				}
 				var td = jQuery('<td>').text(addColText);
 			}
 

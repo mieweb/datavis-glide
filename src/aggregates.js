@@ -253,7 +253,8 @@ AGGREGATES.count = {
 	},
 	canBePivotCell: true,
 	needsField: false,
-	type: 'number'
+	type: 'number',
+	inheritFormatting: false
 };
 
 // .countDistinct {{{1
@@ -279,7 +280,8 @@ AGGREGATES.countDistinct = {
 	},
 	canBePivotCell: true,
 	needsField: true,
-	type: 'number'
+	type: 'number',
+	inheritFormatting: false
 };
 
 // .sum {{{1
@@ -328,7 +330,8 @@ AGGREGATES.sum = {
 	},
 	canBePivotCell: true,
 	needsField: true,
-	type: 'number'
+	type: 'number',
+	inheritFormatting: true
 };
 
 // .average {{{1
@@ -345,7 +348,8 @@ AGGREGATES.average = {
 	},
 	canBePivotCell: true,
 	needsField: true,
-	type: 'number'
+	type: 'number',
+	inheritFormatting: true
 };
 
 // .groupConcat {{{1
@@ -426,7 +430,8 @@ AGGREGATES.first = {
 	},
 	canBePivotCell: true,
 	needsField: true,
-	type: undefined
+	type: undefined,
+	inheritFormatting: true
 };
 
 // .last {{{1
@@ -443,7 +448,8 @@ AGGREGATES.last = {
 	},
 	canBePivotCell: true,
 	needsField: true,
-	type: undefined
+	type: undefined,
+	inheritFormatting: true
 };
 
 // .nth {{{1
@@ -465,7 +471,8 @@ AGGREGATES.nth = {
 		};
 	},
 	needsField: true,
-	type: undefined
+	type: undefined,
+	inheritFormatting: true
 };
 
 // .min {{{1
@@ -501,7 +508,8 @@ AGGREGATES.min = {
 	},
 	canBePivotCell: true,
 	needsField: true,
-	type: undefined
+	type: undefined,
+	inheritFormatting: true
 };
 
 // .max {{{1
@@ -537,7 +545,8 @@ AGGREGATES.max = {
 	},
 	canBePivotCell: true,
 	needsField: true,
-	type: undefined
+	type: undefined,
+	inheritFormatting: true
 };
 
 /**
