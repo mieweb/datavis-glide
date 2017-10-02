@@ -889,6 +889,9 @@ Grid.prototype.addPlainButtons = function (parent) {
 // #addGroupButtons {{{2
 
 Grid.prototype.addGroupButtons = function (parent) {
+	var self = this;
+
+	makeRadioButtons(self.view, ['opts', 'groupIsPivot'], 'Details', null, 'groupOutput', [{label: 'Summary', value: true}, {label: 'Details', value: false}], function (x) { return x === 'true' ? true : false }, function () { self.view.clearCache(); self.redraw() }, parent);
 };
 
 // #addPivotButtons {{{2
@@ -1206,7 +1209,7 @@ Grid.prototype.redraw = function () {
 			debug.info('GRID', 'Creating pivot grid table');
 
 			self.ui.toolbarPlain.hide();
-			self.ui.toolbarGroup.hide();
+			self.ui.toolbarGroup.show();
 			self.ui.toolbarPivot.show();
 		}
 		else if ((ops && ops.group) || self.view.getGroup()) {

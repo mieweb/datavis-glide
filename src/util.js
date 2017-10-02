@@ -1102,6 +1102,37 @@ function makeToggleCheckbox(rootObj, path, startChecked, text, parent, after) {
 	}, text, parent);
 };
 
+function makeRadioButtons(rootObj, path, def, label, name, values, conv, onChange, parent) {
+	setPropDef(def, rootObj, path);
+	var initial = getProp(rootObj, path);
+
+	var root = jQuery('<div>').css('display', 'inline-block').appendTo(parent);
+	if (label) {
+		jQuery('<label>').text(label).appendTo(root);
+	}
+	_.each(values, function (v) {
+		console.log(v);
+		var label = _.isString(v) ? v : v.label;
+		var value = _.isString(v) ? v : v.value;
+		jQuery('<label>')
+			.append(jQuery('<input>', { 'type': 'radio', 'name': name, 'value': value })
+							.on('change', function () {
+								var selected = root.find('input[type=radio]:checked').val();
+								if (typeof conv === 'function') {
+									selected = conv(selected);
+								}
+								debug.info('GRID // TOOLBAR', 'Setting `' + path.join('.') + '` to ' + selected);
+								setProp(selected, rootObj, path);
+								if (typeof onChange === 'function') {
+									onChange(selected);
+								}
+							}))
+			.append(label)
+			.appendTo(root);
+	});
+	root.find('input[type=radio]').val([initial]);
+};
+
 // Input / Output {{{1
 
 function valueInfo(value) {
