@@ -689,7 +689,7 @@ Grid.prototype._validateFeatures = function () {
 		'edit',
 		'delete',
 		'limit',
-		'floatTableHeader',
+		'floatingHeader',
 		'block',
 		'progress'
 	];

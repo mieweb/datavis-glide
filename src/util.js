@@ -1081,6 +1081,8 @@ function fontAwesome(hex, cls, title) {
 	return span;
 };
 
+// makeCheckbox {{{2
+
 function makeCheckbox(startChecked, onChange, text, parent) {
 	return jQuery('<label>')
 		.append(jQuery('<input>', { 'type': 'checkbox', 'checked': startChecked })
@@ -1088,6 +1090,8 @@ function makeCheckbox(startChecked, onChange, text, parent) {
 		.append(text)
 		.appendTo(parent);
 }
+
+// makeToggleCheckbox {{{2
 
 function makeToggleCheckbox(rootObj, path, startChecked, text, parent, after) {
 	setPropDef(startChecked, rootObj, path);
@@ -1100,7 +1104,9 @@ function makeToggleCheckbox(rootObj, path, startChecked, text, parent, after) {
 			after(isChecked);
 		}
 	}, text, parent);
-};
+}
+
+// makeRadioButtons {{{2
 
 function makeRadioButtons(rootObj, path, def, label, name, values, conv, onChange, parent) {
 	setPropDef(def, rootObj, path);
@@ -1111,7 +1117,6 @@ function makeRadioButtons(rootObj, path, def, label, name, values, conv, onChang
 		jQuery('<label>').text(label).appendTo(root);
 	}
 	_.each(values, function (v) {
-		console.log(v);
 		var label = _.isString(v) ? v : v.label;
 		var value = _.isString(v) ? v : v.value;
 		jQuery('<label>')
@@ -1131,7 +1136,7 @@ function makeRadioButtons(rootObj, path, def, label, name, values, conv, onChang
 			.appendTo(root);
 	});
 	root.find('input[type=radio]').val([initial]);
-};
+}
 
 // Input / Output {{{1
 
@@ -1279,46 +1284,41 @@ function format(colConfig, typeInfo, cell, opts) {
 		switch (t) {
 		case 'date':
 		case 'datetime':
-			{
-				if (typeof cell.value === 'string' && typeInfo.needsDecoding) {
-					cell.value = moment(cell.value, typeInfo.format);
-				}
+			if (typeof cell.value === 'string' && typeInfo.needsDecoding) {
+				cell.value = moment(cell.value, typeInfo.format);
+			}
 
-				if (window.moment && window.moment.isMoment(cell.value)) {
-					result = cell.value.format(colConfig.format);
-				}
-				else {
-					result = moment(cell.value).format(colConfig.format);
-				}
+			if (window.moment && window.moment.isMoment(cell.value)) {
+				result = cell.value.format(colConfig.format);
+			}
+			else {
+				result = moment(cell.value).format(colConfig.format);
 			}
 			break;
 		case 'number':
 		case 'currency':
-			{
-				if (typeof cell.value === 'string' && typeInfo.needsDecoding) {
-					if (isInt(cell.value)) {
-						cell.value = toInt(cell.value);
-					}
-					else if (isFloat(cell.value)) {
-						cell.value = toFloat(cell.value);
-					}
-					else {
-						cell.value = numeral(cell.value);
-					}
+			if (typeof cell.value === 'string' && typeInfo.needsDecoding) {
+				if (isInt(cell.value)) {
+					cell.value = toInt(cell.value);
 				}
-
-				if (window.numeral && window.numeral.isNumeral(cell.value)) {
-					result = cell.value.format(colConfig.format);
+				else if (isFloat(cell.value)) {
+					cell.value = toFloat(cell.value);
 				}
 				else {
-					result = numeral(cell.value).format(colConfig.format);
+					cell.value = numeral(cell.value);
 				}
+			}
+
+			if (window.numeral && window.numeral.isNumeral(cell.value)) {
+				result = cell.value.format(colConfig.format);
+			}
+			else {
+				result = numeral(cell.value).format(colConfig.format);
 			}
 			break;
 		case 'string':
-			{
-				result = cell.value;
-			}
+			result = cell.value;
+			break;
 		default:
 			log.error('Unable to format - unknown type: { field = "%s", type = "%s", value = "%s" }',
 								typeInfo.field, t, cell.value);
@@ -2164,4 +2164,33 @@ function mixinEventHandling(obj, name, events) {
 
 		self.eventHandlers[evt] = _.without(self.eventHandlers[evt], null);
 	};
+}
+
+// CGI {{{1
+
+// https://stackoverflow.com/questions/901115/
+
+function getParamsFromUrl() {
+	var match, key, val,
+		pl     = /\+/g,  // Regex for replacing addition symbol with a space
+		search = /([^&=]+)=?([^&]*)/g,
+		decode = function (s) { return decodeURIComponent(s.replace(pl, " ")); },
+		query  = window.location.search.substring(1),
+		params = {};
+
+	while (match = search.exec(query)) {
+		key = decode(match[1]);
+		val = decode(match[2]);
+		if (params[key]) {
+			if (!_.isArray(params[key])) {
+				params[key] = [params[key]];
+			}
+			params[key].push(val);
+		}
+		else {
+			params[key] = val;
+		}
+	}
+
+	return params;
 }

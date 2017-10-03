@@ -72,7 +72,7 @@ var GridTable = (function () {
 			}).join(' ');
 		}
 
-		if (self.features.floatTableHeader) {
+		if (self.features.floatingHeader) {
 			self._validateFloatTableHeader();
 		}
 
@@ -115,11 +115,11 @@ GridTable.prototype._validateLimit = function () {
 GridTable.prototype._validateFloatTableHeader = function () {
 	var self = this;
 
-	if (!self.features.floatTableHeader) {
+	if (!self.features.floatingHeader) {
 		return;
 	}
 
-	var config = getPropDef({}, self.defn, 'table', 'floatTableHeader');
+	var config = getPropDef({}, self.defn, 'table', 'floatingHeader');
 
 	if (config.method === undefined) {
 		if (jQuery.prototype.floatThead) {
@@ -132,11 +132,11 @@ GridTable.prototype._validateFloatTableHeader = function () {
 			config.method = 'tabletool';
 		}
 		else {
-			self.features.floatTableHeader = false;
+			self.features.floatingHeader = false;
 		}
 	}
 
-	self.defn.table.floatTableHeader = config;
+	self.defn.table.floatingHeader = config;
 };
 
 // #toString {{{2
@@ -173,7 +173,7 @@ GridTable.prototype.setCss = function (elt, colName) {
 // #setAlignment {{{2
 
 GridTable.prototype.setAlignment = function (elt, colConfig, typeInfo, field) {
-	var alignment = colConfig.cellAlignment;
+	var alignment = colConfig && colConfig.cellAlignment;
 
 	if (alignment === undefined
 			&& (typeInfo.get(field).type === 'number'
@@ -419,8 +419,8 @@ GridTable.prototype.draw = function (root, tableDoneCont, opts) {
 						self.ui.tbl.block(blockConfig);
 					}
 				}
-				if (self.features.floatTableHeader) {
-					switch (getProp(self.defn, 'table', 'floatTableHeader', 'method')) {
+				if (self.features.floatingHeader) {
+					switch (getProp(self.defn, 'table', 'floatingHeader', 'method')) {
 					case 'tabletool':
 						TableTool.update();
 						break;
@@ -438,8 +438,8 @@ GridTable.prototype.draw = function (root, tableDoneCont, opts) {
 						self.ui.tbl.unblock();
 					}
 				}
-				if (self.features.floatTableHeader) {
-					switch (getProp(self.defn, 'table', 'floatTableHeader', 'method')) {
+				if (self.features.floatingHeader) {
+					switch (getProp(self.defn, 'table', 'floatingHeader', 'method')) {
 					case 'tabletool':
 						TableTool.update();
 						break;
@@ -509,10 +509,10 @@ GridTable.prototype.draw = function (root, tableDoneCont, opts) {
 
 			// Activate TableTool using this attribute, if the user asked for it.
 
-			if (self.features.floatTableHeader) {
-				debug.info('GRID TABLE // DRAW', 'Enabling floating table using method "%s"',
-									 getProp(self.defn, 'table', 'floatTableHeader', 'method'));
-				switch (getProp(self.defn, 'table', 'floatTableHeader', 'method')) {
+			if (self.features.floatingHeader) {
+				debug.info('GRID TABLE // DRAW', 'Enabling floating header using method "%s"',
+									 getProp(self.defn, 'table', 'floatingHeader', 'method'));
+				switch (getProp(self.defn, 'table', 'floatingHeader', 'method')) {
 				case 'floatThead':
 					var floatTheadConfig = {};
 					if (self.opts.fixedHeight) {
@@ -814,7 +814,7 @@ GridTablePlain.prototype.drawHeader = function (columns, data, typeInfo, opts) {
 					var th = tr.children('th.filter_col_' + colIndex);
 
 					var adjustTableToolHeight = function () {
-						if (self.features.floatTableHeader) {
+						if (self.features.floatingHeader) {
 							// Update the height of the original, non-floating header to be the same as that of
 							// the floating header.  This is needed because otherwise the floating header will
 							// cover up the first rows of the table body as we add filters.  TableTool does not
@@ -1036,8 +1036,8 @@ GridTablePlain.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 			self.ui.tbody.append(tr);
 		}
 
-		if (self.features.floatTableHeader) {
-			switch (getProp(self.defn, 'table', 'floatTableHeader', 'method')) {
+		if (self.features.floatingHeader) {
+			switch (getProp(self.defn, 'table', 'floatingHeader', 'method')) {
 			case 'tabletool':
 				TableTool.update();
 				break;
@@ -1598,8 +1598,8 @@ GridTableGroup.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 			placeAfter.after(tr);
 		});
 
-		if (self.features.floatTableHeader) {
-			switch (getProp(self.defn, 'table', 'floatTableHeader', 'method')) {
+		if (self.features.floatingHeader) {
+			switch (getProp(self.defn, 'table', 'floatingHeader', 'method')) {
 			case 'tabletool':
 				TableTool.update();
 				break;
@@ -1729,8 +1729,8 @@ GridTableGroup.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 		lastRowVal = arrayCopy(rowVal);
 	});
 
-	if (self.features.floatTableHeader) {
-		switch (getProp(self.defn, 'table', 'floatTableHeader', 'method')) {
+	if (self.features.floatingHeader) {
+		switch (getProp(self.defn, 'table', 'floatingHeader', 'method')) {
 		case 'tabletool':
 			TableTool.update();
 			break;

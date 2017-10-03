@@ -1178,6 +1178,9 @@ HttpSource.prototype.clearCachedData = function () {
  * @param {boolean} [opts.deferDecoding=false] If true, defer conversion of numeric and date types
  * (using Numeral and Moment) until required (when displayed or upon sort).
  *
+ * @param {boolean} [opts.passThroughParams=false] If true, then parameters are obtained from the
+ * current page's URL.  These are overridden by any other parameters.
+ *
  * @class
  * @property {string} name
  * @property {function} error
@@ -1201,7 +1204,8 @@ var Source = function (spec, params, userTypeInfo, opts) {
 	self.opts = opts || {};
 
 	_.defaults(self.opts, {
-		deferDecoding: false
+		deferDecoding: false,
+		passThroughParams: false
 	});
 
 	self.eventHandlers = {};
@@ -1707,12 +1711,16 @@ Source.prototype.createParams = function () {
 	var self = this
 		, obj = {};
 
+	if (self.opts.passThroughParams) {
+		obj = getParamsFromUrl();
+	}
+
 	_.each(self.params, function (p) {
-		debug.info('DATA SOURCE // CREATE PARAMS', 'Parameter =', p);
+		debug.info('SOURCE // CREATE PARAMS', 'Parameter =', p);
 		p.toParams(obj);
 	});
 
-	debug.info('DATA SOURCE // #createParams()', 'Final Parameters =', obj);
+	debug.info('SOURCE // CREATE PARAMS', 'Final Parameters =', obj);
 
 	// The JSON clause parameters will be objects that need to be serialized first, so they can be
 	// sent to the server and unpacked there.
