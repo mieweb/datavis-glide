@@ -556,7 +556,7 @@ GridTable.prototype.drawHeader_aggregates = function (data, what, tr) {
 
 // #drawHeader_addCols {{{2
 
-GridTable.prototype.drawHeader_addCols = function (tr, opts) {
+GridTable.prototype.drawHeader_addCols = function (tr, typeInfo, opts) {
 	var self = this;
 
 	if (self.opts.addCols) {
@@ -571,6 +571,35 @@ GridTable.prototype.drawHeader_addCols = function (tr, opts) {
 			}
 		});
 	}
+};
+
+// #drawBody_aggregates {{{2
+
+GridTable.prototype.drawBody_aggregates = function (data, tr, groupNum) {
+	var self = this;
+
+	_.each(getPropDef([], data, 'agg', 'info', 'group'), function (agg, aggNum) {
+		var aggType = agg.aggDefn.type || agg.typeInfo.type;
+		var aggResult = data.agg.group[aggNum][groupNum];
+		var text;
+
+		if (agg.aggDefn.inheritFormatting) {
+			text = format(agg.colConfig, agg.typeInfo, aggResult, {
+				alwaysFormat: true,
+				overrideType: aggType
+			});
+		}
+		else {
+			text = format(null, null, aggResult, {
+				alwaysFormat: true,
+				overrideType: aggType
+			});
+		}
+
+		var td = jQuery('<td>').text(text);
+		self.setAlignment(td, agg.colConfig, agg.typeInfo);
+		td.appendTo(tr);
+	});
 };
 
 // #clear {{{2
@@ -1860,7 +1889,7 @@ GridTableGroupSummary.prototype.drawHeader = function (columns, data, typeInfo, 
 	});
 
 	self.drawHeader_aggregates(data, 'group', tr);
-	self.drawHeader_addCols(tr, opts);
+	self.drawHeader_addCols(tr, typeInfo, opts);
 
 	// Add the row for this pivot field to the THEAD.
 	self.ui.thead.append(tr);
@@ -1929,8 +1958,8 @@ GridTableGroupSummary.prototype.drawBody = function (data, typeInfo, columns, co
 			else {
 				var addColText;
 
-				if (agg.inheritFormatting) {
-					addColText = format(pivotAggColConfig, pivotAggColTypeInfo, addColResult, {
+				if (aggInfo.aggDefn.inheritFormatting) {
+					addColText = format(aggInfo.colConfig, aggInfo.typeInfo, addColResult, {
 						alwaysFormat: true
 					});
 				}
@@ -2136,7 +2165,7 @@ GridTablePivot.prototype.drawHeader = function (columns, data, typeInfo, opts) {
 
 		if (pivotFieldNum === 0) {
 			self.drawHeader_aggregates(data, 'group', tr);
-			self.drawHeader_addCols(tr, opts);
+			self.drawHeader_addCols(tr, typeInfo, opts);
 		}
 
 		// Add the row for this pivot field to the THEAD.
@@ -2161,6 +2190,9 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 		}
 	}
 
+	var aggInfo = data.agg.info.pivot[0];
+	var aggType = aggInfo.aggDefn.type || aggInfo.typeInfo.type || 'string';
+
 	_.each(data.data, function (rowGroup, groupNum) {
 		var tr = jQuery('<tr>');
 
@@ -2183,21 +2215,6 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 		});
 
 		var rowAgg = [];
-		var pivotAggColConfig;
-		var pivotAggColTypeInfo;
-		
-		if (opts.pivotConfig.aggField) {
-			pivotAggColConfig = self.colConfig[opts.pivotConfig.aggField];
-			pivotAggColTypeInfo = typeInfo.get(opts.pivotConfig.aggField);
-		}
-		else {
-			pivotAggColConfig = {};
-			pivotAggColTypeInfo = {};
-		}
-
-		var agg = AGGREGATES[opts.pivotConfig.aggFun || 'count'];
-		var aggFun = agg.fun({field: opts.pivotConfig.aggField, type: pivotAggColTypeInfo.type, colConfig: pivotAggColConfig});
-		var aggType = agg.type || pivotAggColTypeInfo.type;
 
 		// Create the cells that show the result of the aggregate function for all rows matching the
 		// column values at the same index.
@@ -2213,46 +2230,15 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 		// Column #3: agg(rowGroup[2]) - rows in the group w/ State = "MI"
 		// Column #4: agg(rowGroup[3]) - rows in the group w/ State = "OH"
 
-		_.each(rowGroup, function (colGroup) {
-			var aggResult = aggFun(colGroup);
+		_.each(rowGroup, function (colGroup, pivotNum) {
+			var aggResult = data.agg.pivot[0][groupNum][pivotNum];
 
 			rowAgg.push(aggResult);
 
-			if (data.pivotFields.length > 0) {
-				var text;
-
-				if (agg.inheritFormatting) {
-					text = format(pivotAggColConfig, pivotAggColTypeInfo, aggResult, {
-						alwaysFormat: true,
-						overrideType: aggType
-					});
-				}
-				else {
-					text = format(null, null, aggResult, {
-						alwaysFormat: true,
-						overrideType: aggType
-					});
-				}
-
-				var td = jQuery('<td>').text(text);
-				// REMOVED: How do we let the user set sizes &c. when doing a pivot table?
-				// self.setCss(td, col);
-
-				if (getProp(opts, 'pivotConfig', 'aggField')) {
-					self.setAlignment(td, self.colConfig[opts.pivotConfig.aggField], typeInfo.get(opts.pivotConfig.aggField));
-				}
-
-				td.appendTo(tr);
-			}
-		});
-
-		_.each(getPropDef([], data, 'agg', 'info', 'group'), function (agg, aggNum) {
-			var aggType = agg.aggDefn.type || agg.typeInfo.type;
-			var aggResult = data.agg.group[aggNum][groupNum];
 			var text;
 
-			if (agg.aggDefn.inheritFormatting) {
-				text = format(agg.colConfig, agg.typeInfo, aggResult, {
+			if (aggInfo.aggDefn.inheritFormatting) {
+				text = format(aggInfo.colConfig, aggInfo.typeInfo, aggResult, {
 					alwaysFormat: true,
 					overrideType: aggType
 				});
@@ -2265,10 +2251,17 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 			}
 
 			var td = jQuery('<td>').text(text);
-			self.setAlignment(td, agg.colConfig, agg.typeInfo);
+			// REMOVED: How do we let the user set sizes &c. when doing a pivot table?
+			// self.setCss(td, col);
+
+			if (aggInfo.field) {
+				self.setAlignment(td, aggInfo.colConfig, aggInfo.typeInfo);
+			}
+
 			td.appendTo(tr);
 		});
 
+		self.drawBody_aggregates(data, tr, groupNum);
 
 		// Generate the user's custom-defined additional columns.  If the `value` function returns an
 		// Element or jQuery instance, we just put that in the <TD> that we make.  Otherwise (e.g. it
@@ -2292,8 +2285,8 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 			else {
 				var addColText;
 
-				if (agg.inheritFormatting) {
-					addColText = format(pivotAggColConfig, pivotAggColTypeInfo, addColResult, {
+				if (aggInfo.aggDefn.inheritFormatting) {
+					addColText = format(aggInfo.colConfig, aggInfo.typeInfo, addColResult, {
 						alwaysFormat: true
 					});
 				}

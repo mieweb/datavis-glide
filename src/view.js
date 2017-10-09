@@ -128,8 +128,10 @@ var View = function (source, name, opts) {
 
 	self.aggregateSpec = {
 		group: [{
-			fun: 'count',
-			name: '# Rows'
+			fun: 'count'
+		}],
+		pivot: [{
+			fun: 'count'
 		}]
 	};
 };
@@ -140,22 +142,23 @@ View.prototype.constructor = View;
 mixinEventHandling(View, function (self) {
 	return 'VIEW (' + self.name + ')';
 }, [
-		'getTypeInfo' // Type information has been retrieved from the source.
-	, 'workBegin'   // ???
-	, 'workEnd'     // ???
-	, 'dataUpdated' // The data has changed in the source.
+		'getTypeInfo'  // Type information has been retrieved from the source.
+	, 'workBegin'    // ???
+	, 'workEnd'      // ???
+	, 'dataUpdated'  // The data has changed in the source.
 
-	, 'sortSet'     // When the sort has been set.  Args: (field, direction)
-	, 'filterSet'   // When the filter has been set.  Args: (spec)
-	, 'groupSet'    // When the grouping has been set.  Args: (spec)
-	, 'pivotSet'    // When the pivot config has been set.  Args: (spec)
+	, 'sortSet'      // When the sort has been set.  Args: (field, direction)
+	, 'filterSet'    // When the filter has been set.  Args: (spec)
+	, 'groupSet'     // When the grouping has been set.  Args: (spec)
+	, 'pivotSet'     // When the pivot config has been set.  Args: (spec)
+	, 'aggregateSet' // When the aggregate config has been set.  Args: (spec)
 
-	, 'sortBegin'   // A sort operation has started.
-	, 'sort'        // Sort information for a row is available.
-	, 'sortEnd'     // A sort operation has finished.
-	, 'filterBegin' // A filter operation has started.
-	, 'filter'      // Filter information for a row is available.
-	, 'filterEnd'   // A filter operation has finished.
+	, 'sortBegin'    // A sort operation has started.
+	, 'sort'         // Sort information for a row is available.
+	, 'sortEnd'      // A sort operation has finished.
+	, 'filterBegin'  // A filter operation has started.
+	, 'filter'       // Filter information for a row is available.
+	, 'filterEnd'    // A filter operation has finished.
 ]);
 
 // #getRowCount {{{2
@@ -1269,67 +1272,89 @@ View.prototype.aggregate = function (cont) {
 		pivot: []
 	};
 
-	_.each(self.aggregateSpec.group, function (spec, specNum) {
-		info.group[specNum] = {
+	_.each(self.aggregateSpec.group, function (spec, aggNum) {
+		info.group[aggNum] = {
 			colConfig: {},
 			typeInfo: {}
 		};
-		info.group[specNum].aggDefn = AGGREGATES[spec.fun];
-		info.group[specNum].name = spec.name;
+		info.group[aggNum].aggDefn = AGGREGATES[spec.fun];
+		info.group[aggNum].name = spec.name;
+
+		if (info.group[aggNum].aggDefn === undefined) {
+			throw new Error('No such aggregate function: "' + spec.fun + '"' +
+											(spec.name ? ' (output name = "' + spec.name + '")' : ''));
+		}
+
 		if (spec.field) {
-			info.group[specNum].colConfig = self.colConfig[spec.field];
-			info.group[specNum].typeInfo = typeInfo.get(spec.field);
+			info.group[aggNum].field = spec.field;
+			info.group[aggNum].colConfig = self.colConfig[spec.field];
+			info.group[aggNum].typeInfo = self.typeInfo.get(spec.field);
 		}
 	});
 
-	_.each(self.aggregateSpec.pivot, function (spec, specNum) {
-		info.group[specNum] = {
+	_.each(self.aggregateSpec.pivot, function (spec, aggNum) {
+		info.pivot[aggNum] = {
 			colConfig: {},
 			typeInfo: {}
 		};
-		info.pivot[specNum].aggDefn = AGGREGATES[spec.fun];
-		info.pivot[specNum].name = spec.name;
+		info.pivot[aggNum].aggDefn = AGGREGATES[spec.fun];
+		info.pivot[aggNum].name = spec.name;
+
+		if (info.pivot[aggNum].aggDefn === undefined) {
+			throw new Error('No such aggregate function: "' + spec.fun + '"' +
+											(spec.name ? ' (output name = "' + spec.name + '")' : ''));
+		}
+
 		if (spec.field) {
-			info.pivot[specNum].colConfig = self.colConfig[spec.field];
-			info.pivot[specNum].typeInfo = typeInfo.get(spec.field);
+			info.pivot[aggNum].field = spec.field;
+			info.pivot[aggNum].colConfig = self.colConfig[spec.field];
+			info.pivot[aggNum].typeInfo = self.typeInfo.get(spec.field);
 		}
 	});
 
 	_.each(self.data.data, function (group, groupNum) {
-		_.each(self.aggregateSpec.group, function (spec, specNum) {
-			if (groupResults[specNum] === undefined) {
-				groupResults[specNum] = [];
+		_.each(self.aggregateSpec.group, function (spec, aggNum) {
+			if (groupResults[aggNum] === undefined) {
+				groupResults[aggNum] = [];
 			}
-			var aggFun = info.group[specNum].aggDefn.fun({
+			var aggFun = info.group[aggNum].aggDefn.fun({
 				field: spec.field,
-				type: info.group[specNum].typeInfo.type,
-				colConfig: info.group[specNum].colConfig
+				type: info.group[aggNum].typeInfo.type,
+				colConfig: info.group[aggNum].colConfig
 			});
 			var aggResult = aggFun(_.flatten(group));
-			groupResults[specNum][groupNum] = aggResult;
-			debug.info('VIEW // AGGREGATE', 'Aggregate [%d] (%s -> %s) : Group [%d] = %O',
-								 specNum,
-								 info.group[specNum].aggDefn.name,
-								 info.group[specNum].name,
+			groupResults[aggNum][groupNum] = aggResult;
+			debug.info('VIEW // AGGREGATE', 'Group aggregate [%d] (%s) : Group [%d] = %O',
+								 aggNum,
+								 info.group[aggNum].aggDefn.name + (info.group[aggNum].name ? ' -> ' + info.group[aggNum].name : ''),
 								 groupNum,
 								 aggResult);
 		});
 
 		if (self.data.isPivot) {
-			_.each(self.aggregateSpec.pivot, function (spec, specNum) {
-				if (pivotResults[specNum] === undefined) {
-					pivotResults[specNum] = [];
+			_.each(self.aggregateSpec.pivot, function (spec, aggNum) {
+				if (pivotResults[aggNum] === undefined) {
+					pivotResults[aggNum] = [];
 				}
-				pivotResults[specNum][groupNum] = [];
+				pivotResults[aggNum][groupNum] = [];
 
 				_.each(group, function (pivot, pivotNum) {
-					var aggFun = info.pivot.aggDefn.fun({
+					var aggFun = info.pivot[aggNum].aggDefn.fun({
 						field: spec.field,
-						type: info.pivot[specNum].typeInfo.type,
-						colConfig: info.pivot[specNum].colConfig
+						type: info.pivot[aggNum].typeInfo.type,
+						colConfig: info.pivot[aggNum].colConfig
 					});
 
-					pivotResults[specNum][groupNum][pivotNum] = aggFun(pivot);
+					var aggResult = aggFun(pivot);
+
+					debug.info('VIEW // AGGREGATE', 'Pivot aggregate [%d] (%s -> %s) : Group [%d], Pivot [%d] = %O',
+										 aggNum,
+										 info.group[aggNum].aggDefn.name + (info.group[aggNum].name ? ' -> ' + info.group[aggNum].name : ''),
+										 groupNum,
+										 pivotNum,
+										 aggResult);
+
+					pivotResults[aggNum][groupNum][pivotNum] = aggResult;
 				});
 			});
 		}

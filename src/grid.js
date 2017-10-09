@@ -479,6 +479,12 @@ var Grid = function (id, view, defn, tagOpts, cb) {
 
 	self.normalize(defn);
 
+	// HACK The *only* reason we need this is so that the aggregate functions which do formatting
+	// (e.g. group concat) know how to format non-string values like currency.  There's got to be a
+	// better way to do this.
+
+	view.colConfig = self.colConfig;
+
 	debug.info('GRID', 'Definition: %O', defn);
 
 	if (isNothing(view)) {
@@ -1613,6 +1619,12 @@ Grid.prototype.normalizeColumns = function (defn) {
 			colConfig.filter = 'checkbox';
 		}
 	});
+
+	self.colConfig = {};
+
+	_.each(defn.table.columns, function (col) {
+		self.colConfig[col.field] = col;
+	});
 };
 
 // GridControl {{{1
@@ -2178,6 +2190,18 @@ PivotControl.prototype.triggerAggChange = function () {
 
 	if (agg.needsField) {
 		self.ui.aggField.show();
+
+		self.view.setAggregate({
+			group: [{
+				fun: self.ui.aggFunDropdown.val(),
+				field: self.ui.aggFieldDropdown.val()
+			}],
+			pivot: [{
+				fun: self.ui.aggFunDropdown.val(),
+				field: self.ui.aggFieldDropdown.val()
+			}]
+		});
+
 		if (typeof self.opts.onAggregateChange === 'function') {
 			self.opts.onAggregateChange(self.ui.aggFunDropdown.val(), self.ui.aggFieldDropdown.val());
 		}
