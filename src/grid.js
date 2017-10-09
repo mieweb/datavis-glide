@@ -2047,7 +2047,11 @@ PivotControl.prototype.draw = function (parent) {
 
 	_.each(AGGREGATES, function (aggObj, aggFunName) {
 		if (aggObj.canBePivotCell) {
-			jQuery('<option>').text(aggFunName).appendTo(self.ui.aggFunDropdown);
+			jQuery('<option>', {
+				value: aggFunName
+			})
+				.text(aggObj.name || aggFunName)
+				.appendTo(self.ui.aggFunDropdown);
 		}
 	});
 

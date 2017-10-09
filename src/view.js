@@ -1042,11 +1042,6 @@ View.prototype.setPivot = function (spec, noUpdate, dontTell) {
 		}, 'Waiting to set pivot: ' + JSON.stringify(spec));
 	}
 
-	if (!isNothing(spec) && isNothing(self.groupSpec)) {
-		alert('Pivot without grouping is not supported.');
-		return false;
-	}
-
 	self.pivotSpec = spec;
 
 	self.fire(View.events.pivotSet, {
@@ -1259,7 +1254,7 @@ View.prototype.aggregate = function (cont) {
 	}
 
 	if (!self.aggregateSpec || !self.data.isGroup) {
-		cont(false);
+		return cont(false);
 	}
 
 	debug.info('VIEW // AGGREGATE', 'Computing group aggregate functions: %s',
@@ -1381,12 +1376,11 @@ View.prototype.getData = function (cont) {
 			self.typeInfo = typeInfo;
 
 			if (self.opts.saveViewConfig && !self.prefsLoaded) {
-				self.prefs.load(function () {
+				return self.prefs.load(function () {
 					self.prefsLoaded = true;
 					self.lock.unlock();
 					self.getData(cont);
 				});
-				return;
 			}
 
 			var ops = {
@@ -1412,9 +1406,9 @@ View.prototype.getData = function (cont) {
 				self.data.data = filteredData;
 				ops.group = self.group();
 				ops.pivot = self.pivot();
-				return self.sort(function (didSort) {
-					ops.sort = didSort;
-					return self.aggregate(function () {
+				return self.aggregate(function () {
+					return self.sort(function (didSort) {
+						ops.sort = didSort;
 
 						var workEndObj = {
 							isPlain: self.data.isPlain,
