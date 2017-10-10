@@ -259,6 +259,10 @@
 	padding-right: 0px;
 }
 
+.wcdv_grid_table .wcdv_gridtable_agg_pivot {
+	border-top: double black;
+}
+
 /*
 td.wcdv_group_col_spacer,
 td.wcdv_group_value {

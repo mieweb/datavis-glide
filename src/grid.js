@@ -912,6 +912,7 @@ Grid.prototype.addGroupButtons = function (parent) {
 
 Grid.prototype.addPivotButtons = function (parent) {
 	var self = this;
+	/*
 	var userAddCols = getPropDef([], self.defn, 'table', 'whenPivot', 'addCols');
 	var totalCol = {
 		name: 'Total',
@@ -941,6 +942,7 @@ Grid.prototype.addPivotButtons = function (parent) {
 	var newAddCols = userAddCols.concat([totalCol]);
 
 	setProp(newAddCols, self.defn, 'table', 'whenPivot', 'addCols');
+	*/
 
 	makeToggleCheckbox(
 		self.defn,
@@ -949,8 +951,8 @@ Grid.prototype.addPivotButtons = function (parent) {
 		'Total Column',
 		parent,
 		function (isChecked) {
-			setProp(isChecked ? newAddCols : userAddCols, self.defn, 'table', 'whenPivot', 'addCols');
 			/*
+			setProp(isChecked ? newAddCols : userAddCols, self.defn, 'table', 'whenPivot', 'addCols');
 			var gridTableOpts = {};
 
 			if (self.pivotAggConfig) {

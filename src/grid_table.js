@@ -2314,6 +2314,17 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 
 		tr = jQuery('<tr>');
 
+		if (aggNum === 0) {
+			tr.addClass('wcdv_gridtable_agg_pivot');
+		}
+
+		if (data.groupFields.length > 1) {
+			jQuery('<th>')
+				.attr({'colspan': data.groupFields.length - 1})
+				.appendTo(tr)
+			;
+		}
+
 		th = jQuery('<th>')
 			.text(agg.name || agg.aggDefn.name)
 			.appendTo(tr);
