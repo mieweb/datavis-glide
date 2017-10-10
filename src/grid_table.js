@@ -2190,7 +2190,7 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 		}
 	}
 
-	var aggInfo = data.agg.info.pivot[0];
+	var aggInfo = data.agg.info.cell[0];
 	var aggType = aggInfo.aggDefn.type || aggInfo.typeInfo.type || 'string';
 
 	_.each(data.data, function (rowGroup, groupNum) {
@@ -2231,7 +2231,7 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 		// Column #4: agg(rowGroup[3]) - rows in the group w/ State = "OH"
 
 		_.each(rowGroup, function (colGroup, pivotNum) {
-			var aggResult = data.agg.pivot[0][groupNum][pivotNum];
+			var aggResult = data.agg.cell[0][groupNum][pivotNum];
 
 			rowAgg.push(aggResult);
 
@@ -2304,6 +2304,39 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 
 			td.appendTo(tr);
 		});
+
+		self.ui.tbody.append(tr);
+	});
+
+	_.each(getPropDef([], data, 'agg', 'info', 'pivot'), function (agg, aggNum) {
+		var aggType = agg.aggDefn.type || agg.typeInfo.type;
+		var text;
+
+		tr = jQuery('<tr>');
+
+		th = jQuery('<th>')
+			.text(agg.name || agg.aggDefn.name)
+			.appendTo(tr);
+
+		_.each(data.colVals, function (colVal, colValIdx) {
+			var aggResult = data.agg.pivot[aggNum][colValIdx];
+			if (agg.aggDefn.inheritFormatting) {
+				text = format(agg.colConfig, agg.typeInfo, aggResult, {
+					alwaysFormat: true,
+					overrideType: aggType
+				});
+			}
+			else {
+				text = format(null, null, aggResult, {
+					alwaysFormat: true,
+					overrideType: aggType
+				});
+			}
+
+			var td = jQuery('<td>').text(text);
+			self.setAlignment(td, agg.colConfig, agg.typeInfo);
+			td.appendTo(tr);
+		})
 
 		self.ui.tbody.append(tr);
 	});

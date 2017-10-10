@@ -2194,11 +2194,18 @@ PivotControl.prototype.triggerAggChange = function () {
 		self.view.setAggregate({
 			group: [{
 				fun: self.ui.aggFunDropdown.val(),
-				field: self.ui.aggFieldDropdown.val()
+				field: self.ui.aggFieldDropdown.val(),
+				name: 'Total'
 			}],
 			pivot: [{
 				fun: self.ui.aggFunDropdown.val(),
-				field: self.ui.aggFieldDropdown.val()
+				field: self.ui.aggFieldDropdown.val(),
+				name: 'Total'
+			}],
+			cell: [{
+				fun: self.ui.aggFunDropdown.val(),
+				field: self.ui.aggFieldDropdown.val(),
+				name: 'Total'
 			}]
 		});
 
