@@ -135,6 +135,9 @@ var View = function (source, name, opts) {
 		}],
 		cell: [{
 			fun: 'count'
+		}],
+		all: [{
+			fun: 'count'
 		}]
 	};
 };
@@ -1263,23 +1266,24 @@ View.prototype.aggregate = function (cont) {
 		return cont(false);
 	}
 
-	debug.info('VIEW // AGGREGATE', 'Computing group aggregate functions: %s',
-						 _.pluck(getProp(self, 'aggregateSpec', 'group'), 'fun').join(', '));
-	debug.info('VIEW // AGGREGATE', 'Computing pivot aggregate functions: %s',
-						 _.pluck(getProp(self, 'aggregateSpec', 'pivot'), 'fun').join(', '));
-	debug.info('VIEW // AGGREGATE', 'Computing cell aggregate functions: %s',
-						 _.pluck(getProp(self, 'aggregateSpec', 'cell'), 'fun').join(', '));
+	_.each(['group', 'pivot', 'cell', 'all'], function (what) {
+		debug.info('VIEW // AGGREGATE', 'Computing %s aggregate functions: %s',
+							 what,
+							 _.pluck(getProp(self, 'aggregateSpec', what), 'fun').join(', '));
+	});
 
 	var groupResults = []; // groupResults[i][n] -> agg over rows w/ rowval[n]
 	var pivotResults = []; // pivotResults[i][m] -> agg over columns w/ colval[m]
 	var cellResults = []; // cellResults[i][n][m] -> agg over cells w/ rowval[n] -AND- colval[m]
+	var allResults = []; // allResults[i] -> agg over all cells
 	var info = {
 		group: [],
 		pivot: [],
-		cell: []
+		cell: [],
+		all: []
 	};
 
-	_.each(['group', 'pivot', 'cell'], function (what) {
+	_.each(['group', 'pivot', 'cell', 'all'], function (what) {
 		_.each(self.aggregateSpec[what], function (spec, aggNum) {
 			info[what][aggNum] = {
 				colConfig: {},
@@ -1313,11 +1317,11 @@ View.prototype.aggregate = function (cont) {
 			});
 			var aggResult = aggFun(_.flatten(self.data.data[rowValIdx]));
 			groupResults[aggNum][rowValIdx] = aggResult;
-			debug.info('VIEW // AGGREGATE', 'Group aggregate [%d] (%s) : Group [%s] = %O',
-								 aggNum,
-								 info.group[aggNum].aggDefn.name + (info.group[aggNum].name ? ' -> ' + info.group[aggNum].name : ''),
-								 rowVal.join(', '),
-								 aggResult);
+			//debug.info('VIEW // AGGREGATE', 'Group aggregate [%d] (%s) : Group [%s] = %O',
+			//					 aggNum,
+			//					 info.group[aggNum].aggDefn.name + (info.group[aggNum].name ? ' -> ' + info.group[aggNum].name : ''),
+			//					 rowVal.join(', '),
+			//					 aggResult);
 		});
 
 		if (self.data.isPivot) {
@@ -1336,12 +1340,12 @@ View.prototype.aggregate = function (cont) {
 
 					var aggResult = aggFun(self.data.data[rowValIdx][colValIdx]);
 
-					debug.info('VIEW // AGGREGATE', 'Pivot aggregate [%d] (%s) : Cell [%s ; %s] = %O',
-										 aggNum,
-										 info.cell[aggNum].aggDefn.name + (info.cell[aggNum].name ? ' -> ' + info.cell[aggNum].name : ''),
-										 rowVal.join(', '),
-										 colVal.join(', '),
-										 aggResult);
+					//debug.info('VIEW // AGGREGATE', 'Pivot aggregate [%d] (%s) : Cell [%s ; %s] = %O',
+					//					 aggNum,
+					//					 info.cell[aggNum].aggDefn.name + (info.cell[aggNum].name ? ' -> ' + info.cell[aggNum].name : ''),
+					//					 rowVal.join(', '),
+					//					 colVal.join(', '),
+					//					 aggResult);
 
 					cellResults[aggNum][rowValIdx][colValIdx] = aggResult;
 				});
@@ -1361,20 +1365,39 @@ View.prototype.aggregate = function (cont) {
 				});
 				var aggResult = aggFun(_.flatten(_.pluck(self.data.data, colValIdx)));
 				pivotResults[aggNum][colValIdx] = aggResult;
-				debug.info('VIEW // AGGREGATE', 'Pivot aggregate [%d] (%s) : Col Val [%s] = %O',
-									 aggNum,
-									 info.pivot[aggNum].aggDefn.name + (info.pivot[aggNum].name ? ' -> ' + info.pivot[aggNum].name : ''),
-									 colVal.join(', '),
-									 aggResult);
+				//debug.info('VIEW // AGGREGATE', 'Pivot aggregate [%d] (%s) : Col Val [%s] = %O',
+				//					 aggNum,
+				//					 info.pivot[aggNum].aggDefn.name + (info.pivot[aggNum].name ? ' -> ' + info.pivot[aggNum].name : ''),
+				//					 colVal.join(', '),
+				//					 aggResult);
 			});
+		});
+	}
+
+	if (self.data.isPivot && self.aggregateSpec.all) {
+		_.each(self.aggregateSpec.all, function (spec, aggNum) {
+			var aggFun = info.all[aggNum].aggDefn.fun({
+				field: spec.field,
+				type: info.all[aggNum].typeInfo.type,
+				colConfig: info.all[aggNum].colConfig
+			});
+			var aggResult = aggFun(_.flatten(self.data.data));
+			//debug.info('VIEW // AGGREGATE', 'All aggregate [%d] (%s) = %O',
+			//					 aggNum,
+			//					 info.all[aggNum].aggDefn.name + (info.all[aggNum].name ? ' -> ' + info.all[aggNum].name : ''),
+			//					 aggResult);
+			allResults[aggNum] = aggResult;
 		});
 	}
 
 	self.data.agg = {
 		info: info,
-		group: groupResults,
-		pivot: pivotResults,
-		cell: cellResults
+		results: {
+			group: groupResults,
+			pivot: pivotResults,
+			cell: cellResults,
+			all: allResults
+		}
 	};
 
 	cont(true);

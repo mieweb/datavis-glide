@@ -2208,6 +2208,11 @@ PivotControl.prototype.triggerAggChange = function () {
 				fun: self.ui.aggFunDropdown.val(),
 				field: self.ui.aggFieldDropdown.val(),
 				name: 'Total'
+			}],
+			all: [{
+				fun: self.ui.aggFunDropdown.val(),
+				field: self.ui.aggFieldDropdown.val(),
+				name: 'Total'
 			}]
 		});
 

@@ -580,7 +580,7 @@ GridTable.prototype.drawBody_aggregates = function (data, tr, groupNum) {
 
 	_.each(getPropDef([], data, 'agg', 'info', 'group'), function (agg, aggNum) {
 		var aggType = agg.aggDefn.type || agg.typeInfo.type;
-		var aggResult = data.agg.group[aggNum][groupNum];
+		var aggResult = data.agg.results.group[aggNum][groupNum];
 		var text;
 
 		if (agg.aggDefn.inheritFormatting) {
@@ -1915,7 +1915,7 @@ GridTableGroupSummary.prototype.drawBody = function (data, typeInfo, columns, co
 
 		_.each(getPropDef([], data, 'agg', 'info', 'group'), function (agg, aggNum) {
 			var aggType = agg.aggDefn.type || agg.typeInfo.type;
-			var aggResult = data.agg.group[aggNum][groupNum];
+			var aggResult = data.agg.results.group[aggNum][groupNum];
 			var text;
 
 			if (agg.aggDefn.inheritFormatting) {
@@ -2231,7 +2231,7 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 		// Column #4: agg(rowGroup[3]) - rows in the group w/ State = "OH"
 
 		_.each(rowGroup, function (colGroup, pivotNum) {
-			var aggResult = data.agg.cell[0][groupNum][pivotNum];
+			var aggResult = data.agg.results.cell[0][groupNum][pivotNum];
 
 			rowAgg.push(aggResult);
 
@@ -2330,7 +2330,7 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 			.appendTo(tr);
 
 		_.each(data.colVals, function (colVal, colValIdx) {
-			var aggResult = data.agg.pivot[aggNum][colValIdx];
+			var aggResult = data.agg.results.pivot[aggNum][colValIdx];
 			if (agg.aggDefn.inheritFormatting) {
 				text = format(agg.colConfig, agg.typeInfo, aggResult, {
 					alwaysFormat: true,
@@ -2347,7 +2347,30 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 			var td = jQuery('<td>').text(text);
 			self.setAlignment(td, agg.colConfig, agg.typeInfo);
 			td.appendTo(tr);
-		})
+		});
+
+		if (getProp(data, 'agg', 'info', 'all', aggNum)) {
+			agg = data.agg.info.all[aggNum];
+			aggType = agg.aggDefn.type || agg.typeInfo.type;
+			aggResult = data.agg.results.all[aggNum];
+
+			if (agg.aggDefn.inheritFormatting) {
+				text = format(agg.colConfig, agg.typeInfo, aggResult, {
+					alwaysFormat: true,
+					overrideType: aggType
+				});
+			}
+			else {
+				text = format(null, null, aggResult, {
+					alwaysFormat: true,
+					overrideType: aggType
+				});
+			}
+
+			td = jQuery('<td>').text(text);
+			self.setAlignment(td, agg.colConfig, agg.typeInfo);
+			td.appendTo(tr);
+		}
 
 		self.ui.tbody.append(tr);
 	});
