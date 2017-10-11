@@ -2122,6 +2122,25 @@ PivotControl.prototype.draw = function (parent) {
 
 	self.addViewConfigChangeHandler('pivot');
 
+	var syncAgg = function (spec) {
+		if (getProp(spec, 'cell', 0, 'fun')) {
+			self.ui.aggFunDropdown.val(spec.cell[0].fun);
+			if (AGGREGATES[spec.cell[0].fun].needsField) {
+				self.ui.aggField.show();
+			}
+		}
+		if (getProp(spec, 'cell', 0, 'field')) {
+			self.ui.aggFieldDropdown.val(spec.cell[0].field);
+		}
+
+		debug.info('GRID // AGGREGATE CONTROL',
+							 'View set aggregate to: ' + JSON.stringify(spec));
+	};
+
+	self.view.on(View.events.aggregateSet, function (spec) {
+		syncAgg(spec)
+	}, { who: self });
+
 	return self.ui.root;
 };
 

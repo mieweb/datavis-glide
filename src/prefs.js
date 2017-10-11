@@ -69,6 +69,11 @@ Prefs.prototype.getPrefsFromView = function () {
 		prefs.pivot = pivotSpec;
 	}
 
+	var aggregateSpec = self.view.getAggregate();
+	if (aggregateSpec) {
+		prefs.aggregate = aggregateSpec;
+	}
+
 	return prefs;
 };
 
@@ -107,10 +112,17 @@ Prefs.prototype.apply = function (prefs, cont) {
 	}
 
 	if (isNothing(prefs.pivot)) {
-		self.view.clearPivot();
+		self.view.clearPivot(true);
 	}
 	else {
-		self.view.setPivot(prefs.pivot);
+		self.view.setPivot(prefs.pivot, true);
+	}
+
+	if (isNothing(prefs.aggregate)) {
+		self.view.clearAggregate();
+	}
+	else {
+		self.view.setAggregate(prefs.aggregate);
 	}
 
 	if (typeof cont === 'function') {

@@ -1235,7 +1235,8 @@ View.prototype.pivot = function () {
 // #setAggregate {{{2
 
 View.prototype.setAggregate = function (spec, opts) {
-	var self = this;
+	var self = this
+		, args = Array.prototype.slice.call(arguments);
 
 	opts = opts || {};
 	_.defaults(opts, {
