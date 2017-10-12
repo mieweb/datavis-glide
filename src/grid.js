@@ -944,11 +944,17 @@ Grid.prototype.addPivotButtons = function (parent) {
 	setProp(newAddCols, self.defn, 'table', 'whenPivot', 'addCols');
 	*/
 
+	var aggSpec;
+
+	self.view.on(View.events.aggregateSet, function (a) {
+		aggSpec = deepCopy(a);
+	});
+
 	makeToggleCheckbox(
 		self.defn,
 		['table', 'whenPivot', 'showTotalCol'],
 		true,
-		'Total Column',
+		'Total Row/Col',
 		parent,
 		function (isChecked) {
 			/*
@@ -963,8 +969,26 @@ Grid.prototype.addPivotButtons = function (parent) {
 			}
 			*/
 
-			self.gridTable.clear();
-			self.gridTable.draw(self.ui.grid, self.tableDoneCont/*, gridTableOpts*/);
+			var agg = self.view.getAggregate();
+
+			if (!isChecked) {
+				aggSpec = deepCopy(agg);
+				delete agg.group;
+				delete agg.pivot;
+				delete agg.all;
+			}
+			else {
+				console.log(aggSpec);
+				agg.group = aggSpec.group;
+				agg.pivot = aggSpec.pivot;
+				agg.all = aggSpec.all;
+			}
+
+			self.view.setAggregate(agg, {
+				sendEvent: false
+			});
+			//self.gridTable.clear();
+			//self.gridTable.draw(self.ui.grid, self.tableDoneCont/*, gridTableOpts*/);
 		}
 	);
 };
@@ -1171,6 +1195,7 @@ Grid.prototype.redraw = function () {
 
 	if (self.pivotControl === undefined) {
 		self.pivotControl = new PivotControl(self, self.defn, self.view, self.features, self.timing, {
+			/*
 			onAggregateChange: function (aggFun, aggField) {
 				if (!(self.gridTable instanceof GridTablePivot)) {
 					return;
@@ -1188,6 +1213,7 @@ Grid.prototype.redraw = function () {
 				self.gridTable.clear();
 				self.gridTable.draw(self.ui.grid, self.tableDoneCont);
 			}
+			*/
 		});
 		self.ui.pivotControl.children().remove();
 		self.pivotControl.draw(self.ui.pivotControl);
@@ -2206,35 +2232,18 @@ PivotControl.prototype.updateView = function () {
  */
 
 PivotControl.prototype.triggerAggChange = function () {
-	var self = this
-		, agg = AGGREGATES[self.ui.aggFunDropdown.val()];
+	var self = this;
+	var agg = AGGREGATES[self.ui.aggFunDropdown.val()];
+	var aggText = (agg.name || self.ui.aggFunDropdown.val())
+		+ (agg.needsField ? (' of ' + self.ui.aggFieldDropdown.val()) : '');
+	var aggSpec = objFromArray(['group', 'pivot', 'cell', 'all'], [[{
+		fun: self.ui.aggFunDropdown.val(),
+		field: agg.needsField && self.ui.aggFieldDropdown.val(),
+		name: aggText
+	}]]);
 
 	if (agg.needsField) {
 		self.ui.aggField.show();
-
-		self.view.setAggregate({
-			group: [{
-				fun: self.ui.aggFunDropdown.val(),
-				field: self.ui.aggFieldDropdown.val(),
-				name: 'Total'
-			}],
-			pivot: [{
-				fun: self.ui.aggFunDropdown.val(),
-				field: self.ui.aggFieldDropdown.val(),
-				name: 'Total'
-			}],
-			cell: [{
-				fun: self.ui.aggFunDropdown.val(),
-				field: self.ui.aggFieldDropdown.val(),
-				name: 'Total'
-			}],
-			all: [{
-				fun: self.ui.aggFunDropdown.val(),
-				field: self.ui.aggFieldDropdown.val(),
-				name: 'Total'
-			}]
-		});
-
 		if (typeof self.opts.onAggregateChange === 'function') {
 			self.opts.onAggregateChange(self.ui.aggFunDropdown.val(), self.ui.aggFieldDropdown.val());
 		}
@@ -2245,6 +2254,10 @@ PivotControl.prototype.triggerAggChange = function () {
 			self.opts.onAggregateChange(self.ui.aggFunDropdown.val());
 		}
 	}
+
+	self.view.setAggregate(aggSpec, {
+		dontSendEventTo: self
+	});
 };
 
 // #showPivotAggContainer {{{2

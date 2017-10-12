@@ -172,13 +172,15 @@ GridTable.prototype.setCss = function (elt, colName) {
 
 // #setAlignment {{{2
 
-GridTable.prototype.setAlignment = function (elt, colConfig, typeInfo) {
+GridTable.prototype.setAlignment = function (elt, colConfig, typeInfo, overrideType) {
 	colConfig = colConfig || {};
 	typeInfo = typeInfo || {};
 
+	var type = overrideType || typeInfo.type;
+
 	var alignment = colConfig && colConfig.cellAlignment;
 
-	if (alignment === undefined && (typeInfo.type === 'number' || typeInfo.type === 'currency')) {
+	if (alignment === undefined && (type === 'number' || type === 'currency')) {
 		alignment = 'right';
 	}
 
@@ -550,7 +552,7 @@ GridTable.prototype.drawHeader_aggregates = function (data, what, tr) {
 		var th = jQuery('<th>')
 			.append(span)
 			.appendTo(tr);
-		self.setAlignment(th, data.agg.info[what].colConfig, data.agg.info[what].typeInfo);
+		self.setAlignment(th, agg.colConfig, agg.typeInfo, agg.aggDefn.type);
 	});
 };
 
@@ -597,7 +599,7 @@ GridTable.prototype.drawBody_aggregates = function (data, tr, groupNum) {
 		}
 
 		var td = jQuery('<td>').text(text);
-		self.setAlignment(td, agg.colConfig, agg.typeInfo);
+		self.setAlignment(td, agg.colConfig, agg.typeInfo, agg.aggDefn.type);
 		td.appendTo(tr);
 	});
 };
@@ -2061,6 +2063,8 @@ GridTablePivot.prototype.drawHeader = function (columns, data, typeInfo, opts) {
 	var self = this;
 
 	var tr, span, th;
+	var aggInfo = data.agg.info.cell[0];
+	var aggType = aggInfo.aggDefn.type || aggInfo.typeInfo.type || 'string';
 
 	// This produces separate rows in the header for each pivot field.  That's what allows you to
 	// see the combinations of column values, like this:
@@ -2163,9 +2167,7 @@ GridTablePivot.prototype.drawHeader = function (columns, data, typeInfo, opts) {
 					self._addSortingToHeader(colVal, span, th);
 				}
 
-				if (getProp(opts, 'pivotConfig', 'aggField')) {
-					self.setAlignment(th, self.colConfig[opts.pivotConfig.aggField], typeInfo.get(opts.pivotConfig.aggField));
-				}
+				self.setAlignment(th, aggInfo.colConfig, aggInfo.typeInfo, aggType);
 			}
 			else {
 				lastColValCount += 1;
@@ -2174,17 +2176,17 @@ GridTablePivot.prototype.drawHeader = function (columns, data, typeInfo, opts) {
 
 		// Same logic as when the colVal changes.
 
-		if (!lastPivotField) {
-			th.attr('colspan',
-							lastColValCount
-							+ getPropDef(0, data, 'agg', 'info', 'group', 'length')
-							+ getPropDef(0, opts, 'addCols', 'length'));
-		}
-		else {
-			th.attr('colspan', lastColValCount);
-		}
+		th.attr('colspan', lastColValCount);
 
 		tr.append(th);
+
+		if (!lastPivotField) {
+			var numExtraCols = getPropDef(0, data, 'agg', 'info', 'group', 'length')
+				+ getPropDef(0, opts, 'addCols', 'length');
+			if (numExtraCols > 0) {
+				jQuery('<th>', { colspan: numExtraCols }).appendTo(tr);
+			}
+		}
 
 		// Render the user's custom-defined additional columns at the end of the last row of pivot field
 		// column values.
@@ -2280,9 +2282,7 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 			// REMOVED: How do we let the user set sizes &c. when doing a pivot table?
 			// self.setCss(td, col);
 
-			if (aggInfo.field) {
-				self.setAlignment(td, aggInfo.colConfig, aggInfo.typeInfo);
-			}
+			self.setAlignment(td, aggInfo.colConfig, aggInfo.typeInfo, aggType);
 
 			td.appendTo(tr);
 		});
@@ -2371,7 +2371,7 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 			}
 
 			var td = jQuery('<td>').text(text);
-			self.setAlignment(td, agg.colConfig, agg.typeInfo);
+			self.setAlignment(td, agg.colConfig, agg.typeInfo, agg.aggDefn.type);
 			td.appendTo(tr);
 		});
 
@@ -2394,7 +2394,7 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 			}
 
 			td = jQuery('<td>').text(text);
-			self.setAlignment(td, agg.colConfig, agg.typeInfo);
+			self.setAlignment(td, agg.colConfig, agg.typeInfo, agg.aggDefn.type);
 			td.appendTo(tr);
 		}
 
@@ -2425,4 +2425,3 @@ GridTablePivot.prototype.addWorkHandler = function () {
 		self.draw(self.root);
 	}, { who: self });
 };
-

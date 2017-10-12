@@ -913,9 +913,9 @@ function arrayCompare(a, b) {
 	return true;
 }
 
-function objFromArray(a) {
-	return _.reduce(a, function (o, x) {
-		o[x] = x;
+function objFromArray(a, v) {
+	return _.reduce(a, function (o, x, i) {
+		o[x] = v ? v[i % v.length] : x;
 		return o;
 	}, {});
 }
