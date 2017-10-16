@@ -453,7 +453,6 @@ View.prototype.sort = function (cont) {
 
 			var comparison = function (a, b) {
 				var result = !!(cmp(a.sortSource, b.sortSource) ^ (self.sortSpec.dir === 'DESC'));
-				console.log('%s %s %s', a.sortSource, result ? '<' : '>', b.sortSource);
 				return !!(cmp(a.sortSource, b.sortSource)
 									^ (self.sortSpec.dir === 'DESC'));
 			};
@@ -1087,6 +1086,11 @@ View.prototype.setPivot = function (spec, noUpdate, dontTell) {
 		}, 'Waiting to set pivot: ' + JSON.stringify(spec));
 	}
 
+	if (isNothing(self.groupSpec) && !isNothing(spec)) {
+		log.error('VIEW (' + self.name + ') // PIVOT', 'Will not set pivot to %O without a group', spec);
+		return false;
+	}
+
 	self.pivotSpec = spec;
 
 	self.fire(View.events.pivotSet, {
@@ -1125,6 +1129,12 @@ View.prototype.pivot = function () {
 		, colValsTree // Tree of all possible column value combinations.
 		, colVals     // Array of all possible column value combinations.
 	;
+
+	// FIXME Allow pivot without group.
+
+	if (!self.data.isGroup) {
+		return false;
+	}
 
 	var buildColValsTree = function (pivotFields) {
 		var colValsTree = {};
