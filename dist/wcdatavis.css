@@ -44,6 +44,14 @@
 	margin-left: 0;
 }
 
+.wcdv_grid_toolbar .buttons > span.fa {
+	color: #888;
+	font-size: 1.25em;
+}
+.wcdv_grid_toolbar .buttons > span.fa:hover {
+	color: #444;
+}
+
 /*
 .wcdv_grid_toolbar .buttons button {
 	background-color: transparent;
@@ -101,7 +109,6 @@
 }
 .wcdv_grid_toolbar .buttons {
 	border-top: 1px solid #737373;
-	display: none;
 	padding: 3px 4px;
 }
 .wcdv_grid_toolbar .showhide {
@@ -121,6 +128,7 @@
 
 .wcdv_grid_control {
 	padding-top: 4px;
+	display: none;
 	/*
 	 * Flexible display of group/filter/pivot controls.
 	 */

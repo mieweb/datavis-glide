@@ -537,7 +537,6 @@ var Grid = function (id, view, defn, tagOpts, cb) {
 			.appendTo(self.ui.root)
 			.droppable({
 				over: function (evt, ui) {
-					self.ui.gridToolBarButtons.show();
 					self.ui.gridControl.show();
 
 					// Need to recalculate the position of the droppable targets, because they are now
@@ -554,7 +553,9 @@ var Grid = function (id, view, defn, tagOpts, cb) {
 				self.toggleGrid();
 			})
 			.appendTo(self.ui.gridToolBar);
-		self.ui.gridToolBarButtons = jQuery('<div class="buttons">').appendTo(self.ui.gridToolBar);
+
+		self.ui.gridToolBarButtons = jQuery('<div class="buttons">')
+			.appendTo(self.ui.gridToolBar);
 
 		self.addHeaderWidgets(self.ui.gridToolBarHeading, doingServerFilter, !!self.tagOpts.runImmediately, id);
 		self.addCommonButtons(self.ui.gridToolBarButtons);
@@ -583,9 +584,22 @@ var Grid = function (id, view, defn, tagOpts, cb) {
 			.hide()
 			.appendTo(self.ui.gridToolBarButtons);
 		self.addPivotButtons(self.ui.toolbarPivot);
+
+		// This is the "gear" icon that shows/hides the controls below the toolbar.  The controls are
+		// used to set the group, pivot, aggregate, and filters.  Ideally the user only has to utilize
+		// these once, and then switches between perspectives to get the same effect.
+
+		jQuery(fontAwesome('f013'))
+			.addClass('wcdv_button pull-right')
+			.attr('title', MIE.trans('SHOWHIDEOPTS'))
+			.click(function (evt) {
+				self.ui.controls.slideToggle();
+				self.fire(Grid.events.showControls);
+			})
+			.appendTo(self.ui.gridToolBarButtons);
 	}
 
-	self.ui.gridControl = jQuery('<div>', { 'class': 'wcdv_grid_control' });
+	self.ui.controls = jQuery('<div>', { 'class': 'wcdv_grid_control' });
 	self.ui.groupControl = jQuery('<div>', { 'class': 'wcdv_group_control' });
 	self.ui.pivotControl = jQuery('<div>', { 'class': 'wcdv_pivot_control' });
 	self.ui.aggregateControl = jQuery('<div>', { 'class': 'wcdv_aggregate_control' });
@@ -599,7 +613,7 @@ var Grid = function (id, view, defn, tagOpts, cb) {
 		self.ui.grid.css({ 'overflow': 'auto' });
 	}
 
-	self.ui.gridControl
+	self.ui.controls
 		.append(self.ui.groupControl)
 		.append(self.ui.pivotControl)
 		.append(self.ui.aggregateControl)
@@ -614,7 +628,7 @@ var Grid = function (id, view, defn, tagOpts, cb) {
 
 		self.ui.footer = jQuery(document.getElementById(id + '_footer'))
 			.css('display', 'block')
-			.appendTo(self.ui.gridControl);
+			.appendTo(self.ui.controls);
 	}
 
 	var initialRender = true;
@@ -816,6 +830,8 @@ Grid.prototype.addHeaderWidgets = function (header, doingServerFilter, runImmedi
 
 	notHeader.appendTo(header);
 
+	// Create the down-chevron button that opens the grid toolbar.
+
 	self.ui.showHideButton = jQuery('<button type="button">')
 		.append(fontAwesome(runImmediately ? 'f077' : 'f078'))
 		.addClass('showhide pull-right')
@@ -823,19 +839,6 @@ Grid.prototype.addHeaderWidgets = function (header, doingServerFilter, runImmedi
 		.click(function (evt) {
 			evt.stopPropagation();
 			self.toggleGrid();
-		})
-		.appendTo(header);
-
-	// Create the down-chevron button that opens the grid toolbar.
-
-	jQuery('<button type="button">')
-		.append(fontAwesome('f013'))
-		.addClass('showhide pull-right')
-		.attr('title', MIE.trans('SHOWHIDEOPTS'))
-		.click(function (evt) {
-			evt.stopPropagation();
-			jQuery(this).parents('.wcdv_grid').find('.buttons').toggle();
-			self.fire(Grid.events.showControls);
 		})
 		.appendTo(header);
 };
@@ -1355,7 +1358,8 @@ Grid.prototype.hideGrid = function () {
 
 	debug.info('GRID', 'Hiding...');
 
-	self.ui.gridControl.slideUp({
+	self.ui.grid.hide({
+		duration: 0,
 		done: function () {
 			if (self.tagOpts.title) {
 				self.ui.showHideButton.removeClass('open').html(fontAwesome('f078'));
@@ -1378,7 +1382,8 @@ Grid.prototype.showGrid = function () {
 
 	debug.info('GRID', 'Showing...');
 
-	self.ui.gridControl.slideDown({
+	self.ui.grid.show({
+		duration: 0,
 		done: function () {
 			if (self.tagOpts.title) {
 				self.ui.showHideButton.addClass('open').html(fontAwesome('f077'));
@@ -1401,7 +1406,7 @@ Grid.prototype.showGrid = function () {
  */
 
 Grid.prototype.toggleGrid = function () {
-	if (this.ui.gridControl.css('display') === 'none') {
+	if (this.ui.grid.css('display') === 'none') {
 		this.showGrid();
 	}
 	else {
