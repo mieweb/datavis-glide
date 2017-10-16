@@ -914,6 +914,11 @@ View.prototype.setGroup = function (spec, noUpdate, dontTell) {
 		}, 'Waiting to set group: ' + JSON.stringify(spec));
 	}
 
+	if (isNothing(spec) && !isNothing(self.pivotSpec)) {
+		log.warn('VIEW (' + self.name + ') // SET GROUP', 'Having a pivot without a group is not allowed');
+		self.clearPivot(true);
+	}
+
 	self.groupSpec = spec;
 
 	self.fire(View.events.groupSet, {
@@ -1087,8 +1092,8 @@ View.prototype.setPivot = function (spec, noUpdate, dontTell) {
 	}
 
 	if (isNothing(self.groupSpec) && !isNothing(spec)) {
-		log.error('VIEW (' + self.name + ') // PIVOT', 'Will not set pivot to %O without a group', spec);
-		return false;
+		log.warn('VIEW (' + self.name + ') // SET PIVOT', 'Having a pivot without a group is not allowed');
+		self.clearPivot(noUpdate, dontTell);
 	}
 
 	self.pivotSpec = spec;
