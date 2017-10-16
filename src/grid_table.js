@@ -64,17 +64,7 @@ var GridTable = (function () {
 
 		self.needsRedraw = false;
 
-		if (self.features.limit) {
-			self._validateLimit();
-
-			self.scrollEvents = ['DOMContentLoaded', 'load', 'resize', 'scroll'].map(function (x) {
-				return x + '.wcdv_gt_' + self.UNIQUE_ID;
-			}).join(' ');
-		}
-
-		if (self.features.floatingHeader) {
-			self._validateFloatTableHeader();
-		}
+		self._validateFeatures();
 
 		self.colConfig = {};
 
@@ -91,6 +81,30 @@ mixinEventHandling(GridTable, 'GridTable', [
 		'columnResize' // Fired when a column is resized.
 	, 'unableToRender' // Fired when a grid table can't render the data in the view it's bound to.
 ]);
+
+// #_validateFeatures {{{2
+
+GridTable.prototype._validateFeatures = function () {
+	var self = this;
+
+	if (self.features.block && !jQuery.blockUI) {
+		log.error('GRID TABLE // CONFIG',
+							'Feature "block" requires BlockUI library, which is not present');
+		self.features.block = false;
+	}
+
+	if (self.features.limit) {
+		self._validateLimit();
+
+		self.scrollEvents = ['DOMContentLoaded', 'load', 'resize', 'scroll'].map(function (x) {
+			return x + '.wcdv_gt_' + self.UNIQUE_ID;
+		}).join(' ');
+	}
+
+	if (self.features.floatingHeader) {
+		self._validateFloatTableHeader();
+	}
+};
 
 // #_validateLimit {{{2
 
