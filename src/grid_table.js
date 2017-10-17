@@ -1929,28 +1929,7 @@ GridTableGroupSummary.prototype.drawBody = function (data, typeInfo, columns, co
 			;
 		});
 
-		_.each(getPropDef([], data, 'agg', 'info', 'group'), function (agg, aggNum) {
-			var aggType = agg.aggDefn.type || agg.typeInfo.type;
-			var aggResult = data.agg.results.group[aggNum][groupNum];
-			var text;
-
-			if (agg.aggDefn.inheritFormatting) {
-				text = format(agg.colConfig, agg.typeInfo, aggResult, {
-					alwaysFormat: true,
-					overrideType: aggType
-				});
-			}
-			else {
-				text = format(null, null, aggResult, {
-					alwaysFormat: true,
-					overrideType: aggType
-				});
-			}
-
-			td = jQuery('<td>').text(text);
-			self.setAlignment(td, agg.colConfig, agg.typeInfo);
-			td.appendTo(tr);
-		});
+		self.drawBody_aggregates(data, tr, groupNum);
 
 		// Generate the user's custom-defined additional columns.  If the `value` function returns an
 		// Element or jQuery instance, we just put that in the <TD> that we make.  Otherwise (e.g. it
