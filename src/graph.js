@@ -52,14 +52,14 @@ var linkHandler = (function () {
 
 	return {
 		u: function (defn, text, userId, opts) {
-			var elt = $('<a>', {
+			var elt = jQuery('<a>', {
 				href: '?f=admin&s=users&opp=vuser&user_id=' + userId + (opts.add_url ? opts.add_url : '')
 			}).text(text);
 			linkHandlerAddTarget(elt, opts);
 			return outerHtml(elt);
 		},
 		p: function (defn, text, patId, opts) {
-			var elt = $('<a>', {
+			var elt = jQuery('<a>', {
 				href: '?f=chart&s=pat&pat_id=' + patId + (opts.add_url ? opts.add_url : '')
 			}).text(text);
 			linkHandlerAddTarget(elt, opts);
@@ -70,14 +70,14 @@ var linkHandler = (function () {
 				emitWarning(defn, 'd', 'Usage of {$d} in grid without _PATIENT_ID column');
 				return text;
 			}
-			var elt = $('<a>', {
+			var elt = jQuery('<a>', {
 				href: '?f=chart&s=doc&doc_id=' + docId + '&pat_id=' + row._PATIENT_ID + (opts.add_url ? opts.add_url : '')
 			}).text(text);
 			linkHandlerAddTarget(elt, opts);
 			return outerHtml(elt);
 		},
 		w: function (defn, text, url, opts) {
-			var elt = $('<a>', {
+			var elt = jQuery('<a>', {
 				href: url
 			}).text(text);
 			linkHandlerAddTarget(elt, opts);
@@ -110,14 +110,14 @@ var linkHandler = (function () {
 				params.enc_lay_id = row._EXAM_LAYOUT;
 			}
 
-			elt = $('<a>', {
+			elt = jQuery('<a>', {
 				href: '?' + $.param(params) + (opts.add_url ? opts.add_url : '')
 			}).text(text);
 			linkHandlerAddTarget(elt, opts);
 			return outerHtml(elt);
 		},
 		a: function (defn, text, aptId, opts) {
-			var elt = $('<a>', {
+			var elt = jQuery('<a>', {
 				href: '?f=scheduler&apt_id=' + aptId + (opts.add_url ? opts.add_url : '')
 			}).text(text);
 			linkHandlerAddTarget(elt, opts);
@@ -128,7 +128,7 @@ var linkHandler = (function () {
 				emitWarning(defn, 'o', 'Usage of {$o} in grid without _PATIENT_ID column');
 				return text;
 			}
-			var elt = $('<a>', {
+			var elt = jQuery('<a>', {
 				href: '?f=chart&s=pat&t=obs&obopp=edit&pat_id=' + row._PATIENT_ID + '&obs_id=' + obsId + (opts.add_url ? opts.add_url : '')
 			}).text(text);
 			linkHandlerAddTarget(elt, opts);
@@ -139,7 +139,7 @@ var linkHandler = (function () {
 				emitWarning(defn, 'i', 'Usage of {$i} in grid without _PATIENT_ID column');
 				return text;
 			}
-			var elt = $('<a>', {
+			var elt = jQuery('<a>', {
 				href: '?f=chart&s=pat&v=dashboard&t=ViewIncident&pat_id=' + row._PATIENT_ID + '&inc_id=' + incId + (opts.add_url ? opts.add_url : '')
 			}).text(text);
 			linkHandlerAddTarget(elt, opts);
@@ -224,7 +224,7 @@ function makeCellRenderer(defn) {
 			return defaultHtml;
 		}
 
-		var node = $(defaultHtml);
+		var node = jQuery(defaultHtml);
 
 		if (getProp(defn, 'table', 'enableEditing')) {
 			delConfig = getProp(defn, 'table', 'editing', 'deleting');
@@ -237,7 +237,7 @@ function makeCellRenderer(defn) {
 		var link = buildLink(row['_ORIG_' + dataField] || value, row, node.text());
 		node.text('');
 		node.append(link);
-		var dummy = $('<div>');
+		var dummy = jQuery('<div>');
 		dummy.append(node);
 		return dummy.html();
 	};

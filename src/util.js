@@ -992,7 +992,7 @@ var makeSuper = function (me, parent) {
  */
 
 function outerHtml(elt) {
-	return $('<div>').append(elt).html();
+	return jQuery('<div>').append(elt).html();
 }
 
 /**

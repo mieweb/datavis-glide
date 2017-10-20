@@ -242,7 +242,7 @@ GridTable.prototype._addSortingToHeader = function (orientation, spec, headingSp
 	};
 
 	var onClick = function () {
-		var cloneSortSpan = $(this).siblings('span.' + sortIndicatorClass);
+		var cloneSortSpan = jQuery(this).siblings('span.' + sortIndicatorClass);
 		jQuery('span.' + sortIndicatorClass).hide();
 		cloneSortSpan.show();
 
@@ -926,7 +926,7 @@ GridTablePlain.prototype.drawHeader = function (columns, data, typeInfo, opts) {
 					// instead of the original (variable `filterTh` holds the original).  This jQuery will
 					// always do the right thing.
 
-					var thead = $(this).closest('thead');
+					var thead = jQuery(this).closest('thead');
 					var tr = thead.children('tr:eq(1)');
 					var th = tr.children('th.filter_col_' + colIndex);
 
