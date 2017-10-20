@@ -600,10 +600,10 @@ var Grid = function (id, view, defn, tagOpts, cb) {
 	}
 
 	self.ui.controls = jQuery('<div>', { 'class': 'wcdv_grid_control' });
+	self.ui.filterControl = jQuery('<div>', { 'class': 'wcdv_filter_control' });
 	self.ui.groupControl = jQuery('<div>', { 'class': 'wcdv_group_control' });
 	self.ui.pivotControl = jQuery('<div>', { 'class': 'wcdv_pivot_control' });
 	self.ui.aggregateControl = jQuery('<div>', { 'class': 'wcdv_aggregate_control' });
-	self.ui.filterControl = jQuery('<div>', { 'class': 'wcdv_filter_control' });
 	self.ui.grid = jQuery('<div>', { 'id': defn.table.id, 'class': 'wcdv_grid_table' });
 
 	// The user has fixed the height of the containing grid, so we will need to have the browser put
@@ -614,10 +614,10 @@ var Grid = function (id, view, defn, tagOpts, cb) {
 	}
 
 	self.ui.controls
+		.append(self.ui.filterControl)
 		.append(self.ui.groupControl)
 		.append(self.ui.pivotControl)
 		.append(self.ui.aggregateControl)
-		.append(self.ui.filterControl)
 		.appendTo(self.ui.gridToolBarButtons);
 
 	self.ui.grid.appendTo(self.ui.root);

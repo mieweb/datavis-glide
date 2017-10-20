@@ -1031,12 +1031,12 @@ View.prototype.filter = function (cont) {
 
 	var i0 = {
 		val: 0
-	}, i_step = 100;
+	}, i_step = self.filterProgress ? 100 : self.data.data.length;
 	var newData = [];
 
 	var doFilter = function () {
-		debug.info('VIEW (' + self.name + ') // FILTER',
-							 'Filtering rows ' + i0.val + ' through ' + (i0.val + i_step));
+		//debug.info('VIEW (' + self.name + ') // FILTER',
+		//					 'Filtering rows ' + i0.val + ' through ' + (i0.val + i_step));
 
 		for (i = i0.val; i < self.data.data.length && i < i0.val + i_step; i += 1) {
 			if (passesAllFilters(self.data.data[i])) {

@@ -359,7 +359,7 @@ AGGREGATES.average = {
 // .groupConcat {{{1
 
 AGGREGATES.groupConcat = {
-	name: 'Show Values',
+	name: 'Values',
 	fun: function (opts) {
 		opts = opts || {};
 		if (_.isUndefined(opts.field)) {
@@ -389,7 +389,7 @@ AGGREGATES.groupConcat = {
 // .groupConcatDistinct {{{1
 
 AGGREGATES.groupConcatDistinct = {
-	name: 'Show Distinct Values',
+	name: 'Distinct Values',
 	fun: function (opts) {
 		opts = opts || {};
 		if (_.isUndefined(opts.field)) {
