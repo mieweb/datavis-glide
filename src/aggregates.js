@@ -513,7 +513,7 @@ AGGREGATES.min = {
 			return invokeAggregate(data, function (acc, next) {
 				var n = getRealValue(next[opts.field]);
 				return opts.compare(n, acc) ? n : acc;
-			}, getRealValue(data[0].rowData[opts.field]));
+			}, data.length > 0 ? getRealValue(data[0].rowData[opts.field]) : '');
 		};
 	},
 	canBePivotCell: true,
@@ -551,7 +551,7 @@ AGGREGATES.max = {
 			return invokeAggregate(data, function (acc, next) {
 				var n = getRealValue(next[opts.field]);
 				return opts.compare(n, acc) ? acc : n;
-			}, getRealValue(data[0].rowData[opts.field]));
+			}, data.length > 0 ? getRealValue(data[0].rowData[opts.field]) : '');
 		};
 	},
 	canBePivotCell: true,
