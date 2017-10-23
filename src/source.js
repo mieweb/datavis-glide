@@ -58,8 +58,14 @@ var Filter = function (config) {
 		, method
 		, operator;
 
+	if (config.inputName && !config.paramName) {
+		config.paramName = config.inputName;
+	}
+	else if (config.paramName && !config.inputName) {
+		config.inputName = config.paramName;
+	}
+
 	_.defaults(config, {
-		inputName: config.paramName,
 		required: false,
 		defaultValue: null
 	});
