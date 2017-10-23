@@ -314,11 +314,11 @@ View.prototype.sort = function (cont) {
 
 		if (fti.needsDecoding) {
 			if (!fti.field) {
-				log.error('Unable to sort: cannot decode unknown field {spec = %O, typeInfo = %O}', spec, fti.asMap());
+				log.error('Unable to sort: cannot decode unknown field {spec = %O, typeInfo = %O}', spec, fti);
 				return null;
 			}
 
-			debug.info('VIEW (' + self.name + ') // SORT', 'Decoding data before sorting: %O', spec);
+			debug.info('VIEW (' + self.name + ') // SORT', 'Decoding data before sorting {spec = %O, typeInfo = %O}', spec, fti);
 
 			if (self.data.isPlain) {
 				self.source.convertAll(self.data.data, fti.field);

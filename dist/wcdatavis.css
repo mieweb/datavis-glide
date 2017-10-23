@@ -369,6 +369,7 @@ tr.wcdvgrid_more td {
 	cursor: pointer;
 }
 
+/*
 .wcdv_grid .tabletool .thead {
 	overflow: initial;
 }
@@ -380,6 +381,7 @@ tr.wcdvgrid_more td {
 .wcdv_grid .tabletool.ttsticky .outer.thead .inner {
 	overflow: initial;
 }
+*/
 
 .ui-progressbar.wcdvgrid_progressbar {
 	height: 32px;
