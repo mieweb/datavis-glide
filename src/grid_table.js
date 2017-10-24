@@ -2006,6 +2006,8 @@ GridTableGroupSummary.prototype.drawHeader = function (columns, data, typeInfo, 
 		, span
 		, th;
 
+	self.csv.addRow();
+
 	_.each(data.groupFields, function (field, fieldIdx) {
 		span = jQuery('<span>').text(field);
 
@@ -2013,6 +2015,8 @@ GridTableGroupSummary.prototype.drawHeader = function (columns, data, typeInfo, 
 			.attr('data-wcdv-field', field)
 			.append(span)
 			._makeDraggableField();
+
+		self.csv.addCol(field);
 
 		self._addSortingToHeader('vertical', {groupFieldIndex: fieldIdx}, span);
 
@@ -2039,12 +2043,15 @@ GridTableGroupSummary.prototype.drawBody = function (data, typeInfo, columns, co
 		var td;
 		var rowVal = data.rowVals[groupNum];
 
+		self.csv.addRow();
+
 		_.each(rowVal, function (rowValElt, rowValIdx) {
 			jQuery('<th>')
 				.addClass('wcdv_group_value')
 				.append(jQuery('<span>').addClass('wcdv_group_value').text(rowValElt))
 				.appendTo(tr)
 			;
+			self.csv.addCol(rowValElt);
 		});
 
 		self.drawBody_aggregates(data, tr, groupNum);
@@ -2089,6 +2096,7 @@ GridTableGroupSummary.prototype.drawBody = function (data, typeInfo, columns, co
 			}
 
 			td.appendTo(tr);
+			self.csv.addCol(td.text());
 		});
 
 		self.ui.tbody.append(tr);
