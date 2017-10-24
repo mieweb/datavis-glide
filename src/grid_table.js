@@ -26,6 +26,11 @@ Csv.prototype.addRow = function () {
 Csv.prototype.addCol = function (x) {
 	var self = this;
 
+	if (self.lastRow == null) {
+		// LMGTFY
+		self.addRow();
+	}
+
 	self.lastRow.push(x);
 };
 
@@ -651,11 +656,13 @@ GridTable.prototype.drawHeader_aggregates = function (data, what, tr) {
 	var self = this;
 
 	_.each(getPropDef([], data, 'agg', 'info', what), function (agg, aggNum) {
+		var text = agg.name || agg.aggDefn.name;
 		var span = jQuery('<span>')
-			.text(agg.name || agg.aggDefn.name);
+			.text(text);
 		var th = jQuery('<th>')
 			.append(span)
 			.appendTo(tr);
+		self.csv.addCol(text);
 		self._addSortingToHeader('vertical', {aggType: what, aggNum: aggNum}, span);
 		self.setAlignment(th, agg.colConfig, agg.typeInfo, agg.aggDefn.type);
 	});
@@ -673,6 +680,7 @@ GridTable.prototype.drawHeader_addCols = function (tr, typeInfo, opts) {
 			th = jQuery('<th>')
 				.append(span)
 				.appendTo(tr);
+			self.csv.addCol(addCol.name);
 			if (getProp(opts, 'pivotConfig', 'aggField')) {
 				self.setAlignment(th, self.colConfig[opts.pivotConfig.aggField], typeInfo.get(opts.pivotConfig.aggField));
 			}
@@ -704,6 +712,7 @@ GridTable.prototype.drawBody_aggregates = function (data, tr, groupNum) {
 		}
 
 		var td = jQuery('<td>').text(text);
+		self.csv.addCol(text);
 		self.setAlignment(td, agg.colConfig, agg.typeInfo, agg.aggDefn.type);
 		td.appendTo(tr);
 	});
@@ -2192,6 +2201,7 @@ GridTablePivot.prototype.drawHeader = function (columns, data, typeInfo, opts) {
 		var lastPivotField = pivotFieldNum === data.pivotFields.length - 1;
 
 		tr = jQuery('<tr>'); // Create the row for the pivot field.
+		self.csv.addRow();
 
 		// Create headers for the fields that we've grouped by.  The headers are the names of those
 		// fields.  We only do this for the last row of the header, i.e. the final pivot field.
@@ -2205,6 +2215,7 @@ GridTablePivot.prototype.drawHeader = function (columns, data, typeInfo, opts) {
 		if (lastPivotField) {
 			_.each(data.groupFields, function (field, fieldIdx) {
 				span = jQuery('<span>').text(field);
+				self.csv.addCol(field);
 
 				th = jQuery('<th>')
 					.attr('data-wcdv-field', field)
@@ -2221,6 +2232,9 @@ GridTablePivot.prototype.drawHeader = function (columns, data, typeInfo, opts) {
 		}
 		else {
 			tr.append(jQuery('<th>', { colspan: data.groupFields.length }));
+			for (var i = 0; i < data.groupFields.length; i += 1) {
+				self.csv.addCol('');
+			}
 		}
 
 		// Create headers for the fields that we've pivotted by.  The headers are the column values for
@@ -2252,6 +2266,10 @@ GridTablePivot.prototype.drawHeader = function (columns, data, typeInfo, opts) {
 
 					th.attr('colspan', lastColValCount);
 					tr.append(th);
+
+					for (var i = 0; i < lastColValCount - 1; i += 1) {
+						self.csv.addCol('');
+					}
 				}
 
 				// Update the tracking information and reset the counter to one.
@@ -2260,6 +2278,7 @@ GridTablePivot.prototype.drawHeader = function (columns, data, typeInfo, opts) {
 				lastColValCount = 1;
 
 				span = jQuery('<span>').text(colVal);
+				self.csv.addCol(colVal);
 
 				th = jQuery('<th>')
 					.append(span);
@@ -2282,8 +2301,11 @@ GridTablePivot.prototype.drawHeader = function (columns, data, typeInfo, opts) {
 		// Same logic as when the colVal changes.
 
 		th.attr('colspan', lastColValCount);
-
 		tr.append(th);
+
+		for (var i = 0; i < lastColValCount - 1; i += 1) {
+			self.csv.addCol('');
+		}
 
 		if (!lastPivotField) {
 			var numExtraCols = getPropDef(0, data, 'agg', 'info', 'group', 'length')
@@ -2328,6 +2350,7 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 
 	_.each(data.data, function (rowGroup, groupNum) {
 		var tr = jQuery('<tr>');
+		self.csv.addRow();
 
 		// Create the cells that show the values of the grouped columns.
 		//
@@ -2357,6 +2380,7 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 			}
 			span.appendTo(th);
 			th.appendTo(tr);
+			self.csv.addCol(span.text());
 
 			if (rowValIndex === data.groupFields.length - 1) {
 				self._addSortingToHeader('horizontal', {rowVal: data.rowVals[groupNum], aggNum: 0}, span);
@@ -2400,6 +2424,7 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 			}
 
 			var td = jQuery('<td>').text(text);
+			self.csv.addCol(text);
 			// REMOVED: How do we let the user set sizes &c. when doing a pivot table?
 			// self.setCss(td, col);
 
@@ -2450,6 +2475,7 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 			}
 
 			td.appendTo(tr);
+			self.csv.addCol(td.text());
 		});
 
 		self.ui.tbody.append(tr);
@@ -2461,12 +2487,16 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 		var text;
 
 		tr = jQuery('<tr>');
+		self.csv.addRow();
 
 		if (aggNum === 0) {
 			tr.addClass('wcdv_gridtable_agg_pivot');
 		}
 
 		if (data.groupFields.length > 1) {
+			for (var i = 0; i < data.groupFields.length - 1; i += 1) {
+				self.csv.addCol('');
+			}
 			jQuery('<th>')
 				.attr({'colspan': data.groupFields.length - 1})
 				.appendTo(tr)
@@ -2478,6 +2508,8 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 
 		span.appendTo(th);
 		th.appendTo(tr);
+
+		self.csv.addCol(agg.name || agg.aggDefn.name);
 
 		self._addSortingToHeader('horizontal', {aggType: 'pivot', aggNum: 0}, span);
 
@@ -2497,6 +2529,7 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 			}
 
 			var td = jQuery('<td>').text(text);
+			self.csv.addCol(text);
 			self.setAlignment(td, agg.colConfig, agg.typeInfo, agg.aggDefn.type);
 			td.appendTo(tr);
 		});
@@ -2520,6 +2553,7 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 			}
 
 			td = jQuery('<td>').text(text);
+			self.csv.addCol(text);
 			self.setAlignment(td, agg.colConfig, agg.typeInfo, agg.aggDefn.type);
 			td.appendTo(tr);
 		}
