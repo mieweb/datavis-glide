@@ -1108,6 +1108,43 @@ function makeToggleCheckbox(rootObj, path, startChecked, text, parent, after) {
 
 // makeRadioButtons {{{2
 
+/**
+ * @typedef makeRadioButtons_values
+ *
+ * @property {string} label
+ *
+ * @property {string} value
+ */
+
+/**
+ * @param {Object} rootObj
+ * Object to update when radio button is selected.
+ *
+ * @param {string[]} path
+ * Path within the object to set the value of the selected radio button.
+ *
+ * @param {string} def
+ * Default value to set in the object.
+ *
+ * @param {string} [label]
+ * Label to put before the group of radio buttons.
+ *
+ * @param {string} name
+ * Name of the form variable.
+ *
+ * @param {Array.<string|makeRadioButtons_values>} values
+ * Possible values to create radio buttons for.
+ *
+ * @param {function} [conv]
+ * Pass selected value through this function to convert it (e.g. "true" -> 1).
+ *
+ * @param {function} [onChange]
+ * Function to call when the value is changed.
+ *
+ * @param {Element|jQuery} parent
+ * Element to place the radio buttons within.
+ */
+
 function makeRadioButtons(rootObj, path, def, label, name, values, conv, onChange, parent) {
 	setPropDef(def, rootObj, path);
 	var initial = getProp(rootObj, path);

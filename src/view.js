@@ -91,7 +91,7 @@ var View = function (source, name, opts) {
 	var self = this;
 
 	opts = deepDefaults(opts, {
-		saveViewConfig: false,
+		saveViewConfig: true,
 		groupIsPivot: false
 	});
 
@@ -785,6 +785,19 @@ View.prototype.setFilter = function (spec, progress, opts) {
 		self.wasPreviouslyFiltered = true;
 	}
 
+	if (self.typeInfo == null) {
+		return self.getTypeInfo(function () {
+			self.setFilter.apply(self, args);
+		});
+	}
+
+	_.each(spec, function (fieldSpec, field) {
+		if (self.typeInfo.get(field) == null) {
+			log.error('Ignoring filter on field "' + field + '" because it doesn\'t exist in the data');
+			delete spec[field];
+		}
+	});
+
 	self.filterSpec = spec;
 	self.filterProgress = progress;
 
@@ -1114,6 +1127,32 @@ View.prototype.setGroup = function (spec, noUpdate, dontTell) {
 		self.clearPivot(true);
 	}
 
+	if (spec != null) {
+		// Make sure we have typeInfo so we can perform the next check.
+
+		if (self.typeInfo == null) {
+			return self.getTypeInfo(function () {
+				self.setFilter.apply(self, args);
+			});
+		}
+
+		// Remove any fields that don't exist in the data (according to typeInfo).
+
+		spec.fieldNames = _.filter(spec.fieldNames, function (field) {
+			if (self.typeInfo.get(field) == null) {
+				log.error('Ignoring group on field "' + field + '" because it doesn\'t exist in the data');
+				return false;
+			}
+			return true;
+		});
+
+		// Don't do anything if we're not grouping by any fields.
+
+		if (spec.fieldNames.length === 0) {
+			return false;
+		}
+	}
+
 	self.groupSpec = spec;
 
 	self.fire(View.events.groupSet, {
@@ -1291,6 +1330,32 @@ View.prototype.setPivot = function (spec, noUpdate, dontTell) {
 		self.clearPivot(noUpdate, dontTell);
 	}
 
+	if (spec != null) {
+		// Make sure we have typeInfo so we can perform the next check.
+
+		if (self.typeInfo == null) {
+			return self.getTypeInfo(function () {
+				self.setFilter.apply(self, args);
+			});
+		}
+
+		// Remove any fields that don't exist in the data (according to typeInfo).
+
+		spec.fieldNames = _.filter(spec.fieldNames, function (field) {
+			if (self.typeInfo.get(field) == null) {
+				log.error('Ignoring pivot on field "' + field + '" because it doesn\'t exist in the data');
+				return false;
+			}
+			return true;
+		});
+
+		// Don't do anything if we're not grouping by any fields.
+
+		if (spec.fieldNames.length === 0) {
+			return false;
+		}
+	}
+
 	self.pivotSpec = spec;
 
 	self.fire(View.events.pivotSet, {
@@ -1465,6 +1530,27 @@ View.prototype.setAggregate = function (spec, opts) {
 	if (!self.aggregateSpec) {
 		self.aggregateSpec = {};
 	}
+
+	// Make sure we have typeInfo so we can perform the next check.
+
+	if (self.typeInfo == null) {
+		return self.getTypeInfo(function () {
+			self.setFilter.apply(self, args);
+		});
+	}
+
+	// Remove any fields that don't exist in the data (according to typeInfo).
+
+	_.each(spec, function (aggSpec, aggType) {
+		aggSpec = _.filter(aggSpec, function(agg) {
+			if (agg.needsField && agg.field != null && self.typeInfo.get(agg.field) == null) {
+				log.error('Ignoring aggregate "' + (agg.name || (agg.aggDefn && agg.aggDefn.name)) + '" on field "' + agg.field + '" because it doesn\'t exist in the data');
+				return false;
+			}
+			return true;
+		});
+		spec[aggType] = aggSpec;
+	});
 
 	_.extend(self.aggregateSpec, spec);
 
