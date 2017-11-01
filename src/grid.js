@@ -68,13 +68,22 @@ function determineColumns(defn, data, typeInfo) {
 
 	validateUserColumnSpec(defn, data, typeInfo);
 
-	if (defn.table.columns) {
+	if (getProp(defn, 'table', 'columns')) {
 		columns = _.pluck(defn.table.columns, 'field');
 	}
-	else {
+	else if (typeInfo.size() > 0) {
 		columns = _.reject(typeInfo.keys(), function (field) {
 			return field.charAt(0) === '_';
 		});
+	}
+	else if (data.isPlain && data.data.length > 0) {
+		columns = _.keys(data.data[0].rowData);
+	}
+	else if (data.isGroup && data.data[0].length > 0) {
+		columns = _.keys(data.data[0][0].rowData);
+	}
+	else if (data.isPivot && data.data[0][0].length > 0) {
+		columns = _.keys(data.data[0][0][0].rowData);
 	}
 
 	debug.info('DETERMINE COLUMNS', 'Columns = %O', columns);
@@ -558,32 +567,44 @@ var Grid = function (id, view, defn, tagOpts, cb) {
 			.appendTo(self.ui.gridToolBar);
 
 		self.addHeaderWidgets(self.ui.gridToolBarHeading, doingServerFilter, !!self.tagOpts.runImmediately, id);
-		self.addCommonButtons(self.ui.gridToolBarButtons);
+
+		self.ui.toolbar = {};
+
+		self.ui.toolbar.source = jQuery('<div>')
+			.addClass('wcdv_toolbar_section')
+			.appendTo(self.ui.gridToolBarButtons);
+		self.addSourceButtons(self.ui.toolbar.source);
+		self.view.source.setToolbar(self.ui.toolbar.source);
+
+		self.ui.toolbar.common = jQuery('<div>')
+			.addClass('wcdv_toolbar_section')
+			.appendTo(self.ui.gridToolBarButtons);
+		self.addCommonButtons(self.ui.toolbar.common);
 
 		if (self.view.opts.saveViewConfig) {
-			self.ui.toolbarPrefs = jQuery('<div>')
+			self.ui.toolbar.prefs = jQuery('<div>')
 				.addClass('wcdv_toolbar_section')
 				.appendTo(self.ui.gridToolBarButtons);
-			self.addPrefsButtons(self.ui.toolbarPrefs);
+			self.addPrefsButtons(self.ui.toolbar.prefs);
 		}
 
-		self.ui.toolbarPlain = jQuery('<div>')
+		self.ui.toolbar.plain = jQuery('<div>')
 			.addClass('wcdv_toolbar_section')
 			.hide()
 			.appendTo(self.ui.gridToolBarButtons);
-		self.addPlainButtons(self.ui.toolbarPlain);
+		self.addPlainButtons(self.ui.toolbar.plain);
 
-		self.ui.toolbarGroup = jQuery('<div>')
+		self.ui.toolbar.group = jQuery('<div>')
 			.addClass('wcdv_toolbar_section')
 			.hide()
 			.appendTo(self.ui.gridToolBarButtons);
-		self.addGroupButtons(self.ui.toolbarGroup);
+		self.addGroupButtons(self.ui.toolbar.group);
 
-		self.ui.toolbarPivot = jQuery('<div>')
+		self.ui.toolbar.pivot = jQuery('<div>')
 			.addClass('wcdv_toolbar_section')
 			.hide()
 			.appendTo(self.ui.gridToolBarButtons);
-		self.addPivotButtons(self.ui.toolbarPivot);
+		self.addPivotButtons(self.ui.toolbar.pivot);
 
 		// This is the "gear" icon that shows/hides the controls below the toolbar.  The controls are
 		// used to set the group, pivot, aggregate, and filters.  Ideally the user only has to utilize
@@ -843,6 +864,20 @@ Grid.prototype.addHeaderWidgets = function (header, doingServerFilter, runImmedi
 		.appendTo(header);
 };
 
+// #addSourceButtons {{{2
+
+Grid.prototype.addSourceButtons = function (toolbar) {
+	var self = this;
+
+	self.ui.refreshLink = jQuery('<button>')
+		.append(fontAwesome('F021'))
+		.append('Refresh')
+		.on('click', function () {
+			self.refresh();
+		})
+		.appendTo(toolbar);
+};
+
 // #addCommonButtons {{{2
 
 /**
@@ -854,14 +889,6 @@ Grid.prototype.addHeaderWidgets = function (header, doingServerFilter, runImmedi
 Grid.prototype.addCommonButtons = function (toolbar) {
 	var self = this;
 	var isVisible = true; // If true, the grid is not currently hidden.
-
-	self.ui.refreshLink = jQuery('<button>')
-		.append(fontAwesome('F021'))
-		.append('Refresh')
-		.on('click', function () {
-			self.refresh();
-		})
-		.appendTo(toolbar);
 
 	self.ui.exportBtn = jQuery('<button>', {'disabled': true})
 		.append(fontAwesome('F14C'))
@@ -1239,9 +1266,9 @@ Grid.prototype.redraw = function () {
 
 			debug.info('GRID', 'Creating pivot grid table');
 
-			self.ui.toolbarPlain.hide();
-			self.ui.toolbarGroup.hide();
-			self.ui.toolbarPivot.show();
+			self.ui.toolbar.plain.hide();
+			self.ui.toolbar.group.hide();
+			self.ui.toolbar.pivot.show();
 		}
 		else if ((ops && ops.group) || self.view.getGroup()) {
 			switch (self.defn.table.groupMode) {
@@ -1257,9 +1284,9 @@ Grid.prototype.redraw = function () {
 
 			debug.info('GRID', 'Creating group grid table');
 
-			self.ui.toolbarPlain.hide();
-			self.ui.toolbarGroup.show();
-			self.ui.toolbarPivot.hide();
+			self.ui.toolbar.plain.hide();
+			self.ui.toolbar.group.show();
+			self.ui.toolbar.pivot.hide();
 		}
 		else {
 			gridTableCtor = GridTablePlain;
@@ -1268,9 +1295,9 @@ Grid.prototype.redraw = function () {
 
 			debug.info('GRID', 'Creating plain grid table');
 
-			self.ui.toolbarPlain.show();
-			self.ui.toolbarGroup.hide();
-			self.ui.toolbarPivot.hide();
+			self.ui.toolbar.plain.show();
+			self.ui.toolbar.group.hide();
+			self.ui.toolbar.pivot.hide();
 		}
 
 		if (self.gridTable) {
@@ -1581,33 +1608,36 @@ Grid.prototype.normalize = function (defn) {
 
 	defn.normalized = true;
 
-	deepDefaults(defn, {
+	deepDefaults(true, defn, {
 		table: {
-			groupMode: 'detail'
+			groupMode: 'detail',
+			features: {
+				sort: true,
+				filter: true,
+				group: true,
+				pivot: true,
+				rowSelect: false,
+				rowReorder: false,
+				add: false,
+				edit: false,
+				delete: false,
+				limit: true,
+				floatingHeader: true,
+				block: false,
+				progress: false
+			},
+			limit: {
+				method: 'more',
+				threshold: 100,
+				chunkSize: 50
+			}
 		}
 	});
 
-	self.normalizeLimit(defn);
 	self.normalizeColumns(defn);
 
 	if (getProp(defn, 'table', 'columns') !== undefined) {
 		defn.table.columns_map = _.indexBy(defn.table.columns, 'field');
-	}
-};
-
-// #normalizeLimit {{{2
-
-Grid.prototype.normalizeLimit = function (defn) {
-	var self = this;
-
-	if (defn.table.features.limit) {
-		defn.table.limit = defn.table.limit || {};
-
-		_.defaults(defn.table.limit, {
-			method: 'more',
-			threshold: 100,
-			chunkSize: 50
-		});
 	}
 };
 
@@ -1645,7 +1675,7 @@ Grid.prototype.normalizeColumns = function (defn) {
 
 	self.colConfig = {};
 
-	_.each(defn.table.columns, function (col) {
+	_.each(getPropDef([], defn, 'table', 'columns'), function (col) {
 		self.colConfig[col.field] = col;
 	});
 };

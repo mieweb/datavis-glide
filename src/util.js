@@ -398,7 +398,15 @@ function isEmpty(o) {
 
 function deepDefaults() {
 	var args = Array.prototype.slice.call(arguments)
-		, base = deepCopy(args.shift());
+		, base;
+
+	if (args[0] === true) {
+		args.shift();
+		base = args.shift();
+	}
+	else {
+		base = deepCopy(args.shift());
+	}
 
 	var f = function (a, b) {
 		_.each(b, function (v, k) {

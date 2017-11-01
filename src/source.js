@@ -1100,6 +1100,64 @@ HttpSource.prototype.clearCachedData = function () {
 	self.cache = null;
 };
 
+// FileSource {{{1
+
+var FileSource = function (spec, params, userTypeInfo, source) {
+	var self = this;
+
+	self.spec = spec;
+	self.params = params;
+	self.userTypeInfo = userTypeInfo;
+	self.source = source;
+
+	self.cache = {};
+};
+
+// #setToolbar {{{2
+
+FileSource.prototype.setToolbar = function (toolbar) {
+	var self = this;
+
+	var input = jQuery('<input>', { 'type': 'file', 'name': 'file' })
+		.on('change', function () {
+			Papa.parse(this.files.item(0), {
+				header: true,
+				skipEmptyLines: true,
+				complete: function (results, file) {
+					console.log(results);
+
+					self.cache.data = results.data;
+					self.cache.typeInfo = new OrdMap();
+
+					_.each(results.meta.fields, function (field) {
+						self.cache.typeInfo.set(field, {
+							'type': 'string'
+						});
+					});
+
+					self.source.clearCachedData();
+				}
+			});
+		})
+		.appendTo(toolbar);
+};
+
+// #getData {{{2
+
+FileSource.prototype.getData = function (params, cont) {
+	var self = this;
+
+	return cont(self.cache.data);
+};
+
+// #getTypeInfo {{{2
+
+FileSource.prototype.getTypeInfo = function (cont) {
+	var self = this;
+
+	return cont(self.cache.typeInfo);
+};
+
 // Source {{{1
 
 // JSDoc Typedefs {{{2
@@ -1226,7 +1284,7 @@ var Source = function (spec, params, userTypeInfo, opts) {
 		throw new SourceError('Unsupported data source type: ' + self.type);
 	}
 
-	self.origin = new Source.sources[self.type](spec, params, userTypeInfo);
+	self.origin = new Source.sources[self.type](spec, params, userTypeInfo, self);
 
 	var checkConversionArray = function (convs, field) {
 		// Check the validity of all the specified conversions.
@@ -1283,7 +1341,8 @@ mixinEventHandling(Source, 'Source', [
 
 Source.sources = {
 	local: LocalSource,
-	http: HttpSource
+	http: HttpSource,
+	file: FileSource
 };
 
 // .converters {{{2
@@ -1511,7 +1570,7 @@ Source.prototype.postProcess = function (data, cont) {
 				// Unless conversion has been deferred on this field, convert it into the appropriate
 				// internal representation (numeral or moment).
 
-				if (!fti.deferDecoding) {
+				if (fti != null && !fti.deferDecoding) {
 					self.convertCell(row, field);
 				}
 			});
@@ -1768,6 +1827,18 @@ Source.prototype.toString = function () {
 	var self = this;
 
 	return 'Source <' + self.name + ', ' + self.type + '>';
+};
+
+// #setToolbar {{{2
+
+Source.prototype.setToolbar = function (toolbar) {
+	var self = this;
+
+	self.toolbar = toolbar;
+
+	if (typeof self.origin.setToolbar === 'function') {
+		self.origin.setToolbar(toolbar);
+	}
 };
 
 // Data Model {{{1

@@ -320,6 +320,12 @@ tr.wcdv_grid_filterrow th.wcdv_grid_filtercol {
 	margin: -10px;
 }
 
+.wcdv_toolbar_section:first-child {
+	padding-left: inherit;
+	margin-left: inherit;
+	border-left: inherit;
+}
+
 .wcdv_toolbar_section {
 	display: inline-block;
 	padding-left: 0.5em;

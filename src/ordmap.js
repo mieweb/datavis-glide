@@ -129,3 +129,11 @@ OrdMap.prototype.keys = function () {
 OrdMap.prototype.asMap = function () {
 	return this._map;
 };
+
+/**
+ * Tells the number of keys.
+ */
+
+OrdMap.prototype.size = function () {
+	return this._keys.length;
+};

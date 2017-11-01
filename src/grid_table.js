@@ -2380,7 +2380,7 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 			if (rowVal instanceof Element || rowVal instanceof jQuery) {
 				span.append(rowVal);
 			}
-			else if (self.colConfig[data.groupFields[rowValIndex]].allowHtml) {
+			else if (getProp(self.colConfig, data.groupFields[rowValIndex], 'allowHtml')) {
 				span.innerHtml(rowVal);
 			}
 			else {
