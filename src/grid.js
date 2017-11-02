@@ -879,14 +879,16 @@ Grid.prototype.addSourceButtons = function (toolbar) {
 // #addCommonButtons {{{2
 
 /**
+ * Add common controls to the grid's toolbar.
+ *
+ * @param {Element} parent
+ * Where to attach this toolbar section (i.e. the toolbar div).
+ *
  * @method
- * @memberof Grid
- * @private
  */
 
 Grid.prototype.addCommonButtons = function (toolbar) {
 	var self = this;
-	var isVisible = true; // If true, the grid is not currently hidden.
 
 	self.ui.exportBtn = jQuery('<button>', {'disabled': true})
 		.append(fontAwesome('F14C'))
@@ -895,35 +897,35 @@ Grid.prototype.addCommonButtons = function (toolbar) {
 			self.export();
 		})
 		.appendTo(toolbar);
-
-	/*
-	makeCheckbox(self.features.group, function () {
-		if (jQuery(this).prop('checked')) {
-			self.enableGroup();
-		}
-		else {
-			self.disableGroup();
-		}
-	}, 'Enable Grouping', toolbar);
-
-	makeCheckbox(self.features.pivot, function () {
-		if (jQuery(this).prop('checked')) {
-			self.enablePivot();
-		}
-		else {
-			self.disablePivot();
-		}
-	}, 'Enable Pivot', toolbar);
-	*/
 };
 
 // #addPlainButtons {{{2
+
+/**
+ * Add plain-related controls to the grid's toolbar.
+ *
+ * @param {Element} parent
+ * Where to attach this toolbar section (i.e. the toolbar div).
+ *
+ * @method
+ */
 
 Grid.prototype.addPlainButtons = function (parent) {
 	var self = this;
 
 	if (self.features.limit) {
+
+		// Create a checkbox that will toggle the "automatically show more" feature for the grid table.
+
 		makeToggleCheckbox(self.defn, ['table', 'limit', 'autoShowMore'], true, 'Show More on Scroll', parent);
+
+		// Create a button that will show all the rows when clicked.  We fake this a little bit by just
+		// turning off the "limit" feature and letting the grid table be redrawn (changing the features
+		// causes it to be redrawn).
+		//
+		// TODO: This should disable the "automatically show more" checkbox (need to make sure it gets
+		// re-enabled if we switch grid tables and come back - as "limit" feature will be reset to its
+		// default value).
 
 		jQuery('<button>')
 			.on('click', function (evt) {
@@ -940,13 +942,44 @@ Grid.prototype.addPlainButtons = function (parent) {
 
 // #addGroupButtons {{{2
 
+/**
+ * Add group-related controls to the grid's toolbar.
+ *
+ * @param {Element} parent
+ * Where to attach this toolbar section (i.e. the toolbar div).
+ *
+ * @method
+ */
+
 Grid.prototype.addGroupButtons = function (parent) {
 	var self = this;
 
-	makeRadioButtons(self.defn, ['table', 'groupMode'], 'detail', null, 'groupOutput', [{label: 'Summary', value: 'summary'}, {label: 'Detail', value: 'detail'}], null, function () { self.redraw() }, parent);
+	// Create radio buttons to switch between summary and detail group grid tables.
+
+	makeRadioButtons(
+		self.defn
+		, ['table', 'groupMode']
+		, 'detail'
+		, null
+		, 'groupOutput'
+		, [{label: 'Summary', value: 'summary'}
+			, {label: 'Detail', value: 'detail'}]
+		, null
+		, function () { self.redraw() }
+		, parent
+	);
 };
 
 // #addPivotButtons {{{2
+
+/**
+ * Add pivot-related controls to the grid's toolbar.
+ *
+ * @param {Element} parent
+ * Where to attach this toolbar section (i.e. the toolbar div).
+ *
+ * @method
+ */
 
 Grid.prototype.addPivotButtons = function (parent) {
 	var self = this;
@@ -1034,13 +1067,25 @@ Grid.prototype.addPivotButtons = function (parent) {
 // #addPrefsButtons {{{2
 
 /**
+ * Add preference-related controls to the grid's toolbar.
+ *
+ * @param {Element} parent
+ * Where to attach this toolbar section (i.e. the toolbar div).
+ *
  * @method
- * @memberof Grid
- * @private
  */
 
 Grid.prototype.addPrefsButtons = function (parent) {
 	var self = this;
+
+	var div = jQuery('<div>')
+		.css({'display': 'inline-block'})
+		.append(jQuery('<span>').text('View: '))
+		.appendTo(parent)
+	;
+
+	// A shortcut for doing the "right thing" with the rename & delete buttons, which are only shown
+	// when the currently selected perspective isn't "Main".
 
 	var showHideBtns = function () {
 		if (dropdown.val() === 'Main') {
@@ -1053,11 +1098,9 @@ Grid.prototype.addPrefsButtons = function (parent) {
 		}
 	};
 
-	var div = jQuery('<div>')
-		.css({'display': 'inline-block'})
-		.append(jQuery('<span>').text('View: '))
-		.appendTo(parent)
-	;
+
+	// Dropdown of all the available perspectives, plus an entry that (when selected) prompts for the
+	// name of a new perspective.
 
 	var dropdown = jQuery('<select>')
 		.append(jQuery('<option>', { value: 'NEW' }).text('New View...'))
@@ -1084,6 +1127,14 @@ Grid.prototype.addPrefsButtons = function (parent) {
 		.appendTo(div)
 	;
 
+	// Clicking this button will show a prompt to rename the currently selected perspective.  If you
+	// cancel the prompt, nothing will happen.  This button is only shown when the currently selected
+	// perspective is not "Main" as it cannot be renamed.
+	//
+	// XXX: What if the user types in the name of an existing perspective?
+	// XXX: What if the user types in "Main" ?
+	// XXX: What if the user types in "NEW" ?
+
 	var renameBtn = jQuery(fontAwesome('F040', 'wcdv_button', 'Rename'))
 		.on('click', function () {
 			var oldName = dropdown.val();
@@ -1105,6 +1156,10 @@ Grid.prototype.addPrefsButtons = function (parent) {
 		.appendTo(div)
 	;
 
+	// Clicking this button will delete the currently selected perspective and switch back to the
+	// "Main" perspective.  It is only shown when the currently selected perspective is not "Main" as
+	// it cannot be deleted.
+
 	var deleteBtn = jQuery(fontAwesome('F1F8', 'wcdv_button', 'Delete'))
 		.on('click', function () {
 			if (dropdown.val() === 'Main') {
@@ -1123,6 +1178,11 @@ Grid.prototype.addPrefsButtons = function (parent) {
 		.appendTo(div)
 	;
 
+	// Clicking this button will reset all preferences back to the initial set (i.e. just "Main" and
+	// no changes in the view from its default).  Perhaps useful when you have too many different
+	// perspectives set, but I feel better having it as a safety in case your prefs somehow get really
+	// messed up and don't work at all anymore.  This button is always shown.
+
 	var resetBtn = jQuery(fontAwesome('F0E2', 'wcdv_button', 'Reset'))
 		.on('click', function () {
 			self.view.prefs.reset();
@@ -1135,41 +1195,12 @@ Grid.prototype.addPrefsButtons = function (parent) {
 		.appendTo(div)
 	;
 
-	/*
-	var newPerspectiveInput = jQuery('<input>', { 'type': 'text' });
-
-	var newPerspectiveButton =
-		jQuery('<button>', { 'type': 'button' })
-		.html(fontAwesome('F0FE'))
-		.on('click', function () {
-			var perspectiveName = newPerspectiveInput.val();
-			newPerspectiveInput.val('');
-			self.ui.newPerspective.hide();
-			self.ui.curPerspective.show();
-		})
-	;
-
-	var newPerspectiveCancel =
-		jQuery('<button>', { 'type': 'button' })
-		.html(fontAwesome('F05E'))
-		.on('click', function () {
-			newPerspectiveInput.val('');
-			self.ui.newPerspective.hide();
-			self.ui.curPerspective.show();
-		})
-	;
-
-	self.ui.newPerspective =
-		jQuery('<div>')
-		.css({'display': 'inline-block'})
-		.hide()
-		.appendTo(parent)
-		.append(jQuery('<span>').text('New Perspective: '))
-		.append(newPerspectiveInput)
-		.append(newPerspectiveButton)
-		.append(newPerspectiveCancel)
-	;
-	*/
+	// Get the list of available perspectives from the Prefs instance and put them into the dropdown.
+	// The initial perspective will be selected by default.  This DOES NOT actually load that
+	// perspective, it's just for the UI.
+	//
+	// XXX: Is it possible for perspectives to change by some other route so that we need to know
+	// about it to update the UI?
 
 	self.view.prefs.getPerspectives(function (perspectives) {
 		self.view.prefs.getInitialPerspective(function (initial) {

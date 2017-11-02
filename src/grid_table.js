@@ -1506,6 +1506,15 @@ GridTablePlain.prototype.setSelectedRows = function (r) {
 
 // #updateFeatures {{{2
 
+/**
+ * Change the features of this grid table, then redraw the grid table.
+ *
+ * @param {Object} f
+ * The new features to apply.  Any features not indicated will maintain their current settings.
+ *
+ * @method
+ */
+
 GridTablePlain.prototype.updateFeatures = function (f) {
 	var self = this;
 
