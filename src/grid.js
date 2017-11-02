@@ -1727,14 +1727,26 @@ Grid.prototype.normalizeColumns = function (defn) {
 Grid.prototype.export = function () {
 	var self = this;
 
+	var fileName = self.id + '.csv';
 	var csv = self.gridTable.getCsv();
-	var form = jQuery('<form>', {'method': 'POST', 'action': 'grid-export.php'}).appendTo(document.body);
-	jQuery('<input>', {'type': 'hidden', 'name': 'format'}).val('csv').appendTo(form);
-	jQuery('<input>', {'type': 'hidden', 'name': 'filename'}).val(self.id).appendTo(form);
-	jQuery('<input>', {'type': 'hidden', 'name': 'content'}).val(csv).appendTo(form);
+	var contentType = 'text/csv';
 
-	form.submit();
-	form.remove();
+	if (false /* old browser - need to test */) {
+		var form = jQuery('<form>', {'method': 'POST', 'action': 'grid-export.php'}).appendTo(document.body);
+		jQuery('<input>', {'type': 'hidden', 'name': 'format'}).val('csv').appendTo(form);
+		jQuery('<input>', {'type': 'hidden', 'name': 'filename'}).val(fileName).appendTo(form);
+		jQuery('<input>', {'type': 'hidden', 'name': 'content'}).val(csv).appendTo(form);
+		form.submit();
+		form.remove();
+	}
+	else {
+		var a = document.createElement('a');
+		a.download = fileName;
+		a.href = URL.createObjectURL(new Blob([csv], {'type': contentType}));
+		jQuery(document.body).append(a);
+		a.click();
+		a.remove();
+	}
 };
 
 // GridControl {{{1
