@@ -9,7 +9,7 @@ var Csv = makeSubclass(Object, function (opts) {
 		separator: ','
 	});
 
-	self.data = [];
+	self.clear();
 });
 
 // #addRow {{{2
@@ -32,6 +32,15 @@ Csv.prototype.addCol = function (x) {
 	}
 
 	self.lastRow.push(x);
+};
+
+// #clear {{{2
+
+Csv.prototype.clear = function () {
+	var self = this;
+
+	self.data = [];
+	self.lastRow = null;
 };
 
 // #toString {{{2
@@ -472,6 +481,9 @@ GridTable.prototype.draw = function (root, tableDoneCont, opts) {
 
 				return self.fire(GridTable.events.unableToRender);
 			}
+
+			self.data = data;
+			self.typeInfo = typeInfo;
 
 			self.timing.start(['Grid Table', 'Draw']);
 
@@ -1580,6 +1592,45 @@ GridTablePlain.prototype.addWorkHandler = function () {
 			self.fire(GridTable.events.columnResize);
 		}
 	}, { who: self });
+};
+
+// #getCsv {{{2
+
+GridTablePlain.prototype.getCsv = function () {
+	var self = this;
+	var columns = determineColumns(self.defn, self.data, self.typeInfo);
+
+	self.csv.clear();
+
+	self.csv.addRow();
+	_.each(columns, function (field, colIndex) {
+		var colConfig = getPropDef({}, self.defn, 'table', 'columns', colIndex);
+		self.csv.addCol(colConfig.displayText || field);
+	});
+
+	_.each(self.data.data, function (row) {
+		self.csv.addRow();
+		_.each(columns, function (field, colIndex) {
+			var colConfig = getPropDef({}, self.defn, 'table', 'columns', colIndex);
+			var cell = row.rowData[field];
+			var value = format(colConfig, self.typeInfo.get(field), cell);
+
+			if (value instanceof Element) {
+				self.csv.addCol(jQuery(value).text());
+			}
+			else if (value instanceof jQuery) {
+				self.csv.addCol(value.text());
+			}
+			else if (colConfig.allowHtml && typeInfo.get(field).type === 'string') {
+				self.csv.addCol(jQuery(value).text());
+			}
+			else {
+				self.csv.addCol(value);
+			}
+		});
+	});
+
+	return self.csv.toString();
 };
 
 // GridTableGroupDetail {{{1
