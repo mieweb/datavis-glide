@@ -1727,7 +1727,7 @@ Grid.prototype.normalizeColumns = function (defn) {
 Grid.prototype.export = function () {
 	var self = this;
 
-	var fileName = self.id + '.csv';
+	var fileName = (self.tagOpts.title || self.id) + '.csv';
 	var csv = self.gridTable.getCsv();
 	var contentType = 'text/csv';
 
