@@ -1110,7 +1110,10 @@ var FileSource = function (spec, params, userTypeInfo, source) {
 	self.userTypeInfo = userTypeInfo;
 	self.source = source;
 
-	self.cache = {};
+	self.cache = {
+		data: [],
+		typeInfo: new OrdMap()
+	};
 };
 
 // #setToolbar {{{2
