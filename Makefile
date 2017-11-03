@@ -7,7 +7,7 @@ all:	dist/wcdatavis.js examples
 dist/wcdatavis.js:	wcdatavis.src $(SOURCE)
 	./bin/jspp -o $@ $<
 
-examples:	examples/wcdatavis.js examples/wcdatavis.css examples/wcdatavis-extra.css
+examples:	examples/wcdatavis.js examples/wcdatavis.css examples/wcdatavis-extra.css examples/export.php
 
 clean:
 	rm -f dist/wcdatavis.js examples/wcdatavis.js examples/wcdatavis.css
@@ -32,4 +32,7 @@ examples/wcdatavis.css:	dist/wcdatavis.css
 	cp $^ $@
 
 examples/wcdatavis-extra.css:	dist/wcdatavis-extra.css
+	cp $^ $@
+
+examples/export.php:	dist/export.php
 	cp $^ $@

@@ -28,7 +28,35 @@ jQuery.fn.extend({
 		function handleDragOver(evt) {
 			evt.stopPropagation();
 			evt.preventDefault();
-			evt.dataTransfer.dropEffect = 'copy';
+
+			// Things I've tried to determine file type in drag+drop:
+			//
+			//   evt.dataTransfer.items[0].type => MIME Type
+			//
+			// +---------+--------------------------------------+
+			// | Browser | Result                               |
+			// +=========+======================================+
+			// | Chrome  | ** OK **                             |
+			// | Firefox | ** OK **                             |
+			// | IE11    | evt.dataTransfer.items doesn't exist |
+			// | Safari  | evt.dataTransfer.items doesn't exist |
+			// | Edge    | evt.dataTransfer.items[0].type = ''  |
+			// +---------+--------------------------------------+
+			//
+			// Setting the dropEffect:
+			//
+			// +---------+-----------------------------+
+			// | Browser | Result                      |
+			// +=========+=============================+
+			// | Chrome  | ** OK **                    |
+			// | Firefox | ** OK **                    |
+			// | IE11    | None (performs navigation)  |
+			// | Safari  | ** OK **                    |
+			// | Edge    | None (file always accepted) |
+			// +---------+-----------------------------+
+
+			evt.dataTransfer.dropEffect =
+				getProp(evt.dataTransfer, 'items', 0, 'type') === 'text/csv' ? 'copy' : 'none';
 		}
 
 		this.get(0).addEventListener('dragover', handleDragOver, false);

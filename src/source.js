@@ -1121,7 +1121,7 @@ var FileSource = function (spec, params, userTypeInfo, source) {
 FileSource.prototype.setToolbar = function (toolbar) {
 	var self = this;
 
-	var input = jQuery('<input>', { 'type': 'file', 'name': 'file' })
+	var input = jQuery('<input>', { 'type': 'file', 'name': 'file', 'accept': '.csv' })
 		.on('change', function () {
 			Papa.parse(this.files.item(0), {
 				header: true,

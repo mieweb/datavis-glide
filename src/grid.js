@@ -1737,8 +1737,8 @@ Grid.prototype.export = function () {
 	var csv = self.gridTable.getCsv();
 	var contentType = 'text/csv';
 
-	if (false /* old browser - need to test */) {
-		var form = jQuery('<form>', {'method': 'POST', 'action': 'grid-export.php'}).appendTo(document.body);
+	if (window.Blob == null /* old browser */) {
+		var form = jQuery('<form>', {'method': 'POST', 'action': MIE.WC_DataVis.EXPORT_URL}).appendTo(document.body);
 		jQuery('<input>', {'type': 'hidden', 'name': 'format'}).val('csv').appendTo(form);
 		jQuery('<input>', {'type': 'hidden', 'name': 'filename'}).val(fileName).appendTo(form);
 		jQuery('<input>', {'type': 'hidden', 'name': 'content'}).val(csv).appendTo(form);

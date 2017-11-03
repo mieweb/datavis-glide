@@ -120,6 +120,7 @@
 	window.MIE.WC_DataVis.Graph      = Graph;
 	window.MIE.WC_DataVis.graphs     = [];
 	window.MIE.WC_DataVis.Prefs      = Prefs;
+	window.MIE.WC_DataVis.EXPORT_URL = 'export.php';
 })(jQuery);
 
 // vim:set ft=javascript:
