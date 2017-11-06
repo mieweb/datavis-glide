@@ -636,7 +636,12 @@ GridTable.prototype.draw = function (root, tableDoneCont, opts) {
 					self.ui.tbl.floatThead(floatTheadConfig);
 					break;
 				case 'tabletool':
-					self.ui.tbl.attr('data-tttype', 'sticky');
+					if (self.opts.fixedHeight) {
+						self.ui.tbl.attr('data-tttype', 'fixed');
+					}
+					else {
+						self.ui.tbl.attr('data-tttype', 'sticky');
+					}
 					break;
 				}
 			}
