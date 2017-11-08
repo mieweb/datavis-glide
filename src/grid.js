@@ -630,6 +630,9 @@ var Grid = function (id, view, defn, tagOpts, cb) {
 	if (self.rootHasFixedHeight) {
 		self.ui.grid.css({ 'overflow': 'auto' });
 	}
+	else if (!self.features.floatingHeader || self.defn.table.floatingHeader.method !== 'tabletool') {
+		self.ui.grid.css({ 'overflow-x': 'auto' });
+	}
 
 	self.ui.controls
 		.append(self.ui.filterControl)
@@ -1675,6 +1678,9 @@ Grid.prototype.normalize = function (defn) {
 				method: 'more',
 				threshold: 100,
 				chunkSize: 50
+			},
+			floatingHeader: {
+				method: 'tabletool'
 			}
 		}
 	});

@@ -233,7 +233,7 @@
 
 .wcdv_filter_control ul li .wcdv_field > .wcdv_filter_control_filter_container {
 	margin-left: 1ex;
-	flex: 1 1 0;
+	flex: auto;
 }
 
 .wcdv_filter_control ul li .wcdv_field > .wcdv_filter_control_filter_container > div {
@@ -244,7 +244,7 @@
 
 .wcdv_filter_control ul li .wcdv_field > .wcdv_filter_control_filter_container > div > input,
 .wcdv_filter_control ul li .wcdv_field > .wcdv_filter_control_filter_container > div > div.SumoSelect {
-	flex: 1 1 0;
+	flex: auto;
 }
 
 /*
@@ -264,7 +264,7 @@ div.SumoSelect > div.optWrapper {
 	border-left: solid 1px #666;
 	border-right: solid 1px #666;
 	border-bottom: solid 1px #666;
-	flex: 1 1 0;
+	flex: auto;
 }
 
 .wcdv_grid_table th {
