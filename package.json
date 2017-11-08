@@ -1,10 +1,11 @@
 {
-    "name": "wcdatavis",
-    "version": "1.0.0",
-    "description": "Data visualization library",
-    "license": "TBD",
-    "devDependencies": {
-        "jsdoc": "latest",
-        "ink-docstrap": "latest"
-    }
+  "name": "wcdatavis",
+  "version": "1.0.0",
+  "description": "Data visualization library",
+  "license": "TBD",
+  "devDependencies": {
+    "eslint": "latest",
+    "ink-docstrap": "latest",
+    "jsdoc": "latest"
+  }
 }
