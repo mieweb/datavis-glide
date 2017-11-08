@@ -19,99 +19,26 @@
 	margin-top: 0;
 }
 
-.wcdv_grid_toolbar {
-	border: solid 1px #666;
-	flex: 0 0 0;
-}
+/******************************************************************************/
 
-.wcdv_grid_toolbar .buttons {
-	font-size: 0.85em;
-	background-color: #EEE;
-}
-
-.wcdv_grid_toolbar .buttons button,
-.wcdv_grid_toolbar .buttons label,
-.wcdv_grid_toolbar .buttons .wcdv_button,
-.wcdv_grid_toolbar .buttons input {
-	margin-left: 0.5em;
-}
-
-
-.wcdv_grid_toolbar .buttons button:first-child,
-.wcdv_grid_toolbar .buttons label:first-child,
-.wcdv_grid_toolbar .buttons .wcdv_button:first-child,
-.wcdv_grid_toolbar .buttons input:first-child {
-	margin-left: 0;
-}
-
-.wcdv_grid_toolbar .buttons > span.fa {
-	color: #888;
-	font-size: 18px;
-}
-.wcdv_grid_toolbar .buttons > span.fa:hover {
-	color: #444;
-}
-
-/*
-.wcdv_grid_toolbar .buttons button {
-	background-color: transparent;
-	border: 1px solid transparent;
-	border-radius: 2px;
-	box-sizing: content-box;
-	color: #404040;
-	display: inline-block;
-	height: 18px;
-	line-height: 18px;
-	margin: 0 2px 0 0;
-	padding: 2px 6px;
-	vertical-align: top;
-}
-*/
-.wcdv_grid_toolbar .buttons button .fa {
-	color: #666;
-	font-size: 1.15em;
-	padding-right: 3px;
-}
-/*
-.wcdv_grid_toolbar .buttons button:focus, .wcdv_grid_toolbar .buttons button:hover {
-	background-color: #fff;
-	border-color: #B3B3B3;
-	box-shadow: 0 1px 3px -2px #132D44;
-	color: #000;
-	outline: 0;
-}
-*/
-.wcdv_grid_toolbar .buttons button:focus .fa, .wcdv_grid_toolbar .buttons button:hover .fa {
-	color: #2D6A9F;
-}
-/*
-.wcdv_grid_toolbar .buttons button:active {
-	background-color: white;
-	border-color: #B3B3B3;
-	box-shadow: inset 0 2px 3px -2px #808080;
-	color: #000;
-	padding-bottom: 1px;
-	padding-top: 3px;
-}
-*/
-.wcdv_grid_toolbar .heading {
+.wcdv_grid_titlebar {
 	background-color: #666;
 	color: white;
 	cursor: pointer;
 	line-height: 29px;
 	padding-left: 0.5em;
 }
-.wcdv_grid_toolbar .heading strong {
+.wcdv_grid_titlebar strong {
 	font-size: 1.2em;
 }
-.wcdv_grid_toolbar .heading .headingInfo {
+.wcdv_grid_titlebar .headingInfo {
 	cursor: default;
 }
-.wcdv_grid_toolbar .buttons {
+.wcdv_grid_titlebar {
 	border-top: 1px solid #737373;
 	padding: 3px 4px;
 }
-.wcdv_grid_toolbar .showhide {
+.wcdv_grid_titlebar .showhide {
 	background-color: transparent;
 	border: 0;
 	color: #CCC;
@@ -122,13 +49,78 @@
 	margin: 3px 4px;
 	padding: 0 4px;
 }
-.wcdv_grid_toolbar .showhide:focus, .wcdv_grid_toolbar .showhide:hover, .wcdv_grid_toolbar .showhide:active {
+.wcdv_grid_titlebar .showhide:focus,
+.wcdv_grid_titlebar .showhide:hover,
+.wcdv_grid_titlebar .showhide:active {
 	color: white;
 }
 
-.wcdv_grid_control {
+/******************************************************************************/
+
+.wcdv_grid_toolbar {
+	background-color: #EEE;
+	border: solid 1px #666;
+	flex: 0 0 0;
+	font-size: 0.85em;
 	padding-top: 4px;
+	padding-bottom: 4px;
+}
+
+.wcdv_grid_toolbar button,
+.wcdv_grid_toolbar label,
+.wcdv_grid_toolbar .wcdv_button,
+.wcdv_grid_toolbar input {
+	margin-left: 0.5em;
+}
+
+.wcdv_grid_toolbar button:first-child,
+.wcdv_grid_toolbar label:first-child,
+.wcdv_grid_toolbar .wcdv_button:first-child,
+.wcdv_grid_toolbar input:first-child {
+	margin-left: 0;
+}
+
+.wcdv_grid_toolbar > span.fa {
+	color: #888;
+	font-size: 18px;
+}
+.wcdv_grid_toolbar > span.fa:hover {
+	color: #444;
+}
+
+.wcdv_grid_toolbar button .fa {
+	color: #666;
+	font-size: 1.15em;
+	padding-right: 3px;
+}
+
+.wcdv_grid_toolbar .wcdv_button.pull-right {
+	padding-right: 0.5em;
+}
+
+.wcdv_toolbar_section:first-child {
+	padding-left: 0px;
+	border-left: none;
+}
+
+.wcdv_toolbar_section {
+	display: inline-block;
+	padding-left: 0.5em;
+	margin-left: 0.5em;
+	border-left: solid 2px #BBB;
+}
+
+
+/******************************************************************************/
+
+.wcdv_grid_control {
+	background-color: #EEE;
+	border: solid 1px #666;
+	border-top: none;
 	display: none;
+	font-size: 0.85em;
+	padding-top: 4px;
+	padding-bottom: 4px;
 	/*
 	 * Flexible display of group/filter/pivot controls.
 	 */
@@ -188,8 +180,7 @@
 	border-radius: 4px;
 	display: inline-block;
 	vertical-align: top;
-	margin-bottom: 4px;
-	margin-right: 4px;
+	margin-left: 4px;
 }
 
 .wcdv_group_control ul li, /* HORIZONTAL */
@@ -260,6 +251,8 @@ div.SumoSelect > div.optWrapper {
 	display: inline-block;
 }
 
+/******************************************************************************/
+
 .wcdv_grid_table {
 	border-left: solid 1px #666;
 	border-right: solid 1px #666;
@@ -309,6 +302,8 @@ tr.wcdv_grid_filterrow th.wcdv_grid_filtercol {
 	text-transform: none;
 }
 
+/******************************************************************************/
+
 .wcdv_drop_target_hover {
 	background-color: rgb(255, 235, 59) !important;
 }
@@ -329,22 +324,7 @@ tr.wcdv_grid_filterrow th.wcdv_grid_filtercol {
 	margin: -10px;
 }
 
-.wcdv_toolbar_section:first-child {
-	padding-left: inherit;
-	margin-left: inherit;
-	border-left: inherit;
-}
-
-.wcdv_toolbar_section {
-	display: inline-block;
-	padding-left: 0.5em;
-	margin-left: 0.5em;
-	border-left: solid 2px #BBB;
-}
-
-/*
- * Alignment classes.
- */
+/******************************************************************************/
 
 .wcdvgrid_textLeft {
     text-align: left !important;
@@ -414,102 +394,3 @@ tr.wcdvgrid_more td {
 .wcdv_grid_table td.wcdv_selected_row {
 	background-color: rgba(255, 235, 59, .4) !important;
 }
-
-/*
-		// jqx graph additions
-		miestrlist_append(l,".graphwrapper {"
-								"margin-top: 1em;"
-							"}\n");
-		miestrlist_append(l,".graphwrapper:first-of-type {"
-								"margin-top: 0;"
-							"}\n");
-		miestrlist_append(l,".graphtoolbar {"
-								"background-color: white;"
-								"border: 1px solid #737373;"
-								"margin: 0 -2px -1px 0;"
-								"padding: 0;"
-							"}\n");
-		miestrlist_append(l,".graphtoolbar .buttons button {"
-								"background-color: transparent;"
-								//"border: 1px solid #D9D9D9;"
-								"border: 1px solid transparent;"
-								"border-radius: 2px;"
-								"box-sizing: content-box;"
-								"color: #404040;"
-								"display: inline-block;"
-								"height: 18px;"
-								"line-height: 18px;"
-								"margin: 0 2px 0 0;"
-								"padding: 2px 6px;"
-								"vertical-align: top;"
-							"}\n");
-
-		miestrlist_append(l,".graphtoolbar .buttons button .fa {"
-								"color: #666;"
-								"font-size: 1.15em;"
-								"padding-right: 3px;"
-							"}\n");
-
-		tmp = CSSLIB_box_shadow("0 1px 3px -2px #132D44");
-		miestrlist_append(l,".graphtoolbar .buttons button:focus, .graphtoolbar .buttons button:hover {"
-								"background-color: #fff;"
-								"border-color: #B3B3B3;"
-								"color: #000;"
-								"outline: 0;"
-								"%s;"
-							"}\n", tmp);
-		free(tmp);
-
-		miestrlist_append(l,".graphtoolbar .buttons button:focus .fa, .graphtoolbar .buttons button:hover .fa {"
-								"color: #2D6A9F;"
-							"}\n");
-
-		tmp = CSSLIB_box_shadow("inset 0 2px 3px -2px #808080");
-		miestrlist_append(l,".graphtoolbar .buttons button:active {"
-								"background-color: white;"
-								"padding-top: 3px;"
-								"padding-bottom: 1px;"
-								"border-color: #B3B3B3;"
-								"color: #000;"
-								"%s;"
-							"}\n", tmp);
-		free(tmp);
-
-		miestrlist_append(l,".graphtoolbar .heading {"
-								"background-color: #737373;"
-								"color: white;"
-								"line-height: 29px;"
-								"padding-left: 8px;"
-								"cursor: pointer;"
-							"}\n");
-		miestrlist_append(l,".graphtoolbar .heading strong {"
-								"font-size: 1.2em;"
-							"}\n");
-		miestrlist_append(l,".graphtoolbar .heading .headingInfo {"
-								"cursor: default;"
-							"}\n");
-
-		tmp = CSSLIB_linear_gradient(CSSLIB_ANGLE_TO_TOP, NULL, 4, "#EAEAF1", "0%", "#fff", "100%");
-		miestrlist_append(l,".graphtoolbar .buttons {"
-								"border-top: 1px solid #737373;"
-								"display: none;"
-								"padding: 3px 4px;"
-								"%s"
-							"}\n", tmp);
-		free(tmp);
-
-		miestrlist_append(l,".graphtoolbar .showhide {"
-								"background-color: transparent;"
-								"border: 0;"
-								"color: #CCC;"
-								"cursor: pointer;"
-								"font-size: 1.4em;"
-								"height: 24px;"
-								"line-height: 24px;"
-								"margin: 3px 4px;"
-								"padding: 0 4px;"
-							"}\n");
-		miestrlist_append(l,".graphtoolbar .showhide:focus, .graphtoolbar .showhide:hover, .graphtoolbar .showhide:active {"								
-								"color: white;"
-						  "}\n");
-						  */

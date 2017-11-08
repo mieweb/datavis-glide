@@ -529,75 +529,68 @@ var Grid = function (id, view, defn, tagOpts, cb) {
 		});
 	}
 
-	if (tagOpts.title) {
-		if (!_.isString(tagOpts.title)) {
-			throw '<tagOpts.title> is not a string';
-		}
+	self.ui.titlebar = jQuery('<div class="wcdv_grid_titlebar">')
+		.attr('title', MIE.trans('SHOWHIDE'))
+		.on('click', function (evt) {
+			evt.stopPropagation();
+			self.toggle();
+		})
+		.appendTo(self.ui.root);
 
-		self.ui.gridToolBar = jQuery('<div>')
-			.addClass('wcdv_grid_toolbar')
-			.appendTo(self.ui.root)
-			.droppable({
-				over: function (evt, ui) {
-					self.ui.controls.show();
+	self.addTitleWidgets(self.ui.titlebar, doingServerFilter, !!self.tagOpts.runImmediately, id);
 
-					// Need to recalculate the position of the droppable targets, because they are now
-					// guaranteed to be visible (they may have been hidden within the grid control before).
+	self.ui.content = jQuery('<div>').appendTo(self.ui.root);
 
-					ui.draggable.draggable('option', 'refreshPositions', true);
-				}
-			});
+	self.ui.toolbar = jQuery('<div>')
+		.addClass('wcdv_grid_toolbar')
+		.droppable({
+			over: function (evt, ui) {
+				self.ui.controls.show();
 
-		self.ui.gridToolBarHeading = jQuery('<div class="heading">')
-			.attr('title', MIE.trans('SHOWHIDE'))
-			.on('click', function (evt) {
-				evt.stopPropagation();
-				self.toggleGrid();
-			})
-			.appendTo(self.ui.gridToolBar);
+				// Need to recalculate the position of the droppable targets, because they are now
+				// guaranteed to be visible (they may have been hidden within the grid control before).
 
-		self.ui.gridToolBarButtons = jQuery('<div class="buttons">')
-			.appendTo(self.ui.gridToolBar);
+				ui.draggable.draggable('option', 'refreshPositions', true);
+			}
+		})
+		.appendTo(self.ui.content)
+	;
 
-		self.addHeaderWidgets(self.ui.gridToolBarHeading, doingServerFilter, !!self.tagOpts.runImmediately, id);
-
-		self.ui.toolbar = {};
-
-		self.ui.toolbar.source = jQuery('<div>')
+		self.ui.toolbar_source = jQuery('<div>')
 			.addClass('wcdv_toolbar_section')
-			.appendTo(self.ui.gridToolBarButtons);
-		self.addSourceButtons(self.ui.toolbar.source);
-		self.view.source.setToolbar(self.ui.toolbar.source);
+			.appendTo(self.ui.toolbar);
+		self.addSourceButtons(self.ui.toolbar_source);
+		self.view.source.setToolbar(self.ui.toolbar_source);
 
-		self.ui.toolbar.common = jQuery('<div>')
+		self.ui.toolbar_common = jQuery('<div>')
 			.addClass('wcdv_toolbar_section')
-			.appendTo(self.ui.gridToolBarButtons);
-		self.addCommonButtons(self.ui.toolbar.common);
+			.appendTo(self.ui.toolbar);
+		self.addCommonButtons(self.ui.toolbar_common);
 
 		if (self.view.opts.saveViewConfig) {
-			self.ui.toolbar.prefs = jQuery('<div>')
+			self.ui.toolbar_prefs = jQuery('<div>')
 				.addClass('wcdv_toolbar_section')
-				.appendTo(self.ui.gridToolBarButtons);
-			self.addPrefsButtons(self.ui.toolbar.prefs);
+				.appendTo(self.ui.toolbar);
+			self.addPrefsButtons(self.ui.toolbar_prefs);
 		}
 
-		self.ui.toolbar.plain = jQuery('<div>')
+		self.ui.toolbar_plain = jQuery('<div>')
 			.addClass('wcdv_toolbar_section')
 			.hide()
-			.appendTo(self.ui.gridToolBarButtons);
-		self.addPlainButtons(self.ui.toolbar.plain);
+			.appendTo(self.ui.toolbar);
+		self.addPlainButtons(self.ui.toolbar_plain);
 
-		self.ui.toolbar.group = jQuery('<div>')
+		self.ui.toolbar_group = jQuery('<div>')
 			.addClass('wcdv_toolbar_section')
 			.hide()
-			.appendTo(self.ui.gridToolBarButtons);
-		self.addGroupButtons(self.ui.toolbar.group);
+			.appendTo(self.ui.toolbar);
+		self.addGroupButtons(self.ui.toolbar_group);
 
-		self.ui.toolbar.pivot = jQuery('<div>')
+		self.ui.toolbar_pivot = jQuery('<div>')
 			.addClass('wcdv_toolbar_section')
 			.hide()
-			.appendTo(self.ui.gridToolBarButtons);
-		self.addPivotButtons(self.ui.toolbar.pivot);
+			.appendTo(self.ui.toolbar);
+		self.addPivotButtons(self.ui.toolbar_pivot);
 
 		// This is the "gear" icon that shows/hides the controls below the toolbar.  The controls are
 		// used to set the group, pivot, aggregate, and filters.  Ideally the user only has to utilize
@@ -614,8 +607,7 @@ var Grid = function (id, view, defn, tagOpts, cb) {
 					}
 				});
 			})
-			.appendTo(self.ui.gridToolBarButtons);
-	}
+			.appendTo(self.ui.toolbar);
 
 	self.ui.controls = jQuery('<div>', { 'class': 'wcdv_grid_control' });
 	self.ui.filterControl = jQuery('<div>', { 'class': 'wcdv_filter_control' });
@@ -634,23 +626,26 @@ var Grid = function (id, view, defn, tagOpts, cb) {
 		self.ui.grid.css({ 'overflow-x': 'auto' });
 	}
 
-	self.ui.controls
-		.append(self.ui.filterControl)
-		.append(self.ui.groupControl)
-		.append(self.ui.pivotControl)
-		.append(self.ui.aggregateControl)
-		.appendTo(self.ui.gridToolBarButtons);
-
-	self.ui.grid.appendTo(self.ui.root);
-
 	if (document.getElementById(id + '_footer')) {
 		// There was a footer which was printed out by dashboard.c which we are now going to move
 		// inside the structure that we've been creating.
 
 		self.ui.footer = jQuery(document.getElementById(id + '_footer'))
-			.css('display', 'block')
-			.appendTo(self.ui.controls);
+			.css('display', 'block');
 	}
+
+	self.ui.root
+		.append(self.ui.titlebar)
+		.append(self.ui.content
+			.append(self.ui.toolbar)
+			.append(self.ui.controls
+				.append(self.ui.filterControl)
+				.append(self.ui.groupControl)
+				.append(self.ui.pivotControl)
+				.append(self.ui.aggregateControl))
+			.append(self.ui.grid)
+			.append(self.ui.footer))
+	;
 
 	var initialRender = true;
 
@@ -688,11 +683,11 @@ var Grid = function (id, view, defn, tagOpts, cb) {
 	});
 
 	if (self.tagOpts.runImmediately) {
-		self.showGrid();
+		self.show();
 	}
 	else {
 		self.hasRun = false;
-		self.hideGrid();
+		self.hide();
 	}
 
 	/*
@@ -782,7 +777,7 @@ Grid.prototype._validateId = function (id) {
 	setProp(id + '_gridContainer', self.defn, 'table', 'id');
 };
 
-// #addHeaderWidgets {{{2
+// #addTitleWidgets {{{2
 
 /**
  * Add widgets to the header of the grid.
@@ -797,19 +792,21 @@ Grid.prototype._validateId = function (id) {
  * @param {string} id
  */
 
-Grid.prototype.addHeaderWidgets = function (header, doingServerFilter, runImmediately, id) {
+Grid.prototype.addTitleWidgets = function (titlebar, doingServerFilter, runImmediately, id) {
 	var self = this;
-	var notHeader = jQuery('<span>', {'class': 'headingInfo'})
-		.on('click', function (evt) {
-			evt.stopPropagation();
-		});
 
-	self.ui.spinner = jQuery('<strong>').css({'font-weight': 'normal', 'margin-right': '0.5em'}).appendTo(header);
+	self.ui.spinner = jQuery('<strong>').css({'font-weight': 'normal', 'margin-right': '0.5em'}).appendTo(titlebar);
 	self.setSpinner(self.tagOpts.runImmediately ? 'loading' : 'not-loaded');
 
 	jQuery('<strong>', {'id': id + '_title', 'data-parent': id})
 		.text(self.tagOpts.title)
-		.appendTo(header);
+		.appendTo(titlebar);
+
+	var notHeader = jQuery('<span>', {'class': 'headingInfo'})
+		.on('click', function (evt) {
+			evt.stopPropagation();
+		})
+		.appendTo(titlebar);
 
 	if (typeof self.tagOpts.helpText === 'string' && self.tagOpts.helpText !== '') {
 		notHeader.append(' ');
@@ -853,8 +850,6 @@ Grid.prototype.addHeaderWidgets = function (header, doingServerFilter, runImmedi
 			.appendTo(notHeader);
 	}
 
-	notHeader.appendTo(header);
-
 	// Create the down-chevron button that opens the grid toolbar.
 
 	self.ui.showHideButton = jQuery('<button type="button">')
@@ -863,9 +858,9 @@ Grid.prototype.addHeaderWidgets = function (header, doingServerFilter, runImmedi
 		.attr('title', MIE.trans('SHOWHIDEOPTS'))
 		.click(function (evt) {
 			evt.stopPropagation();
-			self.toggleGrid();
+			self.toggle();
 		})
-		.appendTo(header);
+		.appendTo(titlebar);
 };
 
 // #addSourceButtons {{{2
@@ -1314,9 +1309,9 @@ Grid.prototype.redraw = function () {
 
 			debug.info('GRID', 'Creating pivot grid table');
 
-			self.ui.toolbar.plain.hide();
-			self.ui.toolbar.group.hide();
-			self.ui.toolbar.pivot.show();
+			self.ui.toolbar_plain.hide();
+			self.ui.toolbar_group.hide();
+			self.ui.toolbar_pivot.show();
 		}
 		else if ((ops && ops.group) || self.view.getGroup()) {
 			switch (self.defn.table.groupMode) {
@@ -1332,9 +1327,9 @@ Grid.prototype.redraw = function () {
 
 			debug.info('GRID', 'Creating group grid table');
 
-			self.ui.toolbar.plain.hide();
-			self.ui.toolbar.group.show();
-			self.ui.toolbar.pivot.hide();
+			self.ui.toolbar_plain.hide();
+			self.ui.toolbar_group.show();
+			self.ui.toolbar_pivot.hide();
 		}
 		else {
 			gridTableCtor = GridTablePlain;
@@ -1343,9 +1338,9 @@ Grid.prototype.redraw = function () {
 
 			debug.info('GRID', 'Creating plain grid table');
 
-			self.ui.toolbar.plain.show();
-			self.ui.toolbar.group.hide();
-			self.ui.toolbar.pivot.hide();
+			self.ui.toolbar_plain.show();
+			self.ui.toolbar_group.hide();
+			self.ui.toolbar_pivot.hide();
 		}
 
 		if (self.gridTable) {
@@ -1435,7 +1430,7 @@ Grid.prototype.updateRowCount = function (info, ops) {
 	}
 };
 
-// #hideGrid {{{2
+// #hide {{{2
 
 /**
  * Hide the grid.
@@ -1444,12 +1439,12 @@ Grid.prototype.updateRowCount = function (info, ops) {
  * @memberof Grid
  */
 
-Grid.prototype.hideGrid = function () {
+Grid.prototype.hide = function () {
 	var self = this;
 
 	debug.info('GRID', 'Hiding...');
 
-	self.ui.grid.hide({
+	self.ui.content.hide({
 		duration: 0,
 		done: function () {
 			if (self.tagOpts.title) {
@@ -1459,7 +1454,7 @@ Grid.prototype.hideGrid = function () {
 	});
 };
 
-// #showGrid {{{2
+// #show {{{2
 
 /**
  * Make the grid visible.  If the grid has not been "run" yet, it will be done now.
@@ -1468,12 +1463,12 @@ Grid.prototype.hideGrid = function () {
  * @memberof Grid
  */
 
-Grid.prototype.showGrid = function () {
+Grid.prototype.show = function () {
 	var self = this;
 
 	debug.info('GRID', 'Showing...');
 
-	self.ui.grid.show({
+	self.ui.content.show({
 		duration: 0,
 		done: function () {
 			if (self.tagOpts.title) {
@@ -1487,7 +1482,7 @@ Grid.prototype.showGrid = function () {
 	});
 };
 
-// #toggleGrid {{{2
+// #toggle {{{2
 
 /**
  * Toggle grid visibility.
@@ -1496,12 +1491,12 @@ Grid.prototype.showGrid = function () {
  * @memberof Grid
  */
 
-Grid.prototype.toggleGrid = function () {
-	if (this.ui.grid.css('display') === 'none') {
-		this.showGrid();
+Grid.prototype.toggle = function () {
+	if (this.ui.content.css('display') === 'none') {
+		this.show();
 	}
 	else {
-		this.hideGrid();
+		this.hide();
 	}
 };
 
