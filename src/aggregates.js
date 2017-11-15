@@ -866,13 +866,21 @@ SumOverSumAggregate.prototype.getNumber = function (x) {
 			return 0;
 		}
 	}
+	else if (_.isNumber(x)) {
+		return x;
+	}
+	else {
+		return 0;
+	}
 };
 
 // #calculateStep {{{2
 
 SumOverSumAggregate.prototype.calculateStep = function (acc, next) {
-	acc.a += self.getNumber(next[opts.fields[0]].value);
-	acc.b += self.getNumber(next[opts.fields[1]].value);
+	var self = this;
+
+	acc.a += self.getNumber(next[self.opts.fields[0]].value);
+	acc.b += self.getNumber(next[self.opts.fields[1]].value);
 
 	return acc;
 };
@@ -880,6 +888,7 @@ SumOverSumAggregate.prototype.calculateStep = function (acc, next) {
 // #calculateDone {{{2
 
 SumOverSumAggregate.prototype.calculateDone = function (obj) {
+	console.log(obj);
 	return obj.a / obj.b;
 };
 

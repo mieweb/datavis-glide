@@ -340,6 +340,14 @@ function eachUntilObj(o, f, r, extra) {
 	return true;
 }
 
+function mapLimit(a, f, l) {
+	var result = [];
+	for (var i = 0; i < Math.min(a.length, l); i += 1) {
+		result.push(f(a[i], i));
+	}
+	return result;
+}
+
 /**
  * Create a deep copy of an object.
  *

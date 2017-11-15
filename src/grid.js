@@ -2260,7 +2260,9 @@ var AggregateControl = makeSubclass(Object, function (view, defn) {
 	self.view = view;
 	self.defn = defn;
 
-	self.ui = {};
+	self.ui = {
+		fields: []
+	};
 });
 
 // #draw {{{2
@@ -2308,35 +2310,29 @@ AggregateControl.prototype.draw = function (parent) {
 		}
 	});
 
-	self.ui.field = jQuery('<div>').css({'margin-top': '4px'}).appendTo(self.ui.root).hide();
-	jQuery('<label>').text('Field:').appendTo(self.ui.field);
-	self.ui.fieldDropdown = jQuery('<select>')
-		.appendTo(self.ui.field)
-		.on('change', function () {
-			self.triggerAggChange();
-		})
-	;
-
 	// When we receive type information, use that to populate the "fields" dropdown.
 	//
 	// TODO This needs to be expanded to the possibility of having multiple fields.
 
 	self.view.on('getTypeInfo', function (typeInfo) {
-		_.each(availableFields(self.defn, null, typeInfo), function (fieldName) {
-			var text = getProp(self.colConfig, fieldName, 'displayText') || fieldName;
-			jQuery('<option>', { 'value': fieldName }).text(text).appendTo(self.ui.fieldDropdown);
-		});
+		self.typeInfo = typeInfo;
+		self.updateFieldDropdowns();
 	}, { limit: 1 });
 
 	var syncAgg = function (spec) {
+		var agg;
 		if (getProp(spec, 'cell', 0, 'fun')) {
 			self.ui.funDropdown.val(spec.cell[0].fun);
-			if (AGGREGATES.get(spec.cell[0].fun).prototype.fieldCount > 0) {
-				self.ui.field.show();
+			agg = AGGREGATES.get(spec.cell[0].fun);
+			if (agg.prototype.fieldCount >= self.ui.fields.length) {
+				self.addFieldDropdowns(agg);
 			}
+			self.showHideFields(agg);
 		}
-		if (getProp(spec, 'cell', 0, 'fields', 0)) {
-			self.ui.fieldDropdown.val(spec.cell[0].fields[0]);
+		if (getProp(spec, 'cell', 0, 'fields')) {
+			_.each(spec.cell[0].fields, function (f, i) {
+				self.ui.fields[i].dropdown.val(f);
+			});
 		}
 
 		debug.info('GRID // AGGREGATE CONTROL',
@@ -2364,22 +2360,85 @@ AggregateControl.prototype.triggerAggChange = function () {
 	// TODO Move `aggText` functionality into the Aggregates class (i.e. use `toString()` or something
 	// to produce the name from the fields).
 	var aggText = (agg.prototype.name || self.ui.funDropdown.val())
-		+ (agg.prototype.fieldCount > 0 ? (' of ' + self.ui.fieldDropdown.val()) : '');
+		+ (agg.prototype.fieldCount > 0 ? (' of ' + mapLimit(self.ui.fields, function (f) {
+			return f.dropdown.val();
+		}).join(', ')) : '');
 	var aggSpec = objFromArray(['group', 'pivot', 'cell', 'all'], [[{
 		fun: self.ui.funDropdown.val(),
-		fields: agg.prototype.fieldCount > 0 && [self.ui.fieldDropdown.val()],
+		fields: agg.prototype.fieldCount > 0 && mapLimit(self.ui.fields, function (f) {
+			return f.dropdown.val();
+		}, agg.prototype.fieldCount),
 		name: aggText
 	}]]);
+	var i;
+	var div;
 
-	if (agg.prototype.fieldCount > 0) {
-		self.ui.field.show();
+	if (agg.prototype.fieldCount > self.ui.fields.length) {
+		self.addFieldDropdowns(agg);
 	}
-	else {
-		self.ui.field.hide();
-	}
+
+	self.showHideFields(agg);
 
 	self.view.setAggregate(aggSpec, {
 		dontSendEventTo: self
+	});
+};
+
+// #showHideFields {{{2
+
+AggregateControl.prototype.showHideFields = function (agg) {
+	var self = this;
+
+	for (i = 0; i < self.ui.fields.length; i += 1) {
+		if (i < agg.prototype.fieldCount) {
+			self.ui.fields[i].div.show();
+		}
+		else {
+			self.ui.fields[i].div.hide();
+		}
+	}
+};
+
+// #addFieldDropdowns {{{2
+
+AggregateControl.prototype.addFieldDropdowns = function (agg) {
+	var self = this;
+
+	debug.info('GRID // AGGREGATE CONTROL', 'Adding ' + (agg.prototype.fieldCount - self.ui.fields.length) + ' extra field dropdowns for the ' + agg.prototype.name + ' aggregate function');
+
+	// Create the extra dropdowns that we need to get all the fields required by the aggregate
+	// function selected.
+
+	while (self.ui.fields.length < agg.prototype.fieldCount) {
+		var x = {};
+		x.div = jQuery('<div>').css({'margin-top': '4px'}).appendTo(self.ui.root);
+		x.label = jQuery('<label>').text('Field:').appendTo(x.div);
+		x.dropdown = jQuery('<select>').on('change', function () { self.triggerAggChange(); }).appendTo(x.div);
+		self.ui.fields.push(x);
+	}
+
+	self.updateFieldDropdowns();
+};
+
+// #updateFieldDropdowns {{{2
+
+AggregateControl.prototype.updateFieldDropdowns = function () {
+	var self = this;
+
+	// Clear out the fields that are already in the dropdown (in case anything was removed, and to
+	// prevent duplicates from being added).
+
+	_.each(self.ui.fields, function (f) {
+		f.dropdown.children().remove();
+	});
+
+	// Add <OPTION> elements for all the fields.
+
+	_.each(availableFields(self.defn, null, self.typeInfo), function (fieldName) {
+		var text = getProp(self.colConfig, fieldName, 'displayText') || fieldName;
+		_.each(self.ui.fields, function (f) {
+			jQuery('<option>', { 'value': fieldName }).text(text).appendTo(f.dropdown);
+		});
 	});
 };
 
