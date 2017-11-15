@@ -138,6 +138,19 @@ function checkAggregate(defn, agg, source) {
 // Aggregate {{{1
 
 /**
+ * @class Aggregate
+ *
+ * Base class for all aggregate functions.  To make your own, extend it like this:
+ *
+ * ```
+ * var MyAggregate = makeSubclass(Aggregate, function () {
+ *   // constructor (optional)
+ * }, {
+ *   name: 'My Aggregate',
+ *   ... // override properties listed below
+ * });
+ * ```
+ *
  * @property {string} name
  * Name of the aggregate function used in the dropdown menu by the grid.
  *
@@ -148,7 +161,7 @@ function checkAggregate(defn, agg, source) {
  * @property {int} [fieldCount=0]
  * Number of fields required.  Usually zero or one.
  *
- * @property {string} type
+ * @property {string} [type]
  * Fixed type of the result of this aggregate function.  Undefined indicates that the type depends
  * on the field(s) used.
  *
@@ -156,7 +169,8 @@ function checkAggregate(defn, agg, source) {
  * If true, then the result should be formatted according to the formatting of the field(s).
  *
  * @property {any} [bottomValue]
- * The value returned when an error occurs.
+ * The value returned when an error occurs.  Also used as the "starting point" of the reduction over
+ * the data (i.e. zero or the empty string for most aggregates) when `init` isn't provided.
  *
  * @property {function|any} [init]
  * The value used as the initial seed of the result calculation (which is a reduction/fold over the
@@ -174,7 +188,54 @@ var Aggregate = makeSubclass(Object, function (opts) {
 	inheritFormatting: false
 });
 
+// JSDoc {{{2
+
+/**
+ * @method calculateStep
+ * @abstract
+ * @memberof Aggregate
+ * @instance
+ *
+ * @param {any} acc
+ * Accumulator built up by the aggregate function so far.
+ *
+ * @param {any} next
+ * The value from the next "row" in the data.
+ *
+ * @return {any}
+ * The new accumulator value.
+ */
+
+/**
+ * @method calculateDone
+ * @abstract
+ * @memberof Aggregate
+ * @instance
+ *
+ * If this exists, it will be called to determine what the final result from the aggregate function
+ * should be.  It receives the final accumulator value built from the reduction over the data.
+ *
+ * @param {any} result
+ * The result of the aggregate function (the value returned from the final call to `calculateStep`).
+ *
+ * @return {any}
+ * A value to return instead of the last accumulator.
+ */
+
 // #calculate {{{2
+
+/**
+ * Calculate the result of the aggregate function applied over the specified data.  Calls the
+ * `calculateStep` method for each "row" in the data.  If the `calculateDone` method exists, the
+ * result is passed through it before being returned.
+ *
+ * @param {object[]} data
+ * The data to apply this aggregate function to.
+ *
+ * @return {any}
+ * The result of the aggregate function.  This will have the type indicated by the `type` property
+ * of the instance (and if undefined, will depend on the type of the fields used).
+ */
 
 Aggregate.prototype.calculate = function (data) {
 	var self = this;
@@ -231,6 +292,14 @@ Aggregate.prototype.calculate = function (data) {
 
 // #checkOpts {{{2
 
+/**
+ * Check the options provided to the constructor.  This ensures that all configuration needed by the
+ * aggregate function was provided.
+ *
+ * @return {boolean}
+ * True if everything is OK, false if there is a problem with the options.
+ */
+
 Aggregate.prototype.checkOpts = function () {
 	var self = this;
 
@@ -253,6 +322,13 @@ Aggregate.prototype.checkOpts = function () {
 };
 
 // #checkData {{{2
+
+/**
+ * Check the data provided to the `calculate` method.
+ *
+ * @return {boolean}
+ * True if everything is OK, false if there is a problem with the data.
+ */
 
 Aggregate.prototype.checkData = function (data) {
 	var self = this;
@@ -817,109 +893,6 @@ CountOverCountAggregate = makeSubclass(Aggregate, null, {
 	inheritFormatting: false,
 	bottomValue: 0
 });
-
-/**
- * @typedef {Object} Aggregate
- *
- * @property {function} fun Call this with the options for the aggregate function to get a function
- * back.  The return value should be called, passing the data as the only argument; its result is
- * the final value of the aggregate function.
- *
- * Example:
- *
- * ```
- * var findAverageAge = AGGREGATES.average.fun({field: 'age'});
- * var averageAge1 = findAverageAge(data1);
- * var averageAge2 = findAverageAge(data2);
- * ```
- *
- * @property {string} type The type of the result of the aggregate function (e.g. `groupConcat` is
- * string, `sum` is number).  When undefined, the type is dependent on the data being consumed (e.g.
- * `min` and `max`).
- */
-
-/**
- * Registry for all the known types of aggregate functions.
- *
- * @type {Object.<string, Aggregate>}
- *
- * @property {Aggregate} count Returns the number of items in the data.
- *
- * @property {Aggregate} countDistinct Returns the number of items in the data with distinct values
- * for the specified field.
- *
- * Required config properties:
- *
- *   - field
- *
- * @property {Aggregate} sum Returns the sum of the numeric values of the specified field, across
- * all items in the data.  An error will occur if there are any items where the value of the field
- * is not a number.
- *
- * Required config properties:
- *
- *   - field
- *
- * @property {Aggregate} average Returns the average of the numeric values of the specified field,
- * across all items in the data.  An error will occur if there are any items where the value of the
- * field is not a number.
- *
- * Required config properties:
- *
- *   - field
- *
- * @property {Aggregate} groupConcat
- *
- * Required config properties:
- *
- *   - field
- *
- * Optional config properties:
- *
- *   - separator
- *
- * @property {Aggregate} groupConcatDistinct
- *
- * Required config properties:
- *
- *   - field
- *
- * Optional config properties:
- *
- *   - separator
- *
- * @property {Aggregate} first
- *
- * Required config properties:
- *
- *   - field
- *
- * @property {Aggregate} last
- *
- * Required config properties:
- *
- *   - field
- *
- * @property {Aggregate} nth
- *
- * Required config properties:
- *
- *   - field
- *   - index
- *
- * @property {Aggregate} min
- *
- * Required config properties:
- *
- *   - field
- *
- * @property {Aggregate} max
- *
- * Required config properties:
- *
- *   - field
- */
-var AGGREGATES = {};
 
 // Aggregate Dictionary {{{1
 

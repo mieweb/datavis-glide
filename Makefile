@@ -17,7 +17,8 @@ clean:
 doc:	jsdoc sphinx
 
 jsdoc:
-	jsdoc -c jsdoc_conf.json src
+	rm -rf jsdoc
+	./node_modules/.bin/jsdoc -c jsdoc_conf.json src
 
 sphinx:
 	$(MAKE) -C doc html
