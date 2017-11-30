@@ -5,7 +5,7 @@
         "destination": "jsdoc"
     },
 	"templates": {
-		"systemName": "Webchart",
+		"systemName": "WC DataVis",
 		"copyright": "Copyright © Medical Informatics Engineering, Inc.",
 		"theme": "spacelab",
 		"linenums": true,

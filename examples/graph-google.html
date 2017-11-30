@@ -12,7 +12,6 @@
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/nprogress/0.2.0/nprogress.js"></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/sprintf/1.0.3/sprintf.js"></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.sumoselect/3.0.2/jquery.sumoselect.min.js"></script>
-		<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
 		<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/4.3.5/papaparse.min.js"></script>
 		<script src="tabletool.js"></script>
 		<script src="wcdatavis.js"></script>
@@ -28,67 +27,64 @@
 $(document).ready(function () {
 	MIE.DEBUGGING = true;
 
-	google.charts.load('current', {'packages':['corechart']});
-	google.charts.setOnLoadCallback(function () {
-		var source = new MIE.WC_DataVis.Source({
-			type: 'http',
-			url: 'fruit.csv'
-		}, null, [{
-			field: 'Order ID',
-			type: 'number'
-		}, {
-			field: 'Product',
-			type: 'string'
-		}, {
-			field: 'Category',
-			type: 'string'
-		}, {
-			field: 'Amount',
-			type: 'currency'
-		}, {
-			field: 'Date',
-			type: 'date',
-			format: 'M/D/YYYY'
-		}, {
-			field: 'Country',
-			type: 'string'
-		}]);
-		var view = new MIE.WC_DataVis.View(source);
-		new MIE.WC_DataVis.Graph('graph', view, {
-			title: 'Google Charts Example',
-			height: 400,
-			whenPlain: {
-				graphType: 'area',
-				categoryField: 'Date',
-				valueField: 'Amount'
-			},
-			whenGroup: {
-				graphType: 'pie',
-				options: {
-					pieHole: 0.5
-				}
+	var source = new MIE.WC_DataVis.Source({
+		type: 'http',
+		url: 'fruit.csv'
+	}, null, [{
+		field: 'Order ID',
+		type: 'number'
+	}, {
+		field: 'Product',
+		type: 'string'
+	}, {
+		field: 'Category',
+		type: 'string'
+	}, {
+		field: 'Amount',
+		type: 'currency'
+	}, {
+		field: 'Date',
+		type: 'date',
+		format: 'M/D/YYYY'
+	}, {
+		field: 'Country',
+		type: 'string'
+	}]);
+	var view = new MIE.WC_DataVis.View(source);
+	new MIE.WC_DataVis.Graph('graph', view, {
+		title: 'Google Charts Example',
+		height: 400,
+		whenPlain: {
+			graphType: 'area',
+			categoryField: 'Date',
+			valueField: 'Amount'
+		},
+		whenGroup: {
+			graphType: 'pie',
+			options: {
+				pieHole: 0.5
 			}
-		});
-		new MIE.WC_DataVis.Grid('grid', view, {
-			id: 'grid',
-			table: {
-				features: {
-					sort: true,
-					filter: true,
-					group: true,
-					pivot: true,
-					limit: true
-				},
-				limit: {
-					threshold: 100,
-					chunkSize: 50
-				}
+		}
+	});
+	new MIE.WC_DataVis.Grid('grid', view, {
+		id: 'grid',
+		table: {
+			features: {
+				sort: true,
+				filter: true,
+				group: true,
+				pivot: true,
+				limit: true
 			},
-			source: source
-		}, {
-			title: 'Fruit Sales',
-			runImmediately: true
-		});
+			limit: {
+				threshold: 100,
+				chunkSize: 50
+			}
+		},
+		source: source
+	}, {
+		title: 'Fruit Sales',
+		runImmediately: true
 	});
 });
 		</script>

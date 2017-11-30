@@ -1964,13 +1964,16 @@ var Graph = function (id, view, opts) {
 	self.normalize(opts);
 	
 	debug.info('GRAPH', 'opts = %O', opts);
+	self.renderer = new GraphRendererGoogle(id, view, opts);
 
+	/*
 	if (window.google) {
 		self.renderer = new GraphRendererGoogle(id, view, opts);
 	}
 	else if (window.$jit) {
 		self.renderer = new GraphRendererJit(id, view, opts);
 	}
+	*/
 
 	self.draw();
 };
@@ -2046,22 +2049,14 @@ Graph.prototype.normalize = function (opts) {
 
 // GraphRenderer {{{1
 
-GraphRenderer = function () {
-};
-
-GraphRenderer.prototype = Object.create(Object.prototype);
-GraphRenderer.prototype.constructor = GraphRenderer;
-
-// #init {{{2
-
-GraphRenderer.prototype.init = function (id, view, opts) {
+GraphRenderer = makeSubclass(Object, function (id, view, opts) {
 	var self = this;
 
 	self.id = id;
 	self.view = view;
 	self.opts = opts;
 	self.addRedrawHandlers();
-};
+});
 
 // #addRedrawHandlers {{{2
 
@@ -2079,15 +2074,7 @@ GraphRenderer.prototype.addRedrawHandlers = function () {
 
 // GraphRendererGoogle {{{1
 
-GraphRendererGoogle = function (id, view, opts) {
-	var self = this;
-
-	self.super = makeSuper(self, GraphRenderer);
-	self.super.init.apply(self, arguments);
-};
-
-GraphRendererGoogle.prototype = Object.create(GraphRenderer.prototype);
-GraphRendererGoogle.prototype.constructor = GraphRendererGoogle;
+GraphRendererGoogle = makeSubclass(GraphRenderer);
 
 // #draw_plain {{{2
 
@@ -2306,68 +2293,81 @@ GraphRendererGoogle.prototype.draw_pivot = function (data, typeInfo, dt) {
 GraphRendererGoogle.prototype.draw = function () {
 	var self = this;
 
-	jQuery(document.getElementById(self.id)).children().remove();
+	var drawLikeForRealThisTime = function () {
+		jQuery(document.getElementById(self.id)).children().remove();
 
-	self.view.getData(function (data) {
-		self.view.getTypeInfo(function (typeInfo) {
-			var graphConfig
-				, dt = new google.visualization.DataTable();
+		self.view.getData(function (data) {
+			self.view.getTypeInfo(function (typeInfo) {
+				var graphConfig
+					, dt = new google.visualization.DataTable();
 
-			if (data.isPlain) {
-				graphConfig = self.draw_plain(data, typeInfo, dt);
-			}
-			else if (data.isGroup && !data.isPivot) {
-				graphConfig = self.draw_group(data, typeInfo, dt);
-			}
-			else if (data.isPivot) {
-				graphConfig = self.draw_pivot(data, typeInfo, dt);
-			}
-
-			if (graphConfig === undefined) {
-				return;
-			}
-
-			var ctor = {
-				area: 'AreaChart',
-				bar: 'BarChart',
-				column: 'ColumnChart',
-				pie: 'PieChart'
-			};
-
-			var options = {
-				title: self.opts.title,
-				width: self.opts.width,
-				height: self.opts.height,
-				isStacked: graphConfig.stacked,
-				hAxis: {
-					title: graphConfig.categoryField
-				},
-				vAxis: {
-					title: graphConfig.valueFields[0]
+				if (data.isPlain) {
+					graphConfig = self.draw_plain(data, typeInfo, dt);
 				}
-			};
+				else if (data.isGroup && !data.isPivot) {
+					graphConfig = self.draw_group(data, typeInfo, dt);
+				}
+				else if (data.isPivot) {
+					graphConfig = self.draw_pivot(data, typeInfo, dt);
+				}
 
-			jQuery.extend(true, options, graphConfig.options);
+				if (graphConfig === undefined) {
+					return;
+				}
 
-			console.log(options);
+				var ctor = {
+					area: 'AreaChart',
+					bar: 'BarChart',
+					column: 'ColumnChart',
+					pie: 'PieChart'
+				};
 
-			var chart = new google.visualization[ctor[graphConfig.graphType]](document.getElementById(self.id));
-			chart.draw(dt, options);
+				var options = {
+					title: self.opts.title,
+					width: self.opts.width,
+					height: self.opts.height,
+					isStacked: graphConfig.stacked,
+					hAxis: {
+						title: graphConfig.categoryField
+					},
+					vAxis: {
+						title: graphConfig.valueFields[0]
+					}
+				};
+
+				jQuery.extend(true, options, graphConfig.options);
+
+				console.log(options);
+
+				var chart = new google.visualization[ctor[graphConfig.graphType]](document.getElementById(self.id));
+				chart.draw(dt, options);
+			});
 		});
+	};
+
+	debug.info('GRAPH // GOOGLE // DRAW', 'Starting draw...');
+
+	return loadScript('https://www.gstatic.com/charts/loader.js', function (wasAlreadyLoaded, k) {
+		var cb = function () {
+			k();
+			drawLikeForRealThisTime();
+		};
+		if (!wasAlreadyLoaded) {
+			debug.info('GRAPH // GOOGLE // DRAW', 'Loading support for Google Charts');
+			google.charts.load('current', {'packages':['corechart']});
+			google.charts.setOnLoadCallback(cb);
+		}
+		else {
+			cb();
+		}
+	}, {
+		needAsyncSetup: true
 	});
 };
 
 // GraphRendererJit {{{1
 
-GraphRendererJit = function (id, view, opts) {
-	var self = this;
-
-	self.super = makeSuper(self, GraphRenderer);
-	self.super.init.apply(self, arguments);
-};
-
-GraphRendererJit.prototype = Object.create(GraphRenderer.prototype);
-GraphRendererJit.prototype.constructor = GraphRendererJit;
+GraphRendererJit = makeSubclass(GraphRenderer);
 
 // #draw {{{2
 

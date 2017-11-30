@@ -1129,6 +1129,177 @@ var makeSuper = function (me, parent) {
 	return sup;
 };
 
+// Locking {{{1
+
+/**
+ * Locks exist because we may have multiple asynchronous chunks of JavaScript running at the same
+ * time which interfere with each other.
+ *
+ * A really good example is preferences: loading them into the jQWidgets grid fires the event
+ * handlers associated with changing all the items in the prefs.  The preferences contain column
+ * widths, so loading them causes all the column resize event handlers to fire.  So we have a lock
+ * for preferences.  We engage it when load the preferences, then the event handlers find the lock
+ * engaged, so they don't try to save the preferences.  When the preferences are done loading, we
+ * disengage the lock, and event handlers are free to save prefs again.
+ */
+
+/**
+ * Engage the lock with the given name.
+ */
+
+function lock(defn, name) {
+	if (defn.locks === undefined) {
+		defn.locks = {};
+	}
+
+	if (defn.locks[name] === undefined) {
+		defn.locks[name] = 0;
+	}
+
+	defn.locks[name] += 1;
+	debug.info('LOCK', 'Locking ' + name + ' - ' + defn.locks[name]);
+}
+
+/**
+ * Disengage the lock with the given name.
+ */
+
+function unlock(defn, name) {
+	if (defn.locks === undefined) {
+		defn.locks = {};
+	}
+
+	if (defn.locks[name] === undefined) {
+		defn.locks[name] = 1;
+	}
+
+	defn.locks[name] -= 1;
+	debug.info('LOCK', 'Unlocking ' + name + ' - ' + defn.locks[name]);
+}
+
+/**
+ * Check to see if the lock with the given name is engaged or not.
+ */
+
+function isLocked(defn, name) {
+	return defn.locks && !!defn.locks[name];
+}
+
+/**
+ * An implementation of a counting semaphore for JavaScript.
+ * @class
+ */
+
+var Lock = function (name) {
+	var self = this;
+
+	self._name = name || '#' + (Lock._id++);
+	self._lockCount = 0;
+	self._onUnlock = [];
+};
+
+Lock._id = 1;
+
+// #lock {{{2
+
+/**
+ * Engage the lock.  A lock can be engaged multiple times.  Each lock operation must be unlocked
+ * separately to fully disengage the lock.
+ *
+ * @method
+ */
+
+Lock.prototype.lock = function () {
+	this._lockCount += 1;
+	debug.info('LOCK // ' + this._name, 'Locking to level: ' + this._lockCount);
+};
+
+// #unlock {{{2
+
+/**
+ * Disengage the lock.  A lock can be engaged multiple times.  Each lock operation must be unlocked
+ * separately to fully disengage the lock.
+ *
+ * @method
+ */
+
+Lock.prototype.unlock = function () {
+	var self = this;
+
+	self._lockCount -= 1;
+	debug.info('LOCK // ' + self._name, 'Unlocking to level: ' + self._lockCount);
+
+	// If we're completely unlocked, start going through the functions that were registered to be run.
+	// The only problem is that these functions can cause us to be locked again.  If that happens, we
+	// abort.  The functions to run are a queue, and when we become unlocked we'll just resume running
+	// the functions in the queue.
+
+	var onUnlockLen = self._onUnlock.length;
+	var i = 0;
+
+	while (self._onUnlock.length > 0 && !self.isLocked()) {
+		i += 1;
+		var onUnlock = self._onUnlock.shift();
+
+		debug.info('LOCK // ' + self._name,
+							 'Running onUnlock function (#'
+							 + i
+							 + '/'
+							 + onUnlockLen
+							 + ') - '
+							 + (onUnlock.info || '[NO INFO]'));
+
+		onUnlock.f();
+	}
+};
+
+// #isLocked {{{2
+
+/**
+ * Check to see if the lock is engaged.
+ *
+ * @method
+ *
+ * @returns {boolean} True if the lock is engaged, false if it's disengaged.
+ */
+
+Lock.prototype.isLocked = function () {
+	return this._lockCount !== 0;
+};
+
+// #onUnlock {{{2
+
+/**
+ * Register a function to call when the lock is fully disengaged (i.e. all locks have been
+ * unlocked).
+ *
+ * @method
+ *
+ * @param {function} f Function to call when the lock is disengaged.
+ */
+
+Lock.prototype.onUnlock = function (f, info) {
+	var self = this;
+
+	// If we're not already locked, there's no point in queueing it up, just do it.  This can simplify
+	// logic in callers (i.e. they don't have to do the check).
+
+	if (!self.isLocked()) {
+		f();
+	}
+
+	self._onUnlock.push({
+		f: f,
+		info: info
+	});
+
+	debug.info('LOCK // ' + self._name,
+		'Saved onUnlock function (#'
+		+ self._onUnlock.length
+		+ ') - '
+		+ (info || '[NO INFO]'));
+};
+
 // HTML {{{1
 
 /**
@@ -1224,6 +1395,123 @@ function fontAwesome(hex, cls, title) {
 
 	return span;
 };
+
+/**
+ * @function loadScript
+ * @description
+ *
+ * Dynamically load JavaScript from a URL into the page.
+ *
+ * Here's an example of using the `needAsyncSetup` option:
+ *
+ * ```
+ * return loadScript('https://www.gstatic.com/charts/loader.js', function (wasAlreadyLoaded, k) {
+ *   if (!wasAlreadyLoaded) {
+ *     google.charts.load('current', {'packages':['corechart']});
+ *     google.charts.setOnLoadCallback(k);
+ *   }
+ *   else {
+ *     k();
+ *   }
+ * }, {
+ *   needAsyncSetup: true
+ * });
+ * ```
+ *
+ * Calling `k()` *must* be done to properly unlock the loading code (only one file is loaded at a
+ * time) but only after everything is fully set up.
+ *
+ * @param {string} url
+ * The URL to load a script file from.
+ *
+ * @param {function} callback
+ * A function that receives at least one argument, a boolean which is true if the script was already
+ * loaded in the page.  The callback will not be called until the browser has finished executing the
+ * script, so it can safely use anything that the script provides.  If the callback needs to perform
+ * any additional setup before the loading is considered "complete" then use the `needAsyncSetup`
+ * option as shown below.
+ *
+ * @param {object} [opts]
+ * Additional options (see below).
+ *
+ * @param {boolean} [opts.needAsyncSetup = false]
+ * If true, then the callback function receives an additional argument, another function *which it
+ * must call* when finished.  This is specifically to support Google's JS API "loader" script, which
+ * requires additional (asynchronous) setup.
+ */
+
+var loadScript = (function () {
+	var alreadyLoaded = {};
+	var lock = new Lock('LOAD SCRIPT');
+	return function (url, callback, opts) {
+		_.defaults(opts, {
+			needAsyncSetup: false
+		});
+
+		// https://stackoverflow.com/a/950146
+
+		var load = function (url, callback) {
+			// Adding the script tag to the head as suggested before
+			var head = document.getElementsByTagName('head')[0];
+			var script = document.createElement('script');
+			script.type = 'text/javascript';
+			script.src = url;
+
+			// Then bind the event to the callback function.
+			// There are several events for cross browser compatibility.
+			script.onreadystatechange = callback;
+			script.onload = callback;
+
+			// Fire the loading
+			head.appendChild(script);
+		};
+
+		var makeCb = function (isAlreadyLoaded) {
+			var showLoadMsg = function () {
+				if (isAlreadyLoaded) {
+					debug.info('UTIL // LOAD SCRIPT', '[url = %s] Already loaded', url);
+				}
+				else {
+					debug.info('UTIL // LOAD SCRIPT', '[url = %s] Finished executing loaded script', url);
+				}
+			};
+
+			if (opts.needAsyncSetup) {
+				return function () {
+					showLoadMsg();
+					callback(isAlreadyLoaded, function () {
+						debug.info('UTIL // LOAD SCRIPT', '[url = %s] Exiting control of the script loader', url);
+						if (!isAlreadyLoaded) {
+							alreadyLoaded[url] = true;
+							lock.unlock();
+						}
+					});
+				};
+			}
+			else {
+				return function () {
+					showLoadMsg();
+					debug.info('UTIL // LOAD SCRIPT', '[url = %s] Exiting control of the script loader', url);
+					if (!isAlreadyLoaded) {
+						alreadyLoaded[url] = true;
+						lock.unlock();
+					}
+					callback(isAlreadyLoaded);
+				};
+			}
+		};
+
+		lock.onUnlock(function () {
+			if (alreadyLoaded[url]) {
+				makeCb(true)();
+			}
+			else {
+				lock.lock();
+				load(url, makeCb(false));
+			}
+		});
+	};
+})();
 
 // makeCheckbox {{{2
 
@@ -1801,170 +2089,6 @@ function InvalidCallError(msg) {
 InvalidCallError.prototype = Object.create(Error.prototype);
 InvalidCallError.prototype.constructor = InvalidCallError;
 
-
-// Locking {{{1
-
-/**
- * Locks exist because we may have multiple asynchronous chunks of JavaScript running at the same
- * time which interfere with each other.
- *
- * A really good example is preferences: loading them into the jQWidgets grid fires the event
- * handlers associated with changing all the items in the prefs.  The preferences contain column
- * widths, so loading them causes all the column resize event handlers to fire.  So we have a lock
- * for preferences.  We engage it when load the preferences, then the event handlers find the lock
- * engaged, so they don't try to save the preferences.  When the preferences are done loading, we
- * disengage the lock, and event handlers are free to save prefs again.
- */
-
-/**
- * Engage the lock with the given name.
- */
-
-function lock(defn, name) {
-	if (defn.locks === undefined) {
-		defn.locks = {};
-	}
-
-	if (defn.locks[name] === undefined) {
-		defn.locks[name] = 0;
-	}
-
-	defn.locks[name] += 1;
-	debug.info('LOCK', 'Locking ' + name + ' - ' + defn.locks[name]);
-}
-
-/**
- * Disengage the lock with the given name.
- */
-
-function unlock(defn, name) {
-	if (defn.locks === undefined) {
-		defn.locks = {};
-	}
-
-	if (defn.locks[name] === undefined) {
-		defn.locks[name] = 1;
-	}
-
-	defn.locks[name] -= 1;
-	debug.info('LOCK', 'Unlocking ' + name + ' - ' + defn.locks[name]);
-}
-
-/**
- * Check to see if the lock with the given name is engaged or not.
- */
-
-function isLocked(defn, name) {
-	return defn.locks && !!defn.locks[name];
-}
-
-/**
- * An implementation of a counting semaphore for JavaScript.
- * @class
- */
-
-var Lock = function (name) {
-	var self = this;
-
-	self._name = name || '#' + (Lock._id++);
-	self._lockCount = 0;
-	self._onUnlock = [];
-};
-
-Lock._id = 1;
-
-// #lock {{{2
-
-/**
- * Engage the lock.  A lock can be engaged multiple times.  Each lock operation must be unlocked
- * separately to fully disengage the lock.
- *
- * @method
- */
-
-Lock.prototype.lock = function () {
-	this._lockCount += 1;
-	debug.info('LOCK // ' + this._name, 'Locking to level: ' + this._lockCount);
-};
-
-// #unlock {{{2
-
-/**
- * Disengage the lock.  A lock can be engaged multiple times.  Each lock operation must be unlocked
- * separately to fully disengage the lock.
- *
- * @method
- */
-
-Lock.prototype.unlock = function () {
-	var self = this;
-
-	self._lockCount -= 1;
-	debug.info('LOCK // ' + self._name, 'Unlocking to level: ' + self._lockCount);
-
-	// If we're completely unlocked, start going through the functions that were registered to be run.
-	// The only problem is that these functions can cause us to be locked again.  If that happens, we
-	// abort.  The functions to run are a queue, and when we become unlocked we'll just resume running
-	// the functions in the queue.
-
-	var onUnlockLen = self._onUnlock.length;
-	var i = 0;
-
-	while (self._onUnlock.length > 0 && !self.isLocked()) {
-		i += 1;
-		var onUnlock = self._onUnlock.shift();
-
-		debug.info('LOCK // ' + self._name,
-							 'Running onUnlock function (#'
-							 + i
-							 + '/'
-							 + onUnlockLen
-							 + ') - '
-							 + (onUnlock.info || '[NO INFO]'));
-
-		onUnlock.f();
-	}
-};
-
-// #isLocked {{{2
-
-/**
- * Check to see if the lock is engaged.
- *
- * @method
- *
- * @returns {boolean} True if the lock is engaged, false if it's disengaged.
- */
-
-Lock.prototype.isLocked = function () {
-	return this._lockCount !== 0;
-};
-
-// #onUnlock {{{2
-
-/**
- * Register a function to call when the lock is fully disengaged (i.e. all locks have been
- * unlocked).
- *
- * @method
- *
- * @param {function} f Function to call when the lock is disengaged.
- */
-
-Lock.prototype.onUnlock = function (f, info) {
-	var self = this;
-
-	self._onUnlock.push({
-											f: f,
-											info: info
-	});
-
-	debug.info('LOCK // ' + self._name,
-						 'Saved onUnlock function (#'
-						 + self._onUnlock.length
-						 + ') - '
-						 + (info || '[NO INFO]'));
-};
 
 // Blocking {{{1
 
