@@ -834,7 +834,20 @@ GridTable.prototype.getCsv = function () {
 // #getSelection {{{2
 
 /**
- * @method
+ * Get the currently selected rows.
+ *
+ * @return {object}
+ * Information on what rows are selected.  Contains the following properties:
+ *
+ * - `rowIds` — An array of the unique IDs of the selected rows.  Probably not that useful to you,
+ *   but it's available.
+ *
+ * - `rows` — An array of the data represented by each row.  Each row is an object, each key in the
+ *   object is a field in the source data.  Values are references to the actual data used by the
+ *   grid, so don't mess with their internal structures.
+ *
+ * The ordering of the results is not guaranteed to have any relationship to the order of the rows
+ * from the source, or the order in which they were checked.
  */
 
 GridTable.prototype.getSelection = function () {
@@ -851,7 +864,10 @@ GridTable.prototype.getSelection = function () {
 // #setSelection {{{2
 
 /**
- * @method
+ * Set the currently selected rows.
+ *
+ * @param {number[]} [what]
+ * Set the selection to the specified row IDs, or select nothing if not specified.
  */
 
 GridTable.prototype.setSelection = function (what) {
@@ -881,7 +897,18 @@ GridTable.prototype.setSelection = function (what) {
 /**
  * Adds to the current selection.
  *
- * @method
+ * To add all rows where the field "Model" is Civic, Fit, or Accord:
+ *
+ * ```
+ * grid.select((row) => { ['Civic', 'Fit', 'Accord'].indexOf(row['Model'].value) >= 0 });
+ * ```
+ *
+ * @param {number|number[]|function} [what]
+ * Behaves as follows:
+ *
+ * - When not specified, adds all rows to the selection.
+ * - When a number or array of numbers, adds all those row IDs to the selection.
+ * - When a function, adds all rows that pass that filter to the selection.
  */
 
 GridTable.prototype.select = function (what) {
@@ -920,7 +947,18 @@ GridTable.prototype.select = function (what) {
 /**
  * Removes from the current selection.
  *
- * @method
+ * To remove all rows where the field "Make" is Honda:
+ *
+ * ```
+ * grid.unselect((row) => { row['Make'].value === 'Honda' });
+ * ```
+ *
+ * @param {number|number[]|function} [what]
+ * Behaves as follows:
+ *
+ * - When not specified, removes all rows from the selection.
+ * - When a number or array of numbers, removes all those row IDs from the selection.
+ * - When a function, removes all rows that pass that filter from the selection.
  */
 
 GridTable.prototype.unselect = function (what) {
@@ -954,6 +992,16 @@ GridTable.prototype.unselect = function (what) {
 };
 
 // #isSelected {{{2
+
+/**
+ * Tells if a row is selected.
+ *
+ * @param {number} what
+ * Row ID to check.
+ *
+ * @return {boolean}
+ * True if the row is selected, false if it isn't.
+ */
 
 GridTable.prototype.isSelected = function (what) {
 	var self = this;

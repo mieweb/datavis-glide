@@ -460,6 +460,12 @@ GridError.prototype.constructor = GridError;
  * If true, then the root DIV element has a fixed height (e.g. "600px") and the grid must fit within
  * that size.  Basically, this controls the "overflow" CSS property of the grid table, and also the
  * scroll handler for when a grid table automatically shows more rows.
+ *
+ * @borrows GridTable#getSelection
+ * @borrows GridTable#setSelection
+ * @borrows GridTable#select
+ * @borrows GridTable#unselect
+ * @borrows GridTable#isSelected
  */
 
 var Grid = function (id, view, defn, tagOpts, cb) {

@@ -140,16 +140,33 @@ function checkAggregate(defn, agg, source) {
 /**
  * @class Aggregate
  *
- * Base class for all aggregate functions.  To make your own, extend it like this:
+ * Base class for all aggregate functions.  To make your own, extend it with {@linkcode
+ * makeSubclass makeSubclass()} like this:
  *
  * ```
- * var MyAggregate = makeSubclass(Aggregate, function () {
+ * var MyAggregate = MIE.makeSubclass(MIE.WC_DataVis.Aggregate, function () {
  *   // constructor (optional)
  * }, {
  *   name: 'My Aggregate',
  *   ... // override properties listed below
  * });
  * ```
+ *
+ * Aggregate functions are computed with the `calculate()` method.  You *must* either override the
+ * base class' implementation of this method, or provide an implementation of the `calculateStep()`
+ * method.  The base implementation of `calculate()` uses the abstract `calculateStep()` to iterate
+ * over each row in the data.  This is the most common use, but some aggregate functions (e.g.
+ * "count") don't need to iterate over all the rows, and therefore override `calculate()` with
+ * something simpler.
+ *
+ * After creating the class, it needs to be added to the aggregate registry:
+ *
+ * ```
+ * MIE.WC_DataVis.AGGREGATE_REGISTRY.set('briefUniqueName', MyAggregate);
+ * ```
+ *
+ * Since the registry is an {@linkcode OrdMap}, the aggregate functions appear in the user interface
+ * in the order they were added to the registry.
  *
  * @property {string} name
  * Name of the aggregate function used in the dropdown menu by the grid.

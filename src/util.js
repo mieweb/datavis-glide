@@ -331,6 +331,34 @@ function eachUntil(l, f, r) {
 	}
 }
 
+/**
+ * Calls a function on each key/value pair in an object until the function returns a certain value.
+ * This is mainly useful as a sort of short-circuited version of `_.each()` or a version of
+ * `_.every()` that works on objects.  This contrived example only goes through as many keys as
+ * necessary to determine that one of them is "TERMINATE."
+ *
+ * ```
+ * if (!eachUntilObject(o, (v, k) => { k.toUpperCase() }, "TERMINATE")) {
+ *   console.log('Object contains TERMINATE key!');
+ * }
+ * ```
+ *
+ * @param {object} o
+ * The object to iterate over.
+ *
+ * @param {function} f
+ * Function to call like this: `f(value, key, extra)`
+ *
+ * @param {any} r
+ * If `f` returns `r` then this function returns false.
+ *
+ * @param {any} [extra]
+ * A "userdata" type of argument passed to `f`.
+ *
+ * @return {boolean}
+ * False if `f` returned `r` for some key/value pair in the object, and true otherwise.
+ */
+
 function eachUntilObj(o, f, r, extra) {
 	for (k in o) {
 		if (o.hasOwnProperty(k) && f(o[k], k, extra) === r) {
@@ -339,6 +367,22 @@ function eachUntilObj(o, f, r, extra) {
 	}
 	return true;
 }
+
+/**
+ * Map a function over an array, stopping after a preset number of elements.
+ *
+ * @param {any[]} a
+ * An array of items.
+ *
+ * @param {function} f
+ * The function to map.
+ *
+ * @param {number} l
+ * Maximum number of elements to process.
+ *
+ * @return {any[]}
+ * An array of size `min(a.length, l)` containing the mapped results.
+ */
 
 function mapLimit(a, f, l) {
 	var result = [];
@@ -351,9 +395,11 @@ function mapLimit(a, f, l) {
 /**
  * Create a deep copy of an object.
  *
- * @param object o The thing to copy.
+ * @param object o
+ * The thing to copy.
  *
- * @return object A clean copy of the argument.
+ * @return object
+ * A clean copy of the argument.
  */
 
 function deepCopy(o) {
@@ -362,6 +408,12 @@ function deepCopy(o) {
 
 /**
  * Deep copy an array.
+ *
+ * @param {any[]} a
+ * The array to copy.
+ *
+ * @return
+ * A new array containing deep copies of all elements (including objects and sub-arrays).
  */
 
 function arrayCopy(a) {
@@ -974,6 +1026,54 @@ function walkObj(o, f, acc) {
 
 // Object Orientation {{{1
 
+/**
+ * Create a function representing a subclass.
+ *
+ * ```
+ * var Animal = makeSubclass(Object, function (name) {
+ *   this.name = name;
+ * }, {
+ *   species: 'unknown species'
+ * });
+ *
+ * Animal.prototype.printInfo = function () {
+ *   console.log(this.name + ' is a ' + this.species + '.');
+ * };
+ *
+ * var HouseFinch = makeSubclass(Animal, null, {
+ *   species: 'Haemorhous mexicanus'
+ * });
+ *
+ * HouseFinch.prototype.printInfo = function () {
+ *   self.super.printInfo();
+ *   console.log('He says: Tweet tweet!');
+ * };
+ *
+ * var harold = new HouseFinch('Harold');
+ * harold.printInfo();
+ *
+ * > Harold is a Haemorhous mexicanus.
+ * > He says: Tweet tweet!
+ * ```
+ *
+ * Within the source code, look to {@linkcode Aggregate} or {@linkcode GridTable} for some prime
+ * examples.
+ *
+ * @param {function} parent
+ * The parent class; use "Object" to create base classes.
+ *
+ * @param {function} [ctor]
+ * Constructor for the subclass.  If not provided, a default constructor is used which simply calls
+ * the superclass' constructor with all arguments.
+ *
+ * @param {object} [ptype]
+ * Properties added to the resulting class' prototype.
+ *
+ * @return {function}
+ * A constructor used to create new instances of the subclass.  The instance will get a `super`
+ * property which can be used to invoke the superclass' methods on itself.
+ */
+
 var makeSubclass = function (parent, ctor, ptype) {
 	// Default constructor just calls the super constructor.
 
@@ -1002,6 +1102,20 @@ var makeSubclass = function (parent, ctor, ptype) {
 
 	return subclass;
 };
+
+/**
+ * Creates an object to act as a proxy to superclass methods.  Probably best to not use this
+ * directly, and instead let {@linkcode makeSubclass makeSubclass()} do the work for you.
+ *
+ * @param {object} me
+ * An instance of the subclass.
+ *
+ * @param {function} parent
+ * The superclass.
+ *
+ * @return {object}
+ * An object containing proxies to superclass methods (bound to `me`).
+ */
 
 var makeSuper = function (me, parent) {
 	var sup = _.mapObject(parent.prototype, function (v, k) {
