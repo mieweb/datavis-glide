@@ -279,6 +279,10 @@ View.prototype.sort = function (cont) {
 		, conv = I
 		, aggInfo = getProp(self.data, 'agg', 'info');
 
+	if (self.sortSpec == null) {
+		return cont(false);
+	}
+
 	debug.info('VIEW (' + self.name + ') // SORT', 'Beginning sort: %s', JSON.stringify(self.sortSpec));
 
 	var determineCmp = function (spec, fti) {
@@ -524,13 +528,15 @@ View.prototype.sort = function (cont) {
 	var performSort = function (orientation, next) {
 		var fti
 			, sortSourceFn
-			, spec = deepCopy(getProp(self, 'sortSpec', orientation));
+			, spec = getProp(self, 'sortSpec', orientation);
 
 		var rvi, cvi;
 
 		if (spec == null) {
 			return next(false);
 		}
+
+		spec = deepCopy(spec);
 
 		if (self.data.isPlain) {
 			if (spec.field) {
