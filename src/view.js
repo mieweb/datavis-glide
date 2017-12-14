@@ -791,18 +791,20 @@ View.prototype.setFilter = function (spec, progress, opts) {
 		self.wasPreviouslyFiltered = true;
 	}
 
-	if (self.typeInfo == null) {
-		return self.getTypeInfo(function () {
-			self.setFilter.apply(self, args);
+	if (spec != null) {
+		if (self.typeInfo == null) {
+			return self.getTypeInfo(function () {
+				self.setFilter.apply(self, args);
+			});
+		}
+
+		_.each(spec, function (fieldSpec, field) {
+			if (self.typeInfo.get(field) == null) {
+				log.error('Ignoring filter on field "' + field + '" because it doesn\'t exist in the data');
+				delete spec[field];
+			}
 		});
 	}
-
-	_.each(spec, function (fieldSpec, field) {
-		if (self.typeInfo.get(field) == null) {
-			log.error('Ignoring filter on field "' + field + '" because it doesn\'t exist in the data');
-			delete spec[field];
-		}
-	});
 
 	self.filterSpec = spec;
 	self.filterProgress = progress;
@@ -1539,11 +1541,13 @@ View.prototype.setAggregate = function (spec, opts) {
 
 	// Make sure we have typeInfo so we can perform the next check.
 
+	/*
 	if (self.typeInfo == null) {
 		return self.getTypeInfo(function () {
 			self.setFilter.apply(self, args);
 		});
 	}
+	*/
 
 	// Remove any fields that don't exist in the data (according to typeInfo).
 
