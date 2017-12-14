@@ -390,6 +390,37 @@ Aggregate.prototype.getRealValueAsString = function (cell) {
 	return format(colConfig, typeInfo, cell);
 };
 
+// #getNumber {{{2
+
+Aggregate.prototype.getNumber = function (x) {
+	if (window.numeral && window.numeral.isNumeral(x)) {
+		// Check to see if this is a plain number, or a number wrapped by the Numeral library.  It
+		// should always be the latter, but we check anyway, because there's no reason not to.
+
+		return x.value();
+	}
+	else if (_.isString(x)) {
+		// We can also handle when it's a number represented as a string.  We'll try to convert it
+		// either to an integer or a float.
+
+		if (isInt(x)) {
+			return toInt(x);
+		}
+		else if (isFloat(x)) {
+			return toFloat(x);
+		}
+		else {
+			return 0;
+		}
+	}
+	else if (_.isNumber(x)) {
+		return x;
+	}
+	else {
+		return 0;
+	}
+};
+
 // #getFullName {{{2
 
 Aggregate.prototype.getFullName = function () {
@@ -870,37 +901,6 @@ SumOverSumAggregate = makeSubclass(Aggregate, null, {
 		return { a: 0, b: 0 };
 	}
 });
-
-// #getNumber {{{2
-
-SumOverSumAggregate.prototype.getNumber = function (x) {
-	if (window.numeral && window.numeral.isNumeral(x)) {
-		// Check to see if this is a plain number, or a number wrapped by the Numeral library.  It
-		// should always be the latter, but we check anyway, because there's no reason not to.
-
-		return x.value();
-	}
-	else if (_.isString(x)) {
-		// We can also handle when it's a number represented as a string.  We'll try to convert it
-		// either to an integer or a float.
-
-		if (isInt(x)) {
-			return toInt(x);
-		}
-		else if (isFloat(x)) {
-			return toFloat(x);
-		}
-		else {
-			return 0;
-		}
-	}
-	else if (_.isNumber(x)) {
-		return x;
-	}
-	else {
-		return 0;
-	}
-};
 
 // #calculateStep {{{2
 
