@@ -229,6 +229,8 @@ View.prototype.setSort = function (spec, progress, noUpdate, dontTell) {
 		}, 'Waiting to set sort: ' + JSON.stringify(spec));
 	}
 
+	debug.info('VIEW (' + self.name + ') // SET SORT', 'spec = %O', spec);
+
 	self.sortSpec = spec;
 	self.sortProgress = progress;
 
@@ -774,8 +776,6 @@ View.prototype.setFilter = function (spec, progress, opts) {
 		, args = Array.prototype.slice.call(arguments)
 		, opts = deepCopy(opts) || {};
 
-	debug.info('VIEW (' + self.name + ') // SET FILTER', 'spec = %O ; options = %O', spec, opts);
-
 	_.defaults(opts, {
 		notify: false,
 		update: true
@@ -786,6 +786,8 @@ View.prototype.setFilter = function (spec, progress, opts) {
 			self.setFilter.apply(self, args);
 		}, 'Waiting to set filter: ' + JSON.stringify(spec));
 	}
+
+	debug.info('VIEW (' + self.name + ') // SET FILTER', 'spec = %O ; options = %O', spec, opts);
 
 	if (!isNothing(self.filterSpec) && isNothing(spec)) {
 		self.wasPreviouslyFiltered = true;
@@ -1130,6 +1132,8 @@ View.prototype.setGroup = function (spec, noUpdate, dontTell) {
 		}, 'Waiting to set group: ' + JSON.stringify(spec));
 	}
 
+	debug.info('VIEW (' + self.name + ') // SET GROUP', 'spec = %O', spec);
+
 	if (isNothing(spec) && !isNothing(self.pivotSpec)) {
 		log.warn('VIEW (' + self.name + ') // SET GROUP', 'Having a pivot without a group is not allowed');
 		self.clearPivot(true);
@@ -1333,6 +1337,8 @@ View.prototype.setPivot = function (spec, noUpdate, dontTell) {
 		}, 'Waiting to set pivot: ' + JSON.stringify(spec));
 	}
 
+	debug.info('VIEW (' + self.name + ') // SET PIVOT', 'spec = %O', spec);
+
 	if (isNothing(self.groupSpec) && !isNothing(spec)) {
 		log.warn('VIEW (' + self.name + ') // SET PIVOT', 'Having a pivot without a group is not allowed');
 		self.clearPivot(noUpdate, dontTell);
@@ -1535,53 +1541,60 @@ View.prototype.setAggregate = function (spec, opts) {
 		return false;
 	}
 
-	if (!self.aggregateSpec) {
+	debug.info('VIEW (' + self.name + ') // SET AGGREGATE', 'spec = %O ; options = %O', spec, opts);
+
+	if (spec == null) {
 		self.aggregateSpec = {};
 	}
+	else {
+		if (!self.aggregateSpec) {
+			self.aggregateSpec = {};
+		}
 
-	// Make sure we have typeInfo so we can perform the next check.
+		// Make sure we have typeInfo so we can perform the next check.
 
-	/*
-	if (self.typeInfo == null) {
-		return self.getTypeInfo(function () {
-			self.setFilter.apply(self, args);
-		});
-	}
-	*/
+		/*
+		if (self.typeInfo == null) {
+			return self.getTypeInfo(function () {
+				self.setFilter.apply(self, args);
+			});
+		}
+		*/
 
-	// Remove any fields that don't exist in the data (according to typeInfo).
+		// Remove any fields that don't exist in the data (according to typeInfo).
 
-	_.each(spec, function (aggSpec, aggType) {
-		aggSpec = _.filter(aggSpec, function(agg) {
-			var a = AGGREGATE_REGISTRY.get(agg.fun);
-			if (a == null) {
+		_.each(spec, function (aggSpec, aggType) {
+			aggSpec = _.filter(aggSpec, function(agg) {
+				var a = AGGREGATE_REGISTRY.get(agg.fun);
+				if (a == null) {
 					log.error('Ignoring aggregate "' + agg.fun + '" because no such aggregate function exists');
 					return false;
-			}
-			/*
-			if (a.prototype.fieldCount > 0) {
-				if (agg.fields == null) {
-					log.error('Ignoring aggregate "' + agg.fun + '" because no fields have been specified');
-					return false;
 				}
-				if (agg.fields.length < a.prototype.fieldCount) {
-					log.error('Ignoring aggregate "' + agg.fun + '" because there aren\'t enough fields');
-					return false;
-				}
-				for (var i = 0; i < agg.fields.length; i += 1) {
-					if (self.typeInfo.get(agg.fields[i]) == null) {
-						log.error('Ignoring aggregate "' + agg.fun + '" because field "' + agg.fields[i] + '" doesn\'t exist in the data');
+				/*
+				if (a.prototype.fieldCount > 0) {
+					if (agg.fields == null) {
+						log.error('Ignoring aggregate "' + agg.fun + '" because no fields have been specified');
 						return false;
 					}
+					if (agg.fields.length < a.prototype.fieldCount) {
+						log.error('Ignoring aggregate "' + agg.fun + '" because there aren\'t enough fields');
+						return false;
+					}
+					for (var i = 0; i < agg.fields.length; i += 1) {
+						if (self.typeInfo.get(agg.fields[i]) == null) {
+							log.error('Ignoring aggregate "' + agg.fun + '" because field "' + agg.fields[i] + '" doesn\'t exist in the data');
+							return false;
+						}
+					}
 				}
-			}
-			*/
-			return true;
+				*/
+				return true;
+			});
+			spec[aggType] = aggSpec;
 		});
-		spec[aggType] = aggSpec;
-	});
 
-	_.extend(self.aggregateSpec, spec);
+		_.extend(self.aggregateSpec, spec);
+	}
 
 	if (opts.sendEvent) {
 		self.fire(View.events.aggregateSet, {
