@@ -831,13 +831,18 @@ GridFilter.defaultWidgets = {
  * internally when loading preferences to avoid updating for every single filter.
  */
 
-var GridFilterSet = function (view, prefs, gridTable, progress) {
+var GridFilterSet = function (view, prefs, gridTable, progress, opts) {
 	var self = this;
 
 	self.view = view;
 	self.prefs = prefs;
 	self.gridTable = gridTable;
 	self.progress = progress;
+	self.opts = deepDefaults(opts, {
+		sendEvent: true,
+		dontSendEventTo: [],
+		updateData: true
+	});
 
 	self.filters = {
 		all: [],
@@ -1137,7 +1142,7 @@ GridFilterSet.prototype.update = function () {
 
 	debug.info('GRID FILTER SET', 'Updating with ' + self.filters.all.length + ' filters: ', spec);
 
-	self.view.setFilter(spec, false, self.progress);
+	self.view.setFilter(spec, self.progress, self.opts);
 };
 
 // #set {{{2

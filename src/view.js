@@ -769,6 +769,17 @@ View.prototype.sort = function (cont) {
  * @memberof View
  *
  * @param {View_Filter_Spec} spec How to perform filtering.
+ *
+ * @param {object} progress
+ *
+ * @param {object} [opts]
+ *
+ * @param {boolean} [opts.sendEvent=true]
+ * If true, issue an event indicating the filter has been changed.
+ *
+ * @param {Array.<Object>} [opts.dontSendEventTo]
+ *
+ * @param {boolean} [opts.updateData=true]
  */
 
 View.prototype.setFilter = function (spec, progress, opts) {
@@ -777,8 +788,9 @@ View.prototype.setFilter = function (spec, progress, opts) {
 		, opts = deepCopy(opts) || {};
 
 	_.defaults(opts, {
-		notify: false,
-		update: true
+		sendEvent: true,
+		dontSendEventTo: [],
+		updateData: true
 	});
 
 	if (self.lock.isLocked()) {
@@ -811,13 +823,13 @@ View.prototype.setFilter = function (spec, progress, opts) {
 	self.filterSpec = spec;
 	self.filterProgress = progress;
 
-	if (opts.notify) {
+	if (opts.sendEvent) {
 		self.fire(View.events.filterSet, {
-			notTo: opts.dontTell
+			notTo: opts.dontSendEventTo
 		}, spec);
 	}
 
-	if (opts.update) {
+	if (opts.updateData) {
 		self.clearCache();
 		self.getData();
 	}
@@ -1523,6 +1535,17 @@ View.prototype.pivot = function () {
 
 // #setAggregate {{{2
 
+/**
+ * @param {object} [opts]
+ *
+ * @param {boolean} [opts.sendEvent=true]
+ * If true, issue an event indicating the aggregate has been changed.
+ *
+ * @param {Array.<Object>} [opts.dontSendEventTo]
+ *
+ * @param {boolean} [opts.updateData=true]
+ */
+
 View.prototype.setAggregate = function (spec, opts) {
 	var self = this
 		, args = Array.prototype.slice.call(arguments);
@@ -1543,14 +1566,18 @@ View.prototype.setAggregate = function (spec, opts) {
 
 	debug.info('VIEW (' + self.name + ') // SET AGGREGATE', 'spec = %O ; options = %O', spec, opts);
 
+	/*
+	if (spec == null || self.aggregateSpec == null) {
+		self.aggregateSpec = objFromArray(['group', 'pivot', 'cell', 'all'], [[{
+			fun: 'count'
+		}]]);
+	}
+	*/
+
 	if (spec == null) {
-		self.aggregateSpec = {};
+		self.aggregateSpec = null;
 	}
 	else {
-		if (!self.aggregateSpec) {
-			self.aggregateSpec = {};
-		}
-
 		// Make sure we have typeInfo so we can perform the next check.
 
 		/*
@@ -1593,7 +1620,7 @@ View.prototype.setAggregate = function (spec, opts) {
 			spec[aggType] = aggSpec;
 		});
 
-		_.extend(self.aggregateSpec, spec);
+		self.aggregateSpec = deepCopy(spec);
 	}
 
 	if (opts.sendEvent) {
@@ -1738,11 +1765,11 @@ View.prototype.aggregate = function (cont) {
 			}
 			var aggResult = info.group[aggNum].instance.calculate(_.flatten(self.data.data[rowValIdx]));
 			groupResults[aggNum][rowValIdx] = aggResult;
-			debug.info('VIEW // AGGREGATE', 'Group aggregate [%d] (%s) : Group [%s] = %O',
-				aggNum,
-				info.group[aggNum].instance.name + (info.group[aggNum].name ? ' -> ' + info.group[aggNum].name : ''),
-				rowVal.join(', '),
-				aggResult);
+			//debug.info('VIEW // AGGREGATE', 'Group aggregate [%d] (%s) : Group [%s] = %O',
+			//	aggNum,
+			//	info.group[aggNum].instance.name + (info.group[aggNum].name ? ' -> ' + info.group[aggNum].name : ''),
+			//	rowVal.join(', '),
+			//	aggResult);
 		});
 
 		if (self.data.isPivot) {
@@ -1755,12 +1782,12 @@ View.prototype.aggregate = function (cont) {
 				_.each(self.data.colVals, function (colVal, colValIdx) {
 					var aggResult = info.cell[aggNum].instance.calculate(self.data.data[rowValIdx][colValIdx]);
 
-					debug.info('VIEW // AGGREGATE', 'Pivot aggregate [%d] (%s) : Cell [%s ; %s] = %O',
-						aggNum,
-						info.cell[aggNum].instance.name + (info.cell[aggNum].name ? ' -> ' + info.cell[aggNum].name : ''),
-						rowVal.join(', '),
-						colVal.join(', '),
-						aggResult);
+					//debug.info('VIEW // AGGREGATE', 'Pivot aggregate [%d] (%s) : Cell [%s ; %s] = %O',
+					//	aggNum,
+					//	info.cell[aggNum].instance.name + (info.cell[aggNum].name ? ' -> ' + info.cell[aggNum].name : ''),
+					//	rowVal.join(', '),
+					//	colVal.join(', '),
+					//	aggResult);
 
 					cellResults[aggNum][rowValIdx][colValIdx] = aggResult;
 				});
@@ -1775,11 +1802,11 @@ View.prototype.aggregate = function (cont) {
 			_.each(self.data.colVals, function (colVal, colValIdx) {
 				var aggResult = info.pivot[aggNum].instance.calculate(_.flatten(_.pluck(self.data.data, colValIdx)));
 				pivotResults[aggNum][colValIdx] = aggResult;
-				debug.info('VIEW // AGGREGATE', 'Pivot aggregate [%d] (%s) : Col Val [%s] = %O',
-					aggNum,
-					info.pivot[aggNum].instance.name + (info.pivot[aggNum].name ? ' -> ' + info.pivot[aggNum].name : ''),
-					colVal.join(', '),
-					aggResult);
+				//debug.info('VIEW // AGGREGATE', 'Pivot aggregate [%d] (%s) : Col Val [%s] = %O',
+				//	aggNum,
+				//	info.pivot[aggNum].instance.name + (info.pivot[aggNum].name ? ' -> ' + info.pivot[aggNum].name : ''),
+				//	colVal.join(', '),
+				//	aggResult);
 			});
 		});
 	}
@@ -1787,10 +1814,10 @@ View.prototype.aggregate = function (cont) {
 	if (self.data.isPivot && self.aggregateSpec.all) {
 		_.each(self.aggregateSpec.all, function (spec, aggNum) {
 			var aggResult = info.all[aggNum].instance.calculate(_.flatten(self.data.data));
-			debug.info('VIEW // AGGREGATE', 'All aggregate [%d] (%s) = %O',
-				aggNum,
-				info.all[aggNum].instance.name + (info.all[aggNum].name ? ' -> ' + info.all[aggNum].name : ''),
-				aggResult);
+			//debug.info('VIEW // AGGREGATE', 'All aggregate [%d] (%s) = %O',
+			//	aggNum,
+			//	info.all[aggNum].instance.name + (info.all[aggNum].name ? ' -> ' + info.all[aggNum].name : ''),
+			//	aggResult);
 			allResults[aggNum] = aggResult;
 		});
 	}

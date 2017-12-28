@@ -26,11 +26,12 @@ OrdMap.prototype.constructor = OrdMap;
  * @method
  *
  * @param {string} k The key to retrieve.
+ * @param {any} d The default to return if `k` is not set.
  * @returns {any} The value associated with that key.
  */
 
-OrdMap.prototype.get = function (k) {
-	return this._map[k];
+OrdMap.prototype.get = function (k, d) {
+	return this.isSet(k) ? this._map[k] : d;
 };
 
 /**
@@ -43,12 +44,24 @@ OrdMap.prototype.get = function (k) {
  */
 
 OrdMap.prototype.set = function (k, v) {
-	if (this._keyIndex[k] === undefined) {
+	if (!this.isSet(k)) {
 		this._keys.push(k);
 		this._keyIndex[k] = this._keys.length - 1;
 		this._size += 1;
 	}
 	this._map[k] = v;
+};
+
+OrdMap.prototype.append = function (k, v) {
+	if (this.isSet(k)) {
+		if (!Array.isArray(this._map[k])) {
+			this._map[k] = [this._map[k]];
+		}
+		this._map[k].push(v);
+	}
+	else {
+		this.set(k, [v]);
+	}
 };
 
 /**

@@ -156,13 +156,15 @@
 
 .wcdv_group_control .wcdv_remove,
 .wcdv_filter_control .wcdv_remove,
-.wcdv_pivot_control .wcdv_remove {
+.wcdv_pivot_control .wcdv_remove,
+.wcdv_aggregate_control .wcdv_remove {
 	margin-right: 4px;
 }
 
-.wcdv_group_control ul,
-.wcdv_filter_control ul,
-.wcdv_pivot_control ul {
+.wcdv_group_control > div > ul,
+.wcdv_filter_control > div > ul,
+.wcdv_pivot_control > div > ul,
+.wcdv_aggregate_control > div > ul {
 	list-style-type: none;
 	padding: 0px;
 	margin-top: 1ex;
@@ -182,7 +184,9 @@
 	margin-left: 4px;
 }
 
-.wcdv_group_control ul li, /* HORIZONTAL */
+/* HORIZONTAL CONTROLS */
+
+.wcdv_group_control ul li,
 .wcdv_pivot_control ul li {
 	display: inline-block;
 }
@@ -206,13 +210,20 @@
 	margin-right: 4px;
 }
 
-.wcdv_filter_control ul li:first-child .wcdv_field {
+/* VERTICAL CONTROLS */
+
+.wcdv_filter_control ul li:first-child .wcdv_field,
+.wcdv_aggregate_control ul li:first-child .wcdv_field {
 	border-top: none;
 }
 
-.wcdv_filter_control ul li .wcdv_field {
+.wcdv_filter_control ul li .wcdv_field,
+.wcdv_aggregate_control ul li .wcdv_field {
 	border-top: solid 1px #444;
 	padding: 4px;
+}
+
+.wcdv_filter_control ul li .wcdv_field {
 	display: flex;
 	align-items: center;
 }
