@@ -2702,35 +2702,40 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 		// Column #4: agg(rowGroup[3]) - rows in the group w/ State = "OH"
 
 		_.each(rowGroup, function (colGroup, pivotNum) {
-			_.each(data.agg.results.cell, function (agg, aggNum) {
-				var aggInfo = data.agg.info.cell[aggNum];
-				var aggType = aggInfo_type(aggInfo);
-				var aggResult = agg[groupNum][pivotNum];
+			if (data.agg.info.cell.length === 0) {
+				tr.append(document.createElement('td'));
+			}
+			else {
+				_.each(data.agg.results.cell, function (agg, aggNum) {
+					var aggInfo = data.agg.info.cell[aggNum];
+					var aggType = aggInfo_type(aggInfo);
+					var aggResult = agg[groupNum][pivotNum];
 
-				rowAgg.push(aggResult);
+					rowAgg.push(aggResult);
 
-				var text;
+					var text;
 
-				if (aggInfo.instance.inheritFormatting) {
-					text = format(aggInfo.colConfig[aggNum], aggInfo.typeInfo[aggNum], aggResult, {
-						overrideType: aggType
-					});
-				}
-				else {
-					text = format(null, null, aggResult, {
-						overrideType: aggType
-					});
-				}
+					if (aggInfo.instance.inheritFormatting) {
+						text = format(aggInfo.colConfig[aggNum], aggInfo.typeInfo[aggNum], aggResult, {
+							overrideType: aggType
+						});
+					}
+					else {
+						text = format(null, null, aggResult, {
+							overrideType: aggType
+						});
+					}
 
-				var td = jQuery('<td>').text(text);
-				self.csv.addCol(text);
-				// REMOVED: How do we let the user set sizes &c. when doing a pivot table?
-				// self.setCss(td, col);
+					var td = jQuery('<td>').text(text);
+					self.csv.addCol(text);
+					// REMOVED: How do we let the user set sizes &c. when doing a pivot table?
+					// self.setCss(td, col);
 
-				self.setAlignment(td, aggInfo.colConfig[aggNum], aggInfo.typeInfo[aggNum], aggType);
+					self.setAlignment(td, aggInfo.colConfig[aggNum], aggInfo.typeInfo[aggNum], aggType);
 
-				td.appendTo(tr);
-			});
+					td.appendTo(tr);
+				});
+			}
 		});
 
 		self.drawBody_aggregates(data, tr, groupNum);
