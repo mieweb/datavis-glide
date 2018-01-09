@@ -2016,7 +2016,7 @@ GridControl.prototype.addField = function (field, displayText, opts) {
 	opts = opts || {};
 
 	_.defaults(opts, {
-		noUpdate: false,
+		updateView: true,
 		silent: false
 	});
 
@@ -2050,7 +2050,7 @@ GridControl.prototype.addField = function (field, displayText, opts) {
 		self.fields.push(field); // Add it to the fields array.
 	}
 
-	if (typeof self.updateView === 'function' && !opts.noUpdate) {
+	if (typeof self.updateView === 'function' && opts.updateView) {
 		self.updateView();
 	}
 
@@ -2112,7 +2112,7 @@ GridControl.prototype.clear = function (opts) {
 	}).prop('disabled', false);
 	self.ui.clearBtn.hide();
 
-	if (!opts.noUpdate) {
+	if (opts.updateView) {
 		self.updateView();
 	}
 
@@ -2143,13 +2143,13 @@ GridControl.prototype.addViewConfigChangeHandler = function (kind) {
 	var synchronize = function (spec) {
 		var fields = (spec && spec.fieldNames) || [];
 
-		self.clear({ noUpdate: true });
+		self.clear({ updateView: false });
 
 		debug.info('GRID // ' + kind.toUpperCase() + ' CONTROL',
 							 'View set ' + kind + ' fields to: ' + JSON.stringify(fields));
 
 		_.each(fields, function (field) {
-			self.addField(field, getProp(self.colConfig, field, 'displayText'), { noUpdate: true });
+			self.addField(field, getProp(self.colConfig, field, 'displayText'), { updateView: false });
 		});
 	};
 
@@ -2339,7 +2339,7 @@ PivotControl.prototype.updateView = function () {
 
 	if (self.fields.length > 0) {
 		if (!self.view.setPivot({fieldNames: self.fields}, false, self)) {
-			self.clear({ noUpdate: true });
+			self.clear({ updateView: false });
 		}
 	}
 	else {
@@ -2572,13 +2572,13 @@ AggregateControl.prototype.addViewConfigChangeHandler = function () {
 	var self = this;
 
 	var synchronize = function (spec) {
-		self.clear({ noUpdate: true });
+		self.clear({ updateView: false });
 		if (spec != null) {
 			debug.info('GRID // AGGREGATE CONTROL',
 				'View set aggregate to: ' + JSON.stringify(spec.all));
 
 			_.each(spec.all, function (agg) {
-				self.addField(agg.fun, AGGREGATE_REGISTRY.get(agg.fun).prototype.name, { noUpdate: true });
+				self.addField(agg.fun, AGGREGATE_REGISTRY.get(agg.fun).prototype.name, { updateView: false });
 			});
 		}
 	};
@@ -2696,7 +2696,7 @@ FilterControl.prototype.draw = function (parent) {
 FilterControl.prototype.addField = function (field) {
 	var self = this;
 
-	self.super.addField(field, getProp(self.colConfig, field, 'displayText'), { noUpdate: true });	
+	self.super.addField(field, getProp(self.colConfig, field, 'displayText'), { updateView: false });	
 };
 
 // #removeField {{{2
@@ -2730,9 +2730,9 @@ FilterControl.prototype.addViewConfigChangeHandler = function () {
 	var synchronize = function (spec) {
 		debug.info('GRID // FILTER CONTROL', 'View set filter to: %O', spec);
 
-		self.clear({ noUpdate: true });
+		self.clear({ updateView: false });
 		_.each(spec, function (fieldSpec, field) {
-			self.addField(field, getProp(self.colConfig, field, 'displayText'), { noUpdate: true });
+			self.addField(field, getProp(self.colConfig, field, 'displayText'), { updateView: false });
 			self.gfs.set(field, fieldSpec);
 		});
 	};

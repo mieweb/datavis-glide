@@ -1059,6 +1059,9 @@ GridFilterSet.prototype.reset = function (opts) {
 	var self = this;
 
 	opts = opts || {};
+	_.defaults(opts, {
+		updateView: true
+	});
 
 	self.delayUpdate = true;
 
@@ -1076,7 +1079,7 @@ GridFilterSet.prototype.reset = function (opts) {
 		byCol: {}
 	};
 
-	if (!opts.noUpdate) {
+	if (opts.updateView) {
 		self.view.clearFilter();
 	}
 

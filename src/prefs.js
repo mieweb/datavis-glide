@@ -98,10 +98,16 @@ Prefs.prototype.apply = function (prefs, cont) {
 	}
 
 	if (isNothing(prefs.filter)) {
-		self.view.clearFilter({ notify: true, update: false });
+		self.view.clearFilter({
+			sendEvent: true,
+			updateData: false
+		});
 	}
 	else {
-		self.view.setFilter(prefs.filter, null, { notify: true, update: false });
+		self.view.setFilter(prefs.filter, null, {
+			sendEvent: true,
+			updateData: false
+		});
 	}
 
 	if (isNothing(prefs.group)) {
