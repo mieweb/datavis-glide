@@ -704,7 +704,7 @@ View.prototype.sort = function (cont) {
 		//console.log(bundle);
 
 		var comparison = function (a, b) {
-			return !!(cmp(a.sortSource, b.sortSource) ^ (spec.dir === 'DESC'));
+			return !!(cmp(a.sortSource, b.sortSource) ^ (spec.dir.toUpperCase() === 'DESC'));
 		};
 
 		var finish = makeFinishCb(unpackBundle(orientation), next);

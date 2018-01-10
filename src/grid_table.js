@@ -360,6 +360,116 @@ GridTable.prototype._addSortingToHeader = function (orientation, spec, headingSp
 	}
 };
 
+// #_addSortingToHeader2 {{{2
+
+GridTable.prototype._addSortingToHeader2 = function (orientation, spec, th, agg) {
+	var self = this;
+
+	if (!self.features.sort) {
+		return;
+	}
+
+	var sortIndicatorClass = 'wcdv_sort_indicator_' + orientation;
+	var sortSpan = jQuery('<span>');
+
+	var getIconCode = function (dir) {
+		return orientation === 'vertical'
+			? (dir === 'ASC' ? 'F0AB' : 'F0AA')
+			: (dir === 'ASC' ? 'F0A9' : 'F0A8');
+	};
+
+	var icons = {
+		'asc': {
+			/*
+			'number': 'sort-numeric-asc',
+			'string': 'sort-alpha-asc'
+			*/
+		},
+		'desc': {
+			/*
+			'number': 'sort-numeric-desc',
+			'string': 'sort-alpha-desc'
+			*/
+		}
+	};
+
+	var setSort = function (dir, aggNum) {
+		var cloneSortSpan = jQuery(this).siblings('span.' + sortIndicatorClass);
+		jQuery('span.' + sortIndicatorClass).hide();
+		cloneSortSpan.show();
+
+		spec.aggNum = aggNum;
+		spec.dir = dir;
+
+		var sortSpec = self.view.getSort() || {};
+
+		sortSpec[orientation] = deepCopy(spec);
+
+		cloneSortSpan.html(fontAwesome(getIconCode(dir)));
+
+		self.view.setSort(sortSpec, self.makeProgress('Sort'));
+	};
+
+	var sortIcon_id = gensym();
+	var sortIcon_span = fontAwesome('fa-sort', orientation === 'horizontal' ? 'fa-rotate-90' : null)
+		.attr('id', sortIcon_id)
+		.addClass('wcdv_sort_icon');
+	var sortIcon_menu_items = {};
+	_.each(agg, function (aggInfo, aggNum) {
+		var aggType = aggInfo_type(aggInfo);
+		sortIcon_menu_items[gensym()] = {
+			name: aggInfo.instance.getFullName() + ', Ascending',
+			icon: 'fa-' + (icons['asc'][aggType] || 'sort-amount-asc'),
+			callback: function () {
+				setSort('asc', aggNum)
+			}
+		};
+		sortIcon_menu_items[gensym()] = {
+			name: aggInfo.instance.getFullName() + ', Descending',
+			icon: 'fa-' + (icons['desc'][aggType] || 'sort-amount-desc'),
+			callback: function () {
+				setSort('desc', aggNum)
+			}
+		};
+		sortIcon_menu_items[gensym()] = '----';
+	});
+	sortIcon_menu_items.reset = {
+		name: 'Reset Sort',
+		icon: 'fa-ban',
+		callback: function () {
+			self.view.clearSort();
+		}
+	};
+	var sortIcon_menu = jQuery.contextMenu({
+		selector: '#' + sortIcon_id,
+		trigger: 'hover',
+		delay: 500,
+		autoHide: true,
+		callback: function (itemKey, opt) {
+			console.log(itemKey);
+		},
+		items: sortIcon_menu_items
+	});
+
+	th.append(sortIcon_span);
+
+	sortSpan.addClass(sortIndicatorClass);
+	sortSpan.addClass('wcdv_sort_indicator');
+
+	var sortSpec = deepCopy(self.view.getSort());
+
+	if (sortSpec[orientation]) {
+		var currentDir = sortSpec[orientation].dir;
+		delete sortSpec[orientation].dir;
+
+		if (_.isEqual(sortSpec[orientation], spec)) {
+			sortSpan.html(fontAwesome(getIconCode(currentDir)));
+		}
+	}
+
+	th.prepend(sortSpan);
+};
+
 // #addSortHandler {{{2
 
 GridTable.prototype.addSortHandler = function () {
@@ -2443,7 +2553,7 @@ GridTablePivot.prototype.drawHeader = function (columns, data, typeInfo, opts) {
 				.append(span)
 				._makeDraggableField();
 
-			self._addSortingToHeader('vertical', {groupFieldIndex: fieldIdx}, span);
+			self._addSortingToHeader2('vertical', {groupFieldIndex: fieldIdx}, th, data.agg.info.cell);
 
 			self.setCss(th, field);
 
@@ -2564,7 +2674,7 @@ GridTablePivot.prototype.drawHeader = function (columns, data, typeInfo, opts) {
 				// We only allow sorting on the final 
 
 				if (lastPivotField) {
-					self._addSortingToHeader('vertical', {colVal: data.colVals[colValIndex], aggNum: 0}, span);
+					self._addSortingToHeader2('vertical', {colVal: data.colVals[colValIndex], aggNum: 0}, th, data.agg.info.cell);
 				}
 
 				if (numCellAggregates === 1) {
@@ -2682,7 +2792,7 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 			self.csv.addCol(span.text());
 
 			if (rowValIndex === data.groupFields.length - 1) {
-				self._addSortingToHeader('horizontal', {rowVal: data.rowVals[groupNum], aggNum: 0}, span);
+				self._addSortingToHeader2('horizontal', {rowVal: data.rowVals[groupNum], aggNum: 0}, th, data.agg.info.cell);
 			}
 		});
 
@@ -2819,7 +2929,7 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 
 		self.csv.addCol(aggInfo.instance.getFullName());
 
-		self._addSortingToHeader('horizontal', {aggType: 'pivot', aggNum: aggNum}, span);
+		self._addSortingToHeader2('horizontal', {aggType: 'pivot', aggNum: aggNum}, th, data.agg.info.cell);
 
 		_.each(data.colVals, function (colVal, colValIdx) {
 			var aggResult = data.agg.results.pivot[aggNum][colValIdx];

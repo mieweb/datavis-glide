@@ -1380,10 +1380,16 @@ function onVisibilityChange(parent, elt, callback) {
 	}
 }
 
-function fontAwesome(hex, cls, title) {
+function fontAwesome(icon, cls, title) {
 	var span = jQuery('<span>')
-		.addClass('fa')
-		.text(String.fromCharCode(parseInt(hex, 16)))
+		.addClass('fa');
+
+	if (icon.substr(0, 3) === 'fa-') {
+		span.addClass(icon);
+	}
+	else {
+		span.text(String.fromCharCode(parseInt(icon, 16)));
+	}
 
 	if (cls !== undefined) {
 		span.addClass(cls);

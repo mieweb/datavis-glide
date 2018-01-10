@@ -311,6 +311,11 @@ div.SumoSelect > div.optWrapper {
 	border-top: double black;
 }
 
+.wcdv_sort_icon {
+	margin-left: 0.5em;
+	font-size: inherit !important; /* overrides [[ table.newui fa ]] */
+}
+
 .wcdv_sort_indicator {
 	cursor: pointer;
 }
