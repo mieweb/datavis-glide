@@ -4,6 +4,20 @@
 	cursor: pointer;
 }
 
+button.wcdv_button {
+	border: none;
+	background-color: inherit;
+	padding: 0;
+}
+
+button.wcdv_button_left {
+	margin-left: 0.5em;
+}
+
+button.wcdv_button span.fa {
+	font-size: 120%;
+}
+
 .wcdv_expand_button {
 	display: inline-block;
 	vertical-align: middle;

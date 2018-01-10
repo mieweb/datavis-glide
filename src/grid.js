@@ -1853,7 +1853,13 @@ AggregateControlField.prototype.draw = function () {
 
 	self.super.draw();
 
-	var optButton = jQuery('<button>').text('OPT').appendTo(self.ui.root);
+	var optButton = jQuery('<button>', {
+		title: 'Edit Options'
+	})
+		.addClass('wcdv_button wcdv_button_left')
+		.append(fontAwesome('F044'))
+		.appendTo(self.ui.root)
+	;
 	var fieldList = jQuery('<ul>').appendTo(self.ui.root);
 
 	for (var i = 0; i < AGGREGATE_REGISTRY.get(self.field).prototype.fieldCount; i += 1) {
