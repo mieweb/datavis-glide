@@ -54,6 +54,7 @@ var TableTool = {};
 		btmEleWrap = null,
 		topElement = null,
 		btmElement = null,
+		scrTimer = null, // scroll time
 		CONST_THEAD = 0,
 		CONST_TFOOT = 1,
 		allStickies = [],
@@ -168,7 +169,7 @@ var TableTool = {};
 	function uniqueIDs(clonedEle) {
 		function convertIDs(loopEle) { // perform the conversion. Add "-tt" to existing ID's
 			if (loopEle && loopEle.find) {
-				loopEle.find('*').filter('[id]').each(function(idx, ele) {
+				loopEle.find('[id]').each(function(idx, ele) {
 					ele.id += '-tt';
 				});
 			}
@@ -191,6 +192,37 @@ var TableTool = {};
 		}
 
 		return clonedEle;
+	}
+
+	function scrollTracker(pos, trkEle, clsEle) {
+		var scrEle = j(trkEle);
+
+		function trackPos(manPos) {
+			var maxScroll = (scrEle[0].scrollWidth - scrEle.outerWidth()),
+				jqCls = (clsEle ? j(clsEle) : scrEle).removeClass('atLeft atRight'),
+				scrollPos = (typeof manPos === 'undefined' ? scrEle.scrollLeft() : manPos);
+
+			if (maxScroll) {
+				if (scrollPos === 0) {
+					jqCls.addClass('atLeft');
+				} else if (Math.round(scrollPos) >= Math.round(maxScroll)) {
+					jqCls.addClass('atRight');
+				}
+			}
+		}
+
+		if (pos) {
+			trackPos();
+		} else {
+			setTimeout(function() {
+				trackPos(0); // wait for elements to be resized before making this calculation
+			}, 100);
+
+			scrEle.on('scroll', function() {
+				clearTimeout(scrTimer);
+				scrTimer = setTimeout(trackPos, 100);
+			});
+		}
 	}
 
 	function fixedWrap(table, height) {
@@ -218,14 +250,15 @@ var TableTool = {};
 		fixed.tfoot = fixed.tbody.clone(true).addClass('tfoot').appendTo(fixed.parent);
 		fixed.thead = fixed.tbody.clone(true).addClass('thead atTop').appendTo(fixed.parent);
 
-		// give cloned header and footer unique IDs. Wait until after append complete
-		uniqueIDs(fixed.thead, fixed.tfoot);
-
 		fixed.tbody.addClass('tbody');
 		fixed.theadTable = fixed.thead.find('table').removeAttr('id data-ttheight');
 		fixed.theadTable.children('tfoot, tbody').remove();
 		fixed.tfootTable = fixed.tfoot.find('table').removeAttr('id data-ttheight');
 		fixed.tfootTable.children('tbody, thead, caption').remove();
+
+		// give cloned header and footer unique IDs. Wait until after append complete
+		uniqueIDs(fixed.thead, fixed.tfoot);
+
 		fixed.tbody.css('max-height', height);
 		fixed.orgHead = fixed.tbody.find('thead');
 		fixed.orgFoot = fixed.tbody.find('tfoot');
@@ -333,7 +366,10 @@ var TableTool = {};
 			fixed.tfoot.css('visibility', 'hidden');
 			fixed.parent.css('overflow', 'hidden');
 			clearTimeout(timer);
-			timer = setTimeout(fixed.setHeadHeight, 100);
+			timer = setTimeout(function() {
+				fixed.setHeadHeight();
+				scrollTracker(true, fixed.tfoot, fixed.tbody);
+			}, 100);
 		};
 
 		//default behavior for horizontal scrolling of the footer
@@ -349,7 +385,7 @@ var TableTool = {};
 			if (this.scrollTop === 0) {
 				fixed.thead.addClass('atTop');
 				fixed.tfoot.removeClass('atBottom');
-			} else if (this.scrollHeight - this.scrollTop === this.clientHeight) {
+			} else if (Math.round(this.scrollHeight - this.scrollTop) === Math.round(this.clientHeight)) {
 				fixed.thead.removeClass('atTop');
 				fixed.tfoot.addClass('atBottom');
 			} else {
@@ -362,6 +398,7 @@ var TableTool = {};
 		fixed.tbody.on('wheel mousewheel', fixed.wheelScroll).on('touchstart', fixed.touch);
 		win.resize(fixed.windowResize);
 		fixed.windowResize();
+		scrollTracker(null, fixed.tfoot, fixed.tbody);
 		allFixed.push(fixed);
 	}
 
@@ -417,14 +454,16 @@ var TableTool = {};
 				sticky.thead.css('visibility', 'visible');
 				sticky.tfoot.css('visibility', 'visible');
 				sticky.setStickies();
-				sticky.scrollPos();
 
 				if (sticky.sortHead) {
 					setColWidth(sticky.sortHead, sticky.theadColgroup);
 				}
+
 				if (sticky.sortFoot) {
 					setColWidth(sticky.sortFoot, sticky.tfootColgroup);
 				}
+
+				scrollTracker(true, sticky.tfootInner, sticky.tbody); // do not attach scroll evt listener
 			}, 100);
 		};
 
@@ -520,22 +559,6 @@ var TableTool = {};
 			sticky.tfootInner[0].scrollLeft += horWheelData;
 		};
 
-		sticky.scrollPos = function(pos) {
-			//maxScroll will equal 0 if overflow doesn't exist.
-			var maxScroll = sticky.tfootInner[0].scrollWidth - sticky.tfootInner.outerWidth(),
-				scrollPos = pos || sticky.tfootInner.scrollLeft();
-
-			sticky.parent.removeClass('atLeft atRight');
-
-			if (maxScroll) {
-				if (scrollPos === 0) {
-					sticky.parent.addClass('atLeft');
-				} else if (scrollPos === maxScroll) {
-					sticky.parent.addClass('atRight');
-				}
-			}
-		};
-
 		sticky.parent = j('<div class="tabletool ttsticky"></div>');
 		sticky.table = j(table);
 
@@ -575,7 +598,6 @@ var TableTool = {};
 		//default behavior for horizontal scrolling of the footer
 		sticky.tfootInner.scroll({b: sticky.tbody, f: sticky.theadInner}, function(e) {
 			e.data.b[0].scrollLeft = e.data.f[0].scrollLeft = this.scrollLeft;
-			sticky.scrollPos(this.scrollLeft);
 		});
 
 		//on touch set the body scroll to the footer scroll
@@ -590,16 +612,19 @@ var TableTool = {};
 		}
 
 		win.scroll(sticky.setStickies).resize(sticky.windowResize);
-		allStickies.push(sticky);
 		sticky.windowResize();
 		sticky.setStickies();
+		scrollTracker(null, sticky.tfootInner, sticky.tbody); // attach scroll evt listener
+		allStickies.push(sticky);
 	}
 
 	function sidescrollWrap(table, len) {
 		var sidescroll = {},
 			parseLen = parseInt(len),
 			colInt = (!isNaN(len) && parseLen > 0) ? parseLen : 1,
-			colDivideEle = null;
+			colDivideEle = null,
+			scrollDly = null,
+			resizeDly = null;
 
 		sidescroll.bodyTbl = j(table).removeAttr('data-tttype').wrap('<div class="tabletool ttsidescroll"><div class="scrollbodywrap sideouter"></div></div>');
 		sidescroll.bodyWrap = sidescroll.bodyTbl.parents('.scrollbodywrap');
@@ -637,6 +662,15 @@ var TableTool = {};
 				resetSideTbl();
 			}
 		};
+
+		sidescroll.resize = function() {
+			clearTimeout(resizeDly);
+			resizeDly = setTimeout(function() {
+				scrollTracker(true, sidescroll.bodyWrap); // don't attach scroll evt listenerw positions
+			}, 100);
+
+			sidescroll.sizeSidescroll(); // need to re-evaluate on each resize event
+		}
 
 		function rmvRowCls(cls) {
 			j.each(allSidescrolls, function(idx, ele) {
@@ -681,15 +715,11 @@ var TableTool = {};
 			}
 		});
 
-		win.on('resize', function() {
-			var resizeDly = null;
-
-			clearTimeout(resizeDly);
-			resizeDly = setTimeout(sidescroll.sizeSidescroll, 100);
-		});
-
+		win.resize(sidescroll.resize);
+		sidescroll.resize();
 		sidescroll.sizeSidescroll(); // position elements on load
 		setTimeout(sidescroll.sizeSidescroll, 100); // once elements are positioned, remeasure in their new positions
+		scrollTracker(null, sidescroll.bodyWrap); // attach scroll evt listenerw positions
 		allSidescrolls.push(sidescroll);
 	}
 
