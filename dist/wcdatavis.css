@@ -312,16 +312,8 @@ div.SumoSelect > div.optWrapper {
 }
 
 .wcdv_sort_icon {
-	margin-left: 0.5em;
-	font-size: inherit !important; /* overrides [[ table.newui fa ]] */
-}
-
-.wcdv_sort_icon {
 	cursor: pointer;
-}
-
-.wcdv_sort_icon_active {
-	color: #0095D6;
+	margin-left: 0.5em;
 }
 
 .wcdv_sort_icon_vertical {
@@ -330,6 +322,10 @@ div.SumoSelect > div.optWrapper {
 
 .wcdv_sort_icon_horizontal {
 	margin-left: 0.5ex;
+}
+
+.wcdv_sort_arrow_active {
+	color: #0095D6;
 }
 
 /*
@@ -378,19 +374,19 @@ tr.wcdv_grid_filterrow th.wcdv_grid_filtercol {
 /******************************************************************************/
 
 .wcdvgrid_textLeft {
-    text-align: left !important;
+    text-align: left;
 }
 
 .wcdvgrid_textRight {
-    text-align: right !important;
+    text-align: right;
 }
 
 .wcdvgrid_textCenter {
-    text-align: center !important;
+    text-align: center;
 }
 
 .wcdvgrid_textJustify {
-    text-align: justify !important;
+    text-align: justify;
 }
 
 .wcdv_centered {
@@ -447,6 +443,59 @@ tr.wcdvgrid_more td {
 	border: solid 2px dotted;
 }
 
-.wcdv_grid_table td.wcdv_selected_row {
-	background-color: rgba(255, 235, 59, .4) !important;
+/*
+ * =============================================================================
+ *  BASIC TABLE STYLES
+ * =============================================================================
+ */
+
+.wcdv_grid_table table {
+	border-collapse: collapse;
+	background-color: #FFFFFF;
 }
+
+.wcdv_grid_table table th {
+	background-color: #F0F0F0;
+	color: #666;
+	font-weight: normal;
+	text-align: left;
+}
+
+.wcdv_grid_table table > thead > tr > th {
+	border-bottom: solid 2px #D0D0D0;
+}
+.wcdv_grid_table table > thead > tr:last-child > th {
+	border-bottom: double 3px #808080;
+}
+
+.wcdv_grid_table table > tfoot {
+	background-color: #F6F6F9;
+	border-top: 3px double #808080;
+}
+
+.wcdv_grid_table table.zebra > tbody > tr:nth-child(even), .wcdv_grid_table table > tbody > tr.even {
+	background-color: #F6F6F9;
+}
+
+.wcdv_grid_table table.zebra > tbody > tr.odd {
+	background-color: white;
+}
+
+.wcdv_grid_table table td.wcdv_selected_row {
+	background-color: rgba(255, 235, 59, .4);
+}
+
+.wcdv_grid_table table > tbody > tr:first-child > td {
+	padding-top: 4px;
+}
+
+.wcdv_grid_table table td {
+	padding-left: 4px;
+	padding-right: 4px;
+	padding-bottom: 4px;
+}
+
+.wcdv_grid_table table .wcdv_pivot_colval_boundary {
+	border-left: solid 2px #D0D0D0;
+}
+

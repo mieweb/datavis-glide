@@ -560,6 +560,9 @@ GridTable.prototype._addSortingToHeader2 = function (orientation, spec, th, agg)
 		delete sortSpec_copy[orientation].aggNum;
 		delete spec_copy.aggNum;
 
+		debug.info('GRID TABLE // ADD SORTING', 'orientation = %s ; spec = %O ; current = %O ; dir = %s',
+			orientation, spec_copy, sortSpec_copy[orientation], currentDir);
+
 		if (_.isEqual(sortSpec_copy[orientation], spec_copy)) {
 			replaceSortIndicator(sortIcon_span, currentDir);
 		}
@@ -807,7 +810,7 @@ GridTable.prototype.draw = function (root, tableDoneCont, opts) {
 				configureRowReordering(self.defn, self.ui.tbody);
 			}
 
-			self.ui.tbl.attr('class', 'newui zebra');
+			//self.ui.tbl.attr('class', 'newui zebra');
 
 			self.ui.tbl.append(self.ui.thead);
 
@@ -885,6 +888,9 @@ GridTable.prototype.drawHeader_aggregates = function (data, what, tr) {
 		var th = jQuery('<th>')
 			.append(span)
 			.appendTo(tr);
+		if (data.agg.info.group.length > 1) {
+			th.addClass('wcdv_pivot_colval_boundary');
+		}
 		self.csv.addCol(text);
 		self._addSortingToHeader2('vertical', {aggType: what, aggNum: aggNum}, th, getPropDef([], data, 'agg', 'info', 'group'));
 		self.setAlignment(th, aggInfo.colConfig[0], aggInfo.typeInfo[0], aggInfo.instance.getType());
@@ -933,6 +939,11 @@ GridTable.prototype.drawBody_aggregates = function (data, tr, groupNum) {
 		}
 
 		var td = jQuery('<td>').text(text);
+
+		if (data.agg.info.group.length > 1) {
+			td.addClass('wcdv_pivot_colval_boundary');
+		}
+
 		self.csv.addCol(text);
 		self.setAlignment(td, aggInfo.colConfig[0], aggInfo.typeInfo[0], aggInfo.instance.getType());
 		td.appendTo(tr);
@@ -2771,13 +2782,16 @@ GridTablePivot.prototype.drawHeader = function (columns, data, typeInfo, opts) {
 
 				if (lastPivotField) {
 					self._addSortingToHeader2('vertical', {colVal: data.colVals[colValIndex], aggNum: 0}, th, getPropDef([], data, 'agg', 'info', 'cell'));
+					if (numCellAggregates > 1 && colValIndex > 0) {
+						th.addClass('wcdv_pivot_colval_boundary');
+					}
 				}
 
 				if (numCellAggregates === 1) {
 					aggInfo = data.agg.info.cell[0];
 					self.setAlignment(th, aggInfo.colConfig[0], aggInfo.typeInfo[0], aggInfo.instance.getType());
 				}
-				else if (numCellAggregates >= 2) {
+				else if (numCellAggregates > 1) {
 					self.setAlignment(th, null, null, null, 'center');
 				}
 			}
@@ -2934,6 +2948,11 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 					}
 
 					var td = jQuery('<td>').text(text);
+
+					if (numCellAggregates > 1 && aggNum === 0 && pivotNum > 0) {
+						td.addClass('wcdv_pivot_colval_boundary');
+					}
+
 					self.csv.addCol(text);
 					// REMOVED: How do we let the user set sizes &c. when doing a pivot table?
 					// self.setCss(td, col);
@@ -2993,8 +3012,6 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 		self.ui.tbody.append(tr);
 	});
 
-	var numCellAggregates = getPropDef(0, data, 'agg', 'info', 'cell', 'length');
-
 	// ===========================================================================
 	//  PIVOT AGGREGATES
 	// ===========================================================================
@@ -3034,13 +3051,6 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 
 		self._addSortingToHeader2('horizontal', {aggType: 'pivot', aggNum: aggNum}, th, getPropDef([], data, 'agg', 'info', 'cell'));
 
-		// XXX
-
-		console.log('XXX [%d] %O', aggNum, aggInfo);
-		console.log('--> %O', aggInfo.instance.getType());
-
-		// XXX
-
 		_.each(data.colVals, function (colVal, colValIdx) {
 			var aggResult = data.agg.results.pivot[aggNum][colValIdx];
 			if (aggInfo.instance.inheritFormatting) {
@@ -3056,9 +3066,14 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 			}
 
 			var td = jQuery('<td>').text(text);
+
 			if (numCellAggregates >= 2) {
 				td.attr('colspan', numCellAggregates);
+				if (colValIdx > 0) {
+					td.addClass('wcdv_pivot_colval_boundary');
+				}
 			}
+
 			self.csv.addCol(text);
 			self.setAlignment(td, aggInfo.colConfig[0], aggInfo.typeInfo[0], aggInfo.instance.getType());
 			td.appendTo(tr);
@@ -3084,6 +3099,11 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 			}
 
 			td = jQuery('<td>').text(text);
+
+			if (numCellAggregates > 1) {
+				td.addClass('wcdv_pivot_colval_boundary');
+			}
+
 			self.csv.addCol(text);
 			self.setAlignment(td, aggInfo.colConfig[0], aggInfo.typeInfo[0], aggInfo.instance.getType());
 			td.appendTo(tr);
