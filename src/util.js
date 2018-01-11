@@ -1743,7 +1743,7 @@ function format(colConfig, typeInfo, cell, opts) {
 	});
 
 	if (opts.debug) {
-		debug.info('FORMAT', 'typeInfo = %O ; colConfig = %O ; cell = %O', typeInfo, colConfig, cell);
+		debug.info('FORMAT', 'typeInfo = %O ; colConfig = %O ; cell = %O ; opts = %O', typeInfo, colConfig, cell, opts);
 	}
 
 	// When we just receive a value instead of a proper data cell, convert it so that code below can

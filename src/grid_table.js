@@ -2827,7 +2827,7 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 					var text;
 
 					if (aggInfo.instance.inheritFormatting) {
-						text = format(aggInfo.colConfig[aggNum], aggInfo.typeInfo[aggNum], aggResult, {
+						text = format(aggInfo.colConfig[0], aggInfo.typeInfo[0], aggResult, {
 							overrideType: aggType
 						});
 					}
@@ -2842,7 +2842,7 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 					// REMOVED: How do we let the user set sizes &c. when doing a pivot table?
 					// self.setCss(td, col);
 
-					self.setAlignment(td, aggInfo.colConfig[aggNum], aggInfo.typeInfo[aggNum], aggType);
+					self.setAlignment(td, aggInfo.colConfig[0], aggInfo.typeInfo[0], aggType);
 
 					td.appendTo(tr);
 				});
@@ -2904,7 +2904,6 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 	// ===========================================================================
 
 	_.each(getPropDef([], data, 'agg', 'info', 'pivot'), function (aggInfo, aggNum) {
-		var aggType = aggInfo.instance.getType();
 		var span;
 		var text;
 
@@ -2941,21 +2940,22 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 
 		// XXX
 
-		console.log('XXX %O', aggInfo.colConfig);
-		console.log('XXX %O', aggInfo.typeInfo);
+		console.log('XXX [%d] %O', aggNum, aggInfo);
+		console.log('--> %O', aggInfo.instance.getType());
 
 		// XXX
 
 		_.each(data.colVals, function (colVal, colValIdx) {
 			var aggResult = data.agg.results.pivot[aggNum][colValIdx];
 			if (aggInfo.instance.inheritFormatting) {
-				text = format(aggInfo.colConfig[aggNum], aggInfo.typeInfo[aggNum], aggResult, {
-					overrideType: aggType
+				text = format(aggInfo.colConfig[0], aggInfo.typeInfo[0], aggResult, {
+					overrideType: aggInfo.instance.getType(),
+					debug: true
 				});
 			}
 			else {
 				text = format(null, null, aggResult, {
-					overrideType: aggType
+					overrideType: aggInfo.instance.getType()
 				});
 			}
 
@@ -2964,7 +2964,7 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 				td.attr('colspan', numCellAggregates);
 			}
 			self.csv.addCol(text);
-			self.setAlignment(td, aggInfo.colConfig[aggNum], aggInfo.typeInfo[aggNum], aggInfo.instance.getType());
+			self.setAlignment(td, aggInfo.colConfig[0], aggInfo.typeInfo[0], aggInfo.instance.getType());
 			td.appendTo(tr);
 		});
 
@@ -2974,23 +2974,22 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 
 		if (getProp(data, 'agg', 'info', 'all', aggNum)) {
 			aggInfo = data.agg.info.all[aggNum];
-			aggType = aggInfo.instance.getType();
 			aggResult = data.agg.results.all[aggNum];
 
 			if (aggInfo.instance.inheritFormatting) {
-				text = format(aggInfo.colConfig[aggNum], aggInfo.typeInfo[aggNum], aggResult, {
-					overrideType: aggType
+				text = format(aggInfo.colConfig[0], aggInfo.typeInfo[0], aggResult, {
+					overrideType: aggInfo.instance.getType()
 				});
 			}
 			else {
 				text = format(null, null, aggResult, {
-					overrideType: aggType
+					overrideType: aggInfo.instance.getType()
 				});
 			}
 
 			td = jQuery('<td>').text(text);
 			self.csv.addCol(text);
-			self.setAlignment(td, aggInfo.colConfig[aggNum], aggInfo.typeInfo[aggNum], aggInfo.instance.getType());
+			self.setAlignment(td, aggInfo.colConfig[0], aggInfo.typeInfo[0], aggInfo.instance.getType());
 			td.appendTo(tr);
 		}
 
