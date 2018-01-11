@@ -402,37 +402,56 @@ function mapLimit(a, f, l) {
  * A clean copy of the argument.
  */
 
-function deepCopy(o) {
-	return jQuery.extend(true, {}, o);
-}
+var deepCopy = function (x0) {
+	var depth = 0;
+	var depthLimit = 99;
+	var path = [];
 
-/**
- * Deep copy an array.
- *
- * @param {any[]} a
- * The array to copy.
- *
- * @return
- * A new array containing deep copies of all elements (including objects and sub-arrays).
- */
+	if (x0 == null) {
+		return {};
+	}
 
-function arrayCopy(a) {
-	var result = [];
-
-	for (var i = 0; i < a.length; i += 1) {
-		if (_.isArray(a[i])) {
-			result[i] = arrayCopy(a[i]);
+	function recursive(x, depth) {
+		if (depth > depthLimit) {
+			log.error('deepCopy: path = %O', path);
+			throw new Error('deepCopy: Maximum recursion depth exceeded');
 		}
-		else if (_.isObject(a[i])) {
-			result[i] = deepCopy(a[i]);
+
+		var result;
+
+		if (jQuery.isArray(x)) {
+			result = [];
+
+			for (var i = 0; i < x.length; i += 1) {
+				path.push(i);
+				result[i] = recursive(x[i], depth + 1);
+				path.pop();
+			}
+
+			return result;
+		}
+		else if (jQuery.isPlainObject(x)) {
+			result = {};
+
+			for (var k in x) {
+				if (x.hasOwnProperty(k)) {
+					path.push(k);
+					result[k] = recursive(x[k], depth + 1);
+					path.pop();
+				}
+			}
+
+			return result;
 		}
 		else {
-			result[i] = a[i];
+			return x;
 		}
 	}
 
-	return result;
-}
+	return recursive(x0, 0);
+};
+
+var arrayCopy = deepCopy;
 
 /**
  * Returns true if the argument is null or undefined.
