@@ -309,19 +309,11 @@ div.SumoSelect > div.optWrapper {
 
 .wcdv_sort_icon {
 	cursor: pointer;
-	margin-left: 0.5em;
-}
-
-.wcdv_sort_icon_vertical {
-	margin-right: 0.5ex;
-}
-
-.wcdv_sort_icon_horizontal {
-	margin-left: 0.5ex;
+	margin: -10px -11px -8px -4px;
 }
 
 .wcdv_sort_arrow_active {
-	color: #0095D6;
+	color: #FF9800;
 }
 
 /*

@@ -395,29 +395,9 @@ GridTable.prototype._addSortingToHeader2 = function (orientation, spec, th, agg)
 			span = jQuery(span);
 		}
 
-		if (dir == null) {
-			// Revert to the original icon (i.e. "no sort set").  This only needs to be done if we're not
-			// already in that state; we look for the fa-stack class to check.
+		span.children().removeClass('wcdv_sort_arrow_active');
 
-			if (span.hasClass('fa-stack')) {
-				span.children().remove();
-				span.removeClass('fa-stack');
-				span.addClass('fa fa-sort');
-			}
-		}
-		else {
-			// Set the sort direction in the arrow icon.  The way we do this is by building a single
-			// FontAwesome "stack" from the up and down carets.  Then we can style the one we want.
-			// Unless we've just previously sorted this column, the current icon will be the non-stack,
-			// double-caret "fa-sort" icon: we need to replace it with the stack.
-
-			if (span.hasClass('fa-sort')) {
-				span.removeClass('fa fa-sort');
-				span.addClass('fa-stack');
-				var asc = jQuery('<span>').addClass('fa fa-sort-asc fa-stack-1x').appendTo(span);
-				var desc = jQuery('<span>').addClass('fa fa-sort-desc fa-stack-1x').appendTo(span);
-			}
-
+		if (dir != null) {
 			// Yes, this is backwards.  The FontAwesome icon for "ascending" points upwards, but I want to
 			// color the one that points dowards, indicating that is the direction of increasing values.
 
@@ -467,10 +447,17 @@ GridTable.prototype._addSortingToHeader2 = function (orientation, spec, th, agg)
 	};
 
 	var sortIcon_class = gensym();
-	var sortIcon_span = fontAwesome('fa-sort', orientation === 'horizontal' ? 'fa-rotate-270' : null)
+	var sortIcon_span = fontAwesome('fa-stack', orientation === 'horizontal' ? 'fa-rotate-270' : null)
 		.addClass(sortIcon_class)
-		.addClass('wcdv_sort_icon')
-		.addClass(sortIcon_orientationClass);
+		.addClass(sortIcon_orientationClass)
+		.addClass('wcdv_sort_icon');
+
+	// Set the sort direction in the arrow icon.  The way we do this is by building a single
+	// FontAwesome "stack" from the up and down carets.  Then we can style the one we want.
+
+	jQuery('<span>').addClass('fa fa-sort-asc fa-stack-1x').appendTo(sortIcon_span);
+	jQuery('<span>').addClass('fa fa-sort-desc fa-stack-1x').appendTo(sortIcon_span);
+
 	var sortIcon_menu_items = {};
 
 	if (spec.field != null || spec.groupFieldIndex != null) {
