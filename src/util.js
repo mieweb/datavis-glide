@@ -107,6 +107,10 @@ var getComparisonFn = (function () {
 	};
 	cmpFn.currency = cmpFn.number;
 
+	cmpFn.array = function (a, b) {
+		return arrayCompare(a, b) < 0;
+	};
+
 	return {
 		byType: (function (type) {
 			return cmpFn[type];
@@ -118,12 +122,60 @@ var getComparisonFn = (function () {
 			else if (window.moment && window.moment.isMoment(val)) {
 				return cmpFn.date;
 			}
+			else if (_.isArray(val)) {
+				return cmpFn.array;
+			}
 			else {
 				return cmpFn.string;
 			}
 		})
 	};
 })();
+
+function arrayCompare(a, b) {
+	if (!_.isArray(a) || !_.isArray(b)) {
+		throw new Error('Call Error: arguments must be arrays');
+	}
+
+	if (a.length !== b.length) {
+		throw new Error('Call Error: arguments must have the same length');
+	}
+
+	for (var i = 0; i < a.length; i += 1) {
+		if (a[i] < b[i]) {
+			return -1;
+		}
+		else if (a[i] > b[i]) {
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
+function arrayEqual(a, b) {
+	if (!_.isArray(a) || !_.isArray(b)) {
+		throw new Error('Call Error: arguments must be arrays');
+	}
+
+	if (a.length !== b.length) {
+		return false;
+	}
+
+	return arrayCompare(a, b) === 0;
+}
+
+function getNatRep(x) {
+	if (window.numeral && numeral.isNumeral(x)) {
+		return x.value();
+	}
+	else if (window.moment && moment.isMoment(x)) {
+		return x.unix();
+	}
+	else {
+		return x;
+	}
+};
 
 /**
  * Call a chain of functions, such that each function consumes as its arguments the result(s) of
@@ -970,34 +1022,6 @@ function cmpObjField(fieldPath, cmp) {
 		}
 		return cmp(a, b);
 	};
-}
-
-/**
- * Compare two arrays against each other, deeply. There is no function built into JavaScript to do
- * this, of course.
- *
- * @param {array} a First operand.
- * @param {array} b Second operand.
- *
- * @returns {boolean} True if both arrays contain the exact same elements.  Elements which are
- * arrays are compared deeply; elements which are objects are not.
- */
-
-function arrayCompare(a, b) {
-	if (!_.isArray(a) || !_.isArray(b) || a.length !== b.length) {
-		return false;
-	}
-	for (var i = 0; i < a.length; i++) {
-		if (_.isArray(a[i]) && _.isArray(b[i])) {
-			if (!arrayCompare(a[i], b[i])) {
-				return false;
-			}
-		}
-		else if (a[i] !== b[i]) {
-			return false;
-		}
-	}
-	return true;
 }
 
 function objFromArray(a, v) {

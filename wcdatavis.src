@@ -91,6 +91,10 @@
 	var filters = [];
 	var gensymSeed = 0;
 
+	var EXPERIMENTAL_FEATURES = {
+		'Simpler Colval Determination': true
+	}
+
 	$INCLUDE('src/jquery.js');
 	$INCLUDE('src/util.js');
 	$INCLUDE('src/ordmap.js');

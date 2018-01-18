@@ -1432,6 +1432,8 @@ View.prototype.pivot = function () {
 		return false;
 	}
 
+	var origKeys = [];
+
 	var buildColValsTree = function (pivotFields) {
 		var colValsTree = {};
 
@@ -1484,6 +1486,37 @@ View.prototype.pivot = function () {
 		return colVals;
 	};
 
+	var buildColVals2 = function (pivotFields) {
+		var colVals = [];
+
+		for (var groupIndex = 0; groupIndex < self.data.data.length; groupIndex += 1) {
+			var group = self.data.data[groupIndex];
+			for (var rowIndex = 0; rowIndex < group.length; rowIndex += 1) {
+				var row = group[rowIndex];
+				var colVal = [];
+				for (var pivotFieldIndex = 0; pivotFieldIndex < pivotFields.length; pivotFieldIndex += 1) {
+					var pivotField = pivotFields[pivotFieldIndex];
+					var value = row.rowData[pivotField].value;
+					var natRep = getNatRep(value);
+					origKeys[pivotFieldIndex][natRep] = value;
+					colVal[pivotFieldIndex] = natRep;
+				}
+				if (_.findIndex(colVals, function (x) {
+					return arrayEqual(colVal, x);
+				}) === -1) {
+					colVals.push(colVal);
+				}
+			}
+		}
+
+		colVals.sort(function (a, b) {
+			return arrayCompare(a, b);
+		});
+
+		return colVals;
+
+	};
+
 	var buildData = function (data) {
 		var result = [];
 
@@ -1494,7 +1527,9 @@ View.prototype.pivot = function () {
 				_.each(groupedRows, function (row) {
 					if (_.every(colVal, function (colValElt, colValNum) {
 						var pivotField = pivotFields[colValNum];
-						return colValElt === (row.rowData[pivotField].orig || row.rowData[pivotField].value);
+						var value = row.rowData[pivotField].value;
+						var natRep = getNatRep(value);
+						return colValElt === natRep;
 					})) {
 						tmp.push(row);
 					}
@@ -1507,11 +1542,36 @@ View.prototype.pivot = function () {
 		return result;
 	};
 
+	var convertColVals = function (colVals) {
+		var result = [];
+
+		for (var colValIndex = 0; colValIndex < colVals.length; colValIndex += 1) {
+			var colVal = colVals[colValIndex];
+			result[colValIndex] = [];
+			for (var pivotFieldIndex = 0; pivotFieldIndex < pivotFields.length; pivotFieldIndex += 1) {
+				result[colValIndex][pivotFieldIndex] = origKeys[pivotFieldIndex][colVal[pivotFieldIndex]];
+			}
+		}
+
+		return result;
+	};
+
 	if (!isNothing(self.pivotSpec)) {
 		pivotFields = self.pivotSpec.fieldNames;
-		colValsTree = buildColValsTree(pivotFields);
-		colVals = buildColVals(colValsTree);
+		for (var pivotFieldIndex = 0; pivotFieldIndex < pivotFields.length; pivotFieldIndex += 1) {
+			origKeys[pivotFieldIndex] = {};
+		}
+		if (!EXPERIMENTAL_FEATURES['Simpler Colval Determination']) {
+			colValsTree = buildColValsTree(pivotFields);
+			colVals = buildColVals(colValsTree);
+		}
+		else {
+			colVals = buildColVals2(pivotFields);
+		}
 		self.data.data = buildData(self.data.data, colVals);
+		if (EXPERIMENTAL_FEATURES['Simpler Colval Determination']) {
+			colVals = convertColVals(colVals);
+		}
 	}
 	else if (self.data.isGroup && self.opts.groupIsPivot) {
 		pivotFields = [];
@@ -1526,6 +1586,7 @@ View.prototype.pivot = function () {
 	}
 
 	debug.info('VIEW (' + self.name + ') // PIVOT', 'Col Vals Tree: %O', colValsTree);
+	debug.info('VIEW (' + self.name + ') // PIVOT', 'Orig Keys: %O', origKeys);
 	debug.info('VIEW (' + self.name + ') // PIVOT', 'Col Vals: %O', colVals);
 	debug.info('VIEW (' + self.name + ') // PIVOT', 'New Data: %O', self.data);
 

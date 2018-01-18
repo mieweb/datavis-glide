@@ -2714,6 +2714,7 @@ GridTablePivot.prototype.drawHeader = function (columns, data, typeInfo, opts) {
 	for (pivotFieldNum = 0; pivotFieldNum < data.pivotFields.length; pivotFieldNum += 1) {
 		// Indicates that we're on the last pivot field, i.e. the last row of the table header.
 		var lastPivotField = pivotFieldNum === data.pivotFields.length - 1;
+		var pivotField = data.pivotFields[pivotFieldNum];
 
 		tr = jQuery('<tr>'); // Create the row for the pivot field.
 		self.csv.addRow();
@@ -2767,6 +2768,8 @@ GridTablePivot.prototype.drawHeader = function (columns, data, typeInfo, opts) {
 
 		for (colValIndex = 0; colValIndex < data.colVals.length; colValIndex += 1) {
 			colVal = data.colVals[colValIndex][pivotFieldNum];
+			colVal = format(self.colConfig[pivotField], typeInfo.get(pivotField), colVal);
+
 			if (colVal !== lastColVal || lastPivotField) {
 				if (lastColVal !== null) {
 					// The we've hit a different colVal so count up how many of the last one we had to
