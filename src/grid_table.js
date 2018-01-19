@@ -1993,7 +1993,7 @@ GridTablePlain.prototype.getCsv = function () {
 			else if (value instanceof jQuery) {
 				self.csv.addCol(value.text());
 			}
-			else if (colConfig.allowHtml && typeInfo.get(field).type === 'string') {
+			else if (colConfig.allowHtml && self.typeInfo.get(field).type === 'string') {
 				self.csv.addCol(jQuery(value).text());
 			}
 			else {
