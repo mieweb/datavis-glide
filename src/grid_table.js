@@ -940,6 +940,47 @@ GridTable.prototype.drawHeader_addCols = function (tr, typeInfo, opts) {
 	}
 };
 
+// #drawBody_rowVals {{{2
+
+GridTable.prototype.drawBody_rowVals = function (data, tr, groupNum) {
+	var self = this;
+
+	// Create the cells that show the values of the grouped columns.
+	//
+	// EXAMPLE
+	// -------
+	//
+	//   groupFields = ["First Name", "Last Name"]
+	//   rowVals = [["Luke", "Skywalker"], ...]
+	//
+	// <tr>
+	//   <th>Luke</th>
+	//   <th>Skywalker</th>
+	//   ... row[col] | col ∉ groupFields ...
+	// </tr>
+
+	_.each(data.rowVals[groupNum], function (rowVal, rowValIndex) {
+		var th = jQuery('<th>');
+		var span = jQuery('<span>');
+		if (rowVal instanceof Element || rowVal instanceof jQuery) {
+			span.append(rowVal);
+		}
+		else if (getProp(self.colConfig, data.groupFields[rowValIndex], 'allowHtml')) {
+			span.html(rowVal);
+		}
+		else {
+			span.text(rowVal);
+		}
+		span.appendTo(th);
+		th.appendTo(tr);
+		self.csv.addCol(span.text());
+
+		if (rowValIndex === data.groupFields.length - 1) {
+			self._addSortingToHeader2(data, 'horizontal', {rowVal: data.rowVals[groupNum], aggNum: 0}, th, getPropDef([], data, 'agg', 'info', 'cell'));
+		}
+	});
+};
+
 // #drawBody_aggregates {{{2
 
 GridTable.prototype.drawBody_aggregates = function (data, tr, groupNum) {
@@ -2407,10 +2448,21 @@ GridTableGroupDetail.prototype.drawBody = function (data, typeInfo, columns, con
 
 			infoText += ')';
 
+			var span = jQuery('<span>');
+			if (rowValElt instanceof Element || rowValElt instanceof jQuery) {
+				span.append(rowValElt);
+			}
+			else if (getProp(self.colConfig, data.groupFields[rowValIdx], 'allowHtml')) {
+				span.html(rowValElt);
+			}
+			else {
+				span.text(rowValElt);
+			}
+
 			jQuery('<th>')
 				.addClass('wcdv_group_value')
 				.attr('colspan', columns.length - rowValIdx)
-				.append(jQuery('<span>').addClass('wcdv_group_value').text(rowValElt))
+				.append(span)
 				.append(infoText)
 				.appendTo(tr)
 			;
@@ -2534,20 +2586,8 @@ GridTableGroupSummary.prototype.drawBody = function (data, typeInfo, columns, co
 
 	_.each(data.data, function (rowGroup, groupNum) {
 		var tr = jQuery('<tr>');
-		var td;
-		var rowVal = data.rowVals[groupNum];
 
-		self.csv.addRow();
-
-		_.each(rowVal, function (rowValElt, rowValIdx) {
-			jQuery('<th>')
-				.addClass('wcdv_group_value')
-				.append(jQuery('<span>').addClass('wcdv_group_value').text(rowValElt))
-				.appendTo(tr)
-			;
-			self.csv.addCol(rowValElt);
-		});
-
+		self.drawBody_rowVals(data, tr, groupNum);
 		self.drawBody_aggregates(data, tr, groupNum);
 
 		// Generate the user's custom-defined additional columns.  If the `value` function returns an
@@ -2903,40 +2943,7 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 		var tr = jQuery('<tr>');
 		self.csv.addRow();
 
-		// Create the cells that show the values of the grouped columns.
-		//
-		// EXAMPLE
-		// -------
-		//
-		//   groupFields = ["First Name", "Last Name"]
-		//   rowVals = [["Luke", "Skywalker"], ...]
-		//
-		// <tr>
-		//   <th>Luke</th>
-		//   <th>Skywalker</th>
-		//   ... row[col] | col ∉ groupFields ...
-		// </tr>
-
-		_.each(data.rowVals[groupNum], function (rowVal, rowValIndex) {
-			var th = jQuery('<th>');
-			var span = jQuery('<span>');
-			if (rowVal instanceof Element || rowVal instanceof jQuery) {
-				span.append(rowVal);
-			}
-			else if (getProp(self.colConfig, data.groupFields[rowValIndex], 'allowHtml')) {
-				span.innerHtml(rowVal);
-			}
-			else {
-				span.text(rowVal);
-			}
-			span.appendTo(th);
-			th.appendTo(tr);
-			self.csv.addCol(span.text());
-
-			if (rowValIndex === data.groupFields.length - 1) {
-				self._addSortingToHeader2(data, 'horizontal', {rowVal: data.rowVals[groupNum], aggNum: 0}, th, getPropDef([], data, 'agg', 'info', 'cell'));
-			}
-		});
+		self.drawBody_rowVals(data, tr, groupNum);
 
 		var rowAgg = [];
 
