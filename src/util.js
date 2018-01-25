@@ -1850,10 +1850,20 @@ function format(colConfig, typeInfo, cell, opts) {
 			}
 
 			if (window.numeral && window.numeral.isNumeral(cell.value)) {
-				result = cell.value.format(colConfig.format);
+				if (colConfig.format) {
+					result = cell.value.format(colConfig.format);
+				}
+				else {
+					result = cell.value.value() + '';
+				}
 			}
 			else {
-				result = numeral(cell.value).format(colConfig.format);
+				if (colConfig.format) {
+					result = numeral(cell.value).format(colConfig.format);
+				}
+				else {
+					result = cell.value + '';
+				}
 			}
 			break;
 		case 'string':
