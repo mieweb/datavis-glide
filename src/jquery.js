@@ -5,18 +5,68 @@ jQuery.fn.extend({
 	_isDisabled: function () {
 		return jQuery(this).attr('disabled');
 	},
-	_makeDraggableField: function () {
-		return this
-			.draggable({
-				classes: {
-					'ui-draggable-handle': 'wcdv_drag_handle'
-				},
-				distance: 8, // FIXME Deprecated [1.12]: replacement will be in 1.13
-				helper: 'clone',
-				appendTo: document.body,
-				revert: true,
-				revertDuration: 0
+	_addEventDebugging: function (what, tag) {
+		switch (what) {
+		case 'drag':
+			this.on('dragstart', function (evt, ui) {
+				console.log('### ' + tag + ' > DRAG.START: evt = %O, ui = %O', evt, ui);
 			});
+			this.on('dragstop', function (evt, ui) {
+				console.log('### ' + tag + ' > DRAG.STOP: evt = %O, ui = %O', evt, ui);
+			})
+			break;
+		case 'drop':
+			this.on('dropactivate', function (evt, ui) {
+				console.log('### ' + tag + ' > DROP.ACTIVATE: evt = %O, ui = %O', evt, ui);
+			});
+			this.on('dropdeactivate', function (evt, ui) {
+				console.log('### ' + tag + ' > DROP.DEACTIVATE: evt = %O, ui = %O', evt, ui);
+			})
+			this.on('drop', function (evt, ui) {
+				console.log('### ' + tag + ' > DROP.DROP: evt = %O, ui = %O', evt, ui);
+			});
+			break;
+		case 'sort':
+			this.on('sortreceive', function (evt, ui) {
+				console.log('### ' + tag + ' > SORT.RECEIVE: evt = %O, ui = %O', evt, ui);
+			});
+			this.on('sortremove', function (evt, ui) {
+				console.log('### ' + tag + ' > SORT.REMOVE: evt = %O, ui = %O', evt, ui);
+			})
+			this.on('sortstart', function (evt, ui) {
+				console.log('### ' + tag + ' > SORT.START: evt = %O, ui = %O', evt, ui);
+			});
+			this.on('sortstop', function (evt, ui) {
+				console.log('### ' + tag + ' > SORT.STOP: evt = %O, ui = %O', evt, ui);
+			});
+			this.on('sortactivate', function (evt, ui) {
+				console.log('### ' + tag + ' > SORT.ACTIVATE: evt = %O, ui = %O', evt, ui);
+			});
+			this.on('sortdeactivate', function (evt, ui) {
+				console.log('### ' + tag + ' > SORT.DEACTIVATE: evt = %O, ui = %O', evt, ui);
+			});
+			this.on('sortupdate', function (evt, ui) {
+				console.log('### ' + tag + ' > SORT.UPDATE: evt = %O, ui = %O', evt, ui);
+			});
+			break;
+		default:
+			throw new Error('Call Error: Event type must be one of: ["drag", "drop", "sort"]');
+		};
+		return this;
+	},
+	_makeDraggableField: function (opts) {
+		opts = deepDefaults(true, {
+			classes: {
+				'ui-draggable-handle': 'wcdv_drag_handle'
+			},
+			distance: 8, // FIXME Deprecated [1.12]: replacement will be in 1.13
+			helper: 'clone',
+			appendTo: document.body,
+			revert: true,
+			revertDuration: 0
+		});
+		return this
+			.draggable(opts);
 	},
 	_onFileDrop: function (cb) {
 		// https://www.html5rocks.com/en/tutorials/file/dndfiles/

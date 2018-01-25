@@ -92,8 +92,9 @@
 	var gensymSeed = 0;
 
 	var EXPERIMENTAL_FEATURES = {
-		'Simpler Colval Determination': true
-	}
+		'Simpler Colval Determination': true,
+		'Reorder Control Fields': false
+	};
 
 	$INCLUDE('src/jquery.js');
 	$INCLUDE('src/util.js');
@@ -109,6 +110,7 @@
 	$INCLUDE('src/view.js');
 	$INCLUDE('src/graph.js');
 	$INCLUDE('src/grid_filter.js');
+	$INCLUDE('src/grid_control.js');
 	$INCLUDE('src/grid_table.js');
 	$INCLUDE('src/grid.js');
 	$INCLUDE('src/trans.js');

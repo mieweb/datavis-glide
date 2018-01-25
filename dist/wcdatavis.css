@@ -207,6 +207,8 @@ li.wcdv_aggregate_field {
 	padding: 0px;
 	margin-top: 1ex;
 	margin-bottom: 1ex;
+	min-height: 25px;
+	width: 100%;
 }
 
 .wcdv_group_control,

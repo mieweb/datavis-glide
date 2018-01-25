@@ -1520,7 +1520,10 @@ GridTablePlain.prototype.drawHeader = function (columns, data, typeInfo, opts) {
 		var headingText = colConfig.displayText || field;
 
 		var headingSpan = jQuery('<span>')
-			.attr('data-wcdv-field', field)
+			.attr({
+				'data-wcdv-field': field,
+				'data-wcdv-draggable-origin': 'GRID_TABLE_HEADER'
+			})
 			.text(headingText)
 			._makeDraggableField();
 
@@ -2278,7 +2281,10 @@ GridTableGroupDetail.prototype.drawHeader = function (columns, data, typeInfo, o
 		}
 
 		headingSpan = jQuery('<span>')
-			.attr('data-wcdv-field', fieldName)
+			.attr({
+				'data-wcdv-field': fieldName,
+				'data-wcdv-draggable-origin': 'GRID_TABLE_HEADER'
+			})
 			.text(fieldName)
 			._makeDraggableField()
 		;
@@ -2320,7 +2326,10 @@ GridTableGroupDetail.prototype.drawHeader = function (columns, data, typeInfo, o
 		}
 
 		headingSpan = jQuery('<span>')
-			.attr('data-wcdv-field', field)
+			.attr({
+				'data-wcdv-field': field,
+				'data-wcdv-draggable-origin': 'GRID_TABLE_HEADER'
+			})
 			.text(field)
 			._makeDraggableField()
 		;
@@ -2658,7 +2667,10 @@ GridTableGroupSummary.prototype.drawHeader = function (columns, data, typeInfo, 
 		span = jQuery('<span>').text(field);
 
 		th = jQuery('<th>')
-			.attr('data-wcdv-field', field)
+			.attr({
+				'data-wcdv-field': field,
+				'data-wcdv-draggable-origin': 'GRID_TABLE_HEADER'
+			})
 			.append(span)
 			._makeDraggableField();
 
@@ -2825,7 +2837,10 @@ GridTablePivot.prototype.drawHeader = function (columns, data, typeInfo, opts) {
 			self.csv.addCol(field);
 
 			var th = jQuery('<th>')
-				.attr('data-wcdv-field', field)
+				.attr({
+					'data-wcdv-field': field,
+					'data-wcdv-draggable-origin': 'GRID_TABLE_HEADER'
+				})
 				.append(span)
 				._makeDraggableField();
 
