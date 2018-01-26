@@ -19,7 +19,7 @@ button.wcdv_icon_button span.fa {
 	font-size: 120%;
 }
 
-button > span.fa {
+.wcdv_grid button > span.fa {
 	margin-right: 0.25em;
 }
 
