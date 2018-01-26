@@ -1,8 +1,29 @@
 // Csv {{{1
 
+/**
+ * @typedef {object} Csv~LastRow
+ *
+ * @property {number} rowId
+ * @property {boolean} hidden
+ * @property {any[]} rowData
+ */
+
+/**
+ * @property {number} lastRowId
+ *
+ * @property {Csv~LastRow} lastRow
+ *
+ * @property {Csv~LastRow[]} data
+ *
+ * @property {object} opts
+ *
+ * @property {string} opts.separator
+ */
+
 var Csv = makeSubclass(Object, function (opts) {
 	var self = this;
 
+	self.lastRowId = -1;
 	self.opts = opts || {};
 
 	_.defaults(self.opts, {
@@ -14,10 +35,18 @@ var Csv = makeSubclass(Object, function (opts) {
 
 // #addRow {{{2
 
-Csv.prototype.addRow = function () {
+Csv.prototype.addRow = function (rowId) {
 	var self = this;
 
-	self.lastRow = [];
+	if (rowId == null) {
+		rowId = ++self.lastRowId;
+	}
+
+	self.lastRow = {
+		rowId: rowId,
+		rowData: [],
+		hidden: false
+	};
 	self.data.push(self.lastRow);
 };
 
@@ -26,12 +55,13 @@ Csv.prototype.addRow = function () {
 Csv.prototype.addCol = function (x) {
 	var self = this;
 
+	// In case you didn't add a row before you added the first column.  Shame on you.
+
 	if (self.lastRow == null) {
-		// LMGTFY
 		self.addRow();
 	}
 
-	self.lastRow.push(x);
+	self.lastRow.rowData.push(x);
 };
 
 // #clear {{{2
@@ -39,6 +69,7 @@ Csv.prototype.addCol = function (x) {
 Csv.prototype.clear = function () {
 	var self = this;
 
+	self.lastRowId = -1;
 	self.data = [];
 	self.lastRow = null;
 };
@@ -54,12 +85,30 @@ Csv.prototype.toString = function () {
 		if (i > 0) {
 			s += '\r\n';
 		}
-		s += '"' + self.data[i].map(function (s) {
+		s += '"' + self.data[i].rowData.map(function (s) {
 			return s.replace('"', '""');
 		}).join(sep) + '"';
 	}
 
 	return s;
+};
+
+// #updateVisibility {{{2
+
+Csv.prototype.updateVisibility = function (rowId, hide) {
+	var self = this;
+
+	if (self.data[rowId].rowId === rowId) {
+		self.data[rowId].rowId.hidden = hide;
+	}
+	else {
+		var matchingRow = _.findWhere(self.data, {
+			rowId: rowId
+		});
+		if (matchingRow != null) {
+			matchingRow.hidden = hide;
+		}
+	}
 };
 
 // GridTable {{{1
@@ -666,6 +715,8 @@ GridTable.prototype.addFilterHandler = function () {
 				self.ui.tr[rowNum].addClass(even ? 'even' : 'odd');
 				even = !even;
 			}
+
+			self.csv.updateVisibility(rowNum, hide);
 		}, { who: self });
 	}
 };
@@ -1589,6 +1640,8 @@ GridTablePlain.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 		incrementalConfig = self.defn.table.incremental;
 	}
 
+	self.addDataToCsv(data);
+
 	// Clear out the body of the table.  We do this in case somebody invokes this function multiple
 	// times.  This function draws the entirety of the data, we certainly don't want to just tack rows
 	// on to the end.
@@ -1676,7 +1729,6 @@ GridTablePlain.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 			}
 			else {
 				tr = jQuery('<tr>', {id: self.defn.table.id + '_' + rowNum, 'data-row-num': rowNum});
-				self.csv.addRow();
 
 				// Create the check box which selects the row.
 
@@ -1714,7 +1766,6 @@ GridTablePlain.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 						td.text(value);
 					}
 
-					self.csv.addCol(td.text());
 					self.setCss(td, field);
 					self.setAlignment(td, colConfig, typeInfo.get(field));
 
@@ -2018,11 +2069,11 @@ GridTablePlain.prototype.addWorkHandler = function () {
 	}, { who: self });
 };
 
-// #getCsv {{{2
+// #addDataToCsv {{{2
 
-GridTablePlain.prototype.getCsv = function () {
+GridTablePlain.prototype.addDataToCsv = function (data) {
 	var self = this;
-	var columns = determineColumns(self.defn, self.data, self.typeInfo);
+	var columns = determineColumns(self.defn, data, self.typeInfo);
 
 	self.csv.clear();
 
@@ -2032,7 +2083,7 @@ GridTablePlain.prototype.getCsv = function () {
 		self.csv.addCol(colConfig.displayText || field);
 	});
 
-	_.each(self.data.data, function (row) {
+	_.each(data.data, function (row) {
 		self.csv.addRow();
 		_.each(columns, function (field, colIndex) {
 			var colConfig = getPropDef({}, self.defn, 'table', 'columns', colIndex);
