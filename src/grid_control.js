@@ -953,6 +953,7 @@ AggregateControl.prototype.updateView = function () {
 	var info = _.map(self.controlFields, function (cf) {
 		return cf.getInfo();
 	});
+	self.ui.root.find('.wcdv_aggregate_control_error').hide();
 	self.view.setAggregate(objFromArray(['group', 'pivot', 'cell', 'all'], [info]), {
 		dontSendEventTo: self
 	});
