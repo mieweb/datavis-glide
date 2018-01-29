@@ -118,20 +118,7 @@ var View = function (source, name, opts) {
 
 	self.lock = new Lock('View Lock (' + self.name + ')');
 
-	self.aggregateSpec = {
-		group: [{
-			fun: 'count'
-		}],
-		pivot: [{
-			fun: 'count'
-		}],
-		cell: [{
-			fun: 'count'
-		}],
-		all: [{
-			fun: 'count'
-		}]
-	};
+	self.aggregateSpec = objFromArray(['group', 'pivot', 'cell', 'all'], [[{fun: 'count'}]]);
 
 	if (self.opts.saveViewConfig) {
 		try {
@@ -1718,7 +1705,7 @@ View.prototype.getAggregate = function () {
 View.prototype.clearAggregate = function (opts) {
 	var self = this;
 
-	return self.setAggregate(null, opts);
+	return self.setAggregate(objFromArray(['group', 'pivot', 'cell', 'all'], [[{fun: 'count'}]]), opts);
 };
 
 // #aggregate {{{2

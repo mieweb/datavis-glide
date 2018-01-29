@@ -1024,6 +1024,22 @@ function cmpObjField(fieldPath, cmp) {
 	};
 }
 
+/**
+ * Constructs an object from a simplified array representation.
+ *
+ * ```
+ * objFromArray(['foo', 'bar', 'baz'])             => {foo: 0, bar: 1}
+ * objFromArray(['foo', 'bar', 'baz'], ['a'])      => {foo: 'a', bar: 'a', baz: 'a'}
+ * objFromArray(['foo', 'bar', 'baz'], ['a', 'b']) => {foo: 'a', bar: 'b', baz: 'a'}
+ * ```
+ *
+ * @param {any[]} a
+ * Items that will become the keys in the object.
+ *
+ * @param {any[]} [v]
+ * Items that will become the values in the object.
+ */
+
 function objFromArray(a, v) {
 	return _.reduce(a, function (o, x, i) {
 		o[x] = v ? v[i % v.length] : x;
