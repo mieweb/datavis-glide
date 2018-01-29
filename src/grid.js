@@ -1323,7 +1323,9 @@ Grid.prototype.redraw = function () {
 
 			debug.info('GRID', 'Creating pivot grid table');
 
-			self.ui.toolbar_limit.hide();
+			if (self.features.limit) {
+				self.ui.toolbar_limit.hide();
+			}
 			self.ui.toolbar_group.hide();
 			self.ui.toolbar_pivot.show();
 		}
@@ -1341,7 +1343,9 @@ Grid.prototype.redraw = function () {
 
 			debug.info('GRID', 'Creating group grid table');
 
-			self.ui.toolbar_limit.hide();
+			if (self.features.limit) {
+				self.ui.toolbar_limit.hide();
+			}
 			self.ui.toolbar_group.show();
 			self.ui.toolbar_pivot.hide();
 		}
@@ -1351,7 +1355,9 @@ Grid.prototype.redraw = function () {
 
 			debug.info('GRID', 'Creating plain grid table');
 
-			self.ui.toolbar_limit.hide();
+			if (self.features.limit) {
+				self.ui.toolbar_limit.hide();
+			}
 			self.ui.toolbar_group.hide();
 			self.ui.toolbar_pivot.hide();
 		}
@@ -1365,12 +1371,14 @@ Grid.prototype.redraw = function () {
 		self.ui.exportBtn.attr('disabled', true);
 		self.gridTable = new gridTableCtor(self, self.defn, self.view, self.features, gridTableOpts, self.timing, self.id);
 		self.gridTable.on(GridTable.events.unableToRender, makeGridTable);
-		self.gridTable.on(GridTable.events.limited, function () {
-			self.ui.toolbar_limit.show();
-		});
-		self.gridTable.on(GridTable.events.unlimited, function () {
-			self.ui.toolbar_limit.hide();
-		});
+		if (self.features.limit) {
+			self.gridTable.on(GridTable.events.limited, function () {
+				self.ui.toolbar_limit.show();
+			});
+			self.gridTable.on(GridTable.events.unlimited, function () {
+				self.ui.toolbar_limit.hide();
+			});
+		}
 		self.gridTable.draw(self.ui.grid, function () {
 			self.ui.exportBtn.attr('disabled', false);
 			self.tableDoneCont();
