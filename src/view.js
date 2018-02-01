@@ -131,6 +131,8 @@ var View = function (source, name, opts) {
 View.prototype = Object.create(Object.prototype);
 View.prototype.constructor = View;
 
+// Events {{{2
+
 mixinEventHandling(View, function (self) {
 	return 'VIEW (' + self.name + ')';
 }, [
@@ -154,6 +156,10 @@ mixinEventHandling(View, function (self) {
 	, 'filter'         // Filter information for a row is available.
 	, 'filterEnd'      // A filter operation has finished.
 
+	, 'invalidFilterField'
+	, 'invalidGroupField'
+	, 'invalidPivotField'
+	, 'invalidSortField'
 	, 'invalidAggregate'
 ]);
 
@@ -891,7 +897,10 @@ View.prototype.filter = function (cont) {
 		// us to filter.
 
 		if (fti === undefined) {
-			throw new ViewError('Unable to filter field "' + filterField + '" - no type information available');
+			log.error('Filter field does not exist in the source: ' + filterField);
+			self.fire(View.events.invalidFilterField, null, filterField);
+			delete self.filterSpec[filterField];
+			return;
 		}
 
 		if (fti.type === undefined) {
@@ -907,6 +916,13 @@ View.prototype.filter = function (cont) {
 			fti.needsDecoding = false;
 		}
 	});
+
+	if (_.keys(self.filterSpec).length === 0) {
+		self.clearFilter({
+			sendEvent: false,
+			updateData: false
+		});
+	}
 
 	// Checks to see if the given filter passes for the given row.
 
@@ -1215,7 +1231,35 @@ View.prototype.clearGroup = function (noUpdate, dontTell) {
 View.prototype.group = function () {
 	var self = this;
 
+	// Make sure that grouping has been asked for.
+
 	if (isNothing(self.groupSpec)) {
+		return false;
+	}
+
+	// We need `typeInfo` to verify that the group fields requested actually exist in the source data.
+	// It's not possible to just use the data, because there may be no rows.
+
+	if (self.typeInfo == null) {
+		log.error('Source type information is missing');
+		return false;
+	}
+
+	// Go through every group field and make sure it exists in the source.
+
+	_.each(self.groupSpec.fieldNames, function (field, fieldIdx) {
+		if (!self.typeInfo.isSet(field)) {
+			log.error('Group field does not exist in the source: ' + field);
+			self.fire(View.events.invalidGroupField, null, field);
+			self.groupSpec.fieldNames.splice(fieldIdx, 1);
+		}
+	});
+
+	// It's possible now that we've eliminated *all* the group fields because they're invalid; if
+	// that's the case, we just abort as if no grouping was requested at all.
+
+	if (self.groupSpec.fieldNames.length === 0) {
+		self.clearGroup(true, true);
 		return false;
 	}
 
@@ -1418,6 +1462,38 @@ View.prototype.pivot = function () {
 	// FIXME Allow pivot without group.
 
 	if (!self.data.isGroup) {
+		return false;
+	}
+
+	// Make sure that pivotting has been asked for.
+
+	if (isNothing(self.pivotSpec)) {
+		return false;
+	}
+
+	// We need `typeInfo` to verify that the pivot fields requested actually exist in the source data.
+	// It's not possible to just use the data, because there may be no rows.
+
+	if (self.typeInfo == null) {
+		log.error('Source type information is missing');
+		return false;
+	}
+
+	// Go through every pivot field and make sure it exists in the source.
+
+	_.each(self.pivotSpec.fieldNames, function (field, fieldIdx) {
+		if (!self.typeInfo.isSet(field)) {
+			log.error('Pivot field does not exist in the source: ' + field);
+			self.fire(View.events.invalidPivotField, null, field);
+			self.pivotSpec.fieldNames.splice(fieldIdx, 1);
+		}
+	});
+
+	// It's possible now that we've eliminated *all* the pivot fields because they're invalid; if
+	// that's the case, we just abort as if no pivotting was requested at all.
+
+	if (self.pivotSpec.fieldNames.length === 0) {
+		self.clearPivot(true, true);
 		return false;
 	}
 
