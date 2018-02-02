@@ -1144,9 +1144,16 @@ View.prototype.filter = function (cont) {
  * @param {Function} spec.aggregate
  */
 
-View.prototype.setGroup = function (spec, noUpdate, dontTell) {
+View.prototype.setGroup = function (spec, opts) {
 	var self = this
 		, args = Array.prototype.slice.call(arguments);
+
+	opts = opts || {};
+	_.defaults(opts, {
+		sendEvent: true,
+		dontSendEventTo: [],
+		updateData: true
+	});
 
 	if (self.lock.isLocked()) {
 		return self.lock.onUnlock(function () {
@@ -1158,7 +1165,7 @@ View.prototype.setGroup = function (spec, noUpdate, dontTell) {
 
 	if (isNothing(spec) && !isNothing(self.pivotSpec)) {
 		log.warn('VIEW (' + self.name + ') // SET GROUP', 'Having a pivot without a group is not allowed');
-		self.clearPivot(true);
+		self.clearPivot(opts);
 	}
 
 	if (spec != null) {
@@ -1189,11 +1196,13 @@ View.prototype.setGroup = function (spec, noUpdate, dontTell) {
 
 	self.groupSpec = spec;
 
-	self.fire(View.events.groupSet, {
-		notTo: dontTell
-	}, spec);
+	if (opts.sendEvent) {
+		self.fire(View.events.groupSet, {
+			notTo: opts.dontSendEventTo
+		}, spec);
+	}
 
-	if (noUpdate) {
+	if (!opts.updateData) {
 		return true;
 	}
 
@@ -1217,8 +1226,8 @@ View.prototype.getGroup = function () {
  * Remove any grouping that had been set.
  */
 
-View.prototype.clearGroup = function (noUpdate, dontTell) {
-	return this.setGroup(null, noUpdate, dontTell);
+View.prototype.clearGroup = function (opts) {
+	return this.setGroup(null, opts);
 };
 
 // #group {{{2
@@ -1377,9 +1386,16 @@ View.prototype.group = function () {
 
 // #setPivot {{{2
 
-View.prototype.setPivot = function (spec, noUpdate, dontTell) {
+View.prototype.setPivot = function (spec, opts) {
 	var self = this
 		, args = Array.prototype.slice.call(arguments);
+
+	opts = opts || {};
+	_.defaults(opts, {
+		sendEvent: true,
+		dontSendEventTo: [],
+		updateData: true
+	});
 
 	if (self.lock.isLocked()) {
 		return self.lock.onUnlock(function () {
@@ -1391,7 +1407,7 @@ View.prototype.setPivot = function (spec, noUpdate, dontTell) {
 
 	if (isNothing(self.groupSpec) && !isNothing(spec)) {
 		log.warn('VIEW (' + self.name + ') // SET PIVOT', 'Having a pivot without a group is not allowed');
-		self.clearPivot(noUpdate, dontTell);
+		self.clearPivot(opts);
 	}
 
 	if (spec != null) {
@@ -1422,11 +1438,13 @@ View.prototype.setPivot = function (spec, noUpdate, dontTell) {
 
 	self.pivotSpec = spec;
 
-	self.fire(View.events.pivotSet, {
-		notTo: dontTell
-	}, spec);
+	if (opts.sendEvent) {
+		self.fire(View.events.pivotSet, {
+			notTo: opts.dontSendEventTo
+		}, spec);
+	}
 
-	if (noUpdate) {
+	if (!opts.updateData) {
 		return true;
 	}
 
@@ -1446,8 +1464,8 @@ View.prototype.getPivot = function () {
 
 // #clearPivot {{{2
 
-View.prototype.clearPivot = function (noUpdate, dontTell) {
-	return this.setPivot(null, noUpdate, dontTell);
+View.prototype.clearPivot = function (opts) {
+	return this.setPivot(null, opts);
 };
 
 // #pivot {{{2

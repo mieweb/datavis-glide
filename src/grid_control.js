@@ -95,6 +95,8 @@ GridControlField.prototype.draw = function () {
 		.append(jQuery('<span>').text(self.displayText || (self.colConfig && self.colConfig.displayText) || self.field))
 	;
 
+	self._addErrorIndicator(self.ui.root, 'wcdv_aggregate_control_error');
+
 	return self.ui.root;
 };
 
@@ -122,6 +124,37 @@ GridControlField.prototype.getElement = function () {
 
 GridControlField.prototype.destroy = function () {
 	// DO NOTHING
+};
+
+// #showError {{{2
+
+GridControlField.prototype.showError = function (errMsg) {
+	var self = this;
+
+	debug.error('GRID // CONTROL', errMsg);
+
+	if (self.ui.error) {
+		self.ui.error.attr('title', errMsg);
+		self.ui.error.show();
+	}
+	else {
+		log.error('Call Error: Attempted to call `showError()` on a ControlField subclass instance that does not provide a way of indicating errors in the user interface.');
+	}
+};
+
+// #_addErrorIndicator {{{2
+
+GridControlField.prototype._addErrorIndicator = function (parent, cls) {
+	var self = this;
+
+	self.ui.error = fontAwesome('fa-exclamation-triangle', cls)
+		.hide()
+		.tooltip({
+			classes: {
+				'ui-tooltip': 'ui-corner-all ui-widget-shadow ' + cls + '_tooltip'
+			}
+		})
+		.appendTo(parent);
 };
 
 // GroupControlField {{{1
@@ -181,16 +214,9 @@ AggregateControlField.prototype.draw = function () {
 
 	self.super.draw();
 
-	var aggDefn = AGGREGATE_REGISTRY.get(self.field);
+	self._addErrorIndicator(self.ui.root, 'wcdv_aggregate_control_error');
 
-	self.ui.error = fontAwesome('fa-exclamation-triangle', 'wcdv_aggregate_control_error')
-		.hide()
-		.tooltip({
-			classes: {
-				'ui-tooltip': 'ui-corner-all ui-widget-shadow wcdv_aggregate_control_error_tooltip'
-			}
-		})
-		.appendTo(self.ui.root);
+	var aggDefn = AGGREGATE_REGISTRY.get(self.field);
 
 	if (aggDefn.prototype.options != null) {
 		jQuery('<button>', {
@@ -353,15 +379,6 @@ AggregateControlField.prototype.getInfo = function () {
 	};
 };
 
-// #showError {{{2
-
-AggregateControlField.prototype.showError = function (errMsg) {
-	var self = this;
-
-	self.ui.error.attr('title', errMsg);
-	self.ui.error.show();
-};
-
 // GridControl {{{1
 
 // Constructor {{{2
@@ -393,6 +410,9 @@ AggregateControlField.prototype.showError = function (errMsg) {
  * @property {Array.<ControlField>} controlFields
  * List of all the control fields currently in the UI.
  *
+ * @property {Object.<string, Array.<ControlField>>} controlFieldsByField
+ * Object for looking up control fields by name.
+ *
  * @property {object} ui
  * Object containing different user interface components.
  *
@@ -415,6 +435,7 @@ var GridControl = makeSubclass(Object, function (grid, defn, view, features, tim
 
 	self.fields = [];
 	self.controlFields = [];
+	self.controlFieldsByField = {};
 
 	self.ui = {};
 }, {
@@ -505,7 +526,13 @@ GridControl.prototype.addField = function (field, displayText, opts, controlFiel
 	}
 
 	var cf = new self.controlFieldCtor(self, field, displayText, self.useColConfig ? self.colConfig[field] : null, controlFieldOpts);
+
 	self.controlFields.push(cf);
+	
+	if (self.controlFieldsByField[field] == null) {
+		self.controlFieldsByField[field] = [];
+	}
+	self.controlFieldsByField[field].push(cf);
 
 	self.ui.clearBtn.show();
 
@@ -556,19 +583,29 @@ GridControl.prototype.addField = function (field, displayText, opts, controlFiel
 
 GridControl.prototype.removeField = function (cf) {
 	var self = this
-		, controlFieldIndex = self.controlFields.indexOf(cf);
+		, field = cf.field;
+
+	// Remove it from the UI.
 
 	cf.destroy();
-	cf.getElement().parent('li').remove(); // Remove it from the DOM.
-	self.controlFields.splice(controlFieldIndex, 1);
+	cf.getElement().parent('li').remove();
+
+	// Remove it from the internal data structures.
+
+	self.controlFields = _.without(self.controlFields, cf);
+	self.controlFieldsByField[field] = _.without(self.controlFieldsByField[field], cf);
+
+	// Re-enable the option in the dropdown, if necessary.
 
 	if (self.disableUsedItems) {
-		self.fields.splice(self.fields.indexOf(cf.field), 1); // Remove it from the fields array.
+		self.fields.splice(self.fields.indexOf(cf.field), 1);
+
+		self.ui.dropdown.find('option').filter(function () {
+			return jQuery(this).val() === cf.field;
+		}).prop('disabled', false);
 	}
 
-	self.ui.dropdown.find('option').filter(function () {
-		return jQuery(this).val() === cf.field;
-	}).prop('disabled', false);
+	// Hide the "clear" button if there's nothing to clear.
 
 	if (self.controlFields.length === 0) {
 		self.ui.clearBtn.hide();
@@ -594,6 +631,7 @@ GridControl.prototype.clear = function (opts) {
 
 	self.fields = [];
 	self.controlFields = [];
+	self.controlFieldsByField = {};
 	self.ui.fields.children().remove();
 	self.ui.dropdown.find('option:disabled').filter(function () {
 		return jQuery(this).val() !== '';
@@ -666,7 +704,17 @@ GridControl.prototype.getListElement = function () {
  * filtering.
  */
 
-var GroupControl = makeSubclass(GridControl, null, {
+var GroupControl = makeSubclass(GridControl, function () {
+	var self = this;
+
+	self.super.ctor.apply(self, arguments);
+
+	self.view.on(View.events.invalidGroupField, function (field) {
+		_.each(self.controlFieldsByField[field], function (cf) {
+			cf.showError('This field does not exist in the data.');
+		});
+	});
+}, {
 	isHorizontal: true,
 	controlFieldCtor: GroupControlField
 });
@@ -745,7 +793,9 @@ GroupControl.prototype.updateView = function () {
 	debug.info('GRID // GROUP CONTROL', 'Setting group fields to: %O', self.fields);
 
 	if (self.fields.length > 0) {
-		self.view.setGroup({fieldNames: self.fields}, false, self);
+		self.view.setGroup({fieldNames: self.fields}, {
+			dontSendEventTo: self
+		});
 	}
 	else {
 		self.view.clearGroup();
@@ -770,7 +820,17 @@ GroupControl.prototype.updateView = function () {
  * Names of the fields
  */
 
-var PivotControl = makeSubclass(GridControl, null, {
+var PivotControl = makeSubclass(GridControl, function () {
+	var self = this;
+
+	self.super.ctor.apply(self, arguments);
+
+	self.view.on(View.events.invalidPivotField, function (field) {
+		_.each(self.controlFieldsByField[field], function (cf) {
+			cf.showError('This field does not exist in the data.');
+		});
+	});
+}, {
 	isHorizontal: true,
 	controlFieldCtor: PivotControlField
 });
@@ -856,7 +916,9 @@ PivotControl.prototype.updateView = function () {
 	debug.info('GRID // PIVOT CONTROL', 'Setting pivot fields to: %O', self.fields);
 
 	if (self.fields.length > 0) {
-		if (!self.view.setPivot({fieldNames: self.fields}, false, self)) {
+		if (!self.view.setPivot({fieldNames: self.fields}, {
+			dontSendEventTo: self
+		})) {
 			self.clear({ updateView: false });
 		}
 	}

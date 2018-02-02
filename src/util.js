@@ -1728,25 +1728,35 @@ var concatLog = {
 
 var debug = {
 	info: function (tag) {
-		var rest = Array.prototype.slice.call(arguments, 1);
-		var args = Array.prototype.concat.call(['[DEBUG // ' + tag + '] ' + rest[0]], rest.slice(1));
-
 		if (!MIE.DEBUGGING) {
 			return;
 		}
+
+		var rest = Array.prototype.slice.call(arguments, 1);
+		var args = Array.prototype.concat.call(['[DEBUG // ' + tag + '] ' + rest[0]], rest.slice(1));
 
 		return log.info.apply(null, args);
 	},
 	warn: function (tag) {
-		var rest = Array.prototype.slice.call(arguments, 1);
-		var args = Array.prototype.concat.call(['[DEBUG // ' + tag + '] ' + rest[0]], rest.slice(1));
-
 		if (!MIE.DEBUGGING) {
 			return;
 		}
 
+		var rest = Array.prototype.slice.call(arguments, 1);
+		var args = Array.prototype.concat.call(['[DEBUG // ' + tag + '] ' + rest[0]], rest.slice(1));
+
 		return log.warn.apply(null, args);
-	}
+	},
+	error: function (tag) {
+		if (!MIE.DEBUGGING) {
+			return;
+		}
+
+		var rest = Array.prototype.slice.call(arguments, 1);
+		var args = Array.prototype.concat.call(['[DEBUG // ' + tag + '] ' + rest[0]], rest.slice(1));
+
+		return log.error.apply(null, args);
+	},
 };
 
 /**

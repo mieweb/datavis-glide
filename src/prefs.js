@@ -99,29 +99,35 @@ Prefs.prototype.apply = function (prefs, cont) {
 
 	if (isNothing(prefs.filter)) {
 		self.view.clearFilter({
-			sendEvent: true,
 			updateData: false
 		});
 	}
 	else {
 		self.view.setFilter(prefs.filter, null, {
-			sendEvent: true,
 			updateData: false
 		});
 	}
 
 	if (isNothing(prefs.group)) {
-		self.view.clearGroup(true);
+		self.view.clearGroup({
+			updateData: false
+		});
 	}
 	else {
-		self.view.setGroup(prefs.group, true);
+		self.view.setGroup(prefs.group, {
+			updateData: false
+		});
 	}
 
 	if (isNothing(prefs.pivot)) {
-		self.view.clearPivot(true);
+		self.view.clearPivot({
+			updateData: false
+		});
 	}
 	else {
-		self.view.setPivot(prefs.pivot, true);
+		self.view.setPivot(prefs.pivot, {
+			updateData: false
+		});
 	}
 
 	if (isNothing(prefs.aggregate)) {

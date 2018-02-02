@@ -1,7 +1,7 @@
 // Csv {{{1
 
 /**
- * @typedef {object} Csv~LastRow
+ * @typedef {object} Csv~Row
  *
  * @property {number} rowId
  * @property {boolean} hidden
@@ -9,15 +9,24 @@
  */
 
 /**
+ * Represents the data that will be output by exporting the grid table to a spreadsheet format like
+ * CSV.  This is used by grid table rendering functions to build the exported data while rendering
+ * the HTML data shown onscreen.
+ *
  * @property {number} lastRowId
+ * The row ID of the last-added row.
  *
- * @property {Csv~LastRow} lastRow
+ * @property {Csv~Row} lastRow
+ * The last-added row.
  *
- * @property {Csv~LastRow[]} data
+ * @property {Csv~Row[]} data
+ * All rows.
  *
  * @property {object} opts
+ * Options for serializing the data to a string.
  *
  * @property {string} opts.separator
+ * Column separator used when serializing.
  */
 
 var Csv = makeSubclass(Object, function (opts) {
@@ -34,6 +43,13 @@ var Csv = makeSubclass(Object, function (opts) {
 });
 
 // #addRow {{{2
+
+/**
+ * Add a row to the data set.
+ *
+ * @param {number} [rowId]
+ * Row ID of the newly added row; if omitted, the last number is just incremented.
+ */
 
 Csv.prototype.addRow = function (rowId) {
 	var self = this;
@@ -52,6 +68,13 @@ Csv.prototype.addRow = function (rowId) {
 
 // #addCol {{{2
 
+/**
+ * Add a column to the current row.
+ *
+ * @param {string} x
+ * The value to add.
+ */
+
 Csv.prototype.addCol = function (x) {
 	var self = this;
 
@@ -66,16 +89,24 @@ Csv.prototype.addCol = function (x) {
 
 // #clear {{{2
 
+/**
+ * Reset the CSV data buffer.
+ */
+
 Csv.prototype.clear = function () {
 	var self = this;
 
-	self.lastRowId = -1;
+	self.lastRowId = -2;
 	self.data = [];
 	self.lastRow = null;
 	self.order = null;
 };
 
 // #toString {{{2
+
+/**
+ * Render the entire set of data accumulated to a string.
+ */
 
 Csv.prototype.toString = function () {
 	var self = this;
