@@ -178,6 +178,11 @@ function checkAggregate(defn, agg, source) {
  * Fixed type of the result of this aggregate function.  Undefined indicates that the type depends
  * on the field(s) used.
  *
+ * @property {string[]} [allowedTypes]
+ * If fields have one of the types specified, that type overrides the fixed type.  This exists as a
+ * way of dealing with subtypes (e.g. "Sum" returns a number, but could also return a currency if
+ * the field it's operating on is a currency).
+ *
  * @property {boolean} [inheritFormatting=false]
  * If true, then the result should be formatted according to the formatting of the field(s).
  *
@@ -449,20 +454,24 @@ Aggregate.prototype.getComparisonFn = function (type) {
 
 Aggregate.prototype.getType = function () {
 	var self = this;
-	var t;
-	
+
 	// Set the type of the aggregate result.  Sometimes this is fixed (e.g. count is always a number).
 	// If that's the case, it's given by the Aggregate instance itself.
 
 	t = self.type;
 
-	// When the Aggregate instance doesn't specify, then it's considered to be the type of the field
-	// (e.g. min, max, first, last all just reuse a value so the type of the aggregate function is
-	// just whatever the type of the value is).  This only works easily if there is one field, so if
-	// there's more than one, the subclass will need to provide their own definition.
-	
-	if (t == null && getProp(self, 'opts', 'fields', 'length') === 1) {
-		t = self.opts.typeInfo[0].type;
+	if (getProp(self.opts, 'fields', 'length')) {
+		var uniqueTypes = _.uniq(_.pluck(self.opts.typeInfo, 'type'));
+		if (uniqueTypes.length === 1) {
+			if (self.allowedTypes && self.allowedTypes.indexOf(uniqueTypes[0]) >= 0) {
+				// Using `allowedTypes` lets field types override the fixed type.
+				t = uniqueTypes[0];
+			}
+			else if (t == null) {
+				// There is no fixed type, so we must use the field type.
+				t = uniqueTypes[0];
+			}
+		}
 	}
 
 	// Default to a string type.
@@ -665,6 +674,7 @@ var SumAggregate = makeSubclass(Aggregate, null, {
 	name: 'Sum',
 	fieldCount: 1,
 	type: 'number',
+	allowedTypes: ['number', 'currency'],
 	inheritFormatting: true,
 	bottomValue: 0
 });
@@ -715,6 +725,7 @@ var AverageAggregate = makeSubclass(Aggregate, function (opts) {
 	name: 'Average',
 	fieldCount: 1,
 	type: 'number',
+	allowedTypes: ['number', 'currency'],
 	inheritFormatting: true,
 	bottomValue: 0
 });
