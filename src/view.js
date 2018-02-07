@@ -2082,7 +2082,9 @@ View.prototype.getData = function (cont) {
 
 			return self.filter(function (didFilter, filteredData) {
 				ops.filter = didFilter;
-				self.data.data = filteredData;
+				if (didFilter) {
+					self.data.data = filteredData;
+				}
 				ops.group = self.group();
 				ops.pivot = self.pivot();
 				return self.aggregate(function () {
