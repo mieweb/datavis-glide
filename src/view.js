@@ -238,11 +238,12 @@ View.prototype.setSort = function (spec, progress, noUpdate, dontTell) {
 		notTo: dontTell
 	}, spec);
 
+	self.clearCache();
+
 	if (noUpdate) {
 		return true;
 	}
 
-	self.clearCache();
 	self.getData();
 
 	return true;
@@ -829,8 +830,9 @@ View.prototype.setFilter = function (spec, progress, opts) {
 		}, spec);
 	}
 
+	self.clearCache();
+
 	if (opts.updateData) {
-		self.clearCache();
 		self.getData();
 	}
 
@@ -1202,11 +1204,12 @@ View.prototype.setGroup = function (spec, opts) {
 		}, spec);
 	}
 
+	self.clearCache();
+
 	if (!opts.updateData) {
 		return true;
 	}
 
-	self.clearCache();
 	self.getData();
 
 	return true;
@@ -1444,11 +1447,12 @@ View.prototype.setPivot = function (spec, opts) {
 		}, spec);
 	}
 
+	self.clearCache();
+
 	if (!opts.updateData) {
 		return true;
 	}
 
-	self.clearCache();
 	self.getData();
 
 	return true;
@@ -1778,11 +1782,12 @@ View.prototype.setAggregate = function (spec, opts) {
 		}, spec);
 	}
 
+	self.clearCache();
+
 	if (!opts.updateData) {
 		return true;
 	}
 
-	self.clearCache();
 	self.getData();
 
 	return true;
