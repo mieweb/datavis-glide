@@ -610,12 +610,7 @@ var Grid = function (id, view, defn, tagOpts, cb) {
 			.addClass('wcdv_button pull-right')
 			.attr('title', MIE.trans('SHOWHIDEOPTS'))
 			.click(function (evt) {
-				self.ui.controls.toggle({
-					duration: 0,
-					complete: function () {
-						self.fire(Grid.events.showControls);
-					}
-				});
+				self.toggleControls();
 			})
 			.appendTo(self.ui.toolbar);
 
@@ -1493,6 +1488,53 @@ Grid.prototype.toggle = function () {
 	}
 	else {
 		this.hide();
+	}
+};
+
+// hideControls {{{2
+
+Grid.prototype.hideControls = function () {
+	var self = this;
+
+	if (self.ui.controls._isHidden()) {
+		return;
+	}
+
+	self.ui.controls.hide({
+		duration: 0,
+		complete: function () {
+			self.fire(Grid.events.hideControls);
+		}
+	});
+};
+
+// showControls {{{2
+
+Grid.prototype.showControls = function () {
+	var self = this;
+
+	if (!self.ui.controls._isHidden()) {
+		return;
+	}
+
+	self.ui.controls.show({
+		duration: 0,
+		complete: function () {
+			self.fire(Grid.events.showControls);
+		}
+	});
+};
+
+// toggleControls {{{2
+
+Grid.prototype.toggleControls = function () {
+	var self = this;
+
+	if (self.ui.controls._isHidden()) {
+		self.showControls();
+	}
+	else {
+		self.hideControls();
 	}
 };
 

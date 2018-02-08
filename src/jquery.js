@@ -5,6 +5,9 @@ jQuery.fn.extend({
 	_isDisabled: function () {
 		return jQuery(this).attr('disabled');
 	},
+	_isHidden: function () {
+		return jQuery(this).css('display') === 'none' || jQuery(this).css('visibility') !== 'visible';
+	},
 	_addEventDebugging: function (what, tag) {
 		switch (what) {
 		case 'drag':

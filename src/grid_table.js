@@ -692,7 +692,7 @@ GridTable.prototype._addSortingToHeader2 = function (data, orientation, spec, th
 
 // #_addFilterToHeader {{{2
 
-GridTable.prototype._addFilterToHeader = function (th, field) {
+GridTable.prototype._addFilterToHeader = function (th, field, displayText) {
 	var self = this;
 
 	if (self.grid.filterControl == null) {
@@ -701,7 +701,9 @@ GridTable.prototype._addFilterToHeader = function (th, field) {
 
 	jQuery(fontAwesome('fa-filter', 'wcdv_filter_icon', 'Click to add a filter for "' + field + '"'))
 		.on('click', function () {
-			self.grid.filterControl.addField(field);
+			self.grid.filterControl.addField(field, displayText, {
+				openControls: true
+			});
 		})
 		.tooltip({
 			classes: {
@@ -1604,7 +1606,7 @@ GridTablePlain.prototype.drawHeader = function (columns, data, typeInfo, opts) {
 
 		self._addSortingToHeader2(data, 'vertical', {field: field}, headingTh);
 
-		self._addFilterToHeader(headingTh, field);
+		self._addFilterToHeader(headingTh, field, headingText);
 
 		if (self.opts.drawInternalBorders) {
 			headingTh.addClass('wcdv_pivot_colval_boundary');

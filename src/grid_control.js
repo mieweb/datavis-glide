@@ -518,11 +518,16 @@ GridControl.prototype.addField = function (field, displayText, opts, controlFiel
 
 	_.defaults(opts, {
 		updateView: true,
-		silent: false
+		silent: false,
+		openControls: false
 	});
 
 	if (isNothing(field) || field === '' || (self.disableUsedItems && self.fields.indexOf(field) >= 0)) {
 		return;
+	}
+
+	if (opts.openControls) {
+		self.grid.showControls();
 	}
 
 	var cf = new self.controlFieldCtor(self, field, displayText, self.useColConfig ? self.colConfig[field] : null, controlFieldOpts);
@@ -1286,10 +1291,10 @@ FilterControl.prototype.draw = function (parent) {
 
 // #addField {{{2
 
-FilterControl.prototype.addField = function (field) {
+FilterControl.prototype.addField = function (field, displayText, opts) {
 	var self = this;
 
-	self.super.addField(field, getProp(self.colConfig, field, 'displayText'), { updateView: false });	
+	self.super.addField(field, displayText || getProp(self.colConfig, field, 'displayText'), opts);	
 };
 
 // #removeField {{{2
