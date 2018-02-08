@@ -278,6 +278,13 @@ li.wcdv_aggregate_field {
 	padding: 4px 6px 4px 6px;
 }
 
+.ui-widget.ui-widget-content.wcdv_info_tooltip {
+	border: solid 2px #00BCD4;
+	border-top-width: 10px;
+	font-size: 0.85em;
+	padding: 4px 6px 4px 6px;
+}
+
 /* FILTER CONTROL */
 
 .wcdv_filter_control ul li .wcdv_field {
@@ -334,6 +341,11 @@ div.SumoSelect > div.optWrapper {
 .wcdv_grid_table .wcdv_group_col_spacer {
 	width: 1em;
 	padding-right: 0px;
+}
+
+.wcdv_filter_icon {
+	cursor: pointer;
+	padding-left: 0.4em;
 }
 
 .wcdv_sort_icon {

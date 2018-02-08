@@ -165,6 +165,8 @@ Csv.prototype.setOrder = function (rowId, pos) {
 // Constructor {{{2
 
 /**
+ * @param {Grid} grid
+ *
  * @param {object} defn
  *
  * @param {View} view
@@ -193,6 +195,8 @@ Csv.prototype.setOrder = function (rowId, pos) {
  *
  * @property {string} id
  *
+ * @property {Grid} grid
+ *
  * @property {object} defn
  *
  * @property {View} view
@@ -202,6 +206,10 @@ Csv.prototype.setOrder = function (rowId, pos) {
  * @property {object} opts
  *
  * @property {Timing} timing
+ *
+ * @property {Array.<number>} selection
+ * An array of the row IDs of selected rows.  The row ID here refers to that used by the source, so
+ * the selection maps directly back to the underlying source data.
  *
  * @property {boolean} needsRedraw
  * If true, then the view has done something that requires us to be redrawn.
@@ -680,6 +688,27 @@ GridTable.prototype._addSortingToHeader2 = function (data, orientation, spec, th
 			replaceSortIndicator(sortIcon_span, currentDir);
 		}
 	}
+};
+
+// #_addFilterToHeader {{{2
+
+GridTable.prototype._addFilterToHeader = function (th, field) {
+	var self = this;
+
+	if (self.grid.filterControl == null) {
+		return;
+	}
+
+	jQuery(fontAwesome('fa-filter', 'wcdv_filter_icon', 'Click to add a filter for "' + field + '"'))
+		.on('click', function () {
+			self.grid.filterControl.addField(field);
+		})
+		.tooltip({
+			classes: {
+				'ui-tooltip': 'ui-corner-all ui-widget-shadow wcdv_info_tooltip'
+			}
+		})
+		.appendTo(th);
 };
 
 // #addSortHandler {{{2
@@ -1567,6 +1596,8 @@ GridTablePlain.prototype.drawHeader = function (columns, data, typeInfo, opts) {
 		// In the plain grid table output, the only way to sort is vertically by field.
 
 		self._addSortingToHeader2(data, 'vertical', {field: field}, headingTh);
+
+		self._addFilterToHeader(headingTh, field);
 
 		/*
 		 * Configure filtering for this column.  This mainly involves creating a button, which when
