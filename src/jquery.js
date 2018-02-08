@@ -1,12 +1,12 @@
 jQuery.fn.extend({
 	_isChecked: function () {
-		return jQuery(this).attr('checked');
+		return this.attr('checked');
 	},
 	_isDisabled: function () {
-		return jQuery(this).attr('disabled');
+		return this.attr('disabled');
 	},
 	_isHidden: function () {
-		return jQuery(this).css('display') === 'none' || jQuery(this).css('visibility') !== 'visible';
+		return this.css('display') === 'none' || this.css('visibility') !== 'visible';
 	},
 	_addEventDebugging: function (what, tag) {
 		switch (what) {
@@ -67,6 +67,17 @@ jQuery.fn.extend({
 			appendTo: document.body,
 			revert: true,
 			revertDuration: 0
+		});
+		this.attr('title', 'XXX'); // FIXME Without this, the 'content' property below does nothing!
+		var tooltipContent = jQuery('<div>')
+			.append(fontAwesome('fa-info-circle').css('padding-right', '0.25em'))
+			.append('You can drag & drop this field into the grid controls above to filter, group, or pivot');
+		this.tooltip({
+			classes: {
+				'ui-tooltip': 'ui-corner-all ui-widget-shadow ' + 'wcdv_info_tooltip'
+			},
+			show: { delay: 2000 },
+			content: tooltipContent
 		});
 		return this
 			.draggable(opts);
