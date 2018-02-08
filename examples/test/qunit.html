@@ -1,0 +1,146 @@
+<html>
+	<head>
+		<meta charset="utf-8"/>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/numeral.js/2.0.6/numeral.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.20.1/moment.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/chosen/1.8.3/chosen.jquery.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.2.4/flatpickr.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/progressbar.js/1.0.1/progressbar.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/nprogress/0.2.0/nprogress.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/sprintf/1.1.1/sprintf.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.sumoselect/3.0.2/jquery.sumoselect.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/4.3.7/papaparse.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/floatthead/2.0.3/jquery.floatThead.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/fixed-header-table/1.3.0/jquery.fixedheadertable.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.blockUI/2.70/jquery.blockUI.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-contextmenu/2.6.3/jquery.contextMenu.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.8.3/modernizr.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/detectizr/2.2.0/detectizr.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/qunit/2.4.1/qunit.min.js"></script>
+		<script src="../tabletool.js"></script>
+		<script src="../wcdatavis.js"></script>
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.css"/>
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"/>
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/chosen/1.8.3/chosen.css"/>
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.2.4/flatpickr.css"/>
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/nprogress/0.2.0/nprogress.css"/>
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery.sumoselect/3.0.2/sumoselect.min.css"/>
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-contextmenu/2.6.3/jquery.contextMenu.min.css"/>
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/qunit/2.4.1/qunit.min.css"/>
+		<link rel="stylesheet" href="../base.css"/>
+		<link rel="stylesheet" href="../wcdatavis.css"/>
+		<link rel="stylesheet" href="../tabletool.css"/>
+		<script type="text/javascript">
+$(document).ready(function () {
+	MIE.DEBUGGING = true;
+	var source = new MIE.WC_DataVis.Source({
+		type: 'http',
+		url: 'random10000.json'
+	});
+	var view = new MIE.WC_DataVis.View(source, 'Test View', {
+		saveViewConfig: false
+	});
+
+	var sortInfo = [
+		['string1', '-a', 'zymolysis', 'random dictionary word'],
+		['int1', 1, 9999, 'integer (number → number)'],
+		['int2', '0', '9999', 'integer (string → number)'],
+		['int3', '0', '9,996', 'integer (string → numeral)'],
+		['float1', 3.061266484315311, 9998.333795736264, 'float (number → number)'],
+		['float2', '0.1223883580972307', '9998.556759920326', 'float (string → number)'],
+		['float3', '2.896', '9,997.629', 'float (string → numeral)'],
+		['currency1', 1.34, 9998.03, 'currency (number : currency → number)'],
+		['currency2', '1.64', '9,997.38', 'currency (string : currency → number)'],
+		['currency3', '$1.42', '$9,998.74', 'currency (string : currency → numeral)'],
+		['currency4', '$1.40', '$9,997.55', 'currency (string : string → numeral)'],
+		['date1', '1900-01-23', '2099-12-19', 'date (string → string)'],
+		['date2', 'Jan 6, 1900', 'Dec 21, 2099', 'date (string → moment)'],
+		['date3', '01/01/70', '12/31/09', 'date (string → moment)']
+	];
+
+	QUnit.test('Sort Test', function (assert) {
+		var done = assert.async();
+		(function (args, fun, done) {
+			function g() {
+				if (args.length === 0) {
+					return done();
+				}
+				fun(args.shift(), g);
+			};
+			g();
+		})(sortInfo, function (si, next) {
+			var [field, min, max, info] = si;
+			view.reset();
+			view.setSort({ vertical: { field: field, dir: 'ASC' }}, {
+				updateData: false
+			});
+			view.getData(function (data) {
+				var cell = data.data[0].rowData[field];
+				assert.equal(cell.orig || cell.value, min, info);
+				view.reset();
+				view.setSort({ vertical: { field: field, dir: 'DESC' }});
+				view.getData(function (data) {
+					var cell = data.data[0].rowData[field];
+					assert.equal(cell.orig || cell.value, max, info);
+					return next();
+				});
+			});
+		}, done);
+	});
+
+	var groupInfo = [
+		[['country'], 10, [
+			['Canada'], 1000, ['China'], 1000, ['England'], 1000, ['France'], 1000, ['Germany'], 1000, ['Japan'], 1000, ['Mexico'], 1000, ['South Korea'], 1000, ['Switzerland'], 1000, ['United States'], 1000
+		]],
+		[['state'], 49, [
+			['Alabama'], 208, ['Alaska'], 209, ['Arizona'], 222, ['Arkansas'], 184, ['California'], 174, ['Colorado'], 209, ['Connecticut'], 224, ['Delaware'], 204, ['Florida'], 222, ['Georgia'], 215, ['Hawaii'], 205, ['Idaho'], 189, ['Illinois'], 213, ['Indiana'], 211, ['Iowa'], 209, ['Kansas'], 193, ['Kentucky'], 219, ['Louisiana'], 192, ['Maine'], 201, ['Maryland'], 215, ['Massachusetts'], 200, ['Michigan'], 239, ['Minnesota'], 216, ['Mississippi'], 183, ['Missouri'], 211, ['Montana Nebraska'], 205, ['Nevada'], 216, ['New Hampshire'], 201, ['New Jersey'], 194, ['New Mexico'], 192, ['New York'], 198, ['North Carolina'], 205, ['North Dakota'], 184, ['Ohio'], 199, ['Oklahoma'], 192, ['Oregon'], 183, ['Pennsylvania'], 198, ['Rhode Island'], 196, ['South Carolina'], 230, ['South Dakota'], 209, ['Tennessee'], 219, ['Texas'], 196, ['Utah'], 207, ['Vermont'], 210, ['Virginia'], 186, ['Washington'], 223, ['West Virginia'], 195, ['Wisconsin'], 206, ['Wyoming'], 189
+		]],
+		[['country', 'state'], 490, [
+			['United States', 'Alabama'], 25, ['United States', 'Alaska'], 26, ['United States', 'Arizona'], 18, ['United States', 'Arkansas'], 16, ['United States', 'California'], 22, ['United States', 'Colorado'], 26, ['United States', 'Connecticut'], 20, ['United States', 'Delaware'], 26, ['United States', 'Florida'], 19, ['United States', 'Georgia'], 24, ['United States', 'Hawaii'], 20, ['United States', 'Idaho'], 18, ['United States', 'Illinois'], 16, ['United States', 'Indiana'], 16, ['United States', 'Iowa'], 14, ['United States', 'Kansas'], 21, ['United States', 'Kentucky'], 30, ['United States', 'Louisiana'], 23, ['United States', 'Maine'], 23, ['United States', 'Maryland'], 20, ['United States', 'Massachusetts'], 19, ['United States', 'Michigan'], 28, ['United States', 'Minnesota'], 28, ['United States', 'Mississippi'], 16, ['United States', 'Missouri'], 26, ['United States', 'Montana Nebraska'], 23, ['United States', 'Nevada'], 14, ['United States', 'New Hampshire'], 16, ['United States', 'New Jersey'], 19, ['United States', 'New Mexico'], 21, ['United States', 'New York'], 13, ['United States', 'North Carolina'], 21, ['United States', 'North Dakota'], 10, ['United States', 'Ohio'], 21, ['United States', 'Oklahoma'], 18, ['United States', 'Oregon'], 23, ['United States', 'Pennsylvania'], 19, ['United States', 'Rhode Island'], 20, ['United States', 'South Carolina'], 21, ['United States', 'South Dakota'], 16, ['United States', 'Tennessee'], 34, ['United States', 'Texas'], 18, ['United States', 'Utah'], 20, ['United States', 'Vermont'], 21, ['United States', 'Virginia'], 19, ['United States', 'Washington'], 18, ['United States', 'West Virginia'], 18, ['United States', 'Wisconsin'], 21, ['United States', 'Wyoming'], 16, ['Canada', 'Alabama'], 24, ['Canada', 'Alaska'], 24, ['Canada', 'Arizona'], 22, ['Canada', 'Arkansas'], 22, ['Canada', 'California'], 16, ['Canada', 'Colorado'], 15, ['Canada', 'Connecticut'], 20, ['Canada', 'Delaware'], 18, ['Canada', 'Florida'], 16, ['Canada', 'Georgia'], 19, ['Canada', 'Hawaii'], 23, ['Canada', 'Idaho'], 20, ['Canada', 'Illinois'], 22, ['Canada', 'Indiana'], 19, ['Canada', 'Iowa'], 26, ['Canada', 'Kansas'], 20, ['Canada', 'Kentucky'], 27, ['Canada', 'Louisiana'], 14, ['Canada', 'Maine'], 20, ['Canada', 'Maryland'], 17, ['Canada', 'Massachusetts'], 18, ['Canada', 'Michigan'], 31, ['Canada', 'Minnesota'], 18, ['Canada', 'Mississippi'], 15, ['Canada', 'Missouri'], 21, ['Canada', 'Montana Nebraska'], 20, ['Canada', 'Nevada'], 21, ['Canada', 'New Hampshire'], 17, ['Canada', 'New Jersey'], 21, ['Canada', 'New Mexico'], 15, ['Canada', 'New York'], 21, ['Canada', 'North Carolina'], 14, ['Canada', 'North Dakota'], 18, ['Canada', 'Ohio'], 19, ['Canada', 'Oklahoma'], 17, ['Canada', 'Oregon'], 15, ['Canada', 'Pennsylvania'], 28, ['Canada', 'Rhode Island'], 15, ['Canada', 'South Carolina'], 21, ['Canada', 'South Dakota'], 24, ['Canada', 'Tennessee'], 19, ['Canada', 'Texas'], 28, ['Canada', 'Utah'], 21, ['Canada', 'Vermont'], 24, ['Canada', 'Virginia'], 28, ['Canada', 'Washington'], 31, ['Canada', 'West Virginia'], 15, ['Canada', 'Wisconsin'], 17, ['Canada', 'Wyoming'], 24, ['Mexico', 'Alabama'], 16, ['Mexico', 'Alaska'], 28, ['Mexico', 'Arizona'], 27, ['Mexico', 'Arkansas'], 18, ['Mexico', 'California'], 18, ['Mexico', 'Colorado'], 16, ['Mexico', 'Connecticut'], 21, ['Mexico', 'Delaware'], 19, ['Mexico', 'Florida'], 23, ['Mexico', 'Georgia'], 26, ['Mexico', 'Hawaii'], 19, ['Mexico', 'Idaho'], 26, ['Mexico', 'Illinois'], 20, ['Mexico', 'Indiana'], 21, ['Mexico', 'Iowa'], 22, ['Mexico', 'Kansas'], 17, ['Mexico', 'Kentucky'], 13, ['Mexico', 'Louisiana'], 28, ['Mexico', 'Maine'], 19, ['Mexico', 'Maryland'], 25, ['Mexico', 'Massachusetts'], 15, ['Mexico', 'Michigan'], 27, ['Mexico', 'Minnesota'], 23, ['Mexico', 'Mississippi'], 25, ['Mexico', 'Missouri'], 30, ['Mexico', 'Montana Nebraska'], 20, ['Mexico', 'Nevada'], 25, ['Mexico', 'New Hampshire'], 22, ['Mexico', 'New Jersey'], 20, ['Mexico', 'New Mexico'], 17, ['Mexico', 'New York'], 16, ['Mexico', 'North Carolina'], 17, ['Mexico', 'North Dakota'], 26, ['Mexico', 'Ohio'], 19, ['Mexico', 'Oklahoma'], 12, ['Mexico', 'Oregon'], 14, ['Mexico', 'Pennsylvania'], 14, ['Mexico', 'Rhode Island'], 13, ['Mexico', 'South Carolina'], 27, ['Mexico', 'South Dakota'], 26, ['Mexico', 'Tennessee'], 22, ['Mexico', 'Texas'], 14, ['Mexico', 'Utah'], 23, ['Mexico', 'Vermont'], 25, ['Mexico', 'Virginia'], 14, ['Mexico', 'Washington'], 24, ['Mexico', 'West Virginia'], 21, ['Mexico', 'Wisconsin'], 14, ['Mexico', 'Wyoming'], 13, ['England', 'Alabama'], 22, ['England', 'Alaska'], 17, ['England', 'Arizona'], 21, ['England', 'Arkansas'], 21, ['England', 'California'], 14, ['England', 'Colorado'], 27, ['England', 'Connecticut'], 21, ['England', 'Delaware'], 20, ['England', 'Florida'], 23, ['England', 'Georgia'], 24, ['England', 'Hawaii'], 17, ['England', 'Idaho'], 15, ['England', 'Illinois'], 27, ['England', 'Indiana'], 20, ['England', 'Iowa'], 15, ['England', 'Kansas'], 22, ['England', 'Kentucky'], 32, ['England', 'Louisiana'], 22, ['England', 'Maine'], 17, ['England', 'Maryland'], 19, ['England', 'Massachusetts'], 19, ['England', 'Michigan'], 25, ['England', 'Minnesota'], 25, ['England', 'Mississippi'], 22, ['England', 'Missouri'], 16, ['England', 'Montana Nebraska'], 22, ['England', 'Nevada'], 22, ['England', 'New Hampshire'], 20, ['England', 'New Jersey'], 9, ['England', 'New Mexico'], 18, ['England', 'New York'], 22, ['England', 'North Carolina'], 21, ['England', 'North Dakota'], 17, ['England', 'Ohio'], 23, ['England', 'Oklahoma'], 20, ['England', 'Oregon'], 14, ['England', 'Pennsylvania'], 13, ['England', 'Rhode Island'], 23, ['England', 'South Carolina'], 29, ['England', 'South Dakota'], 21, ['England', 'Tennessee'], 19, ['England', 'Texas'], 27, ['England', 'Utah'], 19, ['England', 'Vermont'], 11, ['England', 'Virginia'], 21, ['England', 'Washington'], 20, ['England', 'West Virginia'], 16, ['England', 'Wisconsin'], 25, ['England', 'Wyoming'], 25, ['France', 'Alabama'], 23, ['France', 'Alaska'], 17, ['France', 'Arizona'], 17, ['France', 'Arkansas'], 20, ['France', 'California'], 10, ['France', 'Colorado'], 25, ['France', 'Connecticut'], 25, ['France', 'Delaware'], 20, ['France', 'Florida'], 23, ['France', 'Georgia'], 15, ['France', 'Hawaii'], 28, ['France', 'Idaho'], 23, ['France', 'Illinois'], 19, ['France', 'Indiana'], 23, ['France', 'Iowa'], 14, ['France', 'Kansas'], 18, ['France', 'Kentucky'], 19, ['France', 'Louisiana'], 9, ['France', 'Maine'], 22, ['France', 'Maryland'], 19, ['France', 'Massachusetts'], 21, ['France', 'Michigan'], 21, ['France', 'Minnesota'], 26, ['France', 'Mississippi'], 18, ['France', 'Missouri'], 24, ['France', 'Montana Nebraska'], 30, ['France', 'Nevada'], 22, ['France', 'New Hampshire'], 19, ['France', 'New Jersey'], 15, ['France', 'New Mexico'], 27, ['France', 'New York'], 28, ['France', 'North Carolina'], 20, ['France', 'North Dakota'], 16, ['France', 'Ohio'], 13, ['France', 'Oklahoma'], 11, ['France', 'Oregon'], 20, ['France', 'Pennsylvania'], 24, ['France', 'Rhode Island'], 23, ['France', 'South Carolina'], 26, ['France', 'South Dakota'], 18, ['France', 'Tennessee'], 23, ['France', 'Texas'], 18, ['France', 'Utah'], 20, ['France', 'Vermont'], 22, ['France', 'Virginia'], 20, ['France', 'Washington'], 26, ['France', 'West Virginia'], 22, ['France', 'Wisconsin'], 23, ['France', 'Wyoming'], 15, ['Germany', 'Alabama'], 13, ['Germany', 'Alaska'], 17, ['Germany', 'Arizona'], 20, ['Germany', 'Arkansas'], 18, ['Germany', 'California'], 15, ['Germany', 'Colorado'], 23, ['Germany', 'Connecticut'], 27, ['Germany', 'Delaware'], 19, ['Germany', 'Florida'], 26, ['Germany', 'Georgia'], 19, ['Germany', 'Hawaii'], 23, ['Germany', 'Idaho'], 14, ['Germany', 'Illinois'], 18, ['Germany', 'Indiana'], 25, ['Germany', 'Iowa'], 38, ['Germany', 'Kansas'], 19, ['Germany', 'Kentucky'], 26, ['Germany', 'Louisiana'], 24, ['Germany', 'Maine'], 15, ['Germany', 'Maryland'], 26, ['Germany', 'Massachusetts'], 26, ['Germany', 'Michigan'], 17, ['Germany', 'Minnesota'], 17, ['Germany', 'Mississippi'], 19, ['Germany', 'Missouri'], 13, ['Germany', 'Montana Nebraska'], 19, ['Germany', 'Nevada'], 21, ['Germany', 'New Hampshire'], 23, ['Germany', 'New Jersey'], 29, ['Germany', 'New Mexico'], 19, ['Germany', 'New York'], 21, ['Germany', 'North Carolina'], 19, ['Germany', 'North Dakota'], 16, ['Germany', 'Ohio'], 12, ['Germany', 'Oklahoma'], 22, ['Germany', 'Oregon'], 22, ['Germany', 'Pennsylvania'], 21, ['Germany', 'Rhode Island'], 15, ['Germany', 'South Carolina'], 17, ['Germany', 'South Dakota'], 20, ['Germany', 'Tennessee'], 17, ['Germany', 'Texas'], 20, ['Germany', 'Utah'], 17, ['Germany', 'Vermont'], 26, ['Germany', 'Virginia'], 15, ['Germany', 'Washington'], 25, ['Germany', 'West Virginia'], 20, ['Germany', 'Wisconsin'], 25, ['Germany', 'Wyoming'], 22, ['Switzerland', 'Alabama'], 23, ['Switzerland', 'Alaska'], 24, ['Switzerland', 'Arizona'], 32, ['Switzerland', 'Arkansas'], 14, ['Switzerland', 'California'], 23, ['Switzerland', 'Colorado'], 20, ['Switzerland', 'Connecticut'], 20, ['Switzerland', 'Delaware'], 18, ['Switzerland', 'Florida'], 17, ['Switzerland', 'Georgia'], 23, ['Switzerland', 'Hawaii'], 17, ['Switzerland', 'Idaho'], 16, ['Switzerland', 'Illinois'], 21, ['Switzerland', 'Indiana'], 22, ['Switzerland', 'Iowa'], 20, ['Switzerland', 'Kansas'], 17, ['Switzerland', 'Kentucky'], 19, ['Switzerland', 'Louisiana'], 17, ['Switzerland', 'Maine'], 13, ['Switzerland', 'Maryland'], 24, ['Switzerland', 'Massachusetts'], 21, ['Switzerland', 'Michigan'], 29, ['Switzerland', 'Minnesota'], 20, ['Switzerland', 'Mississippi'], 20, ['Switzerland', 'Missouri'], 17, ['Switzerland', 'Montana Nebraska'], 23, ['Switzerland', 'Nevada'], 18, ['Switzerland', 'New Hampshire'], 21, ['Switzerland', 'New Jersey'], 27, ['Switzerland', 'New Mexico'], 12, ['Switzerland', 'New York'], 16, ['Switzerland', 'North Carolina'], 24, ['Switzerland', 'North Dakota'], 31, ['Switzerland', 'Ohio'], 22, ['Switzerland', 'Oklahoma'], 21, ['Switzerland', 'Oregon'], 17, ['Switzerland', 'Pennsylvania'], 17, ['Switzerland', 'Rhode Island'], 26, ['Switzerland', 'South Carolina'], 24, ['Switzerland', 'South Dakota'], 20, ['Switzerland', 'Tennessee'], 17, ['Switzerland', 'Texas'], 17, ['Switzerland', 'Utah'], 30, ['Switzerland', 'Vermont'], 16, ['Switzerland', 'Virginia'], 20, ['Switzerland', 'Washington'], 11, ['Switzerland', 'West Virginia'], 17, ['Switzerland', 'Wisconsin'], 20, ['Switzerland', 'Wyoming'], 26, ['Japan', 'Alabama'], 28, ['Japan', 'Alaska'], 18, ['Japan', 'Arizona'], 23, ['Japan', 'Arkansas'], 14, ['Japan', 'California'], 23, ['Japan', 'Colorado'], 18, ['Japan', 'Connecticut'], 24, ['Japan', 'Delaware'], 29, ['Japan', 'Florida'], 23, ['Japan', 'Georgia'], 20, ['Japan', 'Hawaii'], 21, ['Japan', 'Idaho'], 15, ['Japan', 'Illinois'], 31, ['Japan', 'Indiana'], 22, ['Japan', 'Iowa'], 25, ['Japan', 'Kansas'], 18, ['Japan', 'Kentucky'], 16, ['Japan', 'Louisiana'], 16, ['Japan', 'Maine'], 17, ['Japan', 'Maryland'], 19, ['Japan', 'Massachusetts'], 23, ['Japan', 'Michigan'], 29, ['Japan', 'Minnesota'], 26, ['Japan', 'Mississippi'], 17, ['Japan', 'Missouri'], 24, ['Japan', 'Montana Nebraska'], 24, ['Japan', 'Nevada'], 24, ['Japan', 'New Hampshire'], 20, ['Japan', 'New Jersey'], 21, ['Japan', 'New Mexico'], 18, ['Japan', 'New York'], 16, ['Japan', 'North Carolina'], 24, ['Japan', 'North Dakota'], 21, ['Japan', 'Ohio'], 25, ['Japan', 'Oklahoma'], 19, ['Japan', 'Oregon'], 17, ['Japan', 'Pennsylvania'], 18, ['Japan', 'Rhode Island'], 25, ['Japan', 'South Carolina'], 19, ['Japan', 'South Dakota'], 15, ['Japan', 'Tennessee'], 16, ['Japan', 'Texas'], 15, ['Japan', 'Utah'], 16, ['Japan', 'Vermont'], 24, ['Japan', 'Virginia'], 12, ['Japan', 'Washington'], 16, ['Japan', 'West Virginia'], 23, ['Japan', 'Wisconsin'], 22, ['Japan', 'Wyoming'], 11, ['China', 'Alabama'], 16, ['China', 'Alaska'], 16, ['China', 'Arizona'], 22, ['China', 'Arkansas'], 18, ['China', 'California'], 16, ['China', 'Colorado'], 20, ['China', 'Connecticut'], 28, ['China', 'Delaware'], 18, ['China', 'Florida'], 23, ['China', 'Georgia'], 24, ['China', 'Hawaii'], 20, ['China', 'Idaho'], 18, ['China', 'Illinois'], 14, ['China', 'Indiana'], 25, ['China', 'Iowa'], 15, ['China', 'Kansas'], 20, ['China', 'Kentucky'], 26, ['China', 'Louisiana'], 23, ['China', 'Maine'], 25, ['China', 'Maryland'], 18, ['China', 'Massachusetts'], 21, ['China', 'Michigan'], 14, ['China', 'Minnesota'], 16, ['China', 'Mississippi'], 14, ['China', 'Missouri'], 14, ['China', 'Montana Nebraska'], 11, ['China', 'Nevada'], 28, ['China', 'New Hampshire'], 19, ['China', 'New Jersey'], 16, ['China', 'New Mexico'], 25, ['China', 'New York'], 24, ['China', 'North Carolina'], 23, ['China', 'North Dakota'], 16, ['China', 'Ohio'], 28, ['China', 'Oklahoma'], 29, ['China', 'Oregon'], 21, ['China', 'Pennsylvania'], 20, ['China', 'Rhode Island'], 13, ['China', 'South Carolina'], 15, ['China', 'South Dakota'], 24, ['China', 'Tennessee'], 27, ['China', 'Texas'], 23, ['China', 'Utah'], 23, ['China', 'Vermont'], 17, ['China', 'Virginia'], 20, ['China', 'Washington'], 25, ['China', 'West Virginia'], 28, ['China', 'Wisconsin'], 25, ['China', 'Wyoming'], 16, ['South Korea', 'Alabama'], 18, ['South Korea', 'Alaska'], 22, ['South Korea', 'Arizona'], 20, ['South Korea', 'Arkansas'], 23, ['South Korea', 'California'], 17, ['South Korea', 'Colorado'], 19, ['South Korea', 'Connecticut'], 18, ['South Korea', 'Delaware'], 17, ['South Korea', 'Florida'], 29, ['South Korea', 'Georgia'], 21, ['South Korea', 'Hawaii'], 17, ['South Korea', 'Idaho'], 24, ['South Korea', 'Illinois'], 25, ['South Korea', 'Indiana'], 18, ['South Korea', 'Iowa'], 20, ['South Korea', 'Kansas'], 21, ['South Korea', 'Kentucky'], 11, ['South Korea', 'Louisiana'], 16, ['South Korea', 'Maine'], 30, ['South Korea', 'Maryland'], 28, ['South Korea', 'Massachusetts'], 17, ['South Korea', 'Michigan'], 18, ['South Korea', 'Minnesota'], 17, ['South Korea', 'Mississippi'], 17, ['South Korea', 'Missouri'], 26, ['South Korea', 'Montana Nebraska'], 13, ['South Korea', 'Nevada'], 21, ['South Korea', 'New Hampshire'], 24, ['South Korea', 'New Jersey'], 17, ['South Korea', 'New Mexico'], 20, ['South Korea', 'New York'], 21, ['South Korea', 'North Carolina'], 22, ['South Korea', 'North Dakota'], 13, ['South Korea', 'Ohio'], 17, ['South Korea', 'Oklahoma'], 23, ['South Korea', 'Oregon'], 20, ['South Korea', 'Pennsylvania'], 24, ['South Korea', 'Rhode Island'], 23, ['South Korea', 'South Carolina'], 31, ['South Korea', 'South Dakota'], 25, ['South Korea', 'Tennessee'], 25, ['South Korea', 'Texas'], 16, ['South Korea', 'Utah'], 18, ['South Korea', 'Vermont'], 24, ['South Korea', 'Virginia'], 17, ['South Korea', 'Washington'], 27, ['South Korea', 'West Virginia'], 15, ['South Korea', 'Wisconsin'], 14, ['South Korea', 'Wyoming'], 21
+		]]
+	];
+
+	QUnit.test('Group Test', function (assert) {
+		var done = assert.async();
+		(function (args, fun, done) {
+			function g() {
+				if (args.length === 0) {
+					return done();
+				}
+				fun(args.shift(), g);
+			};
+			g();
+		})(groupInfo, function (gi, next) {
+			var [fields, numGroups, result] = gi;
+			view.reset();
+			view.setGroup({ fieldNames: fields }, {
+				updateData: false
+			});
+			view.getData(function (data) {
+				var tag = JSON.stringify(fields);
+				assert.deepEqual(data.groupFields, fields, tag + ': group fields');
+				for (var i = 0; i < result.length; i += 2) {
+					var rowVal = result[i];
+					var len = result[i + 1];
+					var tag2 = tag + ' - ' + JSON.stringify(rowVal);
+					var rowValIndex = _.findIndex(data.rowVals, function (x) {
+						return _.isEqual(x, rowVal);
+					});
+					assert.notEqual(rowValIndex, -1, tag2 + ': find row val index (' + rowValIndex + ')');
+					assert.equal(data.data[rowValIndex].length, len, tag2 + ': group contains right number of rows');
+				}
+				return next();
+			});
+		}, done);
+	});
+});
+		</script>
+	</head>
+	<body>
+		<div id="qunit"></div>
+		<div id="qunit-fixture"></div>
+	</body>
+</html>
