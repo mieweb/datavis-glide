@@ -19,6 +19,8 @@
       , "date1": "$< random_date(format='yyyy-MM-dd') >$"
       , "date2": "$< random_date(format='MMM d, yyyy') >$"
       , "date3": "$< random_date('1970-01-01', '2010-01-01', format='MM/dd/yy') >$"
+	  , "fixedPrecision1": "0.7"
+	  , "fixedPrecision2": "$0.70"
     }
   ],
   "typeInfo": [
@@ -38,5 +40,7 @@
     , { "field": "date1", "type": "date" }
     , { "field": "date2", "type": "date", "format": "MMMM D, YYYY" }
     , { "field": "date3", "type": "date", "format": "MM/DD/YY" }
+    , { "field": "fixedPrecision1", "type": "number" }
+    , { "field": "fixedPrecision2", "type": "currency" }
   ]
 }
