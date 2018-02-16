@@ -202,9 +202,12 @@ Prefs.prototype.addPerspective = function (name, config, cont, opts) {
 		switch: true
 	});
 
-	if (config == null && self.currentPerspective) {
-		config = self.currentPerspective.save();
-		needToLoad = false; // Don't need to load, because this is the current config.
+	if (self.currentPerspective) {
+		self.save(); // Save the current perspective first.
+		if (config == null) {
+			config = deepCopy(self.currentPerspective.getConfig());
+			needToLoad = false; // Don't need to load, because this is the current config.
+		}
 	}
 
 	self.debug('Adding new perspective: name = "%s" ; config = %O', name, config);
@@ -742,6 +745,8 @@ PrefsBackendLocalStorage.prototype.delete = function (name, cont) {
 	var storedPrefData = JSON.parse(localStorage.getItem(self.localStorageKey) || '{}');
 	delete storedPrefData[self.id]['perspectives'][name];
 	localStorage.setItem(self.localStorageKey, JSON.stringify(storedPrefData));
+
+	return typeof cont === 'function' ? cont(true) : true;
 };
 
 // #reset {{{2
@@ -1111,6 +1116,10 @@ PrefsModuleView.prototype.reset = function () {
 
 /**
  * @class
+ *
+ * @property {string} name
+ * @property {object} config
+ * @property {Object.<string,PrefsModule>} modules
  */
 
 var Perspective = makeSubclass(Object, function (name, config, modules) {
@@ -1151,6 +1160,12 @@ Perspective.prototype.getConfig = function () {
 
 // #load {{{2
 
+/**
+ * Push the configuration of this perspective to all bound modules.
+ *
+ * @param {function} [cont]
+ */
+
 Perspective.prototype.load = function (cont) {
 	var self = this;
 
@@ -1171,6 +1186,12 @@ Perspective.prototype.load = function (cont) {
 };
 
 // #save {{{2
+
+/**
+ * Receive configuration from all bound modules and update this perspective's configuration.
+ *
+ * @param {function} [cont]
+ */
 
 Perspective.prototype.save = function (cont) {
 	var self = this;
