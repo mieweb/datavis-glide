@@ -573,6 +573,13 @@ tr.wcdvgrid_more td {
 	padding-top: 4px;
 }
 
+.wcdv_grid_table table td.wcdv_pivot_cell {
+	cursor: context-menu;
+}
+.wcdv_grid_table table td.wcdv_pivot_cell:active {
+	background-color: #fff9c4;
+}
+
 .wcdv_grid_table table td.wcdv_cell_empty div {
 	background: repeating-linear-gradient(-45deg, rgba(127, 127, 127, 0.5), rgba(127, 127, 127, 0.5) 8px, rgba(0, 0, 0, 0) 8px, rgba(0, 0, 0, 0) 16px);
 }

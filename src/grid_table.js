@@ -3171,9 +3171,11 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 
 		_.each(rowGroup, function (colGroup, pivotNum) {
 			if (numCellAggregates === 0) {
+				// There's no cell aggregate functions, so there isn't anything to put in the cell.
 				tr.append(document.createElement('td'));
 			}
 			else {
+				// Every cell aggregate function is going to make a separate cell.
 				_.each(data.agg.results.cell, function (agg, aggNum) {
 					var aggInfo = data.agg.info.cell[aggNum];
 					var aggType = aggInfo.instance.getType();
@@ -3194,7 +3196,29 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 						});
 					}
 
-					var td = jQuery('<td>').text(text);
+					var td = jQuery('<td>')
+						.addClass('wcdv_pivot_cell')
+						.attr({
+							'data-rowval-index': groupNum,
+							'data-colval-index': pivotNum
+						})
+						.text(text)
+						.on('dblclick', function () {
+							var elt = jQuery(this);
+							var filter = {};
+							_.each(data.rowVals[elt.attr('data-rowval-index')], function (x, i) {
+								filter[data.groupFields[i]] = x;
+							});
+							_.each(data.colVals[elt.attr('data-colval-index')], function (x, i) {
+								filter[data.pivotFields[i]] = x;
+							});
+
+							debug.info('GRID TABLE - PIVOT // DRILL DOWN',
+								'Creating new perspective: filter = %O', filter);
+
+							self.view.prefs.addPerspective('Drill Down', { view: { filter: filter } }, { isTemporary: true });
+						})
+					;
 
 					if ((self.opts.drawInternalBorders || numCellAggregates > 1) && aggNum === 0) {
 						td.addClass('wcdv_pivot_colval_boundary');

@@ -528,7 +528,7 @@ StringDropdownGridFilterSumo.prototype.setValue = function (val) {
 	var self = this;
 
 	if (!_.isArray(val)) {
-		throw new Error('Call Error: `val` must be an array');
+		val = [val];
 	}
 	
 	_.each(val, function (v) {
@@ -1152,6 +1152,10 @@ GridFilterSet.prototype.update = function () {
 
 GridFilterSet.prototype.set = function (field, fieldSpec) {
 	var self = this;
+
+	if (typeof fieldSpec !== 'object') {
+		fieldSpec = { '$eq': fieldSpec };
+	}
 
 	_.each(fieldSpec, function (val, op) {
 		debug.info('GRID FILTER SET',

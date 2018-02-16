@@ -991,6 +991,13 @@ View.prototype.filter = function (cont) {
 			return pred['$lt'](operand) || pred['$eq'](operand);
 		};
 
+		if (_.isArray(fltr)) {
+			fltr = { '$in': fltr };
+		}
+		else if (!_.isObject(fltr)) {
+			fltr = { '$eq': fltr };
+		}
+
 		for (var operator in fltr) {
 			if (!fltr.hasOwnProperty(operator)) {
 				continue;

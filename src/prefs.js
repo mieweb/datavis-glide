@@ -135,7 +135,7 @@ Prefs.prototype.init = function (cont) {
 					currentConfig = {};
 				}
 
-				return self.addPerspective(currentName, currentConfig, cont);
+				return self.addPerspective(currentName, currentConfig, null, cont);
 			});
 		});
 	});
@@ -181,7 +181,7 @@ Prefs.prototype.bind = function (moduleName, target) {
  * If true, automatically switch to the new perspective after creating it.
  */
 
-Prefs.prototype.addPerspective = function (name, config, cont, opts) {
+Prefs.prototype.addPerspective = function (name, config, perspectiveOpts, cont, opts) {
 	var self = this;
 	var needToLoad = true; // Will need to load perspective after we add it.
 
@@ -211,7 +211,7 @@ Prefs.prototype.addPerspective = function (name, config, cont, opts) {
 	}
 
 	self.debug('Adding new perspective: name = "%s" ; config = %O', name, config);
-	self.perspectives[name] = new Perspective(name, config, self.modules);
+	self.perspectives[name] = new Perspective(name, config, self.modules, perspectiveOpts);
 
 	if (opts.switch) {
 		return self.setCurrentPerspective(name, cont, {
@@ -402,6 +402,10 @@ Prefs.prototype.save = function (cont) {
 
 	if (cont != null && typeof cont !== 'function') {
 		throw new Error('Call Error: `cont` must be null or a function');
+	}
+
+	if (self.currentPerspective.isTemporary()) {
+		return typeof cont === 'function' ? cont(false) : false;
 	}
 
 	self.currentPerspective.save(function (config) {
@@ -1122,12 +1126,15 @@ PrefsModuleView.prototype.reset = function () {
  * @property {Object.<string,PrefsModule>} modules
  */
 
-var Perspective = makeSubclass(Object, function (name, config, modules) {
+var Perspective = makeSubclass(Object, function (name, config, modules, opts) {
 	var self = this;
 
 	self.name = name;
 	self.config = config;
 	self.modules = modules;
+	self.opts = deepDefaults(opts, {
+		isTemporary: false
+	});
 });
 
 mixinDebugging(Perspective, function () {
@@ -1210,6 +1217,22 @@ Perspective.prototype.save = function (cont) {
 	});
 
 	return typeof cont === 'function' ? cont(self.config) : self.config;
+};
+
+// #isTemporary {{{2
+
+Perspective.prototype.isTemporary = function () {
+	var self = this;
+
+	return self.opts.isTemporary;
+};
+
+// #makePermanent {{{2
+
+Perspective.prototype.makePermanent = function () {
+	var self = this;
+
+	self.opts.isTemporary = false;
 };
 
 // Registries {{{1
