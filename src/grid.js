@@ -1062,7 +1062,6 @@ Grid.prototype._addPrefsButtons = function (toolbar) {
 
 	var div = jQuery('<div>')
 		.css({'display': 'inline-block'})
-		.append(jQuery('<span>').text('View: '))
 		.appendTo(toolbar)
 	;
 
@@ -1082,6 +1081,38 @@ Grid.prototype._addPrefsButtons = function (toolbar) {
 		}
 	};
 
+	var backBtn = jQuery('<button>')
+		.append(fontAwesome('fa-chevron-circle-left'))
+		.attr('title', 'Back')
+		.addClass('wcdv_icon_button')
+		.css('margin', 0)
+		.on('click', function () {
+			self.prefs.back();
+		})
+		.appendTo(div)
+	;
+
+	var forwardBtn = jQuery('<button>')
+		.append(fontAwesome('fa-chevron-circle-right'))
+		.attr('title', 'Forward')
+		.addClass('wcdv_icon_button')
+		.css('margin', 0)
+		.on('click', function () {
+			self.prefs.forward();
+		})
+		.appendTo(div)
+	;
+
+	/*
+	var historyBtn = jQuery(fontAwesome('fa-clock-o', 'wcdv_button', 'History'))
+		.on('click', function () {
+			self.prefs._historyDebug();
+		})
+		.appendTo(div)
+	;
+	*/
+
+	div.append(jQuery('<span>').text('View: '))
 
 	// Dropdown of all the available perspectives, plus an entry that (when selected) prompts for the
 	// name of a new perspective.
@@ -1090,16 +1121,13 @@ Grid.prototype._addPrefsButtons = function (toolbar) {
 		.append(jQuery('<option>', { value: 'NEW' }).text('New View...'))
 		.on('change', function (evt) {
 			if (dropdown.val() === 'NEW') {
-				var perspectiveName = prompt('Enter new view name', self.prefs.getCurrentPerspective());
-				if (perspectiveName) {
-					if (options[perspectiveName] != null) {
-						self.prefs.setCurrentPerspective(perspectiveName);
+				var name = prompt('Enter new view name', self.prefs.getCurrentPerspective());
+				if (name) {
+					if (options[name] != null) {
+						self.prefs.setCurrentPerspective(name);
 					}
 					else {
-						options[perspectiveName] = jQuery('<option>', { value: perspectiveName }).text(perspectiveName);
-						dropdown.append(options[perspectiveName]);
-						self.prefs.addPerspective(dropdown.val());
-						self.prefs.setCurrentPerspective(dropdown.val());
+						self.prefs.addPerspective(name);
 					}
 				}
 				else {

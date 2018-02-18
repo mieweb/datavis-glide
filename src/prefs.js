@@ -128,6 +128,8 @@ Prefs.prototype.init = function (cont) {
 	}
 
 	self.initialized = true;
+	self.history = [];
+	self.historyIndex = 0;
 
 	return self.backend.getPerspectives(function (names) {
 		self.availablePerspectives = names;
@@ -147,6 +149,71 @@ Prefs.prototype.init = function (cont) {
 			});
 		});
 	});
+};
+
+// #back {{{2
+
+Prefs.prototype.back = function () {
+	var self = this;
+
+	if (self.historyIndex === self.history.length - 1) {
+		// Already at beginning of history, can't go back anymore.
+		return;
+	}
+
+	self.historyIndex += 1;
+	self._historyDebug();
+	self.setCurrentPerspective(self.history[self.historyIndex].getName(), null, {
+		resetHistory: false
+	});
+};
+
+// #forward {{{2
+
+Prefs.prototype.forward = function () {
+	var self = this;
+
+	if (self.historyIndex === 0) {
+		// Already at end of history, can't go back anymore.
+		return;
+	}
+
+	self.historyIndex -= 1;
+	self._historyDebug();
+	self.setCurrentPerspective(self.history[self.historyIndex].getName(), null, {
+		resetHistory: false
+	});
+};
+
+// #_resetHistory {{{2
+
+Prefs.prototype._resetHistory = function (p) {
+	var self = this;
+
+	// Example: self._resetHistory(x)
+	//
+	// BEFORE ----------------------------
+	//   [ A B C D E ]
+	//         ^ (history index)
+	//
+	// AFTER -----------------------------
+	//   [ X C D E ]
+	//     ^ (history index)
+
+	self.history.splice(0, self.historyIndex);
+	if (p != null) {
+		self.history.unshift(p);
+	}
+	self.historyIndex = 0;
+	self._historyDebug();
+};
+
+// #_historyDebug {{{2
+
+Prefs.prototype._historyDebug = function () {
+	var self = this;
+
+	console.log('### HISTORY ### [%d] %O', self.historyIndex, self.history.map((x) => x.getName()));
 };
 
 // #bind {{{2
@@ -284,16 +351,13 @@ Prefs.prototype.deletePerspective = function (name, cont, opts) {
 
 	self.backend.delete(name, function (ok) {
 		var newCurrent;
+		var i;
 
 		if (!ok) {
 			return typeof cont === 'function' ? cont(false) : false;
 		}
 
-		// TODO Augment with history, use most recent instead of just "Main."
-
-		if (self.currentPerspective.getName() === name) {
-			newCurrent = 'Main';
-		}
+		delete self.perspectives[name];
 
 		if (opts.sendEvent) {
 			self.fire('perspectiveDeleted', {
@@ -301,10 +365,81 @@ Prefs.prototype.deletePerspective = function (name, cont, opts) {
 			}, name, newCurrent);
 		}
 
-		// When we've deleted the current perspective, switch to the "Main" perspective.
-
 		if (self.currentPerspective.getName() === name) {
-			self.setCurrentPerspective('Main');
+			// Go back in history until we've found a different perspective.
+
+			while (self.historyIndex < self.history.length && self.history[self.historyIndex].getName() === name) {
+				self.historyIndex += 1;
+			};
+
+			// Reset history until that point, erasing everything after it.
+
+			self._resetHistory();
+
+			if (self.history.length > 0) {
+
+				// We've stripped the future and all matching perspectives from history, so use the first
+				// element of the new history stack as the current perspective.  Don't reset history because
+				// we've already done that manually above.
+				//
+				// BEFORE -------------------------
+				//   [ A B B B C D ]
+				//       ^ (history index)
+				//
+				// AFTER --------------------------
+				//   [ C D ]
+				//     ^ (history index)
+
+				self.setCurrentPerspective(self.history[0].getName(), null, {
+					resetHistory: false
+				});
+			}
+			else {
+
+				// We've removed all items from history, so put "Main" back on the stack.  In this example,
+				// even though there are different things in the future, everything in the past is the same
+				// as what we're deleting, so you end up with empty history.
+				//
+				// BEFORE -------------------------
+				//   [ A B B B ]
+				//       ^ (history index)
+				//
+				// AFTER --------------------------
+				//   [ Main ]
+				//     ^ (history index)
+
+				self.setCurrentPerspective('Main');
+			}
+
+			//var currentIndex;
+			//var historyOffset = 0;
+			//for (i = 0; i < self.history.length; i += 1) {
+			//	if (self.history[i].getName() === name) {
+			//		if (i < self.historyIndex) {
+			//			historyOffset += 1;
+			//		}
+			//	}
+			//	else {
+			//		// Update the old current index if:
+			//		//   #1. There is no old one.
+			//		//   #2. The new index is closer than the old one.
+			//		//   #3. The new index is "back" and the old is "forward."
+			//		if (currentIndex == null
+			//				|| (self.historyIndex - i < self.historyIndex - currentIndex)
+			//				|| (currentIndex < self.historyIndex && i >= self.historyIndex)) {
+			//			currentIndex = i;
+			//		}
+			//	}
+			//}
+			//newCurrent = self.history[currentIndex].getName();
+			//self.history = _.reject(self.history, function (p) {
+			//	return p.getName() === name;
+			//});
+			//self.historyIndex -= historyOffset;
+			//self._historyDebug();
+			//self.setCurrentPerspective(newCurrent, null, {
+			//	resetHistory: false
+			//});
 		}
 	});
 };
@@ -416,7 +551,8 @@ Prefs.prototype.setCurrentPerspective = function (name, cont, opts) {
 
 	opts = deepDefaults(opts, {
 		loadPerspective: true,
-		sendEvent: true
+		sendEvent: true,
+		resetHistory: true
 	});
 
 	if (self.perspectives[name] == null) {
@@ -436,6 +572,10 @@ Prefs.prototype.setCurrentPerspective = function (name, cont, opts) {
 	self.debug('Switching to perspective: name = "%s"', name);
 
 	self.currentPerspective = self.perspectives[name];
+
+	if (opts.resetHistory) {
+		self._resetHistory(self.currentPerspective);
+	}
 
 	if (opts.loadPerspective) {
 		return self.currentPerspective.load(function () {
