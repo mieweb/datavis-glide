@@ -131,6 +131,9 @@ li.wcdv_aggregate_field {
 	font-size: 1.15em;
 	padding-right: 3px;
 }
+.wcdv_grid_toolbar button[disabled=disabled] .fa {
+	color: #999;
+}
 
 .wcdv_grid_toolbar .wcdv_button.pull-right {
 	padding-right: 0.5em;

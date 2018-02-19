@@ -101,6 +101,7 @@ mixinEventHandling(Prefs, function (self) {
 	, 'perspectiveDeleted' // Fired when a perspective is deleted.
 	, 'perspectiveRenamed' // Fired when a perspective is renamed.
 	, 'perspectiveChanged' // Fired when the current perspective has changed.
+	, 'prefsHistoryStatus'
 ]);
 mixinDebugging(Prefs, function () {
 	return 'PREFS (' + this.id + ')';
@@ -151,6 +152,14 @@ Prefs.prototype.init = function (cont) {
 	});
 };
 
+// #_firePrefsHistoryStatus {{{2
+
+Prefs.prototype._firePrefsHistoryStatus = function () {
+	var self = this;
+
+	self.fire('prefsHistoryStatus', null, self.historyIndex < self.history.length - 1, self.historyIndex > 0);
+};
+
 // #back {{{2
 
 Prefs.prototype.back = function () {
@@ -163,6 +172,7 @@ Prefs.prototype.back = function () {
 
 	self.historyIndex += 1;
 	self._historyDebug();
+	self._firePrefsHistoryStatus();
 	self.setCurrentPerspective(self.history[self.historyIndex].getName(), null, {
 		resetHistory: false
 	});
@@ -180,6 +190,7 @@ Prefs.prototype.forward = function () {
 
 	self.historyIndex -= 1;
 	self._historyDebug();
+	self._firePrefsHistoryStatus();
 	self.setCurrentPerspective(self.history[self.historyIndex].getName(), null, {
 		resetHistory: false
 	});
@@ -206,6 +217,7 @@ Prefs.prototype._resetHistory = function (p) {
 	}
 	self.historyIndex = 0;
 	self._historyDebug();
+	self._firePrefsHistoryStatus();
 };
 
 // #_historyDebug {{{2

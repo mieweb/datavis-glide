@@ -1260,6 +1260,11 @@ Grid.prototype._addPrefsButtons = function (toolbar) {
 		dropdown.val(name);
 		showHideBtns();
 	});
+
+	self.prefs.on('prefsHistoryStatus', function (back, forward) {
+		backBtn.attr('disabled', !back);
+		forwardBtn.attr('disabled', !forward);
+	});
 };
 
 // #clear {{{2

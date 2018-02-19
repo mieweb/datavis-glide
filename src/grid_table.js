@@ -2696,7 +2696,7 @@ GridTableGroupDetail.prototype.addWorkHandler = function () {
 		debug.info('GRID TABLE - GROUP - DETAIL // HANDLER (View.workEnd)', 'View has finished doing work');
 
 		if (!ops.group || ops.pivot) {
-			self.fire(GridTable.events.unableToRender);
+			self.fire(GridTable.events.unableToRender, null, ops);
 			return;
 		}
 
@@ -2863,7 +2863,7 @@ GridTableGroupSummary.prototype.addWorkHandler = function () {
 		debug.info('GRID TABLE - GROUP - SUMMARY // HANDLER (View.workEnd)', 'View has finished doing work');
 
 		if (!ops.group || ops.pivot) {
-			self.fire(GridTable.events.unableToRender);
+			self.fire(GridTable.events.unableToRender, null, ops);
 			return;
 		}
 
