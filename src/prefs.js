@@ -171,7 +171,7 @@ Prefs.prototype.back = function () {
 	}
 
 	self.historyIndex += 1;
-	self._historyDebug();
+	//self._historyDebug();
 	self._firePrefsHistoryStatus();
 	self.setCurrentPerspective(self.history[self.historyIndex].getName(), null, {
 		resetHistory: false
@@ -189,7 +189,7 @@ Prefs.prototype.forward = function () {
 	}
 
 	self.historyIndex -= 1;
-	self._historyDebug();
+	//self._historyDebug();
 	self._firePrefsHistoryStatus();
 	self.setCurrentPerspective(self.history[self.historyIndex].getName(), null, {
 		resetHistory: false
@@ -216,7 +216,7 @@ Prefs.prototype._resetHistory = function (p) {
 		self.history.unshift(p);
 	}
 	self.historyIndex = 0;
-	self._historyDebug();
+	//self._historyDebug();
 	self._firePrefsHistoryStatus();
 };
 
