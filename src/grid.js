@@ -1288,7 +1288,7 @@ Grid.prototype.clear = function () {
 Grid.prototype.redraw = function () {
 	var self = this;
 
-	if (!self.isGridVisible()) {
+	if (!self.isVisible()) {
 		return;
 	}
 
@@ -1454,7 +1454,7 @@ Grid.prototype.redraw = function () {
 Grid.prototype.refresh = function () {
 	var self = this;
 
-	if (!self.isGridVisible()) {
+	if (!self.isVisible()) {
 		return;
 	}
 
@@ -1575,12 +1575,29 @@ Grid.prototype.show = function (opts) {
  */
 
 Grid.prototype.toggle = function () {
-	if (this.ui.content.css('display') === 'none') {
-		this.show();
+	var self = this;
+
+	if (self.ui.content.css('display') === 'none') {
+		self.show();
 	}
 	else {
-		this.hide();
+		self.hide();
 	}
+};
+
+// #isVisible {{{2
+
+/**
+ * Determine if the grid is currently visible.
+ *
+ * @returns {boolean}
+ * True if the grid is currently visible, false if it is not.
+ */
+
+Grid.prototype.isVisible = function () {
+	var self = this;
+
+	return self.ui.content.css('display') !== 'none';
 };
 
 // hideControls {{{2
@@ -1628,19 +1645,6 @@ Grid.prototype.toggleControls = function () {
 	else {
 		self.hideControls();
 	}
-};
-
-// #isGridVisible {{{2
-
-/**
- * Determine if the grid is currently visible.
- *
- * @returns {boolean}
- * True if the grid is currently visible, false if it is not.
- */
-
-Grid.prototype.isGridVisible = function () {
-	return this.ui.grid.css('display') !== 'none';
 };
 
 // #_setSpinner {{{2
