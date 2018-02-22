@@ -19,14 +19,7 @@
 // Constructor {{{2
 
 /**
- * @class
- *
- * Represents an individual field added to a control.  In an older iteration, this literally
- * corresponded to a field in the data (e.g. because the control was a filter, group, or pivot).
- * Now that aggregate functions are also managed through a GridControl subclass, the "field" name is
- * no longer strictly accurate.
- *
- *
+ * Create a new GridControlField instance.
  *
  * @param {GridControl} control
  *
@@ -36,7 +29,12 @@
  *
  * @param {object} colConfig
  *
+ * @class
  *
+ * Represents an individual field added to a control.  In an older iteration, this literally
+ * corresponded to a field in the data (e.g. because the control was a filter, group, or pivot).
+ * Now that aggregate functions are also managed through a GridControl subclass, the "field" name is
+ * no longer strictly accurate.
  *
  * @property {GridControl} control
  *
@@ -162,16 +160,31 @@ GridControlField.prototype._addErrorIndicator = function (parent, cls) {
 
 // Constructor {{{2
 
+/**
+ * @class
+ * @extends GridControlField
+ */
+
 var GroupControlField = makeSubclass(GridControlField);
 
 // PivotControlField {{{1
 
 // Constructor {{{2
 
+/**
+ * @class
+ * @extends GridControlField
+ */
+
 var PivotControlField = makeSubclass(GridControlField);
 
 // FilterControlField {{{1
 // Constructor {{{2
+
+/**
+ * @class
+ * @extends GridControlField
+ */
 
 var FilterControlField = makeSubclass(GridControlField);
 
@@ -192,6 +205,9 @@ FilterControlField.prototype.draw = function () {
 // Constructor {{{2
 
 /**
+ * @class
+ * @extends GridControlField
+ *
  * @property {object} [opts]
  *
  * @property {string[]} [opts.fields]
@@ -385,6 +401,14 @@ AggregateControlField.prototype.getInfo = function () {
 // Constructor {{{2
 
 /**
+ * Creates a new GridControl instance.
+ *
+ * @param {Grid} grid
+ * @param {object} defn
+ * @param {View} view
+ * @param {object} features
+ * @param {Timing} timing
+ *
  * @class
  *
  * An abstract class that represents some kind of interface that the user can operate over the
@@ -457,6 +481,8 @@ mixinEventHandling(GridControl, 'GridControl', [
 
 /**
  * Make a button that calls the `addField` method when clicked.
+ *
+ * @private
  *
  * @param {jQuery} target
  * Where to append the button.
@@ -693,12 +719,39 @@ GridControl.prototype.addViewConfigChangeHandler = function (kind) {
 	//synchronize(self.view[methodName]());
 };
 
-// #getListElement
+// #getListElement {{{2
 
 GridControl.prototype.getListElement = function () {
 	var self = this;
 
 	return self.ui.fields;
+};
+
+// #draw {{{2
+
+/**
+ * Render this grid control and attach it to the specified parent element.
+ *
+ * @abstract
+ *
+ * @param {jQuery} parent
+ * Element to append this grid control to.
+ */
+
+GridControl.prototype.draw = function (parent) {
+	throw new Error('ABSTRACT');
+};
+
+// #updateView {{{2
+
+/**
+ * Update the view with the configuration entered using this grid control.
+ *
+ * @abstract
+ */
+
+GridControl.prototype.updateView = function () {
+	throw new Error('ABSTRACT');
 };
 
 // GroupControl {{{1
@@ -708,6 +761,9 @@ GridControl.prototype.getListElement = function () {
 /**
  * Part of the user interface which governs the fields that are part of the group, including
  * filtering.
+ *
+ * @class
+ * @extends GridControl
  */
 
 var GroupControl = makeSubclass(GridControl, function () {
@@ -822,6 +878,7 @@ GroupControl.prototype.updateView = function () {
  * the pivot table.
  *
  * @class
+ * @extends GridControl
  *
  * @property {GridControl} super
  * Proxy to call prototype ("superclass") methods even if we override them.
@@ -948,6 +1005,7 @@ PivotControl.prototype.updateView = function () {
  * that produces the values in (1) group summary columns, (2) pivot cells.
  *
  * @class
+ * @extends GridControl
  *
  * @property {string[]} fields
  * Names of the fields
@@ -1221,6 +1279,9 @@ AggregateControl.prototype.addField = function () {
  * @param {Grid~Features} features
  *
  * @param {object} timing
+ *
+ * @class
+ * @extends GridControl
  */
 
 var FilterControl = makeSubclass(GridControl, function () {

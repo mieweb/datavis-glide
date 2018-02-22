@@ -16,7 +16,7 @@ doc:	jsdoc pandoc
 
 jsdoc:
 	rm -rf jsdoc
-	./node_modules/.bin/jsdoc -c jsdoc_conf.json src
+	./node_modules/.bin/jsdoc -p -c jsdoc_conf.json src
 
 pandoc:	doc/html/index.html doc/html/style.css
 

@@ -9,7 +9,7 @@
 		"copyright": "Copyright © Medical Informatics Engineering, Inc.",
 		"theme": "spacelab",
 		"linenums": true,
-		"collapseSymbols": true,
+		"collapseSymbols": false,
 		"inverseNav": true,
 		"methodHeadingReturns": true
 	}

@@ -1,8 +1,22 @@
 // ViewError {{{1
 
+/**
+ * Exception thrown when there's a problem in the View.
+ *
+ * @class
+ * @extends DataVisError
+ */
+
 var ViewError = makeSubclass(DataVisError);
 
 // InvalidAggregateError {{{1
+
+/**
+ * Exception thrown when there's a problem with the specification of an aggregate function.
+ *
+ * @class
+ * @extends ViewError
+ */
 
 var InvalidAggregateError = makeSubclass(ViewError);
 
@@ -53,7 +67,48 @@ var InvalidAggregateError = makeSubclass(ViewError);
  * @returns {Element|jQuery|string} What should be put into the cell in the table output.
  */
 
-var DATA_VIEW_ID = 1;
+/**
+ * @typedef {Object<string,string>|Object<string,View_Filter_Spec_Value>} View_Filter_Spec
+ * The specification used for filtering within a data view.  The keys are column names, and the
+ * values are either strings (implying an equality relationship) or objects indicating a more
+ * complex relationship.
+ */
+
+/**
+ * @typedef {Object<string,any>} View_Filter_Spec_Value
+ * A value within the filter spec object.  In order for a row to "pass" the filter, all of the
+ * conditions supplied must be true.  At least one of the following must be provided.
+ *
+ * @property {string|number|Date} [$eq] Allow things equal to the value.
+ * @property {string|number|Date} [$ne] Allow things not equal to the value.
+ * @property {string|number|Date} [$gt] Allow things greater than the value.
+ * @property {string|number|Date} [$gte] Allow things greater than or equal to the value.
+ * @property {string|number|Date} [$lt] Allow things less than the value.
+ * @property {string|number|Date} [$lte] Allow things less than or equal to the value.
+ * @property {Array.<string|number>} [$in] Allow things that are elements of the set value.
+ * @property {Array.<string|number>} [$nin] Allow things that are not elements of the set value.
+ */
+
+/**
+ * @typedef {object} View~GroupSpec
+ * An object telling how to group the data.
+ *
+ * @property {string[]} fieldNames
+ * List of the fields to group by.
+ */
+
+/**
+ * @typedef {object} View~PivotSpec
+ * An object telling how to pivot the data.
+ *
+ * @property {string[]} fieldNames
+ * List of the fields to pivot by.
+ */
+
+/**
+ * @typedef {object} View~AggregateSpec
+ * An object telling what aggregate functions to calculate on the data.
+ */
 
 // Constructor {{{2
 
@@ -720,28 +775,6 @@ View.prototype.sort = function (cont) {
 // #setFilter {{{2
 
 /**
- * @typedef {Object<string,string>|Object<string,View_Filter_Spec_Value>} View_Filter_Spec
- * The specification used for filtering within a data view.  The keys are column names, and the
- * values are either strings (implying an equality relationship) or objects indicating a more
- * complex relationship.
- */
-
-/**
- * @typedef {Object<string,any>} View_Filter_Spec_Value
- * A value within the filter spec object.  In order for a row to "pass" the filter, all of the
- * conditions supplied must be true.  At least one of the following must be provided.
- *
- * @property {string|number|Date} [$eq] Allow things equal to the value.
- * @property {string|number|Date} [$ne] Allow things not equal to the value.
- * @property {string|number|Date} [$gt] Allow things greater than the value.
- * @property {string|number|Date} [$gte] Allow things greater than or equal to the value.
- * @property {string|number|Date} [$lt] Allow things less than the value.
- * @property {string|number|Date} [$lte] Allow things less than or equal to the value.
- * @property {Array.<string|number>} [$in] Allow things that are elements of the set value.
- * @property {Array.<string|number>} [$nin] Allow things that are not elements of the set value.
- */
-
-/**
  * Set the filtering that will be used by this view.  The object spec is the same as we support for
  * server-side filtering using JSON.  It's based on MongoDB.  Every key is the name of a column to
  * filter.  Every value is either a string (the column must be equal to that value), or an object
@@ -763,8 +796,10 @@ View.prototype.sort = function (cont) {
  * If true, issue an event indicating the filter has been changed.
  *
  * @param {Array.<Object>} [opts.dontSendEventTo]
+ * Don't send events to these subscribers.
  *
  * @param {boolean} [opts.updateData=true]
+ * If true, automatically update data to match new filter.
  */
 
 View.prototype.setFilter = function (spec, progress, opts) {
@@ -835,6 +870,17 @@ View.prototype.getFilter = function () {
 
 /**
  * Clear the spec used to filter this view.
+ *
+ * @param {object} [opts]
+ *
+ * @param {boolean} [opts.sendEvent=true]
+ * If true, issue an event indicating the filter has been changed.
+ *
+ * @param {Array.<Object>} [opts.dontSendEventTo]
+ * Don't send events to these subscribers.
+ *
+ * @param {boolean} [opts.updateData=true]
+ * If true, automatically update data to match new filter.
  */
 
 View.prototype.clearFilter = function (opts) {
@@ -1130,11 +1176,19 @@ View.prototype.filter = function (cont) {
 /**
  * Set the specification for how the data will be grouped.
  *
- * @param {object} spec
+ * @param {View~GroupSpec} spec
+ * The grouping configuration.
  *
- * @param {Array.<string>} spec.fieldNames
+ * @param {object} [opts]
  *
- * @param {Function} spec.aggregate
+ * @param {boolean} [opts.sendEvent=true]
+ * If true, issue an event indicating the grouping has been changed.
+ *
+ * @param {Array.<Object>} [opts.dontSendEventTo]
+ * Don't send events to these subscribers.
+ *
+ * @param {boolean} [opts.updateData=true]
+ * If true, automatically update data to match new grouping.
  */
 
 View.prototype.setGroup = function (spec, opts) {
@@ -1208,6 +1262,13 @@ View.prototype.setGroup = function (spec, opts) {
 
 // #getGroup {{{2
 
+/**
+ * Get the grouping configuration.
+ *
+ * @returns {View~GroupSpec}
+ * The grouping config currently being used by this view.
+ */
+
 View.prototype.getGroup = function () {
 	var self = this;
 
@@ -1217,7 +1278,18 @@ View.prototype.getGroup = function () {
 // #clearGroup {{{2
 
 /**
- * Remove any grouping that had been set.
+ * Reset the grouping config so the data is not grouped.
+ *
+ * @param {object} [opts]
+ *
+ * @param {boolean} [opts.sendEvent=true]
+ * If true, issue an event indicating the grouping has been changed.
+ *
+ * @param {Array.<Object>} [opts.dontSendEventTo]
+ * Don't send events to these subscribers.
+ *
+ * @param {boolean} [opts.updateData=true]
+ * If true, automatically update data to match new grouping.
  */
 
 View.prototype.clearGroup = function (opts) {
@@ -1382,6 +1454,24 @@ View.prototype.group = function () {
 
 // #setPivot {{{2
 
+/**
+ * Set the pivot configuration.
+ *
+ * @param {View~PivotSpec} spec
+ * The pivot configuration.
+ *
+ * @param {object} [opts]
+ *
+ * @param {boolean} [opts.sendEvent=true]
+ * If true, issue an event indicating the pivot config has been changed.
+ *
+ * @param {Array.<Object>} [opts.dontSendEventTo]
+ * Don't send events to these subscribers.
+ *
+ * @param {boolean} [opts.updateData=true]
+ * If true, automatically update data to match new pivot config.
+ */
+
 View.prototype.setPivot = function (spec, opts) {
 	var self = this
 		, args = Array.prototype.slice.call(arguments);
@@ -1453,6 +1543,13 @@ View.prototype.setPivot = function (spec, opts) {
 
 // #getPivot {{{2
 
+/**
+ * Get the pivot configuration.
+ *
+ * @returns {View~PivotSpec}
+ * The pivot config currently being used by this view.
+ */
+
 View.prototype.getPivot = function () {
 	var self = this;
 
@@ -1460,6 +1557,21 @@ View.prototype.getPivot = function () {
 };
 
 // #clearPivot {{{2
+
+/**
+ * Reset the pivot config so the data is not pivotted.
+ *
+ * @param {object} [opts]
+ *
+ * @param {boolean} [opts.sendEvent=true]
+ * If true, issue an event indicating the pivot config has been changed.
+ *
+ * @param {Array.<Object>} [opts.dontSendEventTo]
+ * Don't send events to these subscribers.
+ *
+ * @param {boolean} [opts.updateData=true]
+ * If true, automatically update data to match new pivot config.
+ */
 
 View.prototype.clearPivot = function (opts) {
 	return this.setPivot(null, opts);
@@ -1670,14 +1782,21 @@ View.prototype.pivot = function () {
 // #setAggregate {{{2
 
 /**
+ * Set the aggregate configuration.
+ *
+ * @param {View~AggregateSpec} spec
+ * The aggregate configuration.
+ *
  * @param {object} [opts]
  *
  * @param {boolean} [opts.sendEvent=true]
- * If true, issue an event indicating the aggregate has been changed.
+ * If true, issue an event indicating the pivot config has been changed.
  *
  * @param {Array.<Object>} [opts.dontSendEventTo]
+ * Don't send events to these subscribers.
  *
  * @param {boolean} [opts.updateData=true]
+ * If true, automatically update data to match new pivot config.
  */
 
 View.prototype.setAggregate = function (spec, opts) {

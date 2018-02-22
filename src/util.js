@@ -1,8 +1,19 @@
+/**
+ * @namespace util
+ */
+
 // Functional {{{1
+
+/**
+ * @namespace util.functional
+ */
 
 /**
  * Generate unique symbols to use for element IDs. It doesn't much matter what the actual string
  * produced is, as long as it's unique. That's why we use the 'gensymSeed' upvalue.
+ *
+ * @memberof util
+ * @inner
  */
 
 var gensym = (function () {
@@ -15,6 +26,9 @@ var gensym = (function () {
 
 /**
  * Y combinator.
+ *
+ * @memberof util.functional
+ * @inner
  */
 
 function Y(f) {
@@ -29,6 +43,9 @@ function Y(f) {
 
 /**
  * Identity function.
+ *
+ * @memberof util.functional
+ * @inner
  */
 
 function I(x) {
@@ -37,6 +54,9 @@ function I(x) {
 
 /**
  * Does nothing.
+ *
+ * @memberof util.functional
+ * @inner
  */
 
 function NOP() {
@@ -46,6 +66,9 @@ function NOP() {
 /**
  * Universal comparison function.  Uses the builtin JavaScript type-safe equality and less-than
  * operators to do the comparison.
+ *
+ * @memberof util.functional
+ * @inner
  *
  * @param {any} a First operand.
  * @param {any} b Second operand.
@@ -131,39 +154,6 @@ var getComparisonFn = (function () {
 		})
 	};
 })();
-
-function arrayCompare(a, b) {
-	if (!_.isArray(a) || !_.isArray(b)) {
-		throw new Error('Call Error: arguments must be arrays');
-	}
-
-	if (a.length !== b.length) {
-		throw new Error('Call Error: arguments must have the same length');
-	}
-
-	for (var i = 0; i < a.length; i += 1) {
-		if (a[i] < b[i]) {
-			return -1;
-		}
-		else if (a[i] > b[i]) {
-			return 1;
-		}
-	}
-
-	return 0;
-}
-
-function arrayEqual(a, b) {
-	if (!_.isArray(a) || !_.isArray(b)) {
-		throw new Error('Call Error: arguments must be arrays');
-	}
-
-	if (a.length !== b.length) {
-		return false;
-	}
-
-	return arrayCompare(a, b) === 0;
-}
 
 function getNatRep(x) {
 	if (window.numeral && numeral.isNumeral(x)) {
@@ -315,6 +305,10 @@ function cdr(a) {
 
 // Conversion {{{1
 
+/**
+ * @namespace util.conversion
+ */
+
 function isInt(x) {
 	return (typeof x === 'string') ? String(parseInt(x, 10)) === x : +x === Math.floor(+x);
 }
@@ -365,7 +359,57 @@ function tryFloatConvert(x) {
 // Data Structures {{{1
 
 /**
+ * @namespace util.data_structures
+ */
+
+/**
+ * @memberof util.data_structures
+ * @inner
+ */
+
+function arrayCompare(a, b) {
+	if (!_.isArray(a) || !_.isArray(b)) {
+		throw new Error('Call Error: arguments must be arrays');
+	}
+
+	if (a.length !== b.length) {
+		throw new Error('Call Error: arguments must have the same length');
+	}
+
+	for (var i = 0; i < a.length; i += 1) {
+		if (a[i] < b[i]) {
+			return -1;
+		}
+		else if (a[i] > b[i]) {
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
+/**
+ * @memberof util.data_structures
+ * @inner
+ */
+
+function arrayEqual(a, b) {
+	if (!_.isArray(a) || !_.isArray(b)) {
+		throw new Error('Call Error: arguments must be arrays');
+	}
+
+	if (a.length !== b.length) {
+		return false;
+	}
+
+	return arrayCompare(a, b) === 0;
+}
+
+/**
  * Calls a function on each element in a list until a certain value is returned.
+ *
+ * @memberof util.data_structures
+ * @inner
  *
  * @param {array} l List to iterate over.
  * @param {function} f Function to invoke on each element.  Called like: f(item, index).
@@ -395,6 +439,9 @@ function eachUntil(l, f, r) {
  * }
  * ```
  *
+ * @memberof util.data_structures
+ * @inner
+ *
  * @param {object} o
  * The object to iterate over.
  *
@@ -423,6 +470,9 @@ function eachUntilObj(o, f, r, extra) {
 /**
  * Map a function over an array, stopping after a preset number of elements.
  *
+ * @memberof util.data_structures
+ * @inner
+ *
  * @param {any[]} a
  * An array of items.
  *
@@ -447,10 +497,13 @@ function mapLimit(a, f, l) {
 /**
  * Create a deep copy of an object.
  *
- * @param object o
+ * @memberof util.data_structures
+ * @inner
+ *
+ * @param {object} o
  * The thing to copy.
  *
- * @return object
+ * @return {object}
  * A clean copy of the argument.
  */
 
@@ -507,6 +560,10 @@ var arrayCopy = deepCopy;
 
 /**
  * Returns true if the argument is null or undefined.
+ *
+ * @memberof util.data_structures
+ * @inner
+ * @deprecated
  */
 
 function isNothing(x) {
@@ -515,6 +572,10 @@ function isNothing(x) {
 
 /**
  * Returns true if the object doesn't have any properties.
+ *
+ * @memberof util.data_structures
+ * @inner
+ * @deprecated
  */
 
 function isEmpty(o) {
@@ -526,6 +587,11 @@ function isEmpty(o) {
 
 	return numProps === 0;
 }
+
+/**
+ * @memberof util.data_structures
+ * @inner
+ */
 
 function deepDefaults() {
 	var args = Array.prototype.slice.call(arguments)
@@ -562,6 +628,9 @@ function deepDefaults() {
  * exist.  Returns the value of the last property in the path, or undefined if some elements in
  * the path don't exist in the object.
  *
+ * @memberof util.data_structures
+ * @inner
+ *
  * @param {object} obj The object to search for the property path.
  * @param {...(string|number)} prop Property path to traverse.
  *
@@ -596,6 +665,9 @@ function getProp() {
  * exist.  Returns the value of the last property in the path, or a default value if some elements
  * in the path don't exist in the object.
  *
+ * @memberof util.data_structures
+ * @inner
+ *
  * @param {any} value The default value to return if the property doesn't exist.
  * @param {object} obj The object to search for the property within.
  * @param {...(string|number)} prop Property path to traverse.
@@ -618,6 +690,9 @@ function getPropDef() {
 
 /**
  * Set a value for a property path in an object.
+ *
+ * @memberof util.data_structures
+ * @inner
  *
  * @param {any} value The value to set for the property.
  * @param {object} obj The object to set the property within.
@@ -646,6 +721,11 @@ function setProp() {
 
 	o[args[args.length - 1]] = x;
 }
+
+/**
+ * @memberof util.data_structures
+ * @inner
+ */
 
 function setPropDef() {
 	var args = Array.prototype.slice.call(arguments);
@@ -1086,6 +1166,10 @@ function walkObj(o, f, acc) {
 // Object Orientation {{{1
 
 /**
+ * @namespace util.object_orientation
+ */
+
+/**
  * Create a function representing a subclass.
  *
  * ```
@@ -1189,6 +1273,10 @@ var makeSuper = function (me, parent) {
 };
 
 // Locking {{{1
+
+/**
+ * @namespace util.locking
+ */
 
 /**
  * Locks exist because we may have multiple asynchronous chunks of JavaScript running at the same
@@ -1360,6 +1448,10 @@ Lock.prototype.onUnlock = function (f, info) {
 };
 
 // HTML {{{1
+
+/**
+ * @namespace util.html
+ */
 
 /**
  * Returns the HTML used to construct the argument.
@@ -1674,6 +1766,10 @@ function makeRadioButtons(rootObj, path, def, label, name, values, conv, onChang
 
 // Input / Output {{{1
 
+/**
+ * @namespace util.io
+ */
+
 function valueInfo(value) {
 	if (_.isNumber(value)) {
 		return [value, ': Number'];
@@ -1932,6 +2028,10 @@ function format(colConfig, typeInfo, cell, opts) {
 
 // Date and Time Formatting {{{1
 
+/**
+ * @namespace util.datetime
+ */
+
 // Initialize date and time format strings from user preferences.  There doesn't seem to be a
 // builtin way to convert the magick numbers into format strings, but since they're stored in the
 // database it seems safe to assume that they won't change.
@@ -2102,6 +2202,10 @@ function addTimeComponent(x) {
 // Exceptions {{{1
 
 /**
+ * @namespace util.exceptions
+ */
+
+/**
  * Exception used when a parameter required by a report has not been provided through the user
  * interface.
  */
@@ -2193,6 +2297,10 @@ InvalidCallError.prototype.constructor = InvalidCallError;
 
 
 // Blocking {{{1
+
+/**
+ * @namespace util.blocking
+ */
 
 var BLOCK_CONFIG = {
 	message: null,
@@ -2442,6 +2550,10 @@ Timing.prototype.dump = function (subject) {
 };
 
 // Event Handling {{{1
+
+/**
+ * @namespace util.events
+ */
 
 function mixinEventHandling(obj, name, events) {
 	obj.events = objFromArray(events);
