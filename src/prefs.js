@@ -589,25 +589,31 @@ Prefs.prototype.setCurrentPerspective = function (name, cont, opts) {
 		self._resetHistory(self.currentPerspective);
 	}
 
-	if (opts.loadPerspective) {
-		return self.currentPerspective.load(function () {
-			if (opts.sendEvent) {
-				self.fire('perspectiveChanged', {
-					notTo: opts.dontSendEventTo
-				}, name);
-			}
+	self.backend.setCurrent(name, function (ok) {
+		if (!ok) {
+			return typeof cont === 'function' ? cont(false) : false;
+		}
 
-			return typeof cont === 'function' ? cont(true) : true;
-		});
-	}
+		if (opts.loadPerspective) {
+			return self.currentPerspective.load(function () {
+				if (opts.sendEvent) {
+					self.fire('perspectiveChanged', {
+						notTo: opts.dontSendEventTo
+					}, name);
+				}
 
-	if (opts.sendEvent) {
-		self.fire('perspectiveChanged', {
-			notTo: opts.dontSendEventTo
-		}, name);
-	}
+				return typeof cont === 'function' ? cont(true) : true;
+			});
+		}
 
-	return typeof cont === 'function' ? cont(true) : true;
+		if (opts.sendEvent) {
+			self.fire('perspectiveChanged', {
+				notTo: opts.dontSendEventTo
+			}, name);
+		}
+
+		return typeof cont === 'function' ? cont(true) : true;
+	});
 };
 
 // #getCurrentPerspective {{{2
@@ -918,7 +924,7 @@ PrefsBackendLocalStorage.prototype.setCurrent = function (name, cont) {
 	self.debug('Setting current perspective to "%s"', name);
 
 	var storedPrefData = JSON.parse(localStorage.getItem(self.localStorageKey) || '{}');
-	setProp(self.perspective, storedPrefData, self.id, 'current');
+	setProp(name, storedPrefData, self.id, 'current');
 	localStorage.setItem(self.localStorageKey, JSON.stringify(storedPrefData));
 
 	return typeof cont === 'function' ? cont(true) : true;
