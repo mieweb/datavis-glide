@@ -720,6 +720,11 @@ GridTable.prototype._addDrillDownHandler = function (data, elt) {
 	var self = this;
 
 	elt.addClass('wcdv_drill_down');
+	elt.on('mousedown', function (evt) {
+		if (evt.detail > 1) {
+			evt.preventDefault();
+		}
+	});
 	elt.on('dblclick', function () {
 		var elt = jQuery(this);
 		var filter = deepCopy(self.view.getFilter());
