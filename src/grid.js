@@ -568,55 +568,53 @@ var Grid = function (id, view, defn, tagOpts, cb) {
 		.appendTo(self.ui.content)
 	;
 
-		self.ui.toolbar_source = jQuery('<div>')
-			.addClass('wcdv_toolbar_section')
-			.appendTo(self.ui.toolbar);
-		self._addSourceButtons(self.ui.toolbar_source);
-		self.view.source.setToolbar(self.ui.toolbar_source);
+	self.ui.toolbar_source = jQuery('<div>')
+		.addClass('wcdv_toolbar_section')
+		.appendTo(self.ui.toolbar);
+	self._addSourceButtons(self.ui.toolbar_source);
+	self.view.source.setToolbar(self.ui.toolbar_source);
 
-		self.ui.toolbar_common = jQuery('<div>')
-			.addClass('wcdv_toolbar_section')
-			.appendTo(self.ui.toolbar);
-		self._addCommonButtons(self.ui.toolbar_common);
+	self.ui.toolbar_common = jQuery('<div>')
+		.addClass('wcdv_toolbar_section')
+		.appendTo(self.ui.toolbar);
+	self._addCommonButtons(self.ui.toolbar_common);
 
-		if (self.view.opts.saveViewConfig) {
-			self.ui.toolbar_prefs = jQuery('<div>')
-				.addClass('wcdv_toolbar_section')
-				.appendTo(self.ui.toolbar);
-			self._addPrefsButtons(self.ui.toolbar_prefs);
-		}
+	self.ui.toolbar_prefs = jQuery('<div>')
+		.addClass('wcdv_toolbar_section')
+		.appendTo(self.ui.toolbar);
+	self._addPrefsButtons(self.ui.toolbar_prefs);
 
-		if (self.features.limit) {
-			self.ui.toolbar_limit = jQuery('<div>')
-				.addClass('wcdv_toolbar_section')
-				.hide()
-				.appendTo(self.ui.toolbar);
-			self._addLimitButtons(self.ui.toolbar_limit);
-		}
-
-		self.ui.toolbar_group = jQuery('<div>')
+	if (self.features.limit) {
+		self.ui.toolbar_limit = jQuery('<div>')
 			.addClass('wcdv_toolbar_section')
 			.hide()
 			.appendTo(self.ui.toolbar);
-		self._addGroupButtons(self.ui.toolbar_group);
+		self._addLimitButtons(self.ui.toolbar_limit);
+	}
 
-		self.ui.toolbar_pivot = jQuery('<div>')
-			.addClass('wcdv_toolbar_section')
-			.hide()
-			.appendTo(self.ui.toolbar);
-		self._addPivotButtons(self.ui.toolbar_pivot);
+	self.ui.toolbar_group = jQuery('<div>')
+		.addClass('wcdv_toolbar_section')
+		.hide()
+		.appendTo(self.ui.toolbar);
+	self._addGroupButtons(self.ui.toolbar_group);
 
-		// This is the "gear" icon that shows/hides the controls below the toolbar.  The controls are
-		// used to set the group, pivot, aggregate, and filters.  Ideally the user only has to utilize
-		// these once, and then switches between perspectives to get the same effect.
+	self.ui.toolbar_pivot = jQuery('<div>')
+		.addClass('wcdv_toolbar_section')
+		.hide()
+		.appendTo(self.ui.toolbar);
+	self._addPivotButtons(self.ui.toolbar_pivot);
 
-		jQuery(fontAwesome('f013'))
-			.addClass('wcdv_button pull-right')
-			.attr('title', MIE.trans('SHOWHIDEOPTS'))
-			.click(function (evt) {
-				self.toggleControls();
-			})
-			.appendTo(self.ui.toolbar);
+	// This is the "gear" icon that shows/hides the controls below the toolbar.  The controls are used
+	// to set the group, pivot, aggregate, and filters.  Ideally the user only has to utilize these
+	// once, and then switches between perspectives to get the same effect.
+
+	jQuery(fontAwesome('f013'))
+		.addClass('wcdv_button pull-right')
+		.attr('title', MIE.trans('SHOWHIDEOPTS'))
+		.click(function (evt) {
+			self.toggleControls();
+		})
+		.appendTo(self.ui.toolbar);
 
 	self.ui.controls = jQuery('<div>', { 'class': 'wcdv_grid_control' });
 	self.ui.filterControl = jQuery('<div>', { 'class': 'wcdv_filter_control' });
