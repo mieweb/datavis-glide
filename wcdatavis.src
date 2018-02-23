@@ -106,6 +106,7 @@
 
 	$INCLUDE('src/prefs.js');
 	$INCLUDE('src/aggregates.js');
+	$INCLUDE('src/source_param.js');
 	$INCLUDE('src/source.js');
 	$INCLUDE('src/view.js');
 	$INCLUDE('src/graph.js');
