@@ -1213,7 +1213,6 @@ View.prototype.setGroup = function (spec, opts) {
 	if (isNothing(spec) && !isNothing(self.pivotSpec)) {
 		log.warn('VIEW (' + self.name + ') // SET GROUP', 'Having a pivot without a group is not allowed');
 		self.clearPivot(opts);
-		return false;
 	}
 
 	if (spec != null) {
