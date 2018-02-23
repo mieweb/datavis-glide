@@ -1008,49 +1008,65 @@ PrefsBackendLocalStorage.prototype.reset = function (cont) {
  * @class
  * @extends PrefsBackend
  *
+ *
  * @param {string} id
  * @param {object} [opts]
+ * @param {string} [opts.key="WCDATAVIS_PREFS"]
  */
 
 var PrefsBackendTemporary = makeSubclass(PrefsBackend, function () {
 	var self = this;
-
-	self.storage = {};
-	self.current = 'Main';
-
 	self.super.ctor.apply(self, arguments);
+	self.storage = {
+		perspectives: {}
+	};
 });
+
+mixinDebugging(PrefsBackendTemporary, function () {
+	return 'PREFS (' + this.id + ') // BACKEND - LOCAL';
+});
+
+// #load {{{2
+
+PrefsBackendTemporary.prototype.load = function (name, cont) {
+	var self = this;
+
+	if (typeof name !== 'string') {
+		throw new Error('Call Error: `name` must be a string');
+	}
+	if (typeof cont !== 'function') {
+		throw new Error('Call Error: `cont` must be a function');
+	}
+
+	config = self.storage.perspectives[name];
+
+	self.debug('Loaded preferences: name = "%s" ; config = %O', name, config);
+	
+	return cont(config);
+};
 
 // #save {{{2
 
-PrefsBackendTemporary.prototype.save = function (opts, cont) {
-	var self = this
-		, prefs = self.getPrefsFromView();
+PrefsBackendTemporary.prototype.save = function (name, config, cont) {
+	var self = this;
 
-	debug.info('PREFS // TEMPORARY - (' + self.view.name + ' : ' + self.perspective + ')',
-						 'Saving preferences: %O', prefs);
+	if (typeof name !== 'string') {
+		throw new Error('Call Error: `name` must be a string');
+	}
+	if (typeof config !== 'object') {
+		throw new Error('Call Error: `config` must be an object');
+	}
+	if (cont != null && typeof cont !== 'function') {
+		throw new Error('Call Error: `cont` must be null or a function');
+	}
 
-	setProp(prefs, self.storage, self.view.name, self.perspective);
+	self.debug('Saving preferences: name = "%s" ; config = %O', name, config);
+
+	self.storage.perspectives[name] = config;
 
 	if (typeof cont === 'function') {
 		return cont(true);
 	}
-};
-
-// #load {{{2
-
-PrefsBackendTemporary.prototype.load = function (cont) {
-	var self = this;
-
-	debug.info('PREFS // TEMPORARY - (' + self.view.name + ' : ' + self.perspective + ')',
-						 'Loading preferences...');
-
-	var prefs = getPropDef({}, self.storage, self.view.name, self.perspective);
-
-	debug.info('PREFS // TEMPORARY - (' + self.view.name + ' : ' + self.perspective + ')',
-						 'Loaded preferences: %O', prefs);
-
-	self.apply(prefs, cont);
 };
 
 // #getPerspectives {{{2
@@ -1062,152 +1078,116 @@ PrefsBackendTemporary.prototype.getPerspectives = function (cont) {
 		throw new Error('Call Error: `cont` must be a function');
 	}
 
-	var perspectives = _.keys(getPropDef({}, self.storage, self.view.name));
+	var perspectives = _.keys(self.storage.perspectives);
 
 	if (perspectives.length === 0) {
 		perspectives = ['Main'];
 	}
 
-	debug.info('PREFS // TEMPORARY - (' + self.view.name + ' : ' + self.perspective + ')',
-						 'Found %d perspectives', perspectives.length);
+	self.debug('Found %d perspectives: %s', perspectives.length, JSON.stringify(perspectives));
 
 	return cont(perspectives);
 };
 
-// #getInitialPerspective {{{2
+// #getCurrent {{{2
 
-PrefsBackendTemporary.prototype.getInitialPerspective = function (cont) {
+PrefsBackendTemporary.prototype.getCurrent = function (cont) {
 	var self = this;
 
 	if (typeof cont !== 'function') {
 		throw new Error('Call Error: `cont` must be a function');
 	}
 
-	var initial = self.current || 'Main';
+	var current = self.storage.current || 'Main';
 
-	debug.info('PREFS // TEMPORARY - (' + self.view.name + ' : ' + self.perspective + ')',
-						 'Initial perspective is "%s"', initial);
+	self.debug('Current perspective is "%s"', current);
 
-	if (self.initialPerspective === undefined) {
-		self.initialPerspective = initial;
-	}
-
-	return cont(initial);
+	return cont(current);
 };
 
-// #setCurrentPerspective {{{2
+// #setCurrent {{{2
 
-PrefsBackendTemporary.prototype.setCurrentPerspective = function (perspective) {
+PrefsBackendTemporary.prototype.setCurrent = function (name, cont) {
 	var self = this;
 
-	if (typeof perspective !== 'string') {
-		throw new Error('Call Error: `perspective` must be a string');
+	if (typeof name !== 'string') {
+		throw new Error('Call Error: `name` must be a string');
+	}
+	if (cont != null && typeof cont !== 'function') {
+		throw new Error('Call Error: `cont` must be null or a function');
 	}
 
-	self.super.setCurrentPerspective(perspective);
+	self.debug('Setting current perspective to "%s"', name);
 
-	debug.info('PREFS // TEMPORARY - (' + self.view.name + ' : ' + self.perspective + ')',
-						 'Setting current perspective to "%s"', self.perspective);
+	self.storage.current = name;
 
-	self.current = perspective;
+	return typeof cont === 'function' ? cont(true) : true;
 };
 
 // #rename {{{2
 
-PrefsBackendTemporary.prototype.rename = function () {
-	var self = this
-		, args = Array.prototype.slice.call(arguments)
-		, oldName
-		, newName;
-
-	if (args.length === 1) {
-		oldName = self.getCurrentPerspective();
-		newName = args[0];
-	}
-	else if (args.length === 2) {
-		oldName = args[0];
-		newName = args[1];
-	}
-	else {
-		throw new Error('Usage: PrefsBackendTemporary#rename([oldName], newName)');
-	}
+PrefsBackendTemporary.prototype.rename = function (oldName, newName, cont) {
+	var self = this;
 
 	if (typeof oldName !== 'string') {
 		throw new Error('Call Error: `oldName` must be a string');
 	}
-
 	if (typeof newName !== 'string') {
 		throw new Error('Call Error: `newName` must be a string');
 	}
+	if (cont != null && typeof cont !== 'function') {
+		throw new Error('Call Error: `cont` must be null or a function');
+	}
 
 	if (oldName === 'Main') {
-		log.error('Not allowed to rename perspective "Main" for view "%s"', self.view.name);
-		return false;
+		log.error('Not allowed to rename "Main" perspective');
+		return typeof cont === 'function' ? cont(false) : false;
 	}
 
-	debug.info('PREFS // TEMPORARY - (' + self.view.name + ' : ' + self.perspective + ')',
-						 'Renaming perspective "%s" to "%s"', oldName, newName);
+	self.debug('Renaming perspective: "%s" -> "%s"', oldName, newName);
 
-	self.storage[self.view.name][newName] = self.storage[self.view.name][oldName];
-	delete self.storage[self.view.name][oldName];
+	self.storage.perspectives[newName] = self.storage.perspectives[oldName];
+	delete self.storage.perspectives[oldName];
 
-	if (self.getCurrentPerspective() === oldName) {
-		self.setCurrentPerspective(newName);
-	}
-
-	return true;
+	return typeof cont === 'function' ? cont(true) : true;
 };
 
 // #delete {{{2
 
-PrefsBackendTemporary.prototype.delete = function (perspective) {
+PrefsBackendTemporary.prototype.delete = function (name, cont) {
 	var self = this;
 
-	if (perspective === undefined) {
-		perspective = self.getCurrentPerspective();
+	if (typeof name !== 'string') {
+		throw new Error('Call Error: `name` must be a string');
+	}
+	if (cont != null && typeof cont !== 'function') {
+		throw new Error('Call Error: `cont` must be null or a function');
 	}
 
-	if (typeof perspective !== 'string') {
-		throw new Error('Call Error: `perspective` must be a string');
+	if (name === 'Main') {
+		log.error('Not allowed to delete "Main" perspective');
+		return typeof cont === 'function' ? cont(false) : false;
 	}
 
-	if (perspective === 'Main') {
-		log.error('Not allowed to delete perspective "Main" for view "%s"', self.view.name);
-		return;
-	}
+	self.debug('Deleting perspective: "%s"', name);
 
-	debug.info('PREFS // TEMPORARY - (' + self.view.name + ' : ' + self.perspective + ')',
-						 'Deleting perspective "%s"', perspective);
+	delete self.storage.perspectives[name];
 
-	delete self.storage[self.view.name][perspective];
-
-	// When we've deleted the current perspective, we have to fall back to some other perspective.
-	// We'd prefer to use the one that we started with, but if that's not available we use Main.
-
-	if (self.getCurrentPerspective() === perspective) {
-		if (self.initialPerspective && self.initialPerspective !== perspective) {
-			self.setCurrentPerspective(self.initialPerspective);
-		}
-		else {
-			self.setCurrentPerspective('Main');
-		}
-		self.load();
-	}
+	return typeof cont === 'function' ? cont(true) : true;
 };
 
 // #reset {{{2
 
-PrefsBackendTemporary.prototype.reset = function () {
+PrefsBackendTemporary.prototype.reset = function (cont) {
 	var self = this;
 
-	debug.info('PREFS // TEMPORARY - (' + self.view.name + ' : ' + self.perspective + ')',
-						 'Resetting perspectives');
+	self.debug('Resetting perspectives');
 
-	delete self.storage[self.view.name];
+	delete self.storage;
 
-	self.setCurrentPerspective('Main');
-	self.super.reset();
+	return typeof cont === 'function' ? cont(true) : true;
 };
+
 // PrefsModule {{{1
 
 /**
