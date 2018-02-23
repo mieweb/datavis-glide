@@ -171,7 +171,7 @@ Prefs.prototype.back = function () {
 	}
 
 	self.historyIndex += 1;
-	//self._historyDebug();
+	self._historyDebug();
 	self._firePrefsHistoryStatus();
 	self.setCurrentPerspective(self.history[self.historyIndex].getName(), null, {
 		resetHistory: false
@@ -189,7 +189,7 @@ Prefs.prototype.forward = function () {
 	}
 
 	self.historyIndex -= 1;
-	//self._historyDebug();
+	self._historyDebug();
 	self._firePrefsHistoryStatus();
 	self.setCurrentPerspective(self.history[self.historyIndex].getName(), null, {
 		resetHistory: false
@@ -216,7 +216,7 @@ Prefs.prototype._resetHistory = function (p) {
 		self.history.unshift(p);
 	}
 	self.historyIndex = 0;
-	//self._historyDebug();
+	self._historyDebug();
 	self._firePrefsHistoryStatus();
 };
 
@@ -314,7 +314,7 @@ Prefs.prototype.addPerspective = function (name, config, perspectiveOpts, cont, 
 	};
 
 	if (self.currentPerspective) {
-		self.save(function () {
+		return self.save(function () {
 			if (config == null) {
 				config = deepCopy(self.currentPerspective.getConfig());
 				needToLoad = false; // Don't need to load, because this is the current config.
@@ -598,25 +598,21 @@ Prefs.prototype.setCurrentPerspective = function (name, cont, opts) {
 			return typeof cont === 'function' ? cont(false) : false;
 		}
 
+		var f = function () {
+			if (opts.sendEvent) {
+				self.fire('perspectiveChanged', {
+					notTo: opts.dontSendEventTo
+				}, name);
+			}
+
+			return typeof cont === 'function' ? cont(true) : true;
+		};
+
 		if (opts.loadPerspective) {
-			return self.currentPerspective.load(function () {
-				if (opts.sendEvent) {
-					self.fire('perspectiveChanged', {
-						notTo: opts.dontSendEventTo
-					}, name);
-				}
-
-				return typeof cont === 'function' ? cont(true) : true;
-			});
+			return self.currentPerspective.load(f);
 		}
 
-		if (opts.sendEvent) {
-			self.fire('perspectiveChanged', {
-				notTo: opts.dontSendEventTo
-			}, name);
-		}
-
-		return typeof cont === 'function' ? cont(true) : true;
+		return f();
 	});
 };
 

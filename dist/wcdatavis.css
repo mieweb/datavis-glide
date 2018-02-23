@@ -581,7 +581,7 @@ tr.wcdvgrid_more td {
  */
 
 .wcdv_grid_table table td.wcdv_drill_down {
-	cursor: context-menu;
+	cursor: zoom-in;
 }
 .wcdv_grid_table table td.wcdv_drill_down:active {
 	background-color: #fff9c4;
