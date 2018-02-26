@@ -987,24 +987,6 @@ GridTable.prototype.draw = function (root, tableDoneCont, opts) {
 				self.drawFooter(columns, data, typeInfo);
 			}
 
-			/*
-			 * Draw the body.
-			 */
-
-			self.drawBody(data, typeInfo, columns, function () {
-				if (getProp(self.defn, 'table', 'incremental', 'appendBodyLast')) {
-					self.ui.tbl.append(self.ui.tbody);
-				}
-
-				self.timing.stop(['Grid Table', 'Draw']);
-
-				if (typeof tableDone === 'function') {
-					window.setTimeout(function () {
-						tableDone();
-					});
-				}
-			}, opts);
-
 			self.addSortHandler();
 
 			if (self.features.rowReorder) {
@@ -1023,13 +1005,35 @@ GridTable.prototype.draw = function (root, tableDoneCont, opts) {
 
 			if (!getProp(self.defn, 'table', 'incremental', 'appendBodyLast')) {
 				self.ui.tbl.append(self.ui.tbody);
-			}
 
-			if (self.features.footer) {
-				self.ui.tbl.append(self.ui.tfoot);
+				if (self.features.footer) {
+					self.ui.tbl.append(self.ui.tfoot);
+				}
 			}
 
 			self.root.append(self.ui.tbl);
+
+			/*
+			 * Draw the body.
+			 */
+
+			self.drawBody(data, typeInfo, columns, function () {
+				if (getProp(self.defn, 'table', 'incremental', 'appendBodyLast')) {
+					self.ui.tbl.append(self.ui.tbody);
+
+					if (self.features.footer) {
+						self.ui.tbl.append(self.ui.tfoot);
+					}
+				}
+
+				self.timing.stop(['Grid Table', 'Draw']);
+
+				if (typeof tableDone === 'function') {
+					window.setTimeout(function () {
+						tableDone();
+					});
+				}
+			}, opts);
 
 			// Activate TableTool using this attribute, if the user asked for it.
 
@@ -1774,17 +1778,6 @@ GridTablePlain.prototype.drawHeader = function (columns, data, typeInfo, opts) {
 
 GridTablePlain.prototype.drawBody = function (data, typeInfo, columns, cont, opts) {
 	var self = this;
-
-	var check_handler = function () {
-		var tds = jQuery(jQuery(this).parents('tr').get(0)).children('td');
-		if (this.checked) {
-			tds.addClass('wcdv_selected_row');
-		}
-		else {
-			tds.removeClass('wcdv_selected_row');
-		}
-	};
-
 	var useLimit = self.features.limit;
 	var limitConfig = getPropDef({}, self.defn, 'table', 'limit');
 
@@ -2305,7 +2298,11 @@ GridTablePlain.prototype.addDataToCsv = function (data) {
 
 GridTablePlain.prototype._updateSelectionGui = function () {
 	var self = this;
+
+	// True if all rows are selected.
 	var isAllChecked = self.selection.length === self.data.data.length;
+
+	// True if some rows are selected, but not all of them.
 	var isIndeterminate = !isAllChecked && self.selection.length > 0;
 
 	var updateCheckboxState = function (elt) {
@@ -2313,23 +2310,32 @@ GridTablePlain.prototype._updateSelectionGui = function () {
 		elt.prop('indeterminate', isIndeterminate);
 	};
 
+	// First, deselect all rows (remove "selected" class and uncheck the box).
+
 	self.root.find('tbody td.wcdv_selected_row').removeClass('wcdv_selected_row');
 	self.root.find('tbody td:first-child input[type="checkbox"]').prop('checked', false);
+
+	// Next, find all the TR elements which correspond to selected rows.
+
 	var trs = self.root.find('tbody tr').filter(function (_idx, elt) {
 		return self.selection.indexOf(+elt.dataset.rowNum) >= 0;
 	});
 
 	// Set the "check all" input in the header.
+
 	if (self.ui.checkAll_thead) {
 		updateCheckboxState(self.ui.checkAll_thead);
 		updateCheckboxState(self.ui.checkAll_thead.parents('div.tabletool').find('input[name="checkAll"]'));
 	}
 
 	// Set the "check all" input in the footer.
+
 	if (self.ui.checkAll_tfoot) {
 		updateCheckboxState(self.ui.checkAll_tfoot);
 		updateCheckboxState(self.ui.checkAll_tfoot.parents('div.tabletool').find('input[name="checkAll"]'));
 	}
+
+	// Finally, select appropriate rows (add "selected" class and check the box).
 
 	trs.children('td').addClass('wcdv_selected_row');
 	trs.find('td:first-child input[type="checkbox"]').prop('checked', true);
