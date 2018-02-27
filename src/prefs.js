@@ -59,10 +59,7 @@ var Prefs = makeSubclass(Object, function (id, moduleBindings, backendConfig) {
 	self.modules = {};
 
 	backendConfig = deepDefaults(backendConfig, {
-		type: 'localStorage',
-		localStorage: {
-			key: 'WCDATAVIS_PREFS'
-		}
+		type: 'localStorage'
 	});
 
 	// Create the backend for saving preferences.
@@ -802,7 +799,7 @@ PrefsBackend.prototype.reset = function (cont) {
  *
  * @param {string} id
  * @param {object} [opts]
- * @param {string} [opts.key="WCDATAVIS_PREFS"]
+ * @param {string} [opts.key="WC_DataVis_Prefs"]
  */
 
 var PrefsBackendLocalStorage = makeSubclass(PrefsBackend, function () {
@@ -818,7 +815,13 @@ var PrefsBackendLocalStorage = makeSubclass(PrefsBackend, function () {
 
 	self.super.ctor.apply(self, arguments);
 
-	self.localStorageKey = self.opts.key || 'WCDATAVIS_PREFS';
+	self.opts = deepDefaults(self.opts, {
+		key: 'WC_DataVis_Prefs'
+	});
+
+	self.localStorageKey = self.opts.key;
+}, {
+	version: 1
 });
 
 mixinDebugging(PrefsBackendLocalStorage, function () {
@@ -838,11 +841,77 @@ PrefsBackendLocalStorage.prototype.load = function (name, cont) {
 	}
 
 	var storedPrefData = JSON.parse(localStorage.getItem(self.localStorageKey) || '{}');
+	var version = getPropDef(0, storedPrefData, self.id, 'version');
+
+	if (storedPrefData[self.id] != null && version < self.version) {
+		self.migrate(version, function () {
+			self.load(name, cont);
+		});
+	}
+
 	var config = getPropDef({}, storedPrefData, self.id, 'perspectives', name);
 
 	self.debug('Loaded preferences: name = "%s" ; config = %O', name, config);
 	
 	return cont(config);
+};
+
+// #migrate {{{2
+
+PrefsBackendLocalStorage.prototype.migrate = function (version, cont) {
+	var self = this;
+
+	self.debug('Migrating prefs: v%d -> v%d', version, self.version);
+
+	for (var i = version; i < self.version; i += 1) {
+		switch (i) {
+		case 0:
+			var oldPrefs = JSON.parse(localStorage.getItem('WC_DataVis_Prefs') || '{}');
+			var oldCurrent = JSON.parse(localStorage.getItem('WC_DataVis_Prefs_Current') || '{}');
+			var newPrefs = JSON.parse(localStorage.getItem(self.localStorageKey) || '{}');
+
+			newPrefs[self.id] = {
+				version: i + 1,
+				current: oldCurrent[self.id],
+				perspectives: _.mapObject(oldPrefs[self.id], function (config, name) {
+					return {
+						view: config
+					};
+				})
+			};
+
+			// We can delete the "current" storage item completely if it's not being used anymore.
+
+			delete oldCurrent[self.id];
+
+			if (_.isEmpty(oldCurrent)) {
+				localStorage.removeItem('WC_DataVis_Prefs_Current');
+			}
+			else {
+				localStorage.setItem('WC_DataVis_Prefs_Current', JSON.stringify(oldCurrent));
+			}
+
+			// We can delete the "prefs" storage item completely if it's not being used anymore.
+			// Only bother with this if the storage key is different from the old hard-coded key.
+			// If it's the same, there's no point because we're just going to overwrite it.
+
+			delete oldPrefs[self.id];
+
+			if (self.localStorageKey !== 'WC_DataVis_Prefs') {
+				if (_.isEmpty(oldPrefs)) {
+					localStorage.removeItem('WC_DataVis_Prefs');
+				}
+				else {
+					localStorage.setItem('WC_DataVis_Prefs', JSON.stringify(oldPrefs));
+				}
+			}
+
+			localStorage.setItem(self.localStorageKey, JSON.stringify(newPrefs));
+			break;
+		}
+	}
+
+	return typeof cont === 'function' ? cont(true) : true;
 };
 
 // #save {{{2
@@ -1008,10 +1077,7 @@ PrefsBackendLocalStorage.prototype.reset = function (cont) {
  * @class
  * @extends PrefsBackend
  *
- *
  * @param {string} id
- * @param {object} [opts]
- * @param {string} [opts.key="WCDATAVIS_PREFS"]
  */
 
 var PrefsBackendTemporary = makeSubclass(PrefsBackend, function () {
