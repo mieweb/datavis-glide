@@ -168,7 +168,7 @@ Prefs.prototype.back = function () {
 	}
 
 	self.historyIndex += 1;
-	self._historyDebug();
+	//self._historyDebug();
 	self._firePrefsHistoryStatus();
 	self.setCurrentPerspective(self.history[self.historyIndex].getName(), null, {
 		resetHistory: false
@@ -186,7 +186,7 @@ Prefs.prototype.forward = function () {
 	}
 
 	self.historyIndex -= 1;
-	self._historyDebug();
+	//self._historyDebug();
 	self._firePrefsHistoryStatus();
 	self.setCurrentPerspective(self.history[self.historyIndex].getName(), null, {
 		resetHistory: false
@@ -213,7 +213,7 @@ Prefs.prototype._resetHistory = function (p) {
 		self.history.unshift(p);
 	}
 	self.historyIndex = 0;
-	self._historyDebug();
+	//self._historyDebug();
 	self._firePrefsHistoryStatus();
 };
 
@@ -222,7 +222,7 @@ Prefs.prototype._resetHistory = function (p) {
 Prefs.prototype._historyDebug = function () {
 	var self = this;
 
-	console.log('### HISTORY ### [%d] %O', self.historyIndex, self.history.map((x) => x.getName()));
+	console.log('### HISTORY ### [%d] %O', self.historyIndex, self.history.map(function (x) { return x.getName(); }));
 };
 
 // #bind {{{2
