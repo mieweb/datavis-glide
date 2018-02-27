@@ -1831,7 +1831,7 @@ var debug = {
 		var rest = Array.prototype.slice.call(arguments, 1);
 		var args = Array.prototype.concat.call(['[DEBUG // ' + tag + '] ' + rest[0]], rest.slice(1));
 
-		return log.info.apply(null, args);
+		return log.info.apply(window.console, args);
 	},
 	warn: function (tag) {
 		if (!MIE.DEBUGGING) {
@@ -1841,7 +1841,7 @@ var debug = {
 		var rest = Array.prototype.slice.call(arguments, 1);
 		var args = Array.prototype.concat.call(['[DEBUG // ' + tag + '] ' + rest[0]], rest.slice(1));
 
-		return log.warn.apply(null, args);
+		return log.warn.apply(window.console, args);
 	},
 	error: function (tag) {
 		if (!MIE.DEBUGGING) {
@@ -1851,7 +1851,7 @@ var debug = {
 		var rest = Array.prototype.slice.call(arguments, 1);
 		var args = Array.prototype.concat.call(['[DEBUG // ' + tag + '] ' + rest[0]], rest.slice(1));
 
-		return log.error.apply(null, args);
+		return log.error.apply(window.console, args);
 	},
 };
 
