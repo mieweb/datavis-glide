@@ -123,6 +123,10 @@
 	window.MIE.trans        = trans;
 	window.MIE.makeSubclass = makeSubclass;
 
+	window.MIE.Util         = window.MIE.Util || {};
+	window.MIE.Util.iota    = iota;
+	window.MIE.Util.objFromArray = objFromArray;
+
 	window.MIE.WC_DataVis                    = window.MIE.WC_DataVis || {};
 	window.MIE.WC_DataVis.Aggregate          = Aggregate;
 	window.MIE.WC_DataVis.AGGREGATE_REGISTRY = AGGREGATE_REGISTRY;
@@ -136,6 +140,7 @@
 	window.MIE.WC_DataVis.Prefs              = Prefs;
 	window.MIE.WC_DataVis.EXPORT_URL         = 'export.php';
 	window.MIE.WC_DataVis.Error              = DataVisError;
+
 })(jQuery);
 
 // vim:set ft=javascript:

@@ -869,6 +869,29 @@ function needArg(val, varName) {
 	return val;
 }
 
+function iota(a, b, step) {
+	var r = [];
+
+	if (b == null) {
+		start = 0;
+		end = a;
+	}
+	else {
+		start = a;
+		end = b;
+	}
+
+	if (step == null) {
+		step = 1;
+	}
+
+	for (var i = start; i <= end; i += step) {
+		r.push(i);
+	}
+
+	return r;
+}
+
 /**
  * Prune a subtree in an object.  This means to prune the leaf, and then if there are no other
  * leaves on that branch, prune the branch, and so on all the way up.
