@@ -1,10 +1,11 @@
 {
   "$< random_seed(0) >$": null,
   "data": [
-    "$< repeat(10000, VALUE) >$",
+    "$< repeat(500, VALUE) >$",
     {
         "string1": "$< word_dict() >$"
       , "country": "$< cycle('country', ['United States', 'Canada', 'Mexico', 'England', 'France', 'Germany', 'Switzerland', 'Japan', 'China', 'South Korea']) >$"
+	  , "fruit": "$< random_element('fruit', ['Apple', 'Banana', 'Blueberry', 'Cherry', 'Grape', 'Kiwi', 'Mango', 'Orange', 'Pineapple', 'Strawberry'], 'normal') >$"
       , "state": "$< state() >$"
       , "int1": "$< random_int(0, 9999, output_type='number') >$"
       , "int2": "$< random_int(0, 9999, output_type='string') >$"
@@ -28,6 +29,7 @@
       { "field": "string1", "type": "string" }
     , { "field": "country", "type": "string" }
     , { "field": "state", "type": "string" }
+	, { "field": "fruit", "type": "string" }
     , { "field": "int1", "type": "number" }
     , { "field": "int2", "type": "number" }
     , { "field": "int3", "type": "number" }

@@ -29,6 +29,9 @@ def init_random(caller=None):
             RANDOMS[caller].seed(RANDOM_SEED['seed'])
     return RANDOMS[caller]
 
+def clamp(val, low, high):
+    return max(min(val, high), low)
+
 def random_int(min=0, max=100, **opts):
     r = init_random('random_int')
     val = r.randint(min, max)
@@ -65,6 +68,18 @@ def random_date(min='1900-01-01', max='2100-01-01', **opts):
         return format_date(val, opts['format'])
     else:
         return str(val)
+
+def random_element(name, set, dist='uniform'):
+    r = init_random(name)
+    if dist == 'triangular':
+        i = round(r.triangular(0, len(set) - 1))
+    elif dist == 'normal':
+        mu = len(set)/2.0 - 0.5
+        sigma = len(set)/6.0 # three std dev on each side, close enough
+        i = clamp(round(r.normalvariate(mu, sigma)), 0, len(set) - 1)
+    else:
+        i = round(r.uniform(0, len(set) - 1))
+    return set[i]
 
 def word_dict():
     r = init_random('word_dict')
@@ -103,6 +118,7 @@ def process(node):
     env = { 'random_int': random_int,
             'random_float': random_float,
             'random_date': random_date,
+            'random_element': random_element,
             'repeat': repeat,
             'word_dict': word_dict,
             'choice': random.choice,
