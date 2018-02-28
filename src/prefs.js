@@ -1366,7 +1366,19 @@ PrefsModuleView.prototype.save = function () {
 
 	var filterSpec = self.target.getFilter();
 	if (filterSpec) {
-		prefs.filter = filterSpec;
+		prefs.filter = deepCopy(filterSpec);
+		walkObj(prefs.filter, function (x) {
+			if (window.numeral && numeral.isNumeral(x)) {
+				console.log('### NUMERAL = %d', x._value);
+				return x._value;
+			}
+			else {
+				return x;
+			}
+		}, {
+			callOnNodes: true,
+			replace: true
+		});
 	}
 
 	var groupSpec = self.target.getGroup();

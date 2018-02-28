@@ -1139,28 +1139,35 @@ function objFromArray(a, v) {
  * @param array acc Accumulator of the key path.
  */
 
-function walkObj(o, f, acc) {
-	if (acc === undefined) {
-		acc = [];
-	}
-	if (_.isUndefined(acc)) {
-		walkObj(o, f, []);
-	}
-	else if (!_.isArray(acc)) {
-		throw 'accumulator is not an array';
-	}
-	else {
+function walkObj(o, f, opts) {
+	opts = deepDefaults(opts, {
+		replace: false,
+		callOnNodes: false
+	});
+
+	var walk = function (o, acc) {
 		_.each(o, function (v, k) {
+			var x;
 			var newAcc = acc.slice();
 			newAcc.push(k);
-			if (!_.isObject(v) || _.isArray(v)) {
-				f(v, newAcc);
+
+			if (opts.callOnNodes || !_.isObject(v) || _.isArray(v)) {
+				x = f(v, newAcc);
 			}
-			else if (_.isObject(v)) {
-				walkObj(v, f, newAcc);
+
+			if (opts.replace) {
+				o[k] = v = x;
+			}
+
+			if (_.isObject(v)) {
+				walk(v, newAcc);
 			}
 		});
-	}
+
+		return o;
+	};
+
+	return walk(o, []);
 }
 
 // Object Orientation {{{1
