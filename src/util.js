@@ -2589,14 +2589,20 @@ function mixinEventHandling(obj, name, events) {
 
 		self._initEventHandlers();
 
-		if (obj.events[evt] === undefined) {
-			throw new Error('Unable to register handler on ' + myName + ' for "' + evt + '" event: no such event available');
+		if (!_.isArray(evt)) {
+			evt = [evt];
 		}
 
-		self.eventHandlers[evt].push({
-																 who: opts.who,
-																 cb: cb,
-																 limit: opts.limit
+		_.each(evt, function (e) {
+			if (obj.events[e] === undefined) {
+				throw new Error('Unable to register handler on ' + myName + ' for "' + e + '" event: no such event available');
+			}
+
+			self.eventHandlers[e].push({
+				who: opts.who,
+				cb: cb,
+				limit: opts.limit
+			});
 		});
 
 		return self;

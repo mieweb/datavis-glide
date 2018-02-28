@@ -1058,6 +1058,12 @@ GridTable.prototype.draw = function (root, tableDoneCont, opts) {
 						self.grid.on(Grid.events.hideControls, function () {
 							self.ui.tbl.floatThead('reflow');
 						});
+						self.grid.filterControl.on(['fieldAdded', 'fieldRemoved'], function () {
+							self.ui.tbl.floatThead('reflow');
+						});
+						self.grid.aggregateControl.on(['fieldAdded', 'fieldRemoved'], function () {
+							self.ui.tbl.floatThead('reflow');
+						});
 					}
 					self.ui.tbl.floatThead(floatTheadConfig);
 					break;
