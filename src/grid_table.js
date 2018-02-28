@@ -3039,25 +3039,13 @@ GridTablePivot.prototype.drawHeader = function (columns, data, typeInfo, opts) {
 		tr = jQuery('<tr>'); // Create the row for the pivot field.
 		self.csv.addRow();
 
-		// WHEN THERE IS ONLY ONE AGGREGATE FUNCTION:
-		//
 		// +---------------------------+--------------------------------------------------------+
 		// |                           | PIVOT COLVAL 1.1                    | PIVOT COLVAL 1.2 |
 		// +-------------+-------------+------------------+------------------+------------------+
 		// | GROUP FIELD | GROUP FIELD | PIVOT COLVAL 2.1 | PIVOT COLVAL 2.2 | PIVOT COLVAL 2.1 |
 		// +-------------+-------------+-------+----------+-------+----------+------------------+
-		//
-		// WHEN THERE ARE MULTIPLE AGGREGATE FUNCTIONS:
-		//
-		// +---------------------------+--------------------------------------------------------+
-		// |                           | PIVOT COLVAL 1.1                    | PIVOT COLVAL 1.2 |
-		// +---------------------------+------------------+------------------+------------------+
-		// |                           | PIVOT COLVAL 2.1 | PIVOT COLVAL 2.2 | PIVOT COLVAL 2.1 |
-		// +-------------+-------------+-------+----------+-------+----------+------------------+
-		// | GROUP FIELD | GROUP FIELD | AGG 1 | AGG 2    | AGG 1 | AGG 2    | AGG 1 | AGG 2    |
-		// +-------------+-------------+-------+----------+-------+----------+-------+----------+
 
-		if (lastPivotField && numCellAggregates <= 1) {
+		if (lastPivotField) {
 			addGroupFields(tr);
 		}
 		else {
