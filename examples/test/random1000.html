@@ -19,12 +19,8 @@
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-contextmenu/2.6.3/jquery.contextMenu.min.js"></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.8.3/modernizr.min.js"></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/detectizr/2.2.0/detectizr.min.js"></script>
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/qunit/2.4.1/qunit.min.js"></script>
 		<script src="../tabletool.js"></script>
 		<script src="../wcdatavis.js"></script>
-		<script src="qunit_sort.js"></script>
-		<script src="qunit_group.js"></script>
-		<script src="qunit_aggregates.js"></script>
 		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.css"/>
 		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"/>
 		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/chosen/1.8.3/chosen.css"/>
@@ -32,29 +28,38 @@
 		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/nprogress/0.2.0/nprogress.css"/>
 		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery.sumoselect/3.0.2/sumoselect.min.css"/>
 		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-contextmenu/2.6.3/jquery.contextMenu.min.css"/>
-		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/qunit/2.4.1/qunit.min.css"/>
 		<link rel="stylesheet" href="../base.css"/>
 		<link rel="stylesheet" href="../wcdatavis.css"/>
 		<link rel="stylesheet" href="../tabletool.css"/>
-		<script type="text/javascript">
+		<script>
 $(document).ready(function () {
 	MIE.DEBUGGING = true;
+
 	var source = new MIE.WC_DataVis.Source({
 		type: 'http',
 		url: 'random1000.json'
 	});
-	var view = new MIE.WC_DataVis.View(source, 'Test View', {
-		saveViewConfig: false
+	var view = new MIE.WC_DataVis.View(source, 'Kitchen Sink');
+	new MIE.WC_DataVis.Grid('grid', view, {
+		id: 'grid',
+		table: {
+			features: {
+				rowSelect: true,
+				floatingHeader: true
+			},
+			floatingHeader: {
+				method: 'floatThead'
+			}
+		},
+		source: source
+	}, {
+		title: 'Grid Test (Random 1000)',
+		showControls: true
 	});
-
-	test_sort(view);
-	test_group(view);
-	test_aggregates(view);
 });
 		</script>
 	</head>
 	<body>
-		<div id="qunit"></div>
-		<div id="qunit-fixture"></div>
+		<div id="grid" style="height: 600px"></div>
 	</body>
 </html>

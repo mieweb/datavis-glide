@@ -1,25 +1,25 @@
 {
   "$< random_seed(0) >$": null,
   "data": [
-    "$< repeat(500, VALUE) >$",
+    "$< repeat(1000, VALUE) >$",
     {
         "string1": "$< word_dict() >$"
       , "country": "$< cycle('country', ['United States', 'Canada', 'Mexico', 'England', 'France', 'Germany', 'Switzerland', 'Japan', 'China', 'South Korea']) >$"
 	  , "fruit": "$< random_element('fruit', ['Apple', 'Banana', 'Blueberry', 'Cherry', 'Grape', 'Kiwi', 'Mango', 'Orange', 'Pineapple', 'Strawberry'], 'normal') >$"
       , "state": "$< state() >$"
-      , "int1": "$< random_int(0, 9999, output_type='number') >$"
-      , "int2": "$< random_int(0, 9999, output_type='string') >$"
-      , "int3": "$< random_int(0, 9999, output_type='string', format='#,##0') >$"
-      , "float1": "$< random_float(0, 9999, output_type='number') >$"
-      , "float2": "$< random_float(0, 9999, output_type='string') >$"
-      , "float3": "$< random_float(0, 9999, output_type='string', format='#,##0.###') >$"
-      , "currency1": "$< random_float(0, 9999, output_type='number', fixed=2) >$"
-      , "currency2": "$< random_float(0, 9999, output_type='string', format='#,##0.##') >$"
-      , "currency3": "$< random_float(0, 9999, output_type='string', format='$#,##0.##') >$"
-      , "currency4": "$< random_float(0, 9999, output_type='string', format='$#,##0.##') >$"
-      , "date1": "$< random_date(format='yyyy-MM-dd') >$"
-      , "date2": "$< random_date(format='MMM d, yyyy') >$"
-      , "date3": "$< random_date('1970-01-01', '2010-01-01', format='MM/dd/yy') >$"
+      , "int1": "$< random_int('int1', 0, 9999, output_type='number') >$"
+      , "int2": "$< random_int('int2', 0, 9999, output_type='string') >$"
+      , "int3": "$< random_int('int3', 0, 9999, output_type='string', format='#,##0') >$"
+      , "float1": "$< random_float('float1', 0, 9999, output_type='number') >$"
+      , "float2": "$< random_float('float2', 0, 9999, output_type='string') >$"
+      , "float3": "$< random_float('float3', 0, 9999, output_type='string', format='#,##0.###') >$"
+      , "currency1": "$< random_float('currency1', 0, 9999, output_type='number', fixed=2) >$"
+      , "currency2": "$< random_float('currency2', 0, 9999, output_type='string', format='#,##0.##') >$"
+      , "currency3": "$< random_float('currency3', 0, 9999, output_type='string', format='$#,##0.##') >$"
+      , "currency4": "$< random_float('currency4', 0, 9999, output_type='string', format='$#,##0.##') >$"
+      , "date1": "$< random_date('date1', format='yyyy-MM-dd') >$"
+      , "date2": "$< random_date('date2', format='MMM d, yyyy') >$"
+      , "date3": "$< random_date('date3', format='MM/dd/yyyy') >$"
 	  , "fixedPrecision1": 0.7
 	  , "fixedPrecision2": "0.7"
 	  , "fixedPrecision3": "$0.70"
@@ -42,7 +42,7 @@
     , { "field": "currency4", "type": "string" }
     , { "field": "date1", "type": "date" }
     , { "field": "date2", "type": "date", "format": "MMMM D, YYYY" }
-    , { "field": "date3", "type": "date", "format": "MM/DD/YY" }
+    , { "field": "date3", "type": "date", "format": "MM/DD/YYYY" }
     , { "field": "fixedPrecision1", "type": "number" }
     , { "field": "fixedPrecision2", "type": "number" }
     , { "field": "fixedPrecision3", "type": "currency" }

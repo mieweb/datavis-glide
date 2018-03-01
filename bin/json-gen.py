@@ -20,20 +20,20 @@ STATES = ['Alabama', 'Alaska', 'Arizona', 'Arkansas', 'California', 'Colorado', 
 RANDOMS = {}
 RANDOM_SEED = { 'seed': None }
 
-def init_random(caller=None):
-    if caller == None:
-        caller = inspect.stack()[1].frame.f_code.co_name
-    if caller not in RANDOMS:
-        RANDOMS[caller] = random.Random()
+def init_random(name=None):
+    if name == None:
+        name = inspect.stack()[1].frame.f_code.co_name
+    if name not in RANDOMS:
+        RANDOMS[name] = random.Random()
         if RANDOM_SEED['seed'] != None:
-            RANDOMS[caller].seed(RANDOM_SEED['seed'])
-    return RANDOMS[caller]
+            RANDOMS[name].seed(RANDOM_SEED['seed'])
+    return RANDOMS[name]
 
 def clamp(val, low, high):
     return max(min(val, high), low)
 
-def random_int(min=0, max=100, **opts):
-    r = init_random('random_int')
+def random_int(name='random_int', min=0, max=100, **opts):
+    r = init_random(name)
     val = r.randint(min, max)
     if opts.get('output_type') == 'string':
         if 'format' in opts:
@@ -43,8 +43,8 @@ def random_int(min=0, max=100, **opts):
     else:
         return val
 
-def random_float(min=0, max=1, **opts):
-    r = init_random('random_float')
+def random_float(name='random_float', min=0, max=1, **opts):
+    r = init_random(name)
     val = r.uniform(min, max)
     if opts.get('output_type') == 'string':
         if 'format' in opts:
@@ -59,8 +59,8 @@ def random_float(min=0, max=1, **opts):
         else:
             return val
 
-def random_date(min='1900-01-01', max='2100-01-01', **opts):
-    r = init_random('random_date')
+def random_date(name='random_date', min='1900-01-01', max='2100-01-01', **opts):
+    r = init_random(name)
     min = time.mktime(time.strptime(min, '%Y-%m-%d'))
     max = time.mktime(time.strptime(max, '%Y-%m-%d'))
     val = date.fromtimestamp(r.randint(min, max))
@@ -81,12 +81,12 @@ def random_element(name, set, dist='uniform'):
         i = round(r.uniform(0, len(set) - 1))
     return set[i]
 
-def word_dict():
-    r = init_random('word_dict')
+def word_dict(name='word_dict'):
+    r = init_random(name)
     return WORDS[r.randint(0, len(WORDS))]
 
-def state():
-    r = init_random('state')
+def state(name='state'):
+    r = init_random(name)
     return r.choice(STATES)
 
 def random_seed(n):

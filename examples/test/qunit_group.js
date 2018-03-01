@@ -1,7 +1,7 @@
 window.test_group = function (view) {
 	var groupInfo = [
 		[['country'], 10, [
-			['Canada'], 50, ['China'], 50, ['England'], 50, ['France'], 50, ['Germany'], 50, ['Japan'], 50, ['Mexico'], 50, ['South Korea'], 50, ['Switzerland'], 50, ['United States'], 50
+			['Canada'], 100, ['China'], 100, ['England'], 100, ['France'], 100, ['Germany'], 100, ['Japan'], 100, ['Mexico'], 100, ['South Korea'], 100, ['Switzerland'], 100, ['United States'], 100
 		]]
 	];
 
