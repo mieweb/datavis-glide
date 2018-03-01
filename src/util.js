@@ -464,6 +464,16 @@ function eachUntilObj(o, f, r, extra) {
 	return true;
 }
 
+function asyncEach(args, fun, done) {
+	function g() {
+		if (args.length === 0) {
+			return done();
+		}
+		fun(args.shift(), g);
+	};
+	g();
+}
+
 /**
  * Map a function over an array, stopping after a preset number of elements.
  *

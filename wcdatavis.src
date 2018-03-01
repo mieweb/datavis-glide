@@ -124,8 +124,8 @@
 	window.MIE.makeSubclass = makeSubclass;
 
 	window.MIE.Util         = window.MIE.Util || {};
-	window.MIE.Util.iota    = iota;
 	window.MIE.Util.objFromArray = objFromArray;
+	window.MIE.Util.asyncEach = asyncEach;
 
 	window.MIE.WC_DataVis                    = window.MIE.WC_DataVis || {};
 	window.MIE.WC_DataVis.Aggregate          = Aggregate;
