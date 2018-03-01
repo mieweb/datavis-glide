@@ -16,7 +16,9 @@ window.test_group = function (view) {
 			};
 			g();
 		})(groupInfo, function (gi, next) {
-			var [fields, numGroups, result] = gi;
+			var fields = gi[0];
+			var numGroups = gi[1];
+			var result = gi[2];
 			view.reset();
 			view.setGroup({ fieldNames: fields }, {
 				updateData: false

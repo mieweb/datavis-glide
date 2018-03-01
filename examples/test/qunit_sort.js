@@ -27,7 +27,10 @@ window.test_sort = function (view) {
 			};
 			g();
 		})(sortInfo, function (si, next) {
-			var [field, min, max, info] = si;
+			var field = si[0];
+			var min = si[1];
+			var max = si[2];
+			var info = si[3];
 			view.reset();
 			view.setSort({ vertical: { field: field, dir: 'ASC' }}, {
 				updateData: false
