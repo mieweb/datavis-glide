@@ -1,4 +1,4 @@
-window.test_sort = function (view) {
+window.test_group_sort = function (view) {
 	var sortInfo = [
 		['string1', '-a', 'zonetime', 'random dictionary word'],
 		['int1', 1, 9996, 'integer (number → number)'],
@@ -16,7 +16,7 @@ window.test_sort = function (view) {
 		['date3', '07/12/1900', '09/08/2099', 'date (string → moment)']
 	];
 
-	QUnit.test('Sort Test', function (assert) {
+	QUnit.test('Group Sort Test', function (assert) {
 		var done = assert.async();
 		MIE.Util.asyncEach(sortInfo, function (si, next) {
 			var field = si[0];
@@ -24,17 +24,25 @@ window.test_sort = function (view) {
 			var max = si[2];
 			var info = si[3];
 			view.reset();
-			view.setSort({ vertical: { field: field, dir: 'ASC' }}, {
+			view.setGroup({fieldNames: [field]}, {
+				updateData: false
+			});
+			view.setSort({ vertical: { groupFieldIndex: 0, dir: 'ASC' }}, {
 				updateData: false
 			});
 			view.getData(function (data) {
-				var cell = data.data[0].rowData[field];
-				assert.equal(cell.orig || cell.value, min, info);
+				var cell = data.rowVals[0][0];
+				assert.equal(cell, min, info + ' min');
 				view.reset();
-				view.setSort({ vertical: { field: field, dir: 'DESC' }});
+				view.setGroup({fieldNames: [field]}, {
+					updateData: false
+				});
+				view.setSort({ vertical: { groupFieldIndex: 0, dir: 'DESC' }}, {
+					updateData: false
+				});
 				view.getData(function (data) {
-					var cell = data.data[0].rowData[field];
-					assert.equal(cell.orig || cell.value, max, info);
+					var cell = data.rowVals[0][0];
+					assert.equal(cell, max, info + ' max');
 					return next();
 				});
 			});

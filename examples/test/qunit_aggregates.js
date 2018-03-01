@@ -49,19 +49,6 @@ window.test_aggregates = function (view) {
 		}]
 	}];
 
-	var testData = MIE.Util.iota(9);
-	var tests = ['count', 'min', 'max'];
-
-	myEach = function (args, fun, done) {
-		function g() {
-			if (args.length === 0) {
-				return done();
-			}
-			fun(args.shift(), g);
-		};
-		g();
-	};
-
 	QUnit.test('Aggregate Test', function (assert) {
 		var done = assert.async();
 
@@ -73,8 +60,8 @@ window.test_aggregates = function (view) {
 			updateData: false
 		});
 
-		myEach(expected, function (e, e_next) {
-			myEach(e.agg, function (a, a_next) {
+		MIE.Util.asyncEach(expected, function (e, e_next) {
+			MIE.Util.asyncEach(e.agg, function (a, a_next) {
 				view.setAggregate(MIE.Util.objFromArray(['group', 'pivot', 'cell', 'all'],
 					[[{
 						fun: e.fun,
@@ -100,6 +87,3 @@ window.test_aggregates = function (view) {
 		}, done);
 	});
 };
-
-
-

@@ -7,15 +7,7 @@ window.test_group = function (view) {
 
 	QUnit.test('Group Test', function (assert) {
 		var done = assert.async();
-		(function (args, fun, done) {
-			function g() {
-				if (args.length === 0) {
-					return done();
-				}
-				fun(args.shift(), g);
-			};
-			g();
-		})(groupInfo, function (gi, next) {
+		MIE.Util.asyncEach(groupInfo, function (gi, next) {
 			var fields = gi[0];
 			var numGroups = gi[1];
 			var result = gi[2];
