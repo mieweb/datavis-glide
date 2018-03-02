@@ -1828,7 +1828,7 @@ GridTablePlain.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 
 				if (self.features.rowSelect) {
 					td = jQuery('<td>');
-					
+
 					var checkbox = jQuery('<input>', { 'type': 'checkbox', 'data-row-num': row.rowNum })
 						.on('change', function () {
 							if (this.checked) {
@@ -2563,6 +2563,10 @@ GridTableGroupDetail.prototype.drawBody = function (data, typeInfo, columns, con
 						elt.hide();
 					}
 				});
+
+			if (self.ui.tbl.floatThead) {
+				self.ui.tbl.floatThead('reflow');
+			}
 		};
 
 		var elt = jQuery(this);
@@ -3027,7 +3031,7 @@ GridTablePivot.prototype.drawHeader = function (columns, data, typeInfo, opts) {
 					// "Roosevelt" so those are the colspans that we would set.
 
 					var colSpan = lastColValCount;
-					
+
 					if (numCellAggregates >= 2) {
 						colSpan *= numCellAggregates;
 					}
@@ -3053,7 +3057,7 @@ GridTablePivot.prototype.drawHeader = function (columns, data, typeInfo, opts) {
 
 				self.setCss(th, colVal);
 
-				// We only allow sorting on the final 
+				// We only allow sorting on the final
 
 				if (lastPivotField) {
 					self._addSortingToHeader(data, 'vertical', {colVal: data.colVals[colValIndex], aggNum: 0}, th, getPropDef([], data, 'agg', 'info', 'cell'));
