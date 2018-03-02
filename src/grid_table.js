@@ -2598,6 +2598,8 @@ GridTableGroupDetail.prototype.drawBody = function (data, typeInfo, columns, con
 		// </tr>
 
 		_.each(rowVal, function (rowValElt, rowValIdx) {
+			var th;
+
 			if (lastRowVal[rowValIdx] === rowValElt) {
 				return;
 			}
@@ -2637,17 +2639,19 @@ GridTableGroupDetail.prototype.drawBody = function (data, typeInfo, columns, con
 				.appendTo(tr)
 			;
 
-			var infoText = ' (';
+			if (data.groupMetadata) {
+				var infoText = ' (';
 
-			if (rowValIdx < data.groupFields.length - 1) {
-				var numSubGroups = getProp(data.groupMetadata, data.rowVals[groupNum].slice(0, rowValIdx + 1), '_children');
-				infoText += '' + numSubGroups + ' group' + (numSubGroups > 1 ? 's' : '');
-				infoText += ', ';
+				if (rowValIdx < data.groupFields.length - 1) {
+					var numSubGroups = getProp(data.groupMetadata, data.rowVals[groupNum].slice(0, rowValIdx + 1), '_children');
+					infoText += '' + numSubGroups + ' group' + (numSubGroups > 1 ? 's' : '');
+					infoText += ', ';
+				}
+
+				infoText += '' + getProp(data.groupMetadata, data.rowVals[groupNum].slice(0, rowValIdx + 1), '_count') + ' rows';
+
+				infoText += ')';
 			}
-
-			infoText += '' + getProp(data.groupMetadata, data.rowVals[groupNum].slice(0, rowValIdx + 1), '_count') + ' rows';
-
-			infoText += ')';
 
 			var span = jQuery('<span>');
 			if (rowValElt instanceof Element || rowValElt instanceof jQuery) {
@@ -2660,13 +2664,17 @@ GridTableGroupDetail.prototype.drawBody = function (data, typeInfo, columns, con
 				span.text(rowValElt);
 			}
 
-			jQuery('<th>')
+			th = jQuery('<th>')
 				.addClass('wcdv_group_value')
 				.attr('colspan', columns.length - rowValIdx)
 				.append(span)
-				.append(infoText)
-				.appendTo(tr)
 			;
+
+			if (infoText) {
+				th.append(infoText);
+			}
+
+			th.appendTo(tr);
 
 			self.ui.tbody.append(tr);
 		});
