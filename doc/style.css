@@ -98,6 +98,10 @@ pre {
     overflow:auto;
 }
 
+pre.small {
+	font-size: 80%;
+}
+
 pre.output {
     background: -moz-repeating-linear-gradient(-45deg, #F3F5F7, #F3F5F7 40px, #DAE6F2 50px, #DAE6F2 60px, #F3F5F7 70px);
 }
