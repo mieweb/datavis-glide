@@ -1294,14 +1294,14 @@ View.prototype.clearGroup = function (opts) {
 	return this.setGroup(null, opts);
 };
 
-// #group {{{2
+// #group_orig {{{2
 
 /**
  * Perform grouping on the data.  This modifies the data in place; it's not asynchronous and there's
  * no return value.
  */
 
-View.prototype.group = function () {
+View.prototype.group_orig = function () {
 	var self = this
 		, groupFields = [];
 
@@ -1444,6 +1444,144 @@ View.prototype.group = function () {
 	self.data.isGroup = true;
 	self.data.groupFields = groupFields;
 	self.data.groupMetadata = metadata;
+	self.data.rowVals = rowVals;
+	self.data.data = newData;
+
+	return true;
+};
+
+// #group_new {{{2
+
+/**
+ * Perform grouping on the data.  This modifies the data in place; it's not asynchronous and there's
+ * no return value.
+ */
+
+View.prototype.group = function () {
+	var self = this
+		, groupFields = []
+		, newData = [];
+
+	// Make sure that grouping has been asked for.
+
+	if (self.groupSpec == null) {
+		return false;
+	}
+
+	// We need `typeInfo` to verify that the group fields requested actually exist in the source data.
+	// It's not possible to just use the data, because there may be no rows.
+
+	if (self.typeInfo == null) {
+		log.error('Source type information is missing');
+		return false;
+	}
+
+	// Go through every group field and make sure it exists in the source.  If it doesn't, we use an
+	// event to notify the user interface about it so a warning can be shown.
+
+	_.each(self.groupSpec.fieldNames, function (field, fieldIdx) {
+		if (!self.typeInfo.isSet(field)) {
+			log.error('Group field does not exist in the source: ' + field);
+			self.fire(View.events.invalidGroupField, null, field);
+		}
+		else {
+			groupFields.push(field);
+		}
+	});
+
+	// It's possible now that we've eliminated *all* the group fields because they're invalid; if
+	// that's the case, we just abort as if no grouping was requested at all.
+
+	if (groupFields.length === 0) {
+		return false;
+	}
+
+	// natRep --
+	//
+	//   Short for "native representation."  A string version of the value that is safe to use as the
+	//   key in an object, and which also sorts the same as the value it represents.
+	//
+	//     sort(values) = map(natRep->val, sort(map(val->natRep, values)))
+
+	var origKeys = []; // groupFieldIndex[] → natRep → value
+
+	var buildRowVals = function (groupFields) {
+		var rowVals = [];
+
+		for (var rowIndex = 0; rowIndex < self.data.data.length; rowIndex += 1) {
+			var row = self.data.data[rowIndex];
+			var rowVal = [];
+			for (var groupFieldIndex = 0; groupFieldIndex < groupFields.length; groupFieldIndex += 1) {
+				var groupField = groupFields[groupFieldIndex];
+				var value = row.rowData[groupField].value;
+				var natRep = getNatRep(value);
+				origKeys[groupFieldIndex][natRep] = value;
+				rowVal[groupFieldIndex] = natRep;
+			}
+			if (_.findIndex(rowVals, function (x) {
+				return arrayEqual(rowVal, x);
+			}) === -1) {
+				rowVals.push(rowVal);
+			}
+		}
+
+		rowVals.sort(function (a, b) {
+			return arrayCompare(a, b);
+		});
+
+		return rowVals;
+	};
+
+	var buildData = function (data) {
+		var result = [];
+
+		_.each(rowVals, function (rowVal) {
+			var groupedRows = [];
+			_.each(data, function (row) {
+				if (_.every(rowVal, function (rowValElt, rowValNum) {
+					var groupField = groupFields[rowValNum];
+					var value = row.rowData[groupField].value;
+					var natRep = getNatRep(value);
+					return rowValElt === natRep;
+				})) {
+					groupedRows.push(row);
+				}
+			});
+			result.push(groupedRows);
+		});
+
+		return result;
+	};
+
+	var convertRowVals = function (rowVals) {
+		var result = [];
+
+		for (var rowValIndex = 0; rowValIndex < rowVals.length; rowValIndex += 1) {
+			var rowVal = rowVals[rowValIndex];
+			result[rowValIndex] = [];
+			for (var groupFieldIndex = 0; groupFieldIndex < groupFields.length; groupFieldIndex += 1) {
+				result[rowValIndex][groupFieldIndex] = origKeys[groupFieldIndex][rowVal[groupFieldIndex]];
+			}
+		}
+
+		return result;
+	};
+
+	for (var groupFieldIndex = 0; groupFieldIndex < groupFields.length; groupFieldIndex += 1) {
+		origKeys[groupFieldIndex] = {};
+	}
+
+	rowVals = buildRowVals(groupFields);
+	newData = buildData(self.data.data, rowVals);
+	rowVals = convertRowVals(rowVals);
+
+	debug.info('VIEW (' + self.name + ') // GROUP', 'Group Fields: %O', groupFields);
+	debug.info('VIEW (' + self.name + ') // GROUP', 'Row Vals: %O', rowVals);
+	debug.info('VIEW (' + self.name + ') // GROUP', 'New Data: %O', newData);
+
+	self.data.isPlain = false;
+	self.data.isGroup = true;
+	self.data.groupFields = groupFields;
 	self.data.rowVals = rowVals;
 	self.data.data = newData;
 
