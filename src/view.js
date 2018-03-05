@@ -815,17 +815,17 @@ View.prototype.setFilter = function (spec, progress, opts) {
 		, args = Array.prototype.slice.call(arguments)
 		, opts = deepCopy(opts) || {};
 
-	_.defaults(opts, {
-		sendEvent: true,
-		dontSendEventTo: [],
-		updateData: true
-	});
-
 	if (self.lock.isLocked()) {
 		return self.lock.onUnlock(function () {
 			self.setFilter.apply(self, args);
 		}, 'Waiting to set filter: ' + JSON.stringify(spec));
 	}
+
+	opts = deepDefaults(opts, {
+		sendEvent: true,
+		dontSendEventTo: [],
+		updateData: true
+	});
 
 	debug.info('VIEW (' + self.name + ') // SET FILTER', 'spec = %O ; options = %O', spec, opts);
 
@@ -833,6 +833,7 @@ View.prototype.setFilter = function (spec, progress, opts) {
 		self.wasPreviouslyFiltered = true;
 	}
 
+	/*
 	if (spec != null) {
 		if (self.typeInfo == null) {
 			return self.getTypeInfo(function () {
@@ -847,6 +848,7 @@ View.prototype.setFilter = function (spec, progress, opts) {
 			}
 		});
 	}
+	*/
 
 	self.filterSpec = spec;
 	self.filterProgress = progress;
@@ -1193,26 +1195,26 @@ View.prototype.setGroup = function (spec, opts) {
 	var self = this
 		, args = Array.prototype.slice.call(arguments);
 
-	opts = opts || {};
-	_.defaults(opts, {
-		sendEvent: true,
-		dontSendEventTo: [],
-		updateData: true
-	});
-
 	if (self.lock.isLocked()) {
 		return self.lock.onUnlock(function () {
 			self.setGroup.apply(self, args);
 		}, 'Waiting to set group: ' + JSON.stringify(spec));
 	}
 
+	opts = deepDefaults(opts, {
+		sendEvent: true,
+		dontSendEventTo: [],
+		updateData: true
+	});
+
 	debug.info('VIEW (' + self.name + ') // SET GROUP', 'spec = %O', spec);
 
-	if (isNothing(spec) && !isNothing(self.pivotSpec)) {
+	if (spec == null && self.pivotSpec != null) {
 		log.warn('VIEW (' + self.name + ') // SET GROUP', 'Having a pivot without a group is not allowed');
 		self.clearPivot(opts);
 	}
 
+	/*
 	if (spec != null) {
 		// Make sure we have typeInfo so we can perform the next check.
 
@@ -1238,6 +1240,7 @@ View.prototype.setGroup = function (spec, opts) {
 			return false;
 		}
 	}
+	*/
 
 	self.groupSpec = spec;
 
@@ -1612,27 +1615,27 @@ View.prototype.setPivot = function (spec, opts) {
 	var self = this
 		, args = Array.prototype.slice.call(arguments);
 
-	opts = opts || {};
-	_.defaults(opts, {
-		sendEvent: true,
-		dontSendEventTo: [],
-		updateData: true
-	});
-
 	if (self.lock.isLocked()) {
 		return self.lock.onUnlock(function () {
 			self.setPivot.apply(self, args);
 		}, 'Waiting to set pivot: ' + JSON.stringify(spec));
 	}
 
+	opts = deepDefaults(opts, {
+		sendEvent: true,
+		dontSendEventTo: [],
+		updateData: true
+	});
+
 	debug.info('VIEW (' + self.name + ') // SET PIVOT', 'spec = %O', spec);
 
-	if (isNothing(self.groupSpec) && !isNothing(spec)) {
+	if (self.groupSpec == null && spec != null) {
 		log.warn('VIEW (' + self.name + ') // SET PIVOT', 'Having a pivot without a group is not allowed');
 		self.clearPivot(opts);
 		return false;
 	}
 
+	/*
 	if (spec != null) {
 		// Make sure we have typeInfo so we can perform the next check.
 
@@ -1658,6 +1661,7 @@ View.prototype.setPivot = function (spec, opts) {
 			return false;
 		}
 	}
+	*/
 
 	self.pivotSpec = spec;
 
@@ -2023,19 +2027,17 @@ View.prototype.setAggregate = function (spec, opts) {
 	var self = this
 		, args = Array.prototype.slice.call(arguments);
 
-	opts = opts || {};
-	_.defaults(opts, {
+	if (self.lock.isLocked()) {
+		return self.lock.onUnlock(function () {
+			self.setAggregate.apply(self, args);
+		}, 'Waiting to set aggregate: ' + JSON.stringify(spec));
+	}
+
+	opts = deepDefaults(opts, {
 		sendEvent: true,
 		dontSendEventTo: [],
 		updateData: true
 	});
-
-	if (self.lock.isLocked()) {
-		self.lock.onUnlock(function () {
-			self.setAggregate.apply(self, args);
-		}, 'Waiting to set aggregate: ' + JSON.stringify(spec));
-		return false;
-	}
 
 	debug.info('VIEW (' + self.name + ') // SET AGGREGATE', 'spec = %O ; options = %O', spec, opts);
 
