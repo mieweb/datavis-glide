@@ -887,6 +887,10 @@ GridFilterSet.prototype.add = function (field, target, opts) {
 
 	filter = self.build(field, target, opts);
 
+	if (filter == null) {
+		return null;
+	}
+
 	// Make sure that requisite data structures are there.
 
 	if (self.filters.byCol[field] === undefined) {
@@ -962,6 +966,11 @@ GridFilterSet.prototype.build = function (field, target, opts) {//filterType, fi
 	// FIXME Don't rely on the cache, do it right.
 
 	var fti = self.view.typeInfo.get(field);
+
+	if (fti == null) {
+		return null;
+	}
+
 	var colType = fti.type;
 
 	// Make sure that we are able to get the column type.
@@ -1161,8 +1170,13 @@ GridFilterSet.prototype.set = function (field, fieldSpec) {
 		debug.info('GRID FILTER SET',
 							 'Setting filter: { field = %s ; operator = %s ; value = %s }',
 							 field, op, typeof val === 'object' ? JSON.stringify(val) : val);
-		var filter = self.filters.byCol[field][0];
-		filter.setOperator(op);
-		filter.setValue(val);
+		var filters = self.filters.byCol[field];
+
+		if (filters == null) {
+			return;
+		}
+
+		filters[0].setOperator(op);
+		filters[0].setValue(val);
 	});
 };

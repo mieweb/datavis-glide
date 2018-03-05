@@ -1402,9 +1402,11 @@ FilterControl.prototype.addViewConfigChangeHandler = function () {
 		});
 	};
 
-	self.view.on(View.events.filterSet, function (spec) {
-		synchronize(spec)
-	}, { who: self });
+	self.view.on('getTypeInfo', function () {
+		self.view.on(View.events.filterSet, function (spec) {
+			synchronize(spec)
+		}, { who: self });
+	}, { limit: 1 });
 
 	synchronize(self.view.getFilter());
 };

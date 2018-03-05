@@ -2366,10 +2366,13 @@ View.prototype.getData = function (cont) {
 
 	self.fire(View.events.fetchDataBegin);
 	return self.source.getData(function (data) {
+		self.sourceData = data;
+
 		return self.getTypeInfo(function (typeInfo) {
+			self.typeInfo = typeInfo;
+
 			self.fire(View.events.fetchDataEnd);
 			self.fire(View.events.workBegin);
-			self.typeInfo = typeInfo;
 
 			if (!self.prefsLoaded) {
 				return self.prefs.init(function () {
@@ -2480,9 +2483,19 @@ View.prototype.clearCache = function () {
 	var self = this;
 
 	self.data = undefined;
-	self.typeInfo = undefined;
 
 	debug.info('VIEW (' + self.name + ')', 'Cleared cache');
+};
+
+// #clearSourceData {{{2
+
+View.prototype.clearSourceData = function () {
+	var self = this;
+
+	self.sourceData = undefined;
+	self.typeInfo = undefined;
+
+	debug.info('VIEW (' + self.name + ')', 'Cleared source data');
 };
 
 // #reset {{{2
