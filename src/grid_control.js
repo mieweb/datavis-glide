@@ -1408,5 +1408,5 @@ FilterControl.prototype.addViewConfigChangeHandler = function () {
 		}, { who: self });
 	}, { limit: 1 });
 
-	synchronize(self.view.getFilter());
+	//synchronize(self.view.getFilter());
 };

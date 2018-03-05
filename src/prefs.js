@@ -3,25 +3,27 @@
 // Constructor {{{2
 
 /**
- * Represents the single entry point to the preferences system.  Preferences consist of:
- *
- *   - One backend, which stores preference data for retrieval in another session.
- *   - Multiple perspectives, which represent different ways of looking at the same data.
- *
- * @class
+ * Creates a new Prefs instance.
  *
  * @param {string} id
  *
  * @param {object} moduleBindings
  * Maps module names to the target instances those modules control.
  *
- * @param {object} backendConfig
+ * @param {object} [opts]
  *
- * @param {string} backendConfig.type
+ * @param {object} [opts.backend]
+ *
+ * @param {string} [opts.backend.type="localStorage"]
  * The type of the backend to use when saving prefs.  Must be a key in the `PREFS_BACKEND_REGISTRY`
  * object, which maps the type to a constructor.
  *
+ * @class
  *
+ * Represents the single entry point to the preferences system.  Preferences consist of:
+ *
+ *   - One backend, which stores preference data for retrieval in another session.
+ *   - Multiple perspectives, which represent different ways of looking at the same data.
  *
  * @property {string} id
  * Unique identifier for this Prefs instance; used as the primary key by the backend.
@@ -42,7 +44,7 @@
  * If true, this Prefs instance has already been initialized.
  */
 
-var Prefs = makeSubclass(Object, function (id, moduleBindings, backendConfig) {
+var Prefs = makeSubclass(Object, function (id, moduleBindings, opts) {
 	var self = this;
 
 	if (typeof id !== 'string') {
@@ -51,28 +53,32 @@ var Prefs = makeSubclass(Object, function (id, moduleBindings, backendConfig) {
 	if (moduleBindings != null && typeof moduleBindings !== 'object') {
 		throw new Error('Call Error: `moduleBindings` must be null or an object');
 	}
-	if (backendConfig != null && typeof backendConfig !== 'object') {
-		throw new Error('Call Error: `backendConfig` must be null or an object');
+	if (opts != null && typeof opts !== 'object') {
+		throw new Error('Call Error: `opts` must be null or an object');
 	}
 
 	self.id = id;
 	self.modules = {};
 
-	backendConfig = deepDefaults(backendConfig, {
-		type: 'localStorage'
+	opts = deepDefaults(opts, {
+		saveCurrent: true,
+		savePerspectives: true,
+		backend: {
+			type: 'localStorage'
+		}
 	});
 
 	// Create the backend for saving preferences.
 
-	if (PREFS_BACKEND_REGISTRY[backendConfig.type] == null) {
+	if (PREFS_BACKEND_REGISTRY[opts.backend.type] == null) {
 		throw new Error('PREFS BACKEND IS NOT REGISTERED'); // XXX
 	}
 
-	var backendCtor = PREFS_BACKEND_REGISTRY[backendConfig.type];
-	var backendCtorOpts = backendConfig[backendConfig.type];
+	var backendCtor = PREFS_BACKEND_REGISTRY[opts.backend.type];
+	var backendCtorOpts = opts.backend[opts.backend.type];
 
 	self.debug('Creating new preferences backend: id = "%s" ; type = %s ; opts = %O',
-		self.id, backendConfig.type, backendCtorOpts);
+		self.id, opts.backend.type, backendCtorOpts);
 
 	// If creating the backend fails for any reason (e.g. unable to access localStorage) then fall
 	// back to a "temporary" prefs backend that doesn't actually save or load anything.
@@ -103,7 +109,7 @@ mixinEventHandling(Prefs, function (self) {
 mixinDebugging(Prefs, function () {
 	return 'PREFS (' + this.id + ')';
 });
-delegate(Prefs, 'backend', ['getPerspectives', 'getCurrent']);
+//delegate(Prefs, 'backend', ['getPerspectives', 'getCurrent']);
 
 // #init {{{2
 
@@ -245,6 +251,36 @@ Prefs.prototype.bind = function (moduleName, target) {
 	}
 
 	self.modules[moduleName] = new PREFS_MODULE_REGISTRY[moduleName](target);
+
+	// When we're adding a binding with a perspective already loaded, reload it for the new binding.
+
+	if (self.currentPerspective != null) {
+		self.currentPerspective.load([moduleName]);
+	}
+};
+
+// #getPerspectives {{{2
+
+Prefs.prototype.getPerspectives = function (cont) {
+	var self = this;
+
+	if (typeof cont !== 'function') {
+		throw new Error('Call Error: `cont` must be a function');
+	}
+
+	return cont(self.availablePerspectives);
+};
+
+// #getCurrent {{{2
+
+Prefs.prototype.getCurrent = function (cont) {
+	var self = this;
+
+	if (typeof cont !== 'function') {
+		throw new Error('Call Error: `cont` must be a function');
+	}
+
+	return cont(self.currentPerspective.getName());
 };
 
 // #addPerspective {{{2
@@ -256,6 +292,9 @@ Prefs.prototype.bind = function (moduleName, target) {
  *
  * @param {object} [config]
  * If missing, the configuration of the current perspective is used.
+ *
+ * @param {object} [perspectiveOpts]
+ * Additional options to pass to Perspective().
  *
  * @param {function} [cont]
  *
@@ -288,11 +327,21 @@ Prefs.prototype.addPerspective = function (name, config, perspectiveOpts, cont, 
 
 	opts = deepDefaults(opts, {
 		switch: true,
-		sendEvent: true
+		sendEvent: true,
+		replace: false
 	});
+
+	if (self.perspectives[name] != null && !opts.replace) {
+		throw new Error('Perspective already exists: ' + name);
+	}
 
 	var f = function () {
 		self.debug('Adding new perspective: name = "%s" ; config = %O', name, config);
+
+		if (self.availablePerspectives.indexOf(name) < 0) {
+			self.availablePerspectives.push(name);
+		}
+
 		self.perspectives[name] = new Perspective(name, config, self.modules, perspectiveOpts);
 
 		if (opts.sendEvent) {
@@ -606,7 +655,7 @@ Prefs.prototype.setCurrentPerspective = function (name, cont, opts) {
 		};
 
 		if (opts.loadPerspective) {
-			return self.currentPerspective.load(f);
+			return self.currentPerspective.load(null, f);
 		}
 
 		return f();
@@ -1446,6 +1495,17 @@ PrefsModuleGrid.prototype.reset = function () {
  *
  * @property {string} name
  * @property {object} config
+ * @property {object} opts
+ *
+ * @property {boolean} opts.isTemporary
+ * If true, then the perspective will not be saved automatically, but it can be made permanent.
+ *
+ * @property {boolean} opts.isEssential
+ * If true, then the perspective cannot be renamed or deleted.
+ *
+ * @property {boolean} opts.isConstant
+ * If true, then the perspective will not be saved if it has been changed.
+ *
  * @property {Object.<string,PrefsModule>} modules
  */
 
@@ -1456,7 +1516,9 @@ var Perspective = makeSubclass(Object, function (name, config, modules, opts) {
 	self.config = config;
 	self.modules = modules;
 	self.opts = deepDefaults(opts, {
-		isTemporary: false
+		isTemporary: false,
+		isEssential: false,
+		isConstant: false
 	});
 });
 
@@ -1496,20 +1558,24 @@ Perspective.prototype.getConfig = function () {
  * @param {function} [cont]
  */
 
-Perspective.prototype.load = function (cont) {
+Perspective.prototype.load = function (modules, cont) {
 	var self = this;
 
 	if (cont != null && typeof cont !== 'function') {
 		throw new Error('Call Error: `cont` must be null or a function');
 	}
 
-	self.debug('Loading perspective');
+	if (modules == null) {
+		modules = _.keys(self.modules);
+	}
+
+	self.debug('Loading perspective using these modules: %s', JSON.stringify(modules));
 
 	// Go through every module that we have preferences for and load them into the bound components.
 
-	_.each(self.modules, function (module, moduleName) {
+	_.each(modules, function (moduleName) {
 		self.debug('Loading module: moduleName = %s ; config = %O', moduleName, self.config[moduleName]);
-		module.load(self.config[moduleName]);
+		self.modules[moduleName].load(self.config[moduleName]);
 	});
 
 	return typeof cont === 'function' ? cont(true) : true;

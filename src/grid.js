@@ -516,8 +516,14 @@ var Grid = function (id, view, defn, tagOpts, cb) {
 	self._validateFeatures();
 	self._validateId(id);
 
-	self.prefs = self.view.prefs;
-	self.prefs.bind('grid', self);
+	if (defn.prefs != null) {
+		if (!(defn.prefs instanceof Prefs)) {
+			throw new Error('Call Error: `defn.prefs` must be null or an instance of MIE.WC_DataVis.Prefs');
+		}
+
+		self.prefs = defn.prefs;
+		self.prefs.bind('grid', self);
+	}
 
 	/*
 	 * Set up other container elements.
@@ -1797,6 +1803,7 @@ Grid.prototype._normalize = function (defn) {
 	defn.normalized = true;
 
 	deepDefaults(true, defn, {
+		prefs: null,
 		table: {
 			groupMode: 'detail',
 			features: {

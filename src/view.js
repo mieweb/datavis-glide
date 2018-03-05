@@ -136,6 +136,7 @@ var View = function (source, name, opts) {
 	var self = this;
 
 	opts = deepDefaults(opts, {
+		prefs: null,
 		saveViewConfig: true,
 		groupIsPivot: false
 	});
@@ -160,11 +161,14 @@ var View = function (source, name, opts) {
 
 	self.aggregateSpec = objFromArray(['group', 'pivot', 'cell', 'all'], [[{fun: 'count'}]]);
 
-	self.prefs = new Prefs(self.name, {
-		view: self
-	}, {
-		type: self.opts.saveViewConfig ? 'localStorage' : 'temporary'
-	});
+	if (opts.prefs != null) {
+		if (!(opts.prefs instanceof Prefs)) {
+			throw new Error('Call Error: `opts.prefs` must be null or an instance of MIE.WC_DataVis.Prefs');
+		}
+
+		self.prefs = opts.prefs;
+		self.prefs.bind('view', self);
+	}
 };
 
 View.prototype = Object.create(Object.prototype);
@@ -959,13 +963,6 @@ View.prototype.filter = function (cont) {
 		}
 	});
 
-	if (_.keys(self.filterSpec).length === 0) {
-		self.clearFilter({
-			sendEvent: false,
-			updateData: false
-		});
-	}
-
 	// Checks to see if the given filter passes for the given row.
 
 	function passesFilter(fltr, field, row) {
@@ -1191,7 +1188,7 @@ View.prototype.filter = function (cont) {
  * If true, automatically update data to match new grouping.
  */
 
-View.prototype.setGroup = function (spec, opts) {
+View.prototype.setGroup = function (spec, opts, cont) {
 	var self = this
 		, args = Array.prototype.slice.call(arguments);
 
@@ -2366,21 +2363,11 @@ View.prototype.getData = function (cont) {
 
 	self.fire(View.events.fetchDataBegin);
 	return self.source.getData(function (data) {
-		self.sourceData = data;
-
 		return self.getTypeInfo(function (typeInfo) {
 			self.typeInfo = typeInfo;
 
 			self.fire(View.events.fetchDataEnd);
 			self.fire(View.events.workBegin);
-
-			if (!self.prefsLoaded) {
-				return self.prefs.init(function () {
-					self.prefsLoaded = true;
-					self.lock.unlock();
-					self.getData(cont);
-				});
-			}
 
 			var ops = {
 				filter: false,
@@ -2435,7 +2422,7 @@ View.prototype.getData = function (cont) {
 							workEndObj.numPivots = 0;
 						}
 
-						if (self.opts.saveViewConfig) {
+						if (self.prefs != null) {
 							self.prefs.save();
 						}
 
@@ -2492,7 +2479,6 @@ View.prototype.clearCache = function () {
 View.prototype.clearSourceData = function () {
 	var self = this;
 
-	self.sourceData = undefined;
 	self.typeInfo = undefined;
 
 	debug.info('VIEW (' + self.name + ')', 'Cleared source data');
