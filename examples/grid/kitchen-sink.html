@@ -59,40 +59,36 @@ $(document).ready(function () {
 		type: 'string'
 	}]);
 
-	var prefs = new MIE.WC_DataVis.Prefs('example_kitchen_sink');
-	prefs.init(function () {
-		var view = new MIE.WC_DataVis.View(source, 'Kitchen Sink', { prefs: prefs });
-		new MIE.WC_DataVis.Grid('grid', view, {
-			id: 'grid',
-			prefs: prefs,
-			table: {
-				features: {
-					rowSelect: true,
-					floatingHeader: true
-				},
-				floatingHeader: {
-					method: 'floatThead'
-				},
-				columns: [{
-					field: 'Order ID'
-				}, {
-					field: 'Product'
-				}, {
-					field: 'Category'
-				}, {
-					field: 'Amount',
-					format: '$0,0.00'
-				}, {
-					field: 'Date'
-				}, {
-					field: 'Country'
-				}]
+	var view = new MIE.WC_DataVis.View(source, 'Kitchen Sink');
+	new MIE.WC_DataVis.Grid('grid', view, {
+		id: 'grid',
+		table: {
+			features: {
+				rowSelect: true,
+				floatingHeader: true
 			},
-			source: source
-		}, {
-			title: 'Fruit Sales',
-			showControls: true
-		});
+			floatingHeader: {
+				method: 'floatThead'
+			},
+			columns: [{
+				field: 'Order ID'
+			}, {
+				field: 'Product'
+			}, {
+				field: 'Category'
+			}, {
+				field: 'Amount',
+				format: '$0,0.00'
+			}, {
+				field: 'Date'
+			}, {
+				field: 'Country'
+			}]
+		},
+		source: source
+	}, {
+		title: 'Fruit Sales',
+		showControls: true
 	});
 
 	jQuery('#feature_header').on('click', function () {

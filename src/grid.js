@@ -516,14 +516,21 @@ var Grid = function (id, view, defn, tagOpts, cb) {
 	self._validateFeatures();
 	self._validateId(id);
 
-	if (defn.prefs != null) {
-		if (!(defn.prefs instanceof Prefs)) {
-			throw new Error('Call Error: `defn.prefs` must be null or an instance of MIE.WC_DataVis.Prefs');
-		}
-
-		self.prefs = defn.prefs;
-		self.prefs.bind('grid', self);
+	if (defn.prefs != null && !(defn.prefs instanceof Prefs)) {
+		throw new Error('Call Error: `defn.prefs` must be null or an instance of MIE.WC_DataVis.Prefs');
 	}
+
+	if (defn.prefs != null) {
+		self.prefs = defn.prefs;
+	}
+	else if (self.view.prefs != null) {
+		self.prefs = self.view.prefs;
+	}
+	else {
+		self.prefs = new Prefs(self.id);
+	}
+
+	self.prefs.bind('grid', self);
 
 	/*
 	 * Set up other container elements.
@@ -1222,53 +1229,55 @@ Grid.prototype._addPrefsButtons = function (toolbar) {
 	// XXX: Is it possible for perspectives to change by some other route so that we need to know
 	// about it to update the UI?
 
-	self.prefs.getPerspectives(function (perspectives) {
-		self.prefs.getCurrent(function (initial) {
-			_.each(perspectives.sort(), function (name) {
-				if (options[name] == null) {
-					options[name] = jQuery('<option>', { 'value': name })
-						.text(name)
-						.appendTo(dropdown);
-				}
+	self.prefs.init(function () {
+		self.prefs.getPerspectives(function (perspectives) {
+			self.prefs.getCurrent(function (initial) {
+				_.each(perspectives.sort(), function (name) {
+					if (options[name] == null) {
+						options[name] = jQuery('<option>', { 'value': name })
+							.text(name)
+							.appendTo(dropdown);
+					}
+				});
+				dropdown.val(initial);
+				showHideBtns();
 			});
-			dropdown.val(initial);
+		});
+
+		self.prefs.on('perspectiveAdded', function (name) {
+			if (options[name] == null) {
+				options[name] = jQuery('<option>', {
+					value: name
+				}).text(name);
+				dropdown.append(options[name]);
+			}
+		});
+
+		self.prefs.on('perspectiveDeleted', function (name) {
+			if (options[name] != null) {
+				options[name].remove();
+				delete options[name];
+			}
+		});
+
+		self.prefs.on('perspectiveRenamed', function (oldName, newName) {
+			if (options[oldName] != null) {
+				options[oldName].attr('value', newName);
+				options[oldName].text(newName);
+				options[newName] = options[oldName];
+				delete options[oldName];
+			}
+		});
+
+		self.prefs.on('perspectiveChanged', function (name) {
+			dropdown.val(name);
 			showHideBtns();
 		});
-	});
 
-	self.prefs.on('perspectiveAdded', function (name) {
-		if (options[name] == null) {
-			options[name] = jQuery('<option>', {
-				value: name
-			}).text(name);
-			dropdown.append(options[name]);
-		}
-	});
-
-	self.prefs.on('perspectiveDeleted', function (name) {
-		if (options[name] != null) {
-			options[name].remove();
-			delete options[name];
-		}
-	});
-
-	self.prefs.on('perspectiveRenamed', function (oldName, newName) {
-		if (options[oldName] != null) {
-			options[oldName].attr('value', newName);
-			options[oldName].text(newName);
-			options[newName] = options[oldName];
-			delete options[oldName];
-		}
-	});
-
-	self.prefs.on('perspectiveChanged', function (name) {
-		dropdown.val(name);
-		showHideBtns();
-	});
-
-	self.prefs.on('prefsHistoryStatus', function (back, forward) {
-		backBtn.attr('disabled', !back);
-		forwardBtn.attr('disabled', !forward);
+		self.prefs.on('prefsHistoryStatus', function (back, forward) {
+			backBtn.attr('disabled', !back);
+			forwardBtn.attr('disabled', !forward);
+		});
 	});
 };
 

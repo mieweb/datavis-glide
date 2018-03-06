@@ -135,19 +135,23 @@ var InvalidAggregateError = makeSubclass(ViewError);
 var View = function (source, name, opts) {
 	var self = this;
 
+	if (!(source instanceof Source)) {
+		throw new Error('Call Error: `source` must be an instance of MIE.WC_DataVis.Source');
+	}
+
 	opts = deepDefaults(opts, {
 		prefs: null,
 		saveViewConfig: true,
 		groupIsPivot: false
 	});
 
-	self.opts = opts;
-
-	if (!(source instanceof Source)) {
-		throw new ViewError('Source must be an instance of MIE.WC_DataVis.Source');
+	if (opts.prefs != null && !(opts.prefs instanceof Prefs)) {
+		throw new Error('Call Error: `opts.prefs` must be null or an instance of MIE.WC_DataVis.Prefs');
 	}
 
 	self.source = source;
+	self.opts = opts;
+
 	self.source.on(Source.events.dataUpdated, function () {
 		self.clearCache();
 		self.fire(View.events.dataUpdated);
@@ -162,11 +166,11 @@ var View = function (source, name, opts) {
 	self.aggregateSpec = objFromArray(['group', 'pivot', 'cell', 'all'], [[{fun: 'count'}]]);
 
 	if (opts.prefs != null) {
-		if (!(opts.prefs instanceof Prefs)) {
-			throw new Error('Call Error: `opts.prefs` must be null or an instance of MIE.WC_DataVis.Prefs');
-		}
-
 		self.prefs = opts.prefs;
+		self.isBoundToPrefs = false;
+	}
+	else {
+		self.prefs = new Prefs(self.name);
 		self.isBoundToPrefs = false;
 	}
 };
