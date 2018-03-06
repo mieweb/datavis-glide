@@ -167,7 +167,7 @@ var View = function (source, name, opts) {
 		}
 
 		self.prefs = opts.prefs;
-		self.prefs.bind('view', self);
+		self.isBoundToPrefs = false;
 	}
 };
 
@@ -2453,6 +2453,12 @@ View.prototype.getTypeInfo = function (cont) {
 	if (self.typeInfo === undefined) {
 		return self.source.getTypeInfo(function (typeInfo) {
 			self.typeInfo = typeInfo;
+
+			if (self.prefs != null && !self.isBoundToPrefs) {
+				self.prefs.bind('view', self);
+				self.isBoundToPrefs = true;
+			}
+
 			return self.getTypeInfo(cont);
 		});
 	}
