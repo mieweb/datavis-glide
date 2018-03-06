@@ -2371,6 +2371,11 @@ View.prototype.getData = function (cont) {
 			self.typeInfo = typeInfo;
 
 			self.prefs.init(function () {
+				if (!self.isBoundToPrefs) {
+					self.prefs.bind('view', self);
+					self.isBoundToPrefs = true;
+				}
+
 				self.fire(View.events.fetchDataEnd);
 				self.fire(View.events.workBegin);
 
@@ -2439,12 +2444,12 @@ View.prototype.getData = function (cont) {
 							if (typeof cont === 'function') {
 								return cont(self.data);
 							}
-						});
-					});
-				});
-			});
-		});
-	});
+						}); // -- self.sort()
+					}); // -- self.aggregate()
+				}); // -- self.filter()
+			}); // -- self.prefs.init()
+		}); // -- self.getTypeInfo()
+	}); // -- self.getData()
 };
 
 // #getTypeInfo {{{2
@@ -2459,11 +2464,6 @@ View.prototype.getTypeInfo = function (cont) {
 	if (self.typeInfo === undefined) {
 		return self.source.getTypeInfo(function (typeInfo) {
 			self.typeInfo = typeInfo;
-
-			if (self.prefs != null && !self.isBoundToPrefs) {
-				self.prefs.bind('view', self);
-				self.isBoundToPrefs = true;
-			}
 
 			return self.getTypeInfo(cont);
 		});
