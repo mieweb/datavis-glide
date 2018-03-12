@@ -110,6 +110,36 @@ var InvalidAggregateError = makeSubclass(ViewError);
  * An object telling what aggregate functions to calculate on the data.
  */
 
+/**
+ * @typedef {object} View~AggInfo
+ * Describes an aggregate function which is applied to a slice of the data.
+ *
+ * @property {number} aggNum
+ * The aggregate number; used to correlate with the results.
+ *
+ * @property {string} fun
+ * Internal name of the aggregate function, maps to a key in `AGGREGATE_REGISTRY`.
+ *
+ * @property {string} name
+ * Display text for the aggregate function.
+ *
+ * @property {boolean} isHidden
+ * If true, then the aggregate function should not be shown in the grid.
+ *
+ * @property {Array.<string>} fields
+ * An array of the fields to which the aggregate function applies.  For functions that don't require
+ * any fields, this will be an empty array.
+ *
+ * @property {Array.<Grid~ColConfig} colConfig
+ * An array of column configuration objects which correspond to `fields`.
+ *
+ * @property {Array.<Source~TypeInfo>} typeInfo
+ * An array of type information objects which correspond to `fields`.
+ *
+ * @property {Aggregate} instance
+ * The actual aggregate function instance which was used to compute the results.
+ */
+
 // Constructor {{{2
 
 /**
@@ -2168,7 +2198,10 @@ View.prototype.aggregate = function (cont) {
 
 	var makeAggInfo = function (aggType, spec, aggNum) {
 		var aggInfo = {
+			aggNum: aggNum,
+			fun: spec.fun,
 			name: spec.name,
+			isHidden: spec.isHidden,
 			fields: [],
 			colConfig: [],
 			typeInfo: []
@@ -2229,6 +2262,7 @@ View.prototype.aggregate = function (cont) {
 			});
 
 			ctorOpts.fields = aggInfo.fields;
+			ctorOpts.isHidden = aggInfo.isHidden;
 			ctorOpts.colConfig = aggInfo.colConfig;
 			ctorOpts.typeInfo = aggInfo.typeInfo;
 		}

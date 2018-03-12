@@ -403,6 +403,26 @@ GridTable.prototype.setAlignment = function (elt, colConfig, typeInfo, overrideT
 
 // #_addSortingToHeader {{{2
 
+/**
+ * Attaches a sort icon to the given table header element, which (1) indicates the current sort, and
+ * (2) when clicked brings up a menu to allow sorting by that header.
+ *
+ * @param {any} data
+ *
+ * @param {string} orientation
+ * Indicates whether the sorting is `horizontal` (i.e. sorting reorders columns) or `vertical` (i.e.
+ * sorting reorders rows).
+ *
+ * @param {View~SortSpec} spec
+ * The sort spec.
+ *
+ * @param {Element} th
+ * Where to place the sort icon.
+ *
+ * @param {Array.<View~AggInfo>} agg
+ * Aggregate functions which we can sort by their results.
+ */
+
 GridTable.prototype._addSortingToHeader = function (data, orientation, spec, th, agg) {
 	var self = this;
 
@@ -505,12 +525,19 @@ GridTable.prototype._addSortingToHeader = function (data, orientation, spec, th,
 	var sortIcon_menu_items = {};
 
 	if (spec.field != null || spec.groupFieldIndex != null) {
+
+		// We're sorting by a field.  This can occur in these situations:
+		//
+		//   1. Sorting plain output by any column.
+		//   2. Sorting group output by a field that we've grouped by.
+
 		var name = spec.field != null
 			? spec.field
 			: spec.groupFieldIndex != null
 			? data.groupFields[spec.groupFieldIndex]
 			: 'Unknown'
 		;
+
 		sortIcon_menu_items[gensym()] = {
 			name: name + ', Ascending',
 			icon: 'fa-sort-amount-asc',
@@ -528,6 +555,9 @@ GridTable.prototype._addSortingToHeader = function (data, orientation, spec, th,
 		sortIcon_menu_items[gensym()] = '----';
 	}
 	else {
+
+		// We're sorting by the result of an aggregate function.
+
 		_.each(agg, function (aggInfo, aggNum) {
 			if (spec.aggType != null && spec.aggNum !== aggNum) {
 				return;
@@ -786,6 +816,21 @@ GridTable.prototype.addFilterHandler = function () {
 //	}
 };
 
+// #_getAggInfo {{{2
+
+GridTable.prototype._getAggInfo = function (data) {
+	var ai = objFromArray(['cell', 'group', 'pivot', 'all'], [[]]);
+	ai = _.mapObject(ai, function (val, key) {
+		return _.filter(
+			getPropDef([], data, 'agg', 'info', key),
+			function (aggInfo) {
+				return !aggInfo.isHidden;
+			}
+		);
+	});
+	return ai;
+};
+
 // #draw {{{2
 
 GridTable.prototype.draw = function (root, tableDoneCont, opts) {
@@ -1030,8 +1075,10 @@ GridTable.prototype.draw = function (root, tableDoneCont, opts) {
 
 GridTable.prototype.drawHeader_aggregates = function (data, what, tr) {
 	var self = this;
+	var ai = self._getAggInfo(data);
 
-	_.each(getPropDef([], data, 'agg', 'info', what), function (aggInfo, aggNum) {
+	_.each(ai[what], function (aggInfo, aggIndex) {
+		var aggNum = aggInfo.aggNum;
 		var text = aggInfo.instance.getFullName();
 		var span = jQuery('<span>')
 			.text(text);
@@ -1039,7 +1086,7 @@ GridTable.prototype.drawHeader_aggregates = function (data, what, tr) {
 			.append(span)
 			.appendTo(tr);
 		if (self.opts.drawInternalBorders || data.agg.info.group.length > 1) {
-			if (what === 'group' && aggNum === 0) {
+			if (what === 'group' && aggIndex === 0) {
 				th.addClass('wcdv_pivot_aggregate_boundary');
 			}
 			else {
@@ -1047,7 +1094,7 @@ GridTable.prototype.drawHeader_aggregates = function (data, what, tr) {
 			}
 		}
 		self.csv.addCol(text);
-		self._addSortingToHeader(data, 'vertical', {aggType: what, aggNum: aggNum}, th, getPropDef([], data, 'agg', 'info', 'group'));
+		self._addSortingToHeader(data, 'vertical', {aggType: what, aggNum: aggNum}, th, ai[what]);
 		self.setAlignment(th, aggInfo.colConfig[0], aggInfo.typeInfo[0], aggInfo.instance.getType());
 	});
 };
@@ -1117,8 +1164,10 @@ GridTable.prototype.drawBody_rowVals = function (data, tr, groupNum) {
 
 GridTable.prototype.drawBody_groupAggregates = function (data, tr, groupNum) {
 	var self = this;
+	var ai = self._getAggInfo(data);
 
-	_.each(getPropDef([], data, 'agg', 'info', 'group'), function (aggInfo, aggNum) {
+	_.each(ai.group, function (aggInfo, aggGroupIndex) {
+		var aggNum = aggInfo.aggNum;
 		var aggType = aggInfo.instance.getType();
 		var aggResult = data.agg.results.group[aggNum][groupNum];
 		var text;
@@ -1141,7 +1190,7 @@ GridTable.prototype.drawBody_groupAggregates = function (data, tr, groupNum) {
 		self._addDrillDownClass(td);
 
 		if (self.opts.drawInternalBorders || data.agg.info.group.length > 1) {
-			if (aggNum === 0) {
+			if (aggGroupIndex === 0) {
 				td.addClass('wcdv_pivot_aggregate_boundary');
 			}
 			else {
@@ -2975,7 +3024,14 @@ GridTablePivot.prototype.drawHeader = function (columns, data, typeInfo, opts) {
 
 	var pivotFieldNum, colValIndex;
 	var colVal;
-	var numCellAggregates = getPropDef(0, data, 'agg', 'info', 'cell', 'length');
+	var numCellAggregates = _.reduce(
+		getPropDef([], data, 'agg', 'info', 'cell'),
+		function (prev, aggInfo) {
+			return aggInfo.isHidden ? prev : prev + 1;
+		},
+		0
+	);
+	console.log('### ' + numCellAggregates);
 
 	for (pivotFieldNum = 0; pivotFieldNum < data.pivotFields.length; pivotFieldNum += 1) {
 		// Indicates that we're on the last pivot field, i.e. the last row of the table header.
@@ -3138,7 +3194,8 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 
 	opts = opts || {};
 	opts.pivotConfig = opts.pivotConfig || {};
-	var numCellAggregates = getPropDef(0, data, 'agg', 'info', 'cell', 'length');
+
+	var ai = self._getAggInfo(data);
 
 	if (data.groupFields.length === 0) {
 		if (typeof cont === 'function') {
@@ -3172,15 +3229,16 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 		// Column #4: agg(rowGroup[3]) - rows in the group w/ State = "OH"
 
 		_.each(rowGroup, function (colGroup, pivotNum) {
-			if (numCellAggregates === 0) {
+			if (ai.cell.length === 0) {
 				// There's no cell aggregate functions, so there isn't anything to put in the cell.
 				tr.append(document.createElement('td'));
 			}
 			else {
 				// Every cell aggregate function is going to make a separate cell.
-				_.each(data.agg.results.cell, function (agg, aggNum) {
-					var aggInfo = data.agg.info.cell[aggNum];
+				_.each(ai.cell, function (aggInfo, aiCellIndex) {
+					var aggNum = aggInfo.aggNum;
 					var aggType = aggInfo.instance.getType();
+					var agg = data.agg.results.cell[aggNum];
 					var aggResult = agg[groupNum][pivotNum];
 
 					rowAgg.push(aggResult);
@@ -3209,7 +3267,7 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 
 					self._addDrillDownClass(td);
 
-					if ((self.opts.drawInternalBorders || numCellAggregates > 1) && aggNum === 0) {
+					if ((self.opts.drawInternalBorders || ai.cell.length > 1) && aiCellIndex === 0) {
 						td.addClass('wcdv_pivot_colval_boundary');
 					}
 
@@ -3276,16 +3334,17 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 	//  PIVOT AGGREGATES
 	// ===========================================================================
 
-	_.each(getPropDef([], data, 'agg', 'info', 'pivot'), function (aggInfo, aggNum) {
+	_.each(ai.pivot, function (aggInfo, aiPivotIndex) {
 		var span;
 		var text;
+		var aggNum = aggInfo.aggNum;
 
 		tr = jQuery('<tr>');
 		self.csv.addRow();
 
 		// Add a class to the first row so it gets the double-bar outline.
 
-		if (aggNum === 0) {
+		if (aiPivotIndex === 0) {
 			tr.addClass('wcdv_gridtable_agg_pivot');
 		}
 
@@ -3315,7 +3374,7 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 			// Add padding cells in the CSV output so that the pivot aggregates appear staggered.  Since
 			// we can't do rowspan in CSV like we can in HTML.
 
-			for (var i = 0; i < aggNum; i += 1) {
+			for (var i = 0; i < aiPivotIndex; i += 1) {
 				self.csv.addCol('');
 			}
 
@@ -3336,11 +3395,11 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 			});
 			self._addDrillDownClass(td);
 
-			if (numCellAggregates > 1) {
-				td.attr('colspan', numCellAggregates);
+			if (ai.cell.length > 1) {
+				td.attr('colspan', ai.cell.length);
 			}
 
-			if (self.opts.drawInternalBorders || numCellAggregates > 1) {
+			if (self.opts.drawInternalBorders || ai.cell.length > 1) {
 				td.addClass('wcdv_pivot_colval_boundary');
 			}
 
@@ -3351,7 +3410,7 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 			// Add padding cells in the CSV output so that the pivot aggregates appear staggered.  Since
 			// we can't do rowspan in CSV like we can in HTML.
 
-			for (var i = aggNum + 1; i < getPropDef(0, data, 'agg', 'info', 'pivot', 'length'); i += 1) {
+			for (var i = aiPivotIndex + 1; i < ai.pivot.length; i += 1) {
 				self.csv.addCol('');
 			}
 		});
@@ -3361,9 +3420,9 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 		// =========================================================================
 
 		if (getProp(data, 'agg', 'info', 'all', aggNum)) {
-			for (var i = 0; i < aggNum; i += 1) {
+			for (var i = 0; i < aiPivotIndex; i += 1) {
 				td = jQuery('<td><div>&nbsp;</div></td>');
-				if (self.opts.drawInternalBorders || numCellAggregates > 1) {
+				if (self.opts.drawInternalBorders || ai.cell.length > 1) {
 					td.addClass(i === 0 ? 'wcdv_pivot_aggregate_boundary' : 'wcdv_pivot_colval_boundary');
 				}
 				td.addClass('wcdv_cell_empty');
@@ -3387,17 +3446,17 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 
 			td = jQuery('<td>').text(text);
 
-			if (self.opts.drawInternalBorders || numCellAggregates > 1) {
-				td.addClass(aggNum === 0 ? 'wcdv_pivot_aggregate_boundary' : 'wcdv_pivot_colval_boundary');
+			if (self.opts.drawInternalBorders || ai.cell.length > 1) {
+				td.addClass(aiPivotIndex === 0 ? 'wcdv_pivot_aggregate_boundary' : 'wcdv_pivot_colval_boundary');
 			}
 
 			self.csv.addCol(text);
 			self.setAlignment(td, aggInfo.colConfig[0], aggInfo.typeInfo[0], aggInfo.instance.getType());
 			td.appendTo(tr);
 
-			for (var i = aggNum + 1; i < getPropDef(0, data, 'agg', 'info', 'all', 'length'); i += 1) {
+			for (var i = aiPivotIndex + 1; i < ai.cell.length; i += 1) {
 				td = jQuery('<td><div>&nbsp;</div></td>');
-				if (self.opts.drawInternalBorders || numCellAggregates > 1) {
+				if (self.opts.drawInternalBorders || ai.cell.length > 1) {
 					td.addClass('wcdv_pivot_colval_boundary');
 				}
 				td.addClass('wcdv_cell_empty');

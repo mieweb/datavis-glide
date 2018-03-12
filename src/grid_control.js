@@ -235,6 +235,18 @@ AggregateControlField.prototype.draw = function () {
 
 	var aggDefn = AGGREGATE_REGISTRY.get(self.field);
 
+	self.ui.isHiddenCheckbox = jQuery('<input>', {
+		'type': 'checkbox'
+	})
+		.prop('checked', getProp(self.opts, 'isHidden'))
+		.on('change', function () {
+			console.log(jQuery(this)._isChecked());
+			self.control.updateView();
+		})
+		.appendTo(self.ui.root)
+		._makeIconCheckbox('fa-eye-slash', 'fa-eye')
+	;
+
 	if (aggDefn.prototype.options != null) {
 		jQuery('<button>', {
 			title: 'Edit Options'
@@ -384,12 +396,15 @@ AggregateControlField.prototype.destroy = function () {
 AggregateControlField.prototype.getInfo = function () {
 	var self = this;
 
+	console.log(self.ui.isHiddenCheckbox._isChecked());
+
 	return {
 		fun: self.field,
+		name: null,
 		fields: _.map(self.fieldDropdowns, function (dropdown) {
 			return dropdown.val();
 		}),
-		name: null,
+		isHidden: self.ui.isHiddenCheckbox._isChecked(),
 		opts: _.mapObject(self.aggFunOpts, function (input, optName) {
 			return input.val();
 		})
@@ -1237,7 +1252,8 @@ AggregateControl.prototype.addViewConfigChangeHandler = function () {
 
 			_.each(spec.all, function (agg) {
 				self.addField(agg.fun, AGGREGATE_REGISTRY.get(agg.fun).prototype.name, { updateView: false }, {
-					fields: agg.fields
+					fields: agg.fields,
+					isHidden: agg.isHidden
 				});
 			});
 		}

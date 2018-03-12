@@ -16,7 +16,22 @@ jQuery.fn.extend({
 	 */
 
 	_isChecked: function () {
-		return this.attr('checked');
+		return this.prop('checked');
+	},
+
+	/**
+	 * Toggles the checkbox.
+	 *
+	 * @function external:"jQuery.fn"#_toggleCheck
+	 *
+	 * @returns {boolean}
+	 * True if the element is now checked, false if it's not.
+	 */
+
+	_toggleCheck: function () {
+		var newValue = !this.prop('checked');
+		this.prop('checked', newValue);
+		return newValue;
 	},
 
 	/**
@@ -43,6 +58,38 @@ jQuery.fn.extend({
 
 	_isHidden: function () {
 		return this.css('display') === 'none' || this.css('visibility') !== 'visible';
+	},
+
+	_makeIconCheckbox: function (on, off) {
+		var self = this;
+
+		var button = jQuery('<button>')
+			.addClass('wcdv_icon_button wcdv_button_left')
+			.on('click', function () {
+				self._toggleCheck();
+				self.trigger('change');
+			})
+		;
+		var onIcon = fontAwesome(on).hide().appendTo(button);
+		var offIcon = fontAwesome(off).hide().appendTo(button);
+
+		var updateIcon = function () {
+			if (self._isChecked()) {
+				onIcon.show();
+				offIcon.hide();
+			}
+			else {
+				onIcon.hide();
+				offIcon.show();
+			}
+		};
+
+		updateIcon();
+		self.hide();
+		self.before(button);
+		self.on('change', updateIcon);
+
+		return self;
 	},
 
 	/**

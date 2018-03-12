@@ -1,87 +1,120 @@
-Data View
-=========
+# Data View
 
-A data view is an image of the data from a source. The original
-source\'s data is never touched, but through the view, a grid can see
-the data as having been filtered, sorted, grouped, or paged.
+A data view is an image of the data from a source. The original source's data is never touched, but through the view, a grid can see the data as having been filtered, sorted, grouped, or paged.
 
-**This should not be confused with the \"named view\" grid preference
-concept. Some day these may be the same, but currently they are not!**
+*This "view" should not be confused with the "view" shown in the grid toolbar, which is used to name and save the configuration of the grid.  The proper, internal name of the latter is a "perspective," see [Preferences] for more information about those.*
 
-Getting Data
-------------
+## Getting Data
 
-An output (e.g. `GridTable`) should never access the data source
-directly, it should only use the view to get data. This is because the
-view handles filtering, sorting, grouping, and other things which the
-data source does not. So how does the view return its data? There are
-two formats, depending on whether the data is grouped or not.
+An output (e.g. `GridTable`) should never access the data source directly, it should only use the view to get data. This is because the view handles filtering, sorting, grouping, and other things which the data source does not. So how does the view return its data? There are two formats, depending on whether the data is grouped or not.
 
-Internal Format
----------------
+## Configuration
 
-`isPlain`
+### Filter
 
-:   True if the data is plain (i.e. not grouped or pivotted).
+### Group
 
-`isGroup`
+* `fieldNames`
 
-:   True if the data is grouped.
+  An array of the fields to group by.
 
-`isPivot`
+### Pivot
 
-:   True if the data is pivotted.
+* `fieldNames`
 
-`groupFields`
+  An array of the fields to pivot by.
 
-:   A list of the fields (from the source, e.g. columns in a system
-    report) that we\'re grouping by, in order.
+### Aggregates
 
-`rowVals`
+The toplevel properties are used to set what aggregate functions will be calculated for various slices of the data:
 
-:   An array of all combinations of values of group fields which exist
-    in the data. Every element in the array is itself an array where the
-    first element is a value of the first group field, the second
-    element is a value of the second group field, etc.
++----------+------------------------------------------------------------------------+
+| Property | Meaning                                                                |
++==========+========================================================================+
+| `cell`   | Function is applied to all rows that fall into the same group & pivot. |
++----------+------------------------------------------------------------------------+
+| `group`  | Function is applied to all rows in the same group.                     |
++----------+------------------------------------------------------------------------+
+| `pivot`  | Function is applied to all rows in the same pivot.                     |
++----------+------------------------------------------------------------------------+
+| `all`    | Function is applied to all rows.                                       |
++----------+------------------------------------------------------------------------+
 
-`pivotFields`
+The value for each of these properties is the same, an array of aggregate function specs.  Each spec looks like this:
 
-:   A list of the fields (from the source, e.g. columns in a system
-    report) that we\'re pivotting by, in order.
+* `fun` : string (required)
 
-`colVals`
+  Name of the aggregate function, a key in `MIE.WC_DataVis.AGGREGATE_REGISTRY`.
 
-:   An array of all combinations of values of pivot fields which exist
-    in the data. Every element in the array is itself an array where the
-    first element is a value of the first pivot field, the second
-    element is a value of the second pivot field, etc.
+* `isHidden` : boolean
 
-`data`
+  If true, then the aggregate function is calculated, but not displayed.  One use for this is to sort based on the function result, when you don't actually care to see what the value is.
 
-:   When doing normal output, this is just an array of rows.
+* `fields` : string array
 
-    When doing grouped output, this is an array of groups. The group
-    index corresponds to the index in `rowVals` for the same group. Each
-    group is an array of rows that are in that group.
+  Names of the fields to apply the function to, for example the "sum" function takes one field.
 
-    When doing pivotted output, this is an array of groups. The group
-    index corresponds to the index in `rowVals` for the same group. Each
-    group is an array of pivots. The pivot index corresponds to the
-    index in `colVals` for the same pivot. Each pivot is an array of
-    rows that are in that group and pivot.
+* `opts` : object
 
-    However many intervening layers there are for groups and pivots, the
-    row itself has two properties.
+  Extra options that are allowed by individual aggregate functions.  A really common one is `separator`, which is used by functions that concatenate values.
 
-    `rowNum`
+### Sort
 
-    :   This is a unique identifier used to track a row. This is
-        currently used to facilitate filtering (e.g. \"hide rows 2, 3,
-        and 7\") and reordering (e.g. \"move row X above row Y\").
+The configuration of the View's sort behavior is different depending on whether the data has been grouped or pivotted.
 
-    `rowData`
+#### Plain
 
-    :   This holds the object containing the actual data.
+#### Group
+
+#### Pivot
+
+## Data Object
+
+* `isPlain`
+
+  True if the data is plain (i.e. not grouped or pivotted).
+
+* `isGroup`
+
+  True if the data is grouped.
+
+* `isPivot`
+
+  True if the data is pivotted.
+
+* `groupFields`
+
+  A list of the fields (from the source, e.g. columns in a system report) that we're grouping by, in order.
+
+* `rowVals`
+
+  An array of all combinations of values of group fields which exist in the data. Every element in the array is itself an array where the first element is a value of the first group field, the second element is a value of the second group field, etc.
+
+* `pivotFields`
+
+  A list of the fields (from the source, e.g. columns in a system report) that we're pivotting by, in order.
+
+* `colVals`
+
+  An array of all combinations of values of pivot fields which exist in the data. Every element in the array is itself an array where the first element is a value of the first pivot field, the second element is a value of the second pivot field, etc.
+
+* `data`
+
+  When doing normal output, this is just an array of rows.
+
+  When doing grouped output, this is an array of groups. The group index corresponds to the index in `rowVals` for the same group. Each group is an array of rows that are in that group.
+
+  When doing pivotted output, this is an array of groups. The group index corresponds to the index in `rowVals` for the same group. Each group is an array of pivots. The pivot index corresponds to the index in `colVals` for the same pivot. Each pivot is an array of rows that are in that group and pivot.
+
+  However many intervening layers there are for groups and pivots, the row itself has two properties.
+
+  * `rowNum`
+
+    This is a unique identifier used to track a row. This is currently used to facilitate filtering (e.g. "hide rows 2, 3, and 7") and reordering (e.g. "move row X above row Y").
+
+  * `rowData`
+
+    This holds the object containing the actual data.
 
 ### Example
 

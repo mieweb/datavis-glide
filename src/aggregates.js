@@ -202,7 +202,9 @@ function checkAggregate(defn, agg, source) {
 var Aggregate = makeSubclass(Object, function (opts) {
 	var self = this;
 
-	self.opts = opts;
+	self.opts = deepDefaults(opts, {
+		isHidden: false
+	});
 }, {
 	enabled: true,
 	fieldCount: 0,
