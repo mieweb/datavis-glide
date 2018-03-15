@@ -21,90 +21,86 @@ window.test_aggregates = function (view) {
 		agg: [{
 			fields: ['int1'],
 			type: 'number',
-			result: [undefined, 3762, 2038, 2300, 619, 216, 138, 128, 4230, undefined]
+			result: [undefined, 3762, 2038, 2300, 619, 216, 138, 128, 4230, undefined],
 		}, {
 			fields: ['int2'],
 			type: 'number',
 			result: [undefined, 3762, 2038, 2300, 619, 216, 138, 128, 4230, undefined],
-			compare: compare.numeral
 		}, {
 			fields: ['int3'],
 			type: 'number',
 			result: [undefined, 3762, 2038, 2300, 619, 216, 138, 128, 4230, undefined],
-			compare: compare.numeral
+			compare: compare.numeral,
 		}, {
 			fields: ['float1'],
 			type: 'number',
-			result: [undefined, 4085.8535856102976, 3563.2227077138227, 623.9952704976507, 420.00331514144483, 126.34235380845713, 1009.1114906484772, 245.6222131805768, 77.75871770920617, undefined]
+			result: [undefined, 4085.8535856102976, 3563.2227077138227, 623.9952704976507, 420.00331514144483, 126.34235380845713, 1009.1114906484772, 245.6222131805768, 77.75871770920617, undefined],
 		}, {
 			fields: ['float2'],
 			type: 'number',
 			result: [undefined, 4085.8535856102976, 3563.2227077138227, 623.9952704976507, 420.00331514144483, 126.34235380845713, 1009.1114906484772, 245.6222131805768, 77.75871770920617, undefined],
-			compare: compare.numeral
 		}, {
 			fields: ['float3'],
 			type: 'number',
 			result: [undefined, 4085.854, 3563.223, 623.995, 420.003, 126.342, 1009.111, 245.622, 77.759, undefined],
-			compare: compare.numeral
+			compare: compare.numeral,
 		}, {
 			fields: ['date1'],
 			type: 'date',
-			result: [undefined, '1927-06-11', '1918-10-13', '1904-03-06', '1904-02-07', '1904-02-07', '1902-12-29', '1926-12-12', '1985-07-17', undefined]
+			result: [undefined, '1927-06-11', '1918-10-13', '1904-03-06', '1904-02-07', '1904-02-07', '1902-12-29', '1926-12-12', '1985-07-17', undefined],
 		}, {
 			fields: ['date2'],
 			type: 'date',
 			result: [undefined, '1927-06-11', '1918-10-13', '1904-03-06', '1904-02-07', '1904-02-07', '1902-12-29', '1926-12-12', '1985-07-17', undefined],
-			compare: compare.moment
+			compare: compare.moment,
 		}, {
 			fields: ['date3'],
 			type: 'date',
 			result: [undefined, '1927-06-11', '1918-10-13', '1904-03-06', '1904-02-07', '1904-02-07', '1902-12-29', '1926-12-12', '1985-07-17', undefined],
-			compare: compare.moment
+			compare: compare.moment,
 		}]
 	}, {
 		fun: 'max',
 		agg: [{
 			fields: ['int1'],
 			type: 'number',
-			result: [undefined, 4768, 9559, 9777, 9966, 9934, 9671, 7649, 9921, undefined]
+			result: [undefined, 4768, 9559, 9777, 9966, 9934, 9671, 7649, 9921, undefined],
 		}, {
 			fields: ['int2'],
 			type: 'number',
 			result: [undefined, 4768, 9559, 9777, 9966, 9934, 9671, 7649, 9921, undefined],
-			compare: compare.numeral
 		}, {
 			fields: ['int3'],
 			type: 'number',
 			result: [undefined, 4768, 9559, 9777, 9966, 9934, 9671, 7649, 9921, undefined],
-			compare: compare.numeral
+			compare: compare.numeral,
 		}, {
 			fields: ['float1'],
 			type: 'number',
-			result: [undefined, 7497.945848259077, 9761.31834703292, 9744.630654275461, 9168.495238256613, 8710.055326779791, 9873.722758763914, 7342.059137229501, 7892.5880545143655, undefined]
+			result: [undefined, 7497.945848259077, 9761.31834703292, 9744.630654275461, 9168.495238256613, 8710.055326779791, 9873.722758763914, 7342.059137229501, 7892.5880545143655, undefined],
 		}, {
 			fields: ['float2'],
 			type: 'number',
 			result: [undefined, 7497.945848259077, 9761.31834703292, 9744.630654275461, 9168.495238256613, 8710.055326779791, 9873.722758763914, 7342.059137229501, 7892.5880545143655, undefined],
-			compare: compare.numeral
 		}, {
 			fields: ['float3'],
 			type: 'number',
 			result: [undefined, 7497.946, 9761.318, 9744.631, 9168.495, 8710.055, 9873.723, 7342.059, 7892.588, undefined],
-			compare: compare.numeral
+			compare: compare.numeral,
 		}, {
 			fields: ['date1'],
 			type: 'date',
-			result: [undefined, '2034-04-17', '2089-02-11', '2077-10-05', '2096-12-23', '2093-03-26', '2099-09-08', '2084-05-31', '2054-11-30', undefined]
+			result: [undefined, '2034-04-17', '2089-02-11', '2077-10-05', '2096-12-23', '2093-03-26', '2099-09-08', '2084-05-31', '2054-11-30', undefined],
 		}, {
 			fields: ['date2'],
 			type: 'date',
 			result: [undefined, '2034-04-17', '2089-02-11', '2077-10-05', '2096-12-23', '2093-03-26', '2099-09-08', '2084-05-31', '2054-11-30', undefined],
-			compare: compare.moment
+			compare: compare.moment,
 		}, {
 			fields: ['date3'],
 			type: 'date',
 			result: [undefined, '2034-04-17', '2089-02-11', '2077-10-05', '2096-12-23', '2093-03-26', '2099-09-08', '2084-05-31', '2054-11-30', undefined],
-			compare: compare.moment
+			compare: compare.moment,
 		}]
 	}];
 

@@ -1,10 +1,18 @@
 window.test_group_sort = function (view) {
 	var extract = {
 		numeral: function (x) {
-			return numeral.isNumeral(x) && x._input;
+			if (!numeral.isNumeral(x)) {
+				console.error('Argument is not a Numeral object: %O', x);
+				return null;
+			}
+			return x._input;
 		},
 		moment: function (x) {
-			return moment.isMoment(x) && x.creationData().input;
+			if (!moment.isMoment(x)) {
+				console.error('Argument is not a Moment object: %O', x);
+				return null;
+			}
+			return x.creationData().input;
 		}
 	};
 
@@ -22,7 +30,6 @@ window.test_group_sort = function (view) {
 		field: 'int2',
 		min: '1',
 		max: '9996',
-		extract: extract.numeral,
 		info: 'integer (string → number)'
 	}, {
 		field: 'int3',
@@ -39,7 +46,6 @@ window.test_group_sort = function (view) {
 		field: 'float2',
 		min: '2.4067245551437795',
 		max: '9995.851570643537',
-		extract: extract.numeral,
 		info: 'float (string → number)'
 	}, {
 		field: 'float3',
@@ -57,7 +63,7 @@ window.test_group_sort = function (view) {
 		min: '2.41',
 		max: '9,995.85',
 		extract: extract.numeral,
-		info: 'currency (string : currency → number)'
+		info: 'currency (string : currency → numeral)'
 	}, {
 		field: 'currency3',
 		min: '$2.41',
@@ -104,7 +110,8 @@ window.test_group_sort = function (view) {
 				if (si.extract) {
 					actual = si.extract(actual);
 				}
-				assert.equal(actual, si.min, si.info + ' min');
+				console.log('QUNIT << %s // %s // min >> Expected = %O, Actual = %O', si.field, si.info, si.min, actual);
+				assert.equal(actual, si.min, si.field + ' // ' + si.info + ' // min');
 				view.reset();
 				view.setGroup({fieldNames: [si.field]}, {
 					updateData: false
@@ -117,7 +124,8 @@ window.test_group_sort = function (view) {
 					if (si.extract) {
 						actual = si.extract(actual);
 					}
-					assert.equal(actual, si.max, si.info + ' max');
+					console.log('QUNIT << %s // %s // max >> Expected = %O, Actual = %O', si.field, si.info, si.max, actual);
+					assert.equal(actual, si.max, si.field + ' // ' + si.info + ' // max');
 					return next();
 				});
 			});
