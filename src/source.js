@@ -840,7 +840,7 @@ Source.prototype.setConversionTypeInfo = function (data, typeInfo) {
 				fti.needsDecoding = true;
 				fti.internalType = 'numeral';
 
-				if (data.length > 0 && (isInt(data[0][f]) || isFloat(data[0][f]))) {
+				if (data.length > 0 && (isInt(data[0][f].value) || isFloat(data[0][f].value))) {
 
 					// Looks like it can be decoded into a primitive number, so there's no need for Numeral's
 					// advanced parsing.
@@ -892,27 +892,45 @@ Source.prototype.convertCell = function (row, field) {
 		if (cell.orig === undefined) {
 			cell.orig = cell.value;
 		}
-		if (typeof cell.value === 'string') {
+
+		if (typeof cell.value === 'number') {
 			switch (fti.internalType) {
+			case 'primitive':
+				// number -> primitive ... Nothing to do.
+				break;
 			case 'numeral':
+				// number -> numeral
 				cell.value = numeral(cell.value);
 				break;
+			default:
+				log.error('Unable to convert cell value, invalid internal type: field = "%s" ; type = %s ; internalType = %s ; valueTypeOf = %s', field, fti.type, fti.internalType, typeof(cell.value));
+			}
+		}
+		else if (typeof cell.value === 'string') {
+			switch (fti.internalType) {
 			case 'primitive':
+				// string -> primitive
 				if (isInt(cell.value)) {
 					cell.value = toInt(cell.value);
 				}
 				else if (isFloat(cell.value)) {
 					cell.value = toFloat(cell.value);
 				}
+				else {
+					log.error('Unable to convert cell value, cannot decode to primitive number: field = "%s" ; type = %s ; internalType = %s ; valueTypeOf = %s', field, fti.type, fti.internalType, typeof(cell.value));
+				}
+				break;
+			case 'numeral':
+				// string -> numeral
+				cell.value = numeral(cell.value);
 				break;
 			default:
-				log.error('Unable to convert cell value, invalid internal type "%s": { field = "%s", type = "%s", valueTypeOf = "%s" }',
-									fti.internalType, field, fti.type, typeof(cell.value));
+				log.error('Unable to convert cell value, invalid internal type: field = "%s" ; type = %s ; internalType = %s ; valueTypeOf = %s', field, fti.type, fti.internalType, typeof(cell.value));
 			}
 		}
-		else if (typeof cell.value !== 'number' && (window.numeral ? !window.numeral.isNumeral(cell.value) : true)) {
+		else if (window.numeral == null || !numeral.isNumeral(cell.value)) {
 			log.error('Unable to convert cell value: { field = "%s", type = "%s", valueTypeOf = "%s" }',
-								field, fti.type, typeof(cell.value));
+				field, fti.type, typeof(cell.value));
 		}
 		break;
 	case 'date':
@@ -946,6 +964,9 @@ Source.prototype.convertCell = function (row, field) {
 
 Source.prototype.convertAll = function (data, field) {
 	var self = this;
+	var fti = self.cache.typeInfo.get(field);
+
+	debug.info('SOURCE // CONVERSION', 'Converting all values: field = "%s" ; type = %s ; internalType = %s ; valueTypeOf = %s', field, fti.type, fti.internalType, typeof(data[0].rowData[field].value));
 
 	_.each(data, function (row) {
 		self.convertCell(row.rowData, field);
