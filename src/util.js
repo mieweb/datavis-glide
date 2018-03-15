@@ -81,8 +81,32 @@ function universalCmp(a, b) {
 	return a === b ? 0 : a < b ? -1 : 1;
 }
 
+// IE does not have Number.EPSILON so set it according to 2 ^ -52 which what it "should" be for
+// JavaScript floating point arithmetic.  (JavaScript uses doubles, which are 64 bits wide and have
+// a 53-bit significand in the IEEE 754 floating point specification.)
+//
+// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/EPSILON
+
+if (Number.EPSILON == null) {
+	Number.EPSILON = Math.pow(2, -52);
+}
+
 var getComparisonFn = (function () {
 	var cmpFn = {};
+
+	var floatSafe_equalp = function (n, m) {
+		var epsilon = Number.EPSILON;
+
+		/*
+		var biggerEpsilon = 0.0000000001;
+
+		if (Math.abs(n - m) > epsilon && Math.abs(n - m) < biggerEpsilon) {
+			log.error('FLOATING POINT WEIRDNESS: %s <=> %s', n, m);
+		}
+		*/
+
+		return Math.abs(n - m) < epsilon;
+	};
 
 	// Dates and times are stored as Moment instances, so we need to compare them accordingly.
 
@@ -108,25 +132,49 @@ var getComparisonFn = (function () {
 		return a < b ? -1 : a > b ? 1 : 0;
 	};
 
-	cmpFn.number = function (a, b) {
-		if (window.numeral === undefined || (!numeral.isNumeral(a) && !numeral.isNumeral(b))) {
-			return a < b ? -1 : a > b ? 1 : 0;
-		}
-
-		if (numeral.isNumeral(a)) {
-			if (numeral.isNumeral(b)) {
-				return a._value < b._value ? -1 : a._value > b._value ? 1 : 0;
+	if (EXPERIMENTAL_FEATURES['Safe Float Equality']) {
+		cmpFn.number = function (a, b) {
+			if (window.numeral === undefined || (!numeral.isNumeral(a) && !numeral.isNumeral(b))) {
+				return floatSafe_equalp(a, b) ? 0 : a < b ? -1 : 1;
 			}
-			else {
-				return a._value < b ? -1 : a._value > b ? 1 : 0;
-			}
-		}
-		else if (numeral.isNumeral(b)) {
-			return a < b._value ? -1 : a > b._value ? 1 : 0;
-		}
 
-		throw new Error('IMPOSSIBLE');
-	};
+			if (numeral.isNumeral(a)) {
+				if (numeral.isNumeral(b)) {
+					return floatSafe_equalp(a._value, b._value) ? 0 : a._value < b._value ? -1 : 1;
+				}
+				else {
+					return floatSafe_equalp(a._value, b) ? 0 : a._value < b ? -1 : 1;
+				}
+			}
+			else if (numeral.isNumeral(b)) {
+				return floatSafe_equalp(a, b._value) ? 0 : a < b._value ? -1 : 1;
+			}
+
+			throw new Error('IMPOSSIBLE');
+		};
+	}
+	else {
+		cmpFn.number = function (a, b) {
+			if (window.numeral === undefined || (!numeral.isNumeral(a) && !numeral.isNumeral(b))) {
+				return a < b ? -1 : a > b ? 1 : 0;
+			}
+
+			if (numeral.isNumeral(a)) {
+				if (numeral.isNumeral(b)) {
+					return a._value < b._value ? -1 : a._value > b._value ? 1 : 0;
+				}
+				else {
+					return a._value < b ? -1 : a._value > b ? 1 : 0;
+				}
+			}
+			else if (numeral.isNumeral(b)) {
+				return a < b._value ? -1 : a > b._value ? 1 : 0;
+			}
+
+			throw new Error('IMPOSSIBLE');
+		};
+	}
+
 	cmpFn.currency = cmpFn.number;
 
 	cmpFn.array = function (a, b) {

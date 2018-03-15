@@ -92,7 +92,8 @@
 	var gensymSeed = 0;
 
 	var EXPERIMENTAL_FEATURES = {
-		'Reorder Control Fields': true
+		'Reorder Control Fields': true,
+		'Safe Float Equality': true
 	};
 
 	$INCLUDE('src/jquery.js');
