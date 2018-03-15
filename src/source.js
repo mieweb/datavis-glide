@@ -966,11 +966,18 @@ Source.prototype.convertAll = function (data, field) {
 	var self = this;
 	var fti = self.cache.typeInfo.get(field);
 
+	if (!fti.needsDecoding) {
+		return;
+	}
+
 	debug.info('SOURCE // CONVERSION', 'Converting all values: field = "%s" ; type = %s ; internalType = %s ; valueTypeOf = %s', field, fti.type, fti.internalType, typeof(data[0].rowData[field].value));
 
 	_.each(data, function (row) {
 		self.convertCell(row.rowData, field);
 	});
+
+	fti.deferDecoding = false;
+	fti.needsDecoding = false;
 };
 
 // #clearCachedData {{{2

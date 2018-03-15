@@ -405,8 +405,13 @@ View.prototype.sort = function (cont) {
 
 			debug.info('VIEW (' + self.name + ') // SORT', 'Decoding data before sorting {spec = %O, typeInfo = %O}', spec, fti);
 
+			// Since this happens after group/pivot, we need to handle those situations where the data
+			// isn't just a flat array full of objects.
+
 			if (self.data.isPlain) {
+				console.log('XXX FTI = %O', fti);
 				self.source.convertAll(self.data.data, fti.field);
+				console.log('XXX FTI = %O', fti);
 			}
 			else {
 				_.each(self.data.data, function (groupedRows) {
@@ -420,9 +425,6 @@ View.prototype.sort = function (cont) {
 					}
 				});
 			}
-
-			fti.deferDecoding = false;
-			fti.needsDecoding = false;
 		}
 
 		return cmp;
@@ -992,9 +994,9 @@ View.prototype.filter = function (cont) {
 			debug.info('VIEW (' + self.name + ') // FILTER',
 								 'Decoding data before filtering: { field = "%s", type = "%s" }',
 								 fti.field, fti.type);
+
+			// Since this happens before group/pivot, we only need to handle the data as if it were plain.
 			self.source.convertAll(self.data.data, fti.field);
-			fti.deferDecoding = false;
-			fti.needsDecoding = false;
 		}
 	});
 
