@@ -409,9 +409,7 @@ View.prototype.sort = function (cont) {
 			// isn't just a flat array full of objects.
 
 			if (self.data.isPlain) {
-				console.log('XXX FTI = %O', fti);
 				self.source.convertAll(self.data.data, fti.field);
-				console.log('XXX FTI = %O', fti);
 			}
 			else {
 				_.each(self.data.data, function (groupedRows) {
@@ -2407,86 +2405,77 @@ View.prototype.getData = function (cont) {
 	self.fire(View.events.fetchDataBegin);
 	return self.source.getData(function (data) {
 		return self.getTypeInfo(function (typeInfo) {
-			self.typeInfo = typeInfo;
+			self.fire(View.events.fetchDataEnd);
+			self.fire(View.events.workBegin);
 
-			self.prefs.prime(function () {
-				if (!self.isBoundToPrefs) {
-					self.prefs.bind('view', self);
-					self.isBoundToPrefs = true;
-				}
+			var ops = {
+				filter: false,
+				group: false,
+				pivot: false,
+				sort: false
+			};
 
-				self.fire(View.events.fetchDataEnd);
-				self.fire(View.events.workBegin);
+			self.data = {
+				isPlain: true,
+				isGroup: false,
+				isPivot: false,
+				data: [],
+				dataByRowId: []
+			};
 
-				var ops = {
-					filter: false,
-					group: false,
-					pivot: false,
-					sort: false
-				};
-
-				self.data = {
-					isPlain: true,
-					isGroup: false,
-					isPivot: false,
-					data: [],
-					dataByRowId: []
-				};
-
-				_.each(data, function (rowData, rowNum) {
-					self.data.data.push({
-						rowNum: rowNum,
-						rowData: rowData
-					});
-					self.data.dataByRowId[rowNum] = rowData;
+			_.each(data, function (rowData, rowNum) {
+				self.data.data.push({
+					rowNum: rowNum,
+					rowData: rowData
 				});
+				self.data.dataByRowId[rowNum] = rowData;
+			});
 
-				return self.filter(function (didFilter, filteredData) {
-					ops.filter = didFilter;
-					if (didFilter) {
-						self.data.data = filteredData;
-					}
-					ops.group = self.group();
-					ops.pivot = self.pivot();
-					return self.aggregate(function () {
-						return self.sort(function (didSort) {
-							ops.sort = didSort;
+			return self.filter(function (didFilter, filteredData) {
+				ops.filter = didFilter;
+				if (didFilter) {
+					self.data.data = filteredData;
+				}
+				ops.group = self.group();
+				ops.pivot = self.pivot();
+				return self.aggregate(function () {
+					return self.sort(function (didSort) {
+						ops.sort = didSort;
 
-							var workEndObj = {
-								isPlain: self.data.isPlain,
-								isGroup: self.data.isGroup,
-								isPivot: self.data.isPivot
-							};
+						var workEndObj = {
+							isPlain: self.data.isPlain,
+							isGroup: self.data.isGroup,
+							isPivot: self.data.isPivot
+						};
 
-							if (self.data.isPlain) {
-								workEndObj.numRows = self.getRowCount();
-								if (self.isFiltered()) {
-									workEndObj.totalRows = self.getTotalRowCount();
-								}
+						if (self.data.isPlain) {
+							workEndObj.numRows = self.getRowCount();
+							if (self.isFiltered()) {
+								workEndObj.totalRows = self.getTotalRowCount();
 							}
-							else if (self.data.isGroup) {
-								workEndObj.numGroups = self.data.data.length;
-							}
-							else if (self.data.isPivot) {
-								workEndObj.numPivots = 0;
-							}
+						}
+						else if (self.data.isGroup) {
+							workEndObj.numGroups = self.data.data.length;
+						}
+						else if (self.data.isPivot) {
+							workEndObj.numPivots = 0;
+						}
 
-							if (self.prefs != null) {
-								self.prefs.save();
-							}
+						if (self.prefs != null) {
+							self.prefs.save();
+						}
 
-							self.lastOps = ops;
-							self.fire(View.events.workEnd, null, workEndObj, ops);
+						self.lastOps = ops;
+						self.fire(View.events.workEnd, null, workEndObj, ops);
 
-							self.lock.unlock();
-							debug.info('VIEW (' + self.name + ')', 'Got new data: %O', self.data);
-							if (typeof cont === 'function') {
-								return cont(self.data);
-							}
-						}); // -- self.sort()
-					}); // -- self.aggregate()
-				}); // -- self.filter()
-			}); // -- self.prefs.prime()
+						self.lock.unlock();
+						debug.info('VIEW (' + self.name + ')', 'Got new data: %O', self.data);
+						if (typeof cont === 'function') {
+							return cont(self.data);
+						}
+					}); // -- self.sort()
+				}); // -- self.aggregate()
+			}); // -- self.filter()
 		}); // -- self.getTypeInfo()
 	}); // -- self.getData()
 };
@@ -2500,19 +2489,27 @@ View.prototype.getData = function (cont) {
 View.prototype.getTypeInfo = function (cont) {
 	var self = this;
 
+	if (cont != null && typeof cont !== 'function') {
+		throw new Error('Call Error: `cont` must be null or a function');
+	}
+
 	if (self.typeInfo === undefined) {
 		return self.source.getTypeInfo(function (typeInfo) {
 			self.typeInfo = typeInfo;
-
 			return self.getTypeInfo(cont);
 		});
 	}
 
 	self.fire(View.events.getTypeInfo, null, self.typeInfo);
 
-	if (typeof cont === 'function') {
-		return cont(self.typeInfo);
-	}
+	return self.prefs.prime(function () {
+		if (!self.isBoundToPrefs) {
+			self.prefs.bind('view', self);
+			self.isBoundToPrefs = true;
+		}
+
+		return cont && cont(self.typeInfo);
+	});
 };
 
 // #clearCache {{{2
@@ -2545,26 +2542,34 @@ View.prototype.clearSourceData = function () {
 View.prototype.reset = function (noUpdate) {
 	var self = this;
 
-	self.clearSort(true, true);
-	self.clearFilter({
-		updateData: false
-	});
-	self.clearAggregate({
-		updateData: false
-	});
-	self.clearPivot({
-		updateData: false
-	});
-	self.clearGroup({
-		updateData: false
-	});
+	self.getTypeInfo(function () {
+		debug.info('VIEW (' + self.name + ')', 'RESET!');
 
-	if (noUpdate) {
-		delete self.lastOps;
-		return;
-	}
+		self.clearSort(true, true);
 
-	self.getData();
+		self.clearFilter({
+			updateData: false
+		});
+
+		self.clearAggregate({
+			updateData: false
+		});
+
+		self.clearPivot({
+			updateData: false
+		});
+
+		self.clearGroup({
+			updateData: false
+		});
+
+		if (noUpdate) {
+			delete self.lastOps;
+			return;
+		}
+
+		self.getData();
+	});
 };
 
 // #getUniqueVals {{{2
