@@ -120,11 +120,9 @@ mixinDebugging(Prefs, function () {
 
 /**
  * Initialize the prefs by loading the "current" perspective from the backend.
- *
- * @param {function} [cont]
  */
 
-Prefs.prototype.init = function (cont) {
+Prefs.prototype.init = function () {
 	var self = this;
 
 	if (self.isInitialized) {
@@ -734,7 +732,9 @@ Prefs.prototype.reset = function (cont) {
 
 	self.backend.reset(function () {
 		self.isInitialized = false;
-		self.init(function () {
+		self.init();
+		self.isPrimed = false;
+		self.prime(function () {
 			_.each(self.modules, function (module, moduleName) {
 				if (typeof module.reset === 'function') {
 					self.debug('Resetting module: moduleName = %s', moduleName);
@@ -1449,7 +1449,6 @@ PrefsModuleView.prototype.save = function () {
 		prefs.filter = deepCopy(filterSpec);
 		walkObj(prefs.filter, function (x) {
 			if (window.numeral && numeral.isNumeral(x)) {
-				console.log('### NUMERAL = %d', x._value);
 				return x._value;
 			}
 			else {
