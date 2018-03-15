@@ -151,6 +151,8 @@ Prefs.prototype.prime = function (cont) {
 
 	self.init();
 
+	self.debug('PRIMING!');
+
 	return self.backend.getPerspectives(function (names) {
 		self.availablePerspectives = names;
 

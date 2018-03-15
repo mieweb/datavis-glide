@@ -197,13 +197,13 @@ var View = function (source, name, opts) {
 
 	if (self.opts.prefs != null) {
 		self.prefs = opts.prefs;
-		self.isBoundToPrefs = false;
 	}
 	else {
 		debug.info('VIEW (' + self.name + ')', 'Creating new Prefs instance');
 		self.prefs = new Prefs(self.name);
-		self.isBoundToPrefs = false;
 	}
+
+	self.isBoundToPrefs = false;
 };
 
 View.prototype = Object.create(Object.prototype);
@@ -293,11 +293,9 @@ View.prototype.getTotalRowCount = function () {
  * @param {string} col Name of the field to sort by.
  *
  * @param {string} dir Direction to sort by, either "ASC" or "DESC."
- *
- * @param {GridTable~Progress} progress
  */
 
-View.prototype.setSort = function (spec, progress, noUpdate, dontTell) {
+View.prototype.setSort = function (spec, opts) {
 	var self = this
 		, args = Array.prototype.slice.call(arguments);
 
@@ -307,22 +305,27 @@ View.prototype.setSort = function (spec, progress, noUpdate, dontTell) {
 		}, 'Waiting to set sort: ' + JSON.stringify(spec));
 	}
 
+	opts = deepDefaults(opts, {
+		sendEvent: true,
+		dontSendEventTo: [],
+		updateData: true
+	});
+
 	debug.info('VIEW (' + self.name + ') // SET SORT', 'spec = %O', spec);
 
 	self.sortSpec = spec;
-	self.sortProgress = progress;
 
-	self.fire(View.events.sortSet, {
-		notTo: dontTell
-	}, spec);
+	if (opts.sendEvent) {
+		self.fire(View.events.sortSet, {
+			notTo: opts.dontSendEventTo
+		}, spec);
+	}
 
 	self.clearCache();
 
-	if (noUpdate) {
-		return true;
+	if (opts.updateData) {
+		self.getData();
 	}
-
-	self.getData();
 
 	return true;
 };
@@ -341,8 +344,8 @@ View.prototype.getSort = function () {
  * Clear the sort spec for the view.
  */
 
-View.prototype.clearSort = function (noUpdate, dontTell) {
-	return this.setSort(null, null, noUpdate, dontTell);
+View.prototype.clearSort = function (opts) {
+	return this.setSort(null, opts);
 };
 
 // #sort {{{2
@@ -2539,37 +2542,43 @@ View.prototype.clearSourceData = function () {
  * "clear" functions, but doesn't notify consumers that there's been work done until the end.
  */
 
-View.prototype.reset = function (noUpdate) {
+View.prototype.reset = function (opts) {
 	var self = this;
 
-	self.getTypeInfo(function () {
-		debug.info('VIEW (' + self.name + ')', 'RESET!');
-
-		self.clearSort(true, true);
-
-		self.clearFilter({
-			updateData: false
-		});
-
-		self.clearAggregate({
-			updateData: false
-		});
-
-		self.clearPivot({
-			updateData: false
-		});
-
-		self.clearGroup({
-			updateData: false
-		});
-
-		if (noUpdate) {
-			delete self.lastOps;
-			return;
-		}
-
-		self.getData();
+	opts = deepDefaults(opts, {
+		sendEvent: true,
+		dontSendEventTo: [],
+		updateData: true
 	});
+
+	debug.info('VIEW (' + self.name + ')', 'RESET!');
+
+	self.clearSort({
+		updateData: false
+	});
+
+	self.clearFilter({
+		updateData: false
+	});
+
+	self.clearAggregate({
+		updateData: false
+	});
+
+	self.clearPivot({
+		updateData: false
+	});
+
+	self.clearGroup({
+		updateData: false
+	});
+
+	if (!opts.updateData) {
+		delete self.lastOps;
+		return;
+	}
+
+	self.getData();
 };
 
 // #getUniqueVals {{{2
