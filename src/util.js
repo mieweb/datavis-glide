@@ -2083,16 +2083,16 @@ function format(colConfig, typeInfo, cell, opts) {
 		}
 	}
 
-	// Handle zero dates like Webchart uses all the time.  Turn them into the empty string, otherwise
-	// Moment will say "Invalid Date".
-
 	if (result == null) {
 		result = '';
 	}
 	else if (['date', 'datetime'].indexOf(t) >= 0
-			&& ((window.moment && window.moment.isMoment(cell.value) && !cell.value.isValid())
-					|| (typeof(cell.value) === 'string' && (cell.value === '0000-00-00'
-																									|| cell.value === '0000-00-00 00:00:00')))) {
+		&& ((window.moment && window.moment.isMoment(cell.value) && !cell.value.isValid())
+			|| ['', '0000-00-00', '0000-00-00 00:00:00'].indexOf(cell.value) >= 0)) {
+
+		// Handle zero dates like Webchart uses all the time.  Turn them into the empty string,
+		// otherwise Moment will say "Invalid Date".
+
 		result = '';
 	}
 	else {
