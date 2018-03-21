@@ -130,7 +130,7 @@ var InvalidAggregateError = makeSubclass(ViewError);
  * An array of the fields to which the aggregate function applies.  For functions that don't require
  * any fields, this will be an empty array.
  *
- * @property {Array.<Grid~ColConfig} colConfig
+ * @property {Array.<Grid~ColConfig>} colConfig
  * An array of column configuration objects which correspond to `fields`.
  *
  * @property {Array.<Source~TypeInfo>} typeInfo

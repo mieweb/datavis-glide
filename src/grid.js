@@ -362,22 +362,64 @@ GridError.prototype.constructor = GridError;
 // JSDoc Types {{{2
 
 /**
- * @typedef Grid~Defn
+ * @typedef {object} Grid~Defn
  *
  * @property {Object} table
- * @property {string} table.id
- * @property {Array.<Grid~Defn_Column>} [table.columns]
- */
-
-/**
- * @typedef Grid~Defn_Column
  *
- * @property {string} field The name of the field (from the data source) we're describing.
- * @property {string} displayText What to show in the column header (instead of the field name).
+ * @property {string} table.id
+ *
+ * @property {Array.<Grid~ColConfig>} [table.columns]
+ * Specifies the order that fields are rendered in plain output.  If not provided, all fields are
+ * rendered in the order received from the source; fields with names starting with an underscore are
+ * not shown.  If provided, only those fields specified are rendered, and in the order indicated.
  */
 
 /**
- * @typedef Grid~Features
+ * @typedef {object} Grid~ColConfig
+ *
+ * @property {string} field
+ * We're configuring the output of this field.
+ *
+ * @property {string} [displayText]
+ * What to show as the name of the column; the default is to show the field name.
+ *
+ * @property {string} [format]
+ * If the value is a number or currency: a Numeral format string used to render the value.  If the
+ * value is a date, datetime, or time: a Moment format string used to render the value.  Otherwise,
+ * this option is not used.  The default format strings are:
+ *
+ *   - number: [none]
+ *   - currency: `$0,0.00` (e.g. "$1,000.23")
+ *   - date: `LL` (e.g. "September 4, 1986")
+ *   - datetime: `LLL` (e.g. "September 4, 1986 8:30 PM")
+ *
+ * @property {string} [format_dateOnly="LL"]
+ * When `hideMidnight = true` this is the Moment format string used to display just the date
+ * component of the datetime.  Note that the time component is still present in the value when it is
+ * formatted, so don't reference the hours/minutes/seconds from the format string.
+ *
+ * @property {boolean} [hideMidnight=false]
+ * If the value is a datetime, and this value is true, then the time component is not rendered when
+ * it's midnight (00:00:00).  If the value is not a datetime, this option is not used.
+ *
+ * @property {string} [cellAlignment]
+ * How to align the value within the cell horizontally.  Possible values:
+ *
+ *   - `left`
+ *   - `center`
+ *   - `right`
+ *
+ * The default depends on the type of the field.  Strings, dates, datetimes, and times are
+ * left-aligned by default.  Numbers and currencies are right-aligned by default.
+ *
+ * @property {boolean} [allowHtml=false]
+ * If true and the type of the field is a string, the value is interpreted as HTML and the resulting
+ * nodes are inserted into the table result.  When exporting to CSV, the value emitted will be the
+ * text nodes only.
+ */
+
+/**
+ * @typedef {object} Grid~Features
  *
  * @property {boolean} [footer=false] If true, then a footer is shown at the bottom of the table.
  * This is automatically enabled if `defn.table.footer` is provided.

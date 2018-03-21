@@ -2117,6 +2117,8 @@ function format(colConfig, typeInfo, cell, opts) {
 				}
 			}
 			else {
+				// FIXME: Make this work without Moment.
+
 				var m = moment(cell.value);
 				if (colConfig.hideMidnight && m.hour() === 0 && m.minute() === 0 && m.second() === 0) {
 					result = m.format(format_dateOnly);
