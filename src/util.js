@@ -2065,6 +2065,7 @@ function format(colConfig, typeInfo, cell, opts) {
 
 	var t = opts.overrideType || typeInfo.type;
 	var format = colConfig.format;
+	var format_dateOnly = colConfig.format_dateOnly;
 
 	// Set default formatting strings for some types.  Note that we're NOT setting one for generic
 	// numbers, because they are often used in different ways (e.g. an ID should have no commas).
@@ -2081,6 +2082,10 @@ function format(colConfig, typeInfo, cell, opts) {
 			format = '$0,0.00';
 			break;
 		}
+	}
+
+	if (format_dateOnly == null && t === 'datetime') {
+		format_dateOnly = 'LL';
 	}
 
 	if (result == null) {
@@ -2104,10 +2109,21 @@ function format(colConfig, typeInfo, cell, opts) {
 			}
 
 			if (window.moment && window.moment.isMoment(cell.value)) {
-				result = cell.value.format(format);
+				if (colConfig.hideMidnight && cell.value.hour() === 0 && cell.value.minute() === 0 && cell.value.second() === 0) {
+					result = cell.value.format(format_dateOnly);
+				}
+				else {
+					result = cell.value.format(format);
+				}
 			}
 			else {
-				result = moment(cell.value).format(format);
+				var m = moment(cell.value);
+				if (colConfig.hideMidnight && m.hour() === 0 && m.minute() === 0 && m.second() === 0) {
+					result = m.format(format_dateOnly);
+				}
+				else {
+					result = m.format(format);
+				}
 			}
 			break;
 		case 'number':
