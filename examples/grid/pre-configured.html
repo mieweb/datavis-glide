@@ -57,47 +57,65 @@ $(document).ready(function () {
 		type: 'string'
 	}]);
 
-	var loadView = function () {
-		var view = new MIE.WC_DataVis.View(source, 'Kitchen Sink', {
-			prefs: prefs
-		});
-
-		var grid = new MIE.WC_DataVis.Grid('grid', view, {
-			id: 'grid',
-			prefs: prefs,
-			table: {
-				features: {
-					floatingHeader: false
-				},
-				columns: [{
-					field: 'Order ID'
-				}, {
-					field: 'Product'
-				}, {
-					field: 'Category'
-				}, {
-					field: 'Amount',
-					format: '$0,0.00'
-				}, {
-					field: 'Date'
-				}, {
-					field: 'Country'
-				}]
-			},
-			source: source
-		}, {
-			title: 'Fruit Sales',
-			showControls: true
-		});
-	};
-
 	var prefs = new MIE.WC_DataVis.Prefs('example_pre_configured');
+
 	prefs.addPerspective('Pre-Configured', {
 		view: {
 			group: { fieldNames: ['Product'] },
-			pivot: { fieldNames: ['Country'] }
+			pivot: { fieldNames: ['Country'] },
+			aggregate: {
+				cell: [{
+					fun: 'min',
+					fields: ['Date']
+				}],
+				group: [{
+					fun: 'min',
+					fields: ['Date']
+				}],
+				pivot: [{
+					fun: 'min',
+					fields: ['Date']
+				}],
+				all: [{
+					fun: 'min',
+					fields: ['Date']
+				}]
+			}
 		}
-	}, { isConstant: true }, loadView, { onDuplicate: 'nothing' });
+	});
+
+	var view = new MIE.WC_DataVis.View(source, 'Kitchen Sink', {
+		prefs: prefs
+	});
+
+	var grid = new MIE.WC_DataVis.Grid('grid', view, {
+		id: 'grid',
+		prefs: prefs,
+		table: {
+			features: {
+				floatingHeader: false
+			},
+			columns: [{
+				field: 'Order ID'
+			}, {
+				field: 'Product'
+			}, {
+				field: 'Category'
+			}, {
+				field: 'Amount',
+				format: '$0,0.00'
+			}, {
+				field: 'Date',
+				format: 'M/D/YY'
+			}, {
+				field: 'Country'
+			}]
+		},
+		source: source
+	}, {
+		title: 'Fruit Sales',
+		showControls: true
+	});
 
 	jQuery('#feature_header').on('click', function () {
 		jQuery('#feature_list').toggle();
