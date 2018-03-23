@@ -2109,7 +2109,7 @@ function format(fcc, fti, cell, opts) {
 			}
 
 			if (window.moment && window.moment.isMoment(cell.value)) {
-				if (fcc.hideMidnight && cell.value.hour() === 0 && cell.value.minute() === 0 && cell.value.second() === 0) {
+				if (t === 'datetime' && fcc.hideMidnight && cell.value.hour() === 0 && cell.value.minute() === 0 && cell.value.second() === 0) {
 					result = cell.value.format(format_dateOnly);
 				}
 				else {
@@ -2120,7 +2120,7 @@ function format(fcc, fti, cell, opts) {
 				// FIXME: Make this work without Moment.
 
 				var m = moment(cell.value);
-				if (fcc.hideMidnight && m.hour() === 0 && m.minute() === 0 && m.second() === 0) {
+				if (t === 'datetime' && fcc.hideMidnight && m.hour() === 0 && m.minute() === 0 && m.second() === 0) {
 					result = m.format(format_dateOnly);
 				}
 				else {

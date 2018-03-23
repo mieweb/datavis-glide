@@ -1914,7 +1914,9 @@ GridTablePlain.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 					var cell = row.rowData[field];
 
 					var td = jQuery('<td>');
-					var value = format(fcc, typeInfo.get(field), cell);
+					var value = format(fcc, typeInfo.get(field), cell, {
+						debug: field === 'Birth Date'
+					});
 
 					if (value instanceof Element || value instanceof jQuery) {
 						td.append(value);
@@ -2033,6 +2035,8 @@ GridTablePlain.prototype.drawFooter = function (columns, data, typeInfo) {
 	var self = this;
 	var tr = jQuery('<tr>');
 
+	var colConfig = self.grid.colConfig;
+
 	if (self.features.rowSelect) {
 		self.ui.checkAll_tfoot = jQuery('<input>', { 'name': 'checkAll', 'type': 'checkbox' })
 			.on('change', function (evt) {
@@ -2054,36 +2058,45 @@ GridTablePlain.prototype.drawFooter = function (columns, data, typeInfo) {
 		self.setCss(td, field);
 		self.setAlignment(td, fcc, typeInfo.get(field));
 
-		if (footerConfig !== undefined) {
-			debug.info('GRID TABLE - PLAIN // FOOTER { field = "' + field + '" }', 'Creating footer using config: %O', footerConfig);
-			switch (typeof footerConfig.aggregate) {
-			case 'function':
-				agg = footerConfig.aggregate;
-				break;
-			case 'string':
-				if (typeof AGGREGATE_REGISTRY.get(footerConfig.aggregate) === undefined) {
-					throw new Error('Footer config for field "' + field + '": requested aggregate function "' + footerConfig.aggregate + '" does not exist; supported aggregates are: ' + JSON.stringify(AGGREGATE_REGISTRY.keys()));
-				}
-				else {
-					agg = AGGREGATE_REGISTRY.get(footerConfig.aggregate);
-				}
-				break;
-			default:
-				throw new Error('Footer config for field "' + field + '": `aggregate` must be a function or string');
+		if (footerConfig != null) {
+			// Although the footer config is an aggregate spec, there is one place we allow more
+			// flexibility.  If the fields aren't set, use the field for the column in which we're
+			// displaying this footer.  This is merely a convenience for the most common case.
+
+			if (footerConfig.fields == null) {
+				footerConfig.fields = [field];
 			}
 
-			aggFun = agg.fun({field: field, type: colTypeInfo.type});
-			aggType = agg.type;
-			aggResult = format(fcc, typeInfo.get(field), aggFun(data.data), {
-				overrideType: aggType
-			});
+			debug.info('GRID TABLE - PLAIN // FOOTER - ' + field, 'Creating footer using config: %O', footerConfig);
+
+			var aggInfo = new AggregateInfo('all', footerConfig, 0, colConfig, typeInfo, null /* TODO */);
+			var aggResult = aggInfo.instance.calculate(data.data);
+			var aggResult_formatted;
+
+			if (aggInfo.instance.inheritFormatting) {
+				aggResult_formatted = format(aggInfo.colConfig[0], aggInfo.typeInfo[0], aggResult, {
+					overrideType: aggInfo.instance.getType(),
+					debug: true
+				});
+			}
+			else {
+				aggResult_formatted = format(null, null, aggResult, {
+					overrideType: aggInfo.instance.getType(),
+					debug: true
+				});
+			}
+
+			if (aggInfo.debug) {
+				debug.info('GRID TABLE - PLAIN // FOOTER - ' + field, 'Aggregate result: %s',
+					JSON.stringify(aggResult));
+			}
 
 			switch (typeof footerConfig.format) {
 			case 'function':
-				footerVal = footerConfig.format(aggResult);
+				footerVal = footerConfig.format(aggResult_formatted);
 				break;
 			case 'string':
-				footerVal = sprintf(footerConfig.format, aggResult);
+				footerVal = sprintf(footerConfig.format, aggResult_formatted);
 				break;
 			default:
 				throw new Error('Footer config for field "' + field + '": `format` must be a function or a string');

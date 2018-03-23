@@ -1026,6 +1026,33 @@ AGGREGATE_REGISTRY.set('sumOverSum', SumOverSumAggregate);
 // AggregateInfo {{{1
 
 /**
+ * Create a new AggregateInfo instance.
+ *
+ * @param {string} aggType
+ * What kind of aggregate to construct.
+ *
+ * @param {View~AggregateSpec} spec
+ * The specification of the aggregate function.
+ *
+ * @param {number} [aggNum]
+ * What number this aggregate function is.  Optional, because this information is not useful in all
+ * contexts (e.g. footer aggregates, because there can only ever be one for each field).
+ *
+ * @param {OrdMap} [colConfig]
+ * Column configuration for all fields; requirement depends upon the aggregate function.
+ *
+ * @param {OrdMap} [typeInfo]
+ * Type information for all fields; requirement depends upon the aggregate function, but is strongly
+ * recommended (only some basic aggregate functions like "count" don't need it).
+ *
+ * @param {function} [decode]
+ * A function which is used to decode all the data in the fields over which the aggregate function
+ * is applied.
+ *
+ * @class
+ *
+ * Represents information about an aggregate function.
+ *
  * @property {number} aggNum
  * The aggregate number; used to correlate with the results.
  *
@@ -1055,7 +1082,7 @@ AGGREGATE_REGISTRY.set('sumOverSum', SumOverSumAggregate);
  * If true, then debugging messages are output for this aggregate.
  */
 
-var AggregateInfo = makeSubclass(Object, function (aggType, spec, aggNum, colConfig, typeInfo, maybeDecode) {
+var AggregateInfo = makeSubclass(Object, function (aggType, spec, aggNum, colConfig, typeInfo, decode) {
 	var self = this;
 
 	self.aggNum = aggNum;
@@ -1066,6 +1093,36 @@ var AggregateInfo = makeSubclass(Object, function (aggType, spec, aggNum, colCon
 	self.colConfig = [];
 	self.typeInfo = [];
 	self.debug = spec.debug;
+
+	if (typeof aggType !== 'string') {
+		throw new Error('Call Error: `aggType` must be a string');
+	}
+
+	if (!_.isObject(spec)) {
+		throw new Error('Call Error: `spec` must be an object');
+	}
+	if (typeof spec.fun !== 'string') {
+		throw new Error('Call Error: `spec.fun` must be a string');
+	}
+	if (spec.fields != null && !_.isArray(spec.fields)) {
+		throw new Error('Call Error: `spec.fields` must be null or an array')
+	}
+
+	if (aggNum != null && typeof aggNum !== 'number') {
+		throw new Error('Call Error: `aggNum` must be null or a number');
+	}
+
+	if (colConfig != null && !(colConfig instanceof OrdMap)) {
+		throw new Error('Call Error: `colConfig` must be null or an OrdMap instance');
+	}
+
+	if (typeInfo != null && !(typeInfo instanceof OrdMap)) {
+		throw new Error('Call Error: `typeInfo` must be null or an OrdMap instance');
+	}
+
+	if (decode != null && typeof decode !== 'function') {
+		throw new Error('Call Error: `decode` must be null or a function');
+	}
 
 	if (AGGREGATE_REGISTRY.get(spec.fun) == null) {
 		throw new Error('No such aggregate function: "' + spec.fun + '"' +
@@ -1105,7 +1162,14 @@ var AggregateInfo = makeSubclass(Object, function (aggType, spec, aggNum, colCon
 				throw new InvalidAggregateError('Aggregate function applied to unknown field: "' + spec.fields[i] + '"');
 			}
 
-			maybeDecode('AGGREGATE', fti);
+			if (fti.needsDecoding) {
+				if (decode != null) {
+					decode('AGGREGATE', fti);
+				}
+				else {
+					log.warn('Unable to decode field "' + fti.field + '" on demand for aggregate function, no decoding function provided.');
+				}
+			}
 		});
 
 		ctorOpts.fields = self.fields;

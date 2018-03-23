@@ -39,38 +39,32 @@ $(document).ready(function () {
 	var source = new MIE.WC_DataVis.Source({
 		type: 'http',
 		url: '../fruit.csv'
-	}, null, [{
-		field: 'Order ID',
-		type: 'number'
-	}, {
-		field: 'Product',
-		type: 'string'
-	}, {
-		field: 'Category',
-		type: 'string'
-	}, {
-		field: 'Amount',
-		type: 'currency'
-	}, {
-		field: 'Date',
-		type: 'date',
-		format: 'M/D/YYYY'
-	}, {
-		field: 'Country',
-		type: 'string'
-	}]);
+	}, null, {
+		'Order ID': {
+			type: 'number'
+		},
+		'Product': {
+			type: 'string'
+		},
+		'Category': {
+			type: 'string'
+		},
+		'Amount': {
+			type: 'currency'
+		},
+		'Date': {
+			type: 'date',
+			format: 'M/D/YYYY'
+		},
+		'Country': {
+			type: 'string'
+		}
+	});
 
 	var view = new MIE.WC_DataVis.View(source, 'Kitchen Sink');
 	new MIE.WC_DataVis.Grid('grid', view, {
 		id: 'grid',
 		table: {
-			features: {
-				rowSelect: true,
-				floatingHeader: true
-			},
-			floatingHeader: {
-				method: 'floatThead'
-			},
 			columns: [{
 				field: 'Order ID'
 			}, {
@@ -84,7 +78,23 @@ $(document).ready(function () {
 				field: 'Date'
 			}, {
 				field: 'Country'
-			}]
+			}],
+			features: {
+				rowSelect: true,
+				floatingHeader: false, // XXX
+				limit: false, // XXX
+			},
+			floatingHeader: {
+				method: 'floatThead'
+			},
+			footer: {
+				'Amount': {
+					fun: 'sum',
+					fields: ['Amount'],
+					debug: true,
+					format: 'Sum = %s'
+				}
+			}
 		},
 		source: source
 	}, {
