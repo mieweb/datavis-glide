@@ -409,6 +409,21 @@ View.prototype.sort = function (cont) {
 
 	debug.info('VIEW (' + self.name + ') // SORT', 'Beginning sort: %s', JSON.stringify(self.sortSpec));
 
+	/**
+	 * Determine the comparison function that should be used to perform the sort operation.
+	 *
+	 * @param {object} spec
+	 * The sort specification; only used for log messages.
+	 *
+	 * @param {Source~TypeInfo} fti
+	 * The type information for the field to sort by.
+	 *
+	 * @returns {function}
+	 * A function that is used to perform the sort.  The comparison function returns -1 when A < B, 0
+	 * when A = B, and +1 when A > B.  Returns null when the sort cannot be performed (e.g. because no
+	 * comparison function could be found).
+	 */
+
 	var determineCmp = function (spec, fti) {
 		var cmp;
 
@@ -428,6 +443,8 @@ View.prototype.sort = function (cont) {
 			return null;
 		}
 
+		// FIXME Should this be based on the internal type?
+
 		cmp = getComparisonFn.byType(fti.type);
 
 		if (cmp == null) {
@@ -435,10 +452,16 @@ View.prototype.sort = function (cont) {
 			return null;
 		}
 
+		// This should never happen, because that would imply that getComparisonFn.byType() is broken.
+
 		if (typeof cmp !== 'function') {
 			log.error('Unable to sort: invalid comparison function for type {spec = %O, type = %s}', spec, fti.type);
 			return null;
 		}
+
+		// Make sure that all the data is decoded first before we try to sort it.  This makes things a
+		// lot simpler (i.e. no need to compare a Moment object --- which has already been decoded ---
+		// with a string containing a date).
 
 		self._maybeDecode('SORT', fti);
 
@@ -446,6 +469,11 @@ View.prototype.sort = function (cont) {
 	};
 
 
+
+	// A "bundle" is an array of the values that need to be sorted.  We store the value to sort, plus
+	// the index that maps back (somehow) to the corresponding rows.  After sorting is complete, we
+	// "unpack" the bundle: going through the bundle in sorted order, moving the data rows around
+	// based on the `oldIndex` we store here.
 
 	var packBundle = function (spec, orientation, sortSourceFn) {
 		var bundle, len;
@@ -480,10 +508,10 @@ View.prototype.sort = function (cont) {
 
 
 
-	/*
-	 * Unpack the sorted "bundle" that comes back from mergesort.  We use that to reconstruct the
-	 * data, row/col values, and aggregate results in the new sorted order.
-	 */
+	// Unpack the bundle, going through each item in the bundle and using its `oldIndex` to reorder
+	// the data and aggregates to match the new sort order.  For vertical orientation, we reorder
+	// row-related stuff (groups, i.e. rowvals and group aggregates).  For horizontal orientation, we
+	// reorder column-related stuff (pivots, i.e. colvals and pivot aggregates).
 
 	var unpackBundle = function (orientation) {
 		return function (sorted) {
@@ -518,6 +546,8 @@ View.prototype.sort = function (cont) {
 					self.data.agg.results.group = [];
 				}
 
+				// Reorder data and rowvals.
+
 				_.each(sorted, function (s, newIndex) {
 					// For plain output, fire the "sort" event so that the rows (if the grid table is showing
 					// all of them) can just be shuffled around, and the table doesn't have to be recreated.
@@ -534,6 +564,8 @@ View.prototype.sort = function (cont) {
 					}
 				});
 
+				// Reorder cell aggregates.
+
 				if (origCellAgg != null) {
 					for (ai = 0; ai < origCellAgg.length; ai += 1) {
 						self.data.agg.results.cell[ai] = [];
@@ -542,6 +574,8 @@ View.prototype.sort = function (cont) {
 						});
 					}
 				}
+
+				// Reorder group aggregates.
 
 				if (origGroupAgg != null) {
 					for (ai = 0; ai < origGroupAgg.length; ai += 1) {
@@ -568,6 +602,8 @@ View.prototype.sort = function (cont) {
 					self.data.agg.results.pivot = [];
 				}
 
+				// Reorder data and colvals.
+
 				_.each(sorted, function (s, newIndex) {
 					self.data.colVals[newIndex] = origColVals[s.oldIndex];
 					if (origColVals != null) {
@@ -580,6 +616,8 @@ View.prototype.sort = function (cont) {
 					}
 				});
 
+				// Reorder cell aggregates.
+
 				if (origCellAgg != null) {
 					for (ai = 0; ai < origCellAgg.length; ai += 1) {
 						self.data.agg.results.cell[ai] = new Array(self.data.rowVals.length);
@@ -591,6 +629,8 @@ View.prototype.sort = function (cont) {
 						}
 					}
 				}
+
+				// Reorder pivot aggregates.
 
 				if (origPivotAgg != null) {
 					for (var ai = 0; ai < origPivotAgg.length; ai += 1) {
@@ -605,6 +645,8 @@ View.prototype.sort = function (cont) {
 			}
 		};
 	};
+
+
 
 	var makeFinishCb = function (postProcess, next) {
 		return function (sorted) {
@@ -624,6 +666,14 @@ View.prototype.sort = function (cont) {
 
 
 	var performSort = function (orientation, next) {
+
+		// sortSourceFn(index) -> value
+		//
+		//   The value that we're interested in sorting by, for the element specified by `index`.  It's
+		//   a way of abstracting away the differences in how we're sorting (this function yields the
+		//   "right thing" whether we're sorting by a cell value, a group aggregate function result, or
+		//   something else altogether).
+
 		var fti
 			, sortSourceFn
 			, spec = getProp(self, 'sortSpec', orientation);
@@ -639,6 +689,10 @@ View.prototype.sort = function (cont) {
 		if (self.data.isPlain) {
 			if (spec.field) {
 				fti = self.typeInfo.get(spec.field);
+
+				// The sort source function accesses the value of the field in the indexed row.  This is as
+				// simple as it can get.
+
 				sortSourceFn = function (i) {
 					return self.data.data[i].rowData[spec.field].value;
 				};
@@ -646,22 +700,44 @@ View.prototype.sort = function (cont) {
 		}
 		else if (self.data.isGroup) {
 			if (spec.groupFieldIndex != null) {
+
+				// SORT GROUPS BY GROUP FIELD VALUE
+				// ================================
+				//
+				// SPEC
+				//   { groupFieldIndex: number }
+				//
+				// DESCRIPTION
+				//   This sorts groups by the value of one group field.
+
 				if (spec.groupFieldIndex < 0 || spec.groupFieldIndex >= self.data.groupFields.length) {
 					log.error('Unable to sort: groupFieldIndex out of range {spec = %O, range = [0,%d]}',
 										spec, self.data.groupFields.length);
 					return next(false);
 				}
+
 				fti = self.typeInfo.get(self.data.groupFields[spec.groupFieldIndex]);
 				sortSourceFn = function (i) {
 					return self.data.rowVals[i][spec.groupFieldIndex];
 				};
 			}
 			else if (spec.aggType === 'group' && spec.aggNum != null) {
+
+				// SORT GROUPS BY AGGREGATE FUNCTION RESULT
+				// ========================================
+				//
+				// SPEC
+				//   { aggType: "group", aggNum: number }
+				//
+				// DESCRIPTION
+				//   This sorts groups by the result of an aggregate function applied to a group.
+
 				if (spec.aggNum < 0 || spec.aggNum >= aggInfo.group.length) {
 					log.error('Unable to sort: aggNum out of range {spec = %O, range = [0,%d]}',
 										spec, aggInfo.group.length);
 					return next(false);
 				}
+
 				fti = aggInfo.group[spec.aggNum].instance.getType();
 				sortSourceFn = function (i) {
 					return self.data.agg.results.group[spec.aggNum][i];
@@ -669,18 +745,42 @@ View.prototype.sort = function (cont) {
 			}
 		}
 		else if (self.data.isPivot) {
+			// See https://1drv.ms/u/s!AuF9WqjL0lB2erNc2Ld6sOCscAs for a diagram showing what all these
+			// different sorting options are.
+			//
+			// #1 - Sort groups by the value of a group field
+			// #2 - Sort pivots by the result of a cell aggregate, for a specific group
+			// #3 - Sort pivots by the value of a pivot field
+			// #4 - Sort groups by the result of a cell aggregate, for a specific pivot
+			// #5 - Sort pivots by the result of a pivot aggregate
+			// #6 - Sort groups by the result of a group aggregate
+
 			if (spec.groupFieldIndex != null) { // #1
+
+				// SORT GROUPS BY GROUP FIELD VALUE
+				// ================================
+				//
+				//   * groupFieldIndex: number
+
 				if (spec.groupFieldIndex < 0 || spec.groupFieldIndex >= self.data.groupFields.length) {
 					log.error('Unable to sort: groupFieldIndex out of range {spec = %O, range = [0,%d]}',
 										spec, self.data.groupFields.length);
 					return next(false);
 				}
+
 				fti = self.typeInfo.get(self.data.groupFields[spec.groupFieldIndex]);
 				sortSourceFn = function (i) {
 					return self.data.rowVals[i][spec.groupFieldIndex];
 				};
 			}
 			else if ((spec.rowVal || spec.rowValIndex != null) && spec.aggNum != null) { // #2
+
+				// SORT PIVOTS BY CELL AGGREGATE RESULT (FOR CERTAIN ROWVAL)
+				// =========================================================
+				//
+				//   * rowVal: [string] -OR- rowValIndex: number
+				//   * aggNum: number
+
 				if (spec.rowVal) {
 					spec.rowValIndex = -1;
 					for (rvi = 0; rvi < self.data.rowVals.length; rvi += 1) {
@@ -694,33 +794,50 @@ View.prototype.sort = function (cont) {
 						return next(false);
 					}
 				}
+
 				if (spec.rowValIndex < 0 || spec.rowValIndex >= self.data.rowVals.length) {
 					log.error('Unable to sort: rowValIndex out of range {spec = %O, range = [0,%d]}',
 										spec, self.data.rowVals.length);
 					return next(false);
 				}
+
 				if (spec.aggNum < 0 || spec.aggNum >= aggInfo.cell.length) {
 					log.error('Unable to sort: aggNum out of range {spec = %O, range = [0,%d]}',
 										spec, aggInfo.cell.length);
 					return next(false);
 				}
+
 				fti = aggInfo.cell[spec.aggNum].instance.getType();
 				sortSourceFn = function (i) {
 					return self.data.agg.results.cell[spec.aggNum][spec.rowValIndex][i];
 				};
 			}
 			else if (spec.pivotFieldIndex != null) { // #3
+
+				// SORT PIVOTS BY PIVOT FIELD VALUE
+				// ================================
+				//
+				//   * pivotFieldIndex: number
+
 				if (spec.pivotFieldIndex < 0 || spec.pivotFieldIndex >= self.data.pivotFields.length) {
 					log.error('Unable to sort: pivotFieldIndex out of range {spec = %O, range = [0,%d]}',
 										spec, self.data.pivotFields.length);
 					return next(false);
 				}
+
 				fti = self.typeInfo.get(self.data.pivotFields[spec.pivotFieldIndex]);
 				sortSourceFn = function (i) {
 					return self.data.rowVals[i][spec.pivotFieldIndex];
 				};
 			}
 			else if ((spec.colVal || spec.colValIndex != null) && spec.aggNum != null) { // #4
+
+				// SORT GROUPS BY CELL AGGREGATE RESULT (FOR CERTAIN COLVAL)
+				// =========================================================
+				//
+				//   * colVal: [string] -OR- colValIndex: number
+				//   * aggNum: number
+
 				if (spec.colVal) {
 					spec.colValIndex = -1;
 					for (cvi = 0; cvi < self.data.colVals.length; cvi += 1) {
@@ -734,38 +851,57 @@ View.prototype.sort = function (cont) {
 						return next(false);
 					}
 				}
+
 				if (spec.colValIndex < 0 || spec.colValIndex >= self.data.colVals.length) {
 					log.error('Unable to sort: colValIndex out of range {spec = %O, range = [0,%d]}',
 										spec, self.data.colVals.length);
 					return next(false);
 				}
+
 				if (spec.aggNum < 0 || spec.aggNum >= aggInfo.cell.length) {
 					log.error('Unable to sort: aggNum out of range {spec = %O, range = [0,%d]}',
 										spec, aggInfo.cell.length);
 					return next(false);
 				}
+
 				fti = aggInfo.cell[spec.aggNum].instance.getType();
 				sortSourceFn = function (i) {
 					return self.data.agg.results.cell[spec.aggNum][i][spec.colValIndex];
 				};
 			}
 			else if (spec.aggType === 'pivot' && spec.aggNum != null) { // #5
+
+				// SORT PIVOTS BY PIVOT AGGREGATE RESULT
+				// =====================================
+				//
+				//   * aggType: "pivot"
+				//   * aggNum: number
+
 				if (spec.aggNum < 0 || spec.aggNum >= aggInfo.pivot.length) {
 					log.error('Unable to sort: aggNum out of range {spec = %O, range = [0,%d]}',
 										spec, aggInfo.pivot.length);
 					return next(false);
 				}
+
 				fti = aggInfo.pivot[spec.aggNum].instance.getType();
 				sortSourceFn = function (i) {
 					return self.data.agg.results.pivot[spec.aggNum][i];
 				};
 			}
 			else if (spec.aggType === 'group' && spec.aggNum != null) { // #6
+
+				// SORT GROUPS BY GROUP AGGREGATE RESULT
+				// =====================================
+				//
+				//   * aggType: "group"
+				//   * aggNum: number
+
 				if (spec.aggNum < 0 || spec.aggNum >= aggInfo.group.length) {
 					log.error('Unable to sort: aggNum out of range {spec = %O, range = [0,%d]}',
 										spec, aggInfo.group.length);
 					return next(false);
 				}
+
 				fti = aggInfo.group[spec.aggNum].instance.getType();
 				sortSourceFn = function (i) {
 					return self.data.agg.results.group[spec.aggNum][i];
@@ -2534,6 +2670,16 @@ View.prototype.getLastOps = function () {
 };
 
 // #setColConfig {{{2
+
+/**
+ * Set the column config on the view.  In particular here, we need access to how the user wants the
+ * data to be formatted.  You'd think that the view shouldn't have to know anything about the
+ * display of the data, and ideally you'd be right.  However, the view runs aggregate functions such
+ * as "group concat" which *do* need to know how values should be formatted.
+ *
+ * @param {OrdMap} colConfig
+ * The column configuration.
+ */
 
 View.prototype.setColConfig = function (colConfig) {
 	var self = this;
