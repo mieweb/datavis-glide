@@ -1168,7 +1168,7 @@ GridTable.prototype.drawBody_rowVals = function (data, tr, groupNum) {
 		th.appendTo(tr);
 		self.csv.addCol(span.text());
 
-		if (rowValIndex === data.groupFields.length - 1) {
+		if (data.isPivot && rowValIndex === data.groupFields.length - 1) {
 			self._addSortingToHeader(data, 'horizontal', {rowVal: data.rowVals[groupNum], aggNum: 0}, th, getPropDef([], data, 'agg', 'info', 'cell'));
 		}
 	});
