@@ -2089,7 +2089,7 @@ function format(fcc, fti, cell, opts) {
 		format_dateOnly = 'LL';
 	}
 
-	if (result == null) {
+	if (result == null || result === '') {
 		result = '';
 	}
 	else if (['date', 'datetime'].indexOf(t) >= 0
