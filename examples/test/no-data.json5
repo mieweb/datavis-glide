@@ -1,0 +1,71 @@
+{
+  "data": [],
+  "typeInfo": [
+    {
+      "field": "string1",
+      "type": "string"
+    },
+    {
+      "field": "country",
+      "type": "string"
+    },
+    {
+      "field": "state",
+      "type": "string"
+    },
+    {
+      "field": "int1",
+      "type": "number"
+    },
+    {
+      "field": "int2",
+      "type": "number"
+    },
+    {
+      "field": "int3",
+      "type": "number"
+    },
+    {
+      "field": "float1",
+      "type": "number"
+    },
+    {
+      "field": "float2",
+      "type": "number"
+    },
+    {
+      "field": "float3",
+      "type": "number"
+    },
+    {
+      "field": "currency1",
+      "type": "currency"
+    },
+    {
+      "field": "currency2",
+      "type": "currency"
+    },
+    {
+      "field": "currency3",
+      "type": "currency"
+    },
+    {
+      "field": "currency4",
+      "type": "string"
+    },
+    {
+      "field": "date1",
+      "type": "date"
+    },
+    {
+      "field": "date2",
+      "type": "date",
+      "format": "MMMM D, YYYY"
+    },
+    {
+      "field": "date3",
+      "type": "date",
+      "format": "MM/DD/YY"
+    }
+  ]
+}

@@ -28,6 +28,7 @@ doc/html/style.css:	doc/style.css
 	cp $^ $@
 
 examples:	$(EXAMPLE_FILES)
+	make -C examples/test
 
 $(EXAMPLE_FILES):examples/%:	dist/%
 	cp $^ $@
