@@ -63,7 +63,7 @@ jQuery.fn.extend({
 	_makeIconCheckbox: function (on, off) {
 		var self = this;
 
-		var button = jQuery('<button>')
+		var button = jQuery('<button>', {'type': 'button'})
 			.addClass('wcdv_icon_button wcdv_button_left')
 			.on('click', function () {
 				self._toggleCheck();

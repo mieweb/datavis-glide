@@ -842,7 +842,7 @@ Grid.prototype._addTitleWidgets = function (titlebar, doingServerFilter, runImme
 Grid.prototype._addSourceButtons = function (toolbar) {
 	var self = this;
 
-	self.ui.refreshBtn = jQuery('<button>')
+	self.ui.refreshBtn = jQuery('<button>', {'type': 'button'})
 		.append(fontAwesome('F021'))
 		.append('Refresh')
 		.on('click', function () {
@@ -865,7 +865,7 @@ Grid.prototype._addSourceButtons = function (toolbar) {
 Grid.prototype._addCommonButtons = function (toolbar) {
 	var self = this;
 
-	self.ui.exportBtn = jQuery('<button>', {'disabled': true})
+	self.ui.exportBtn = jQuery('<button>', {'type': 'button', 'disabled': true})
 		.append(fontAwesome('F14C'))
 		.append('Export')
 		.on('click', function () {
@@ -902,7 +902,7 @@ Grid.prototype._addLimitButtons = function (toolbar) {
 		// re-enabled if we switch grid tables and come back - as "limit" feature will be reset to its
 		// default value).
 
-		jQuery('<button>')
+		jQuery('<button>', {'type': 'button'})
 			.on('click', function (evt) {
 				self.gridTable.updateFeatures({
 					'block': true,
@@ -1027,7 +1027,7 @@ Grid.prototype._addPrefsButtons = function (toolbar) {
 		}
 	};
 
-	var backBtn = jQuery('<button>')
+	var backBtn = jQuery('<button>', {'type': 'button'})
 		.append(fontAwesome('fa-chevron-circle-left'))
 		.attr('title', 'Back')
 		.attr('disabled', true)
@@ -1039,7 +1039,7 @@ Grid.prototype._addPrefsButtons = function (toolbar) {
 		.appendTo(div)
 	;
 
-	var forwardBtn = jQuery('<button>')
+	var forwardBtn = jQuery('<button>', {'type': 'button'})
 		.append(fontAwesome('fa-chevron-circle-right'))
 		.attr('title', 'Forward')
 		.attr('disabled', true)

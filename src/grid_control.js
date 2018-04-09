@@ -79,7 +79,7 @@ var GridControlField = makeSubclass(Object, function (control, field, displayTex
 GridControlField.prototype.draw = function () {
 	var self = this;
 
-	self.ui.removeButton = jQuery('<button>')
+	self.ui.removeButton = jQuery('<button>', {'type': 'button'})
 		.append(fontAwesome('F146'))
 		.attr('title', 'Remove')
 		.addClass('wcdv_icon_button wcdv_remove')
@@ -249,6 +249,7 @@ AggregateControlField.prototype.draw = function () {
 
 	if (aggDefn.prototype.options != null) {
 		jQuery('<button>', {
+			'type': 'button',
 			title: 'Edit Options'
 		})
 			.addClass('wcdv_icon_button wcdv_button_left')
@@ -350,7 +351,7 @@ AggregateControlField.prototype._makeOptionsDialog = function (aggDefn) {
 			'text-align': 'center',
 			'margin-top': '1ex'
 		})
-		.append(jQuery('<button>')
+		.append(jQuery('<button>', {'type': 'button'})
 			.append(fontAwesome('F00C'))
 			.append('OK')
 			.on('click', function () {
@@ -359,7 +360,7 @@ AggregateControlField.prototype._makeOptionsDialog = function (aggDefn) {
 				self.control.updateView();
 				self.ui.optionsDialog.dialog('close');
 			}))
-		.append(jQuery('<button>')
+		.append(jQuery('<button>', {'type': 'button'})
 			.css('margin-left', '1em')
 			.append(fontAwesome('F05E'))
 			.append('Cancel')
