@@ -839,8 +839,17 @@ Source.prototype.setConversionTypeInfo = function (data, typeInfo) {
 				fti.needsDecoding = true;
 				fti.internalType = 'numeral';
 
-				if (data.length > 0 && (isInt(data[0][f].value) || isFloat(data[0][f].value))) {
+				// This value might not exist if:
+				//
+				//   - There's no data.
+				//   - The typeInfo is for a field that doesn't exist in the data.
+				//
+				// But those aren't error conditions, so we shouldn't let them stop us.  We'll simplify by
+				// using `getProp()` to extract the value if it exists.
 
+				var exampleValue = getProp(data, 0, f, 'value');
+
+				if (isInt(exampleValue) || isFloat(exampleValue)) {
 					// Looks like it can be decoded into a primitive number, so there's no need for Numeral's
 					// advanced parsing.
 
