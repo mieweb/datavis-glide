@@ -137,6 +137,10 @@ var InvalidAggregateError = makeSubclass(ViewError);
  * What should be displayed when the value of this function is output.  When not provided, defaults
  * to "[function] of [fields]" e.g. "Min of Date".
  *
+ * @property {string} [fields]
+ * A list of names referring to the fields to which the aggregate should be applied.  Should have a
+ * length equal to `AGGREGATE_REGISTRY[fun].fieldCount` or else bad things may happen.
+ *
  * @property {boolean} [isHidden=false]
  * If true, then this aggregate is hidden, i.e. it is calculated (so you could sort on it) but it
  * isn't displayed in the output.

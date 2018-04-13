@@ -1124,7 +1124,9 @@ var AggregateInfo = makeSubclass(Object, function (aggType, spec, aggNum, colCon
 		throw new Error('Call Error: `decode` must be null or a function');
 	}
 
-	if (AGGREGATE_REGISTRY.get(spec.fun) == null) {
+	var aggClass = AGGREGATE_REGISTRY.get(spec.fun);
+
+	if (aggClass == null) {
 		throw new Error('No such aggregate function: "' + spec.fun + '"' +
 			(spec.name ? ' (output name = "' + spec.name + '")' : ''));
 	}
@@ -1135,6 +1137,18 @@ var AggregateInfo = makeSubclass(Object, function (aggType, spec, aggNum, colCon
 
 	if (spec.fields) {
 		self.fields = spec.fields;
+
+		// Check to see if the number of fields supplied matches the number requested by the aggregate
+		// function class.
+		//
+		// TODO Make this into an error?
+
+		if (spec.fields.length !== aggClass.fieldCount) {
+			log.warn('Creating ' + aggType + '[' + aggNum + '] aggregate function "' + spec.fun + '" to be applied over fields ' + JSON.stringify(spec.fields) + ', which doesn\'t match the number of fields supported by the aggregate function (' + aggClass.fieldCount + ')... expect trouble.');
+		}
+
+		// Set the colConfig array for the supplied fields.
+
 		if (colConfig != null) {
 			self.colConfig = _.map(spec.fields, function (f) {
 				return colConfig.get(f);
@@ -1143,6 +1157,8 @@ var AggregateInfo = makeSubclass(Object, function (aggType, spec, aggNum, colCon
 		else {
 			log.warn('Creating ' + aggType + '[' + aggNum + '] aggregate function "' + spec.fun + '" to be applied over fields ' + JSON.stringify(spec.fields) + ', but no column config was provided.');
 		}
+
+		// Set the typeInfo array for the supplied fields.
 
 		if (typeInfo != null) {
 			self.typeInfo = _.map(spec.fields, function (f) {
@@ -1180,5 +1196,5 @@ var AggregateInfo = makeSubclass(Object, function (aggType, spec, aggNum, colCon
 
 	_.extend(ctorOpts, spec.opts);
 
-	self.instance = new (AGGREGATE_REGISTRY.get(spec.fun))(ctorOpts);
+	self.instance = new aggClass(ctorOpts);
 });
