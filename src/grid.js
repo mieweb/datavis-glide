@@ -264,6 +264,39 @@ GridError.prototype.constructor = GridError;
  * Specifies the order that fields are rendered in plain output.  If not provided, all fields are
  * rendered in the order received from the source; fields with names starting with an underscore are
  * not shown.  If provided, only those fields specified are rendered, and in the order indicated.
+ *
+ * @property {Grid~Features} [table.features]
+ * The features that are enabled for this grid.
+ *
+ * @property {object} [table.limit]
+ *
+ * @property {object} [table.floatingHeader]
+ * Configuration for the "floating header" feature.
+ *
+ * @property {string} [table.floatingHeader.method]
+ * What library to use to create the floating table header.  Must be one of the following:
+ *
+ *   - `floatThead`
+ *   - `fixedHeaderTable`
+ *   - `tabletool`
+ *
+ * If this is not specified, the default is based on what library is available in the page, in the
+ * order listed above.
+ *
+ * @property {object} [table.limit]
+ * Configuration for the "limit" feature.
+ *
+ * @property {string} [table.limit.method="more"]
+ * How to limit the output.  Must be one of the following:
+ *
+ *   - `more` — Show a row at the bottom, which when clicked, loads more rows.
+ *
+ * @property {number} table.limit.threshold
+ * The total number of rows must exceed this in order to trigger using the limit method.  If
+ * omitted, then the "limit" feature is effectively disabled.
+ *
+ * @property {number} table.limit.chunkSize
+ * When using the "more" limit method, how many additional rows to load each time.
  */
 
 /**
@@ -1825,12 +1858,18 @@ Grid.prototype._normalizeColumns = function (defn) {
 
 // #export {{{2
 
+/**
+ * Export whatever this grid is currently showing as a CSV file for the user to download.
+ */
+
 Grid.prototype.export = function () {
 	var self = this;
 
 	var fileName = (self.tagOpts.title || self.id) + '.csv';
 	var csv = self.gridTable.getCsv();
 	var contentType = 'text/csv';
+
+	// TODO Remove this old approach.
 
 	if (window.Blob == null /* old browser */) {
 		var form = jQuery('<form>', {'method': 'POST', 'action': MIE.WC_DataVis.EXPORT_URL}).appendTo(document.body);
