@@ -1,5 +1,44 @@
 // Graph {{{1
 
+// JSDoc Types {{{2
+
+/**
+ * @typedef {object} Graph~Config
+ *
+ * @property {Graph~Config_When} whenPlain
+ * Tells how to configure the graph when the data is plain (has not been grouped or pivotted).
+ *
+ * @property {Graph~Config_When} whenGroup
+ * Tells how to configure the graph when the data is grouped.
+ *
+ * @property {Graph~Config_When} whenPivot
+ * Tells how to configure the graph when the data is pivotted.
+ */
+
+/**
+ * @typedef {object} Graph~Config_When
+ * Can either be a function that returns an object, or just an object.  If it's a function, it
+ * receives the group fields and pivot fields as arguments.
+ *
+ * @mixes View~AggregateSpec
+ */
+
+// Constructor {{{2
+
+/**
+ * Creates a new graph.
+ *
+ * @param {string} id
+ *
+ * @param {View} view
+ *
+ * @param {Graph~Config} opts
+ *
+ * @class
+ *
+ * Represents a graph.
+ */
+
 var Graph = function (id, view, opts) {
 	var self = this;
 
@@ -259,59 +298,65 @@ GraphRendererGoogle.prototype.draw_group = function (data, typeInfo, dt) {
 
 GraphRendererGoogle.prototype.draw_pivot = function (data, typeInfo, dt) {
 	var self = this
-		, graphConfig;
 
-	graphConfig = deepCopy(self.opts.whenPivot || {});
+	var graphConfig = self.opts.whenPivot || {};
+
+	if (typeof graphConfig === 'function') {
+		graphConfig = graphConfig(data.groupFields, data.pivotFields);
+	}
+	else {
+		graphConfig = deepCopy(graphConfig);
+	}
+
 	_.defaults(graphConfig, {
 		graphType: 'column',
 		categoryField: data.groupFields[0],
-		valueFields: [],
+		valueFields: [{
+			fun: 'count'
+		}],
 		options: {
 			isStacked: true
 		}
 	});
 
+	var ai = [];
+
 	dt.addColumn(typeInfo.get(graphConfig.categoryField).type, graphConfig.categoryField);
 
-	_.each(data.colVals, function (colVal) {
-		dt.addColumn('number', colVal.join(', '));
+	// For each value field, create the AggregateInfo instance that will manage it.  Also create
+	// columns for the results (one for each colval) in the data table.
+
+	_.each(graphConfig.valueFields, function (v) {
+		var aggInfo = new AggregateInfo('cell', v, 0, null /* colConfig */, self.typeInfo, null /* convert */);
+
+		_.each(data.colVals, function (colVal) {
+			dt.addColumn(aggInfo.instance.getType(), colVal.join(', '));
+		});
+
+		ai.push(aggInfo);
 	});
 
-	_.each(data.data, function (group, groupNum) {
-		var newRow;
+	_.each(data.rowVals, function (rowVal, rowValIndex) {
+		var newRow = [rowVal.join(', ')];
 
-		newRow = [data.rowVals[groupNum].join(', ')];
-		newRow = newRow.concat(_.map(group, function (pivot) {
-			return pivot.length;
-		}));
-		/*
-		newRow = newRow.concat(_.map(graphConfig.valueFields, function (f) {
-			if (typeof f === 'string') {
-				// FIXME
-				throw new Error('Not sure what to do here');
-			}
-			else if (typeof f === 'object') {
-				var agg = AGGREGATES[f.aggFun];
-				var aggFun = agg.fun({field: f.aggField});
-				var aggType = agg.type;
-				var aggResult = format(colConfig, colTypeInfo, aggFun(colGroup), {
-					alwaysFormat: true,
-					overrideType: aggType
-				});
-				// Calculate the aggregate function result from the data in the group.
-				//
-			}
-			else {
-				// Not a string (field name) and not an object (aggregate function), so it's some other
-				// weird thing that we don't know what to do with.
-
-				throw new Error('Invalid value specification');
-			}
-		}));
-		*/
+		_.each(data.colVals, function (colVal, colValIndex) {
+			_.each(ai, function (aggInfo) {
+				var aggResult = aggInfo.instance.calculate(data.data[rowValIndex][colValIndex]);
+				newRow.push(aggResult);
+				if (aggInfo.debug) {
+					debug.info('GRAPH // GROUP // AGGREGATE', 'Group aggregate (%s) : RowVal [%s] x ColVal [%s] = %s',
+						aggInfo.instance.name + (aggInfo.name ? ' -> ' + aggInfo.name : ''),
+						rowVal.join(', '),
+						colVal.join(', '),
+						JSON.stringify(aggResult));
+				}
+			});
+		});
 
 		dt.addRow(newRow);
 	});
+
+	console.log(google.visualization.dataTableToCsv(dt));
 
 	return graphConfig;
 };
