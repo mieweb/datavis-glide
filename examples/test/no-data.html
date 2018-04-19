@@ -38,7 +38,13 @@ $(document).ready(function () {
 		url: 'no-data.json'
 	});
 	var view = new MIE.WC_DataVis.View(source, 'No Data');
-	new MIE.WC_DataVis.Grid('grid', view, null, {
+	new MIE.WC_DataVis.Grid('grid', view, {
+		table: {
+			features: {
+				rowSelect: true
+			}
+		}
+	}, {
 		title: 'No Data',
 		showControls: true
 	});
