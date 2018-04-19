@@ -272,6 +272,37 @@ Graph.prototype._addCommonButtons = function (toolbar) {
 		.appendTo(toolbar);
 };
 
+// #export {{{2
+
+Graph.prototype.export = function () {
+	var self = this;
+
+	if (self.exportBlob == null) {
+		return;
+	}
+
+	var fileName = (self.opts.title || self.id) + '.png';
+	presentDownload(self.exportBlob, fileName);
+};
+
+// #_setExportBlob {{{2
+
+Graph.prototype._setExportBlob = function (blob) {
+	var self = this;
+
+	self.exportBlob = blob;
+	self.ui.exportBtn.prop('disabled', false);
+};
+
+// #_clearExportBlob {{{2
+
+Graph.prototype._clearExportBlob = function () {
+	var self = this;
+
+	self.exportBlob = null;
+	self.ui.exportBtn.prop('disabled', true);
+};
+
 // #_addAggregateButtons {{{2
 
 Graph.prototype._addAggregateButtons = function (toolbar) {
@@ -283,7 +314,7 @@ Graph.prototype._addAggregateButtons = function (toolbar) {
 Graph.prototype.draw = function () {
 	var self = this;
 
-	var renderer = new GraphRendererGoogle(self.ui.graph, self.view, deepCopy(self.opts));
+	var renderer = new GraphRendererGoogle(self, self.ui.graph, self.view, deepCopy(self.opts));
 	renderer.draw();
 }
 
@@ -502,9 +533,10 @@ Graph.prototype._hideSpinner = function () {
 
 // GraphRenderer {{{1
 
-GraphRenderer = makeSubclass(Object, function (elt, view, opts) {
+GraphRenderer = makeSubclass(Object, function (graph, elt, view, opts) {
 	var self = this;
 
+	self.graph = graph;
 	self.elt = elt;
 	self.view = view;
 	self.opts = opts;
@@ -785,6 +817,9 @@ GraphRendererGoogle.prototype.draw = function () {
 				console.log(options);
 
 				var chart = new google.visualization[ctor[graphConfig.graphType]](self.elt.get(0));
+				google.visualization.events.addListener(chart, 'ready', function () {
+					self.graph._setExportBlob(dataURItoBlob(chart.getImageURI()));
+				});
 				chart.draw(dt, options);
 			});
 		});
