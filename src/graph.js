@@ -45,6 +45,7 @@ var Graph = function (id, view, opts) {
 	self.id = id;
 	self.view = view;
 	self.view.addClient(self, 'graph');
+	/*
 	self.view.on('aggregateSet', function (spec, shouldGraph) {
 		if (shouldGraph.group.length > 0) {
 			var groupConfig = shouldGraph.group[0];
@@ -64,6 +65,7 @@ var Graph = function (id, view, opts) {
 		}
 		self.draw(deepCopy(opts));
 	});
+	*/
 
 	self.normalize(opts);
 	debug.info('GRAPH', 'opts = %O', opts);
