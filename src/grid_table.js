@@ -2363,13 +2363,17 @@ GridTablePlain.prototype.addDataToCsv = function (data) {
 GridTablePlain.prototype._updateSelectionGui = function () {
 	var self = this;
 
+	// True if there are no rows to select.
+	var isDisabled = self.data.data.length === 0;
+
 	// True if all rows are selected.
-	var isAllChecked = self.selection.length === self.data.data.length;
+	var isAllChecked = !isDisabled && self.selection.length === self.data.data.length;
 
 	// True if some rows are selected, but not all of them.
-	var isIndeterminate = !isAllChecked && self.selection.length > 0;
+	var isIndeterminate = !isDisabled && !isAllChecked && self.selection.length > 0;
 
 	var updateCheckboxState = function (elt) {
+		elt.prop('disabled', isDisabled);
 		elt.prop('checked', isAllChecked);
 		elt.prop('indeterminate', isIndeterminate);
 	};
