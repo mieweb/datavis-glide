@@ -765,19 +765,17 @@ GraphRendererGoogle.prototype.draw_group = function (data, typeInfo, dt, config)
 
 // #draw_pivot {{{2
 
-GraphRendererGoogle.prototype.draw_pivot = function (data, typeInfo, dt) {
+GraphRendererGoogle.prototype.draw_pivot = function (data, typeInfo, dt, config) {
 	var self = this
 
-	var graphConfig = self.opts.whenPivot || {};
-
-	if (typeof graphConfig === 'function') {
-		graphConfig = graphConfig(data.groupFields, data.pivotFields);
+	if (typeof config === 'function') {
+		config = config(data.groupFields, data.pivotFields);
 	}
 	else {
-		graphConfig = deepCopy(graphConfig);
+		config = deepCopy(config);
 	}
 
-	_.defaults(graphConfig, {
+	_.defaults(config, {
 		graphType: 'column',
 		categoryField: data.groupFields[0],
 		valueFields: [{
@@ -788,46 +786,73 @@ GraphRendererGoogle.prototype.draw_pivot = function (data, typeInfo, dt) {
 		}
 	});
 
-	var ai = [];
+	dt.addColumn('string', config.categoryField);
 
-	dt.addColumn(typeInfo.get(graphConfig.categoryField).type, graphConfig.categoryField);
+	if (config.aggNum != null) {
+		var aggInfo = data.agg.info.cell[config.aggNum];
+		var name = aggInfo.name || aggInfo.instance.getFullName();
+		var aggType = aggInfo.instance.getType();
+		aggType = {'currency': 'number'}[aggType] || aggType;
 
-	// For each value field, create the AggregateInfo instance that will manage it.  Also create
-	// columns for the results (one for each colval) in the data table.
-
-	_.each(graphConfig.valueFields, function (v) {
-		var aggInfo = new AggregateInfo('cell', v, 0, null /* colConfig */, self.typeInfo, null /* convert */);
+		console.log(config.aggNum, aggType, name);
 
 		_.each(data.colVals, function (colVal) {
-			dt.addColumn(aggInfo.instance.getType(), colVal.join(', '));
+			dt.addColumn(aggType, colVal.join(', '));
 		});
 
-		ai.push(aggInfo);
-	});
+		setProp(name, config, 'options', 'vAxis', 'title');
 
-	_.each(data.rowVals, function (rowVal, rowValIndex) {
-		var newRow = [rowVal.join(', ')];
+		_.each(data.rowVals, function (rowVal, rowValIdx) {
+			newRow = [rowVal.join(', ')];
 
-		_.each(data.colVals, function (colVal, colValIndex) {
-			_.each(ai, function (aggInfo) {
-				var aggResult = aggInfo.instance.calculate(data.data[rowValIndex][colValIndex]);
+			_.each(data.colVals, function (colVal, colValIdx) {
+				var aggResult = data.agg.results.cell[config.aggNum][rowValIdx][colValIdx];
 				newRow.push(aggResult);
-				if (aggInfo.debug) {
-					debug.info('GRAPH // GROUP // AGGREGATE', 'Group aggregate (%s) : RowVal [%s] x ColVal [%s] = %s',
-						aggInfo.instance.name + (aggInfo.name ? ' -> ' + aggInfo.name : ''),
-						rowVal.join(', '),
-						colVal.join(', '),
-						JSON.stringify(aggResult));
-				}
 			});
+
+			dt.addRow(newRow);
+		});
+	}
+	else {
+		var ai = [];
+
+		// For each value field, create the AggregateInfo instance that will manage it.  Also create
+		// columns for the results (one for each colval) in the data table.
+
+		_.each(config.valueFields, function (v) {
+			var aggInfo = new AggregateInfo('cell', v, 0, null /* colConfig */, self.typeInfo, null /* convert */);
+
+			_.each(data.colVals, function (colVal) {
+				dt.addColumn(aggInfo.instance.getType(), colVal.join(', '));
+			});
+
+			ai.push(aggInfo);
 		});
 
-		dt.addRow(newRow);
-	});
+		_.each(data.rowVals, function (rowVal, rowValIndex) {
+			var newRow = [rowVal.join(', ')];
+
+			_.each(data.colVals, function (colVal, colValIndex) {
+				_.each(ai, function (aggInfo) {
+					var aggResult = aggInfo.instance.calculate(data.data[rowValIndex][colValIndex]);
+					newRow.push(aggResult);
+					if (aggInfo.debug) {
+						debug.info('GRAPH // GROUP // AGGREGATE', 'Group aggregate (%s) : RowVal [%s] x ColVal [%s] = %s',
+							aggInfo.instance.name + (aggInfo.name ? ' -> ' + aggInfo.name : ''),
+							rowVal.join(', '),
+							colVal.join(', '),
+							JSON.stringify(aggResult));
+					}
+				});
+			});
+
+			dt.addRow(newRow);
+		});
+	}
 
 	console.log(google.visualization.dataTableToCsv(dt));
 
-	return graphConfig;
+	return config;
 };
 
 // #_ensureGoogleChartsLoaded {{{2
