@@ -273,6 +273,17 @@ Graph.prototype._addAggregateButtons = function (toolbar) {
 		})
 		.appendTo(toolbar);
 
+	self.ui.zeroAxisCheckbox = makeToggleCheckbox(
+		null,
+		null,
+		false,
+		'Y-Axis Starts at Zero',
+		toolbar,
+		function (isChecked) {
+			self.drawInteractive()
+		}
+	);
+
 	// Update the aggregate dropdown now and also make sure that it stays updated whenever new
 	// aggregate functions are calculated in the view.
 
@@ -352,14 +363,18 @@ Graph.prototype.drawInteractive = function () {
 	var self = this;
 
 	var graphConfig = deepCopy(self.graphConfig);
-	graphConfig.whenGroup = {
-		aggNum: toInt(self.ui.aggDropdown.val()),
-		graphType: self.ui.graphTypeDropdown.val()
-	};
-	graphConfig.whenPivot = {
-		aggNum: toInt(self.ui.aggDropdown.val()),
-		graphType: self.ui.graphTypeDropdown.val()
-	};
+
+	_.each(['whenGroup', 'whenPivot'], function (kind) {
+		graphConfig[kind] = {
+			aggNum: toInt(self.ui.aggDropdown.val()),
+			graphType: self.ui.graphTypeDropdown.val(),
+			options: {
+				vAxis: {
+					minValue: self.ui.zeroAxisCheckbox.prop('checked') ? 0 : null
+				}
+			}
+		};
+	});
 
 	self.renderer.draw(graphConfig);
 };
@@ -692,11 +707,8 @@ GraphRendererGoogle.prototype.draw_group = function (data, typeInfo, dt, config)
 	if (typeof config === 'function') {
 		config = config(data.groupFields);
 	}
-	else {
-		config = deepCopy(config);
-	}
 
-	_.defaults(config, {
+	config = deepDefaults(config, {
 		graphType: 'column',
 		categoryField: data.groupFields[0],
 		valueFields: [{
@@ -715,10 +727,8 @@ GraphRendererGoogle.prototype.draw_group = function (data, typeInfo, dt, config)
 
 		if (aggType === 'currency') {
 			aggType = 'number';
-			setProp({format: 'currency'}, config, 'options', 'vAxis');
+			setProp('currency', config, 'options', 'vAxis', 'format');
 		}
-
-		console.log(config.aggNum, aggType, name);
 
 		dt.addColumn(aggType, name);
 		setProp(name, config, 'options', 'vAxis', 'title');
@@ -775,11 +785,8 @@ GraphRendererGoogle.prototype.draw_pivot = function (data, typeInfo, dt, config)
 	if (typeof config === 'function') {
 		config = config(data.groupFields, data.pivotFields);
 	}
-	else {
-		config = deepCopy(config);
-	}
 
-	_.defaults(config, {
+	config = deepDefaults(config, {
 		graphType: 'column',
 		categoryField: data.groupFields[0],
 		valueFields: [{
@@ -799,10 +806,8 @@ GraphRendererGoogle.prototype.draw_pivot = function (data, typeInfo, dt, config)
 
 		if (aggType === 'currency') {
 			aggType = 'number';
-			setProp({format: 'currency'}, config, 'options', 'vAxis');
+			setProp('currency', config, 'options', 'vAxis', 'format');
 		}
-
-		console.log(config.aggNum, aggType, name);
 
 		_.each(data.colVals, function (colVal) {
 			dt.addColumn(aggType, colVal.join(', '));
@@ -858,8 +863,6 @@ GraphRendererGoogle.prototype.draw_pivot = function (data, typeInfo, dt, config)
 		});
 	}
 
-	console.log(google.visualization.dataTableToCsv(dt));
-
 	return config;
 };
 
@@ -907,7 +910,7 @@ GraphRendererGoogle.prototype.redraw = function () {
 				if (data.isPlain) {
 					config = self.draw_plain(data, typeInfo, dt, self.config.whenPlain);
 				}
-				else if (data.isGroup && !data.isPivot) {
+				else if (data.isGroup) {
 					config = self.draw_group(data, typeInfo, dt, self.config.whenGroup);
 				}
 				else if (data.isPivot) {
@@ -936,8 +939,6 @@ GraphRendererGoogle.prototype.redraw = function () {
 				};
 
 				jQuery.extend(true, options, config.options);
-
-				console.log(options);
 
 				var chart = new google.visualization[ctor[config.graphType]](self.elt.get(0));
 
@@ -994,8 +995,6 @@ GraphRendererJit.prototype.draw = function () {
 			};
 
 			jQuery.extend(true, options, self.opts.options);
-
-			console.log(options);
 
 			var chart = new $jit[ctor[self.opts.type]](options);
 			chart.loadJSON(json);

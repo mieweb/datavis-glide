@@ -1806,22 +1806,27 @@ var loadScript = (function () {
 // makeCheckbox {{{2
 
 function makeCheckbox(startChecked, onChange, text, parent) {
-	return jQuery('<label>')
-		.append(jQuery('<input>', { 'type': 'checkbox', 'checked': startChecked })
-						.on('change', onChange))
-		.append(text)
-		.appendTo(parent);
+	var label = jQuery('<label>');
+	var input = jQuery('<input>', { 'type': 'checkbox', 'checked': startChecked }).on('change', onChange);
+
+	label.append(input).append(text).appendTo(parent);
+
+	return input;
 }
 
 // makeToggleCheckbox {{{2
 
 function makeToggleCheckbox(rootObj, path, startChecked, text, parent, after) {
-	setPropDef(startChecked, rootObj, path);
+	if (rootObj != null) {
+		setPropDef(startChecked, rootObj, path);
+	}
 
-	return makeCheckbox(getProp(rootObj, path), function () {
+	return makeCheckbox(rootObj != null ? getProp(rootObj, path) : startChecked, function () {
 		var isChecked = jQuery(this).prop('checked');
-		debug.info('GRID // TOOLBAR', 'Setting `' + path.join('.') + '` to ' + isChecked);
-		setProp(isChecked, rootObj, path);
+		if (rootObj != null) {
+			debug.info('GRID // TOOLBAR', 'Setting `' + path.join('.') + '` to ' + isChecked);
+			setProp(isChecked, rootObj, path);
+		}
 		if (typeof after === 'function') {
 			after(isChecked);
 		}
