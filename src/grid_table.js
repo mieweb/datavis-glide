@@ -963,6 +963,36 @@ GridTable.prototype.addFilterHandler = function () {
 //	}
 };
 
+// #_addRowReorderHandler {{{2
+
+GridTable.prototype._addRowReorderHandler = function () {
+	var self = this;
+
+	configureRowReordering(self.ui.tbody, _.bind(self.view.source.swapRows, self.view.source));
+};
+
+// #_addRowSelectHandler {{{2
+
+/**
+ * Add an event handler for the row select checkboxes.  The event is bound on `self.ui.tbody` and
+ * looks for checkbox inputs inside TD elements with class `wcdv-row-select-col` to actually handle
+ * the events.  The handler calls `self.select(ROW_NUM)` or `self.unselect(ROW_NUM)` when the
+ * checkbox is changed.
+ */
+
+GridTable.prototype._addRowSelectHandler = function () {
+	var self = this;
+
+	self.ui.tbody.on('change', 'td.wcdv-row-select-col > input[type="checkbox"]', function () {
+		if (this.checked) {
+			self.select(+(jQuery(this).attr('data-row-num')));
+		}
+		else {
+			self.unselect(+(jQuery(this).attr('data-row-num')));
+		}
+	});
+};
+
 // #_getAggInfo {{{2
 
 GridTable.prototype._getAggInfo = function (data) {
@@ -1112,8 +1142,12 @@ GridTable.prototype.draw = function (root, tableDoneCont, opts) {
 
 			self.addSortHandler();
 
+			if (self.features.rowSelect) {
+				self._addRowSelectHandler();
+			}
+
 			if (self.features.rowReorder) {
-				configureRowReordering(self.ui.tbody, _.bind(self.view.source.swapRows, self.view.source));
+				self._addRowReorderHandler();
 			}
 
 			if (self.opts.zebraStriping) {
@@ -2043,18 +2077,8 @@ GridTablePlain.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 				// Create the check box which selects the row.
 
 				if (self.features.rowSelect) {
-					td = jQuery('<td>');
-
-					var checkbox = jQuery('<input>', { 'type': 'checkbox', 'data-row-num': row.rowNum })
-						.on('change', function () {
-							if (this.checked) {
-								self.select(+(jQuery(this).attr('data-row-num')));
-							}
-							else {
-								self.unselect(+(jQuery(this).attr('data-row-num')));
-							}
-						});
-					td = jQuery('<td>').append(checkbox).appendTo(tr);
+					var checkbox = jQuery('<input>', { 'type': 'checkbox', 'data-row-num': row.rowNum });
+					td = jQuery('<td>').addClass('wcdv-row-select-col').append(checkbox).appendTo(tr);
 					if (self.opts.drawInternalBorders) {
 						td.addClass('wcdv_pivot_colval_boundary');
 					}
