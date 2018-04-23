@@ -142,15 +142,6 @@ function updateDefnDataInPlace(defn, srcIndex, data) {
 
 // Row Reordering {{{1
 
-function rowSwapIndex(defn, oldIndex, newIndex) {
-	if (defn.source instanceof Source) {
-		defn.source.swapRows(oldIndex, newIndex);
-	}
-	else {
-		throw new NotImplementedError('Using a Source is required to reorder rows');
-	}
-}
-
 function helperClone(e, tr) {
 	var originals = tr.children();
 	clonedRow = tr.clone(),
@@ -194,7 +185,7 @@ function helperClone(e, tr) {
 	return clonedRow;
 }
 
-function configureRowReordering(defn, tbody) {
+function configureRowReordering(tbody, cb) {
 	tbody.sortable({
 		forcePlaceholderSize: true,
 		placeholder: 'sortable-ghost',
@@ -202,7 +193,7 @@ function configureRowReordering(defn, tbody) {
 		cancel: 'input,textarea,select,option',
 		helper: helperClone,
 		handle: '.drag-handle',
-		containment: '#' + defn.table.id,
+		containment: tbody,
 		// This event is triggered when sorting starts.
 		start: function(event, ui) {
 			// set the height of the placeholder row on start
@@ -221,7 +212,7 @@ function configureRowReordering(defn, tbody) {
 				(typeof newIndex !== 'undefined') &&
 				(oldIndex !== newIndex) ) {
 				// swap the rows in our internal data structure
-				rowSwapIndex(defn, oldIndex, newIndex);
+				cb(oldIndex, newIndex);
 			} else {
 				// strange some bad data so just call the 'cancel' method
 				jQuery(this).sortable('cancel');

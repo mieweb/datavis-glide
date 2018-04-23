@@ -996,7 +996,7 @@ GridTable.prototype.draw = function (root, tableDoneCont, opts) {
 			self.addSortHandler();
 
 			if (self.features.rowReorder) {
-				configureRowReordering(self.defn, self.ui.tbody);
+				configureRowReordering(self.ui.tbody, _.bind(self.view.source.swapRows, self.view.source));
 			}
 
 			if (self.opts.zebraStriping) {
