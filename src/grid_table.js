@@ -2174,6 +2174,8 @@ GridTablePlain.prototype.drawFooter = function (columns, data, typeInfo) {
 // #makeRowReorderBtn {{{2
 
 GridTablePlain.prototype.makeRowReorderBtn = function () {
+	var self = this;
+
 	return jQuery('<button type="button" class="drag-handle fa">')
 		.html(fontAwesome('f07d',null,'Drag or press up/down arrows to move'))
 	// When the drag button has focus, add the keydown handler
@@ -2187,6 +2189,7 @@ GridTablePlain.prototype.makeRowReorderBtn = function () {
 				// Reposition if one of the directional keys is pressed
 				switch (event.keyCode) {
 				case 38: // Up
+					event.preventDefault();
 					if (jobj.prev().length) {
 						jobj.insertBefore(jobj.prev());
 					} else {
@@ -2195,6 +2198,7 @@ GridTablePlain.prototype.makeRowReorderBtn = function () {
 					}
 					break;
 				case 40: // Down
+					event.preventDefault();
 					if (jobj.next().length) {
 						jobj.insertAfter(jobj.next());
 					} else {
@@ -2207,7 +2211,7 @@ GridTablePlain.prototype.makeRowReorderBtn = function () {
 				}
 				newIndex = jobj.index();
 				if (oldIndex !== newIndex) {
-					rowSwapIndex(self.defn, oldIndex, newIndex);
+					self.view.source.swapRows(oldIndex, newIndex);
 				}
 				// keep focus on the button after move
 				jQuery(event.currentTarget).focus();
