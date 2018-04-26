@@ -109,6 +109,7 @@
 	$INCLUDE('src/source.js');
 	$INCLUDE('src/view.js');
 	$INCLUDE('src/graph.js');
+	$INCLUDE('src/col_config_win.js');
 	$INCLUDE('src/grid_filter.js');
 	$INCLUDE('src/grid_control.js');
 	$INCLUDE('src/grid_table.js');

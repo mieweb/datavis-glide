@@ -801,3 +801,21 @@ tr.wcdvgrid_more td {
 .SumoSelect .select-all.partial>span i, .SumoSelect .select-all.selected>span i, .SumoSelect>.optWrapper.multiple>.options li.opt.selected span i{
 	background-color: #0095D6;
 }
+
+/*
+ * GRID COLUMN CONFIGURATION WINDOW
+ */
+
+.wcdv_colconfigwin_table {
+	width: 100%;
+}
+
+.wcdv_colconfigwin_table tr {
+	background-color: white;
+}
+
+.wcdv_minimal_width {
+	width: 1px;
+}
+
+/* vim:set noet sw=4 ts=4: */

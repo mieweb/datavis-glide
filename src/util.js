@@ -452,6 +452,12 @@ function arrayEqual(a, b) {
 	return arrayCompare(a, b) === 0;
 }
 
+function moveArrayElement(a, fromIdx, toIdx) {
+	var elt = a[fromIdx];
+	a.splice(fromIdx, 1);
+	a.splice(toIdx, 0, elt);
+}
+
 /**
  * Calls a function on each element in a list until a certain value is returned.
  *
@@ -3078,7 +3084,9 @@ function determineColumns(colConfig, data, typeInfo) {
 	validateColConfig(colConfig, data);
 
 	if (colConfig.size() > 0) {
-		columns = colConfig.keys();
+		columns = colConfig.filter(function (cc) {
+			return !cc.isHidden;
+		}).keys();
 	}
 	else if (typeInfo.size() > 0) {
 		columns = _.reject(typeInfo.keys(), function (field) {

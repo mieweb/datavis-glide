@@ -189,6 +189,126 @@ jQuery.fn.extend({
 			.draggable(opts);
 	},
 
+	_makeSortableTable: function (cb) {
+		var self = this;
+
+		var helperClone = function (e, tr) {
+			var originals = tr.children();
+			clonedRow = tr.clone(),
+				start_idx = tr.index(),
+				all_rows = tr.parent().children(),
+				all_select = tr.find('select');
+
+			// first set the size of the row that was cloned (clonedRow).
+			// This keeps the table rows shape.
+			clonedRow.children().each(function(index, val) {
+				jQuery(val).width(originals.eq(index).width());
+				//_.each(['box-sizing'], function (cssProp) {
+				//	jQuery(val).css(cssProp, originals.eq(index).css(cssProp));
+				//});
+			});
+			// second set the 'selected' value of any selects
+			// found during the clone.  Seems jquery has a
+			// bug that will not be fixed.
+			clonedRow.find('select').val(function(index) {
+				return all_select.eq(index).val();
+			});
+			// third lets place a temp class on all the rows
+			// to keep the zerba striping, during the drag
+			for (var i = start_idx+1; i < all_rows.length; i++) {
+				if ((i % 2) == 0) {
+					// this row should really be even but because
+					// the clonedRow is hidden we need to make it
+					// odd to avoid the 'shifting of colors in the zebra'
+					jQuery(all_rows[i]).addClass('odd');
+				} else {
+					jQuery(all_rows[i]).addClass('even');
+				}
+			}
+			// lastly put the correct zebra strip on the cloned row
+			// that gets dragged around
+			if ((start_idx % 2) == 0) {
+				clonedRow.addClass('odd');
+			} else {
+				clonedRow.addClass('even');
+			}
+			return clonedRow;
+		};
+
+		self.on('keydown', 'button.drag-handle', function (event) {
+			var tr = jQuery(event.currentTarget).closest('tr'),
+				oldIndex = tr.index(),
+				newIndex = oldIndex;
+
+			// Reposition if one of the directional keys is pressed
+			switch (event.keyCode) {
+			case 38: // Up
+				event.preventDefault();
+				if (tr.prev().length) {
+					tr.insertBefore(tr.prev());
+				} else {
+					// already at the top so exit
+					return true;
+				}
+				break;
+			case 40: // Down
+				event.preventDefault();
+				if (tr.next().length) {
+					tr.insertAfter(tr.next());
+				} else {
+					// already at the bottom so exit
+					return true;
+				}
+				break;
+			default:
+				return true; // Exit
+			}
+			newIndex = tr.index();
+			if (oldIndex !== newIndex) {
+				cb(oldIndex, newIndex);
+			}
+			// keep focus on the button after move
+			jQuery(event.currentTarget).focus();
+		});
+
+		opts = {
+			forcePlaceholderSize: true,
+			axis: 'y',
+			cancel: 'input,textarea,select,option',
+			helper: helperClone,
+			handle: '.drag-handle',
+			containment: self,
+			// This event is triggered when sorting starts.
+			start: function(event, ui) {
+				// set the height of the placeholder row on start
+				ui.placeholder.height(ui.helper.height());
+				ui.item.data('originIndex', ui.item.index());
+			},
+			// This event is triggered when sorting has stopped.
+			stop: function(event, ui) {
+				var oldIndex = ui.item.data('originIndex'),
+					newIndex = ui.item.index();
+				// the drag has stopped so remove the classes that 'override'
+				// the even/odd strips
+				ui.item.parent().children().removeClass('even odd');
+
+				if ( (typeof oldIndex !== 'undefined') &&
+					(typeof newIndex !== 'undefined') &&
+					(oldIndex !== newIndex) ) {
+					// swap the rows in our internal data structure
+					cb(oldIndex, newIndex);
+				} else {
+					// strange some bad data so just call the 'cancel' method
+					jQuery(this).sortable('cancel');
+				}
+			}
+		};
+
+		self.sortable(opts);
+
+		return this;
+	},
+
 	/**
 	 * Specify what to do when a file is dropped onto this element.
 	 *

@@ -417,6 +417,8 @@ var Grid = function (id, view, defn, tagOpts, cb) {
 
 	self.prefs.bind('grid', self);
 
+	self.colConfigWin = new ColConfigWin(self.colConfig);
+
 	/*
 	 * Set up other container elements.
 	 */
@@ -853,6 +855,17 @@ Grid.prototype._addTitleWidgets = function (titlebar, doingServerFilter, runImme
 		.append(jQuery(fontAwesome('f013')))
 		.appendTo(self.ui.titlebar_controls)
 	;
+
+	self.ui.configBtn = jQuery('<button>', {'type': 'button'})
+		.append(fontAwesome('fa-columns'))
+		.append('Columns')
+		.on('click', function () {
+			self.colConfigWin.show(function (colConfig) {
+				self.setColConfig(colConfig, 'colConfigWin');
+			});
+		})
+		.appendTo(self.ui.titlebar_controls)
+	;
 		
 	// Create the down-chevron button that shows/hides everything under the titlebar.
 
@@ -1193,53 +1206,55 @@ Grid.prototype._addPrefsButtons = function (toolbar) {
 	// XXX: Is it possible for perspectives to change by some other route so that we need to know
 	// about it to update the UI?
 
-	self.prefs.prime(function () {
-		self.prefs.getPerspectives(function (perspectives) {
-			_.each(perspectives.sort(), function (name) {
+	setTimeout(function () {
+		self.prefs.prime(function () {
+			self.prefs.getPerspectives(function (perspectives) {
+				_.each(perspectives.sort(), function (name) {
+					if (options[name] == null) {
+						options[name] = jQuery('<option>', { 'value': name })
+							.text(name)
+							.appendTo(dropdown);
+					}
+				});
+
+				dropdown.val(self.prefs.getCurrentPerspective());
+				showHideBtns();
+			});
+
+			self.prefs.on('perspectiveAdded', function (name) {
 				if (options[name] == null) {
-					options[name] = jQuery('<option>', { 'value': name })
-						.text(name)
-						.appendTo(dropdown);
+					options[name] = jQuery('<option>', {
+						value: name
+					}).text(name);
+					dropdown.append(options[name]);
 				}
 			});
 
-			dropdown.val(self.prefs.getCurrentPerspective());
-			showHideBtns();
-		});
+			self.prefs.on('perspectiveDeleted', function (name) {
+				if (options[name] != null) {
+					options[name].remove();
+					delete options[name];
+				}
+			});
 
-		self.prefs.on('perspectiveAdded', function (name) {
-			if (options[name] == null) {
-				options[name] = jQuery('<option>', {
-					value: name
-				}).text(name);
-				dropdown.append(options[name]);
-			}
-		});
+			self.prefs.on('perspectiveRenamed', function (oldName, newName) {
+				if (options[oldName] != null) {
+					options[oldName].attr('value', newName);
+					options[oldName].text(newName);
+					options[newName] = options[oldName];
+					delete options[oldName];
+				}
+			});
 
-		self.prefs.on('perspectiveDeleted', function (name) {
-			if (options[name] != null) {
-				options[name].remove();
-				delete options[name];
-			}
-		});
+			self.prefs.on('perspectiveChanged', function (name) {
+				dropdown.val(name);
+				showHideBtns();
+			});
 
-		self.prefs.on('perspectiveRenamed', function (oldName, newName) {
-			if (options[oldName] != null) {
-				options[oldName].attr('value', newName);
-				options[oldName].text(newName);
-				options[newName] = options[oldName];
-				delete options[oldName];
-			}
-		});
-
-		self.prefs.on('perspectiveChanged', function (name) {
-			dropdown.val(name);
-			showHideBtns();
-		});
-
-		self.prefs.on('prefsHistoryStatus', function (back, forward) {
-			backBtn.attr('disabled', !back);
-			forwardBtn.attr('disabled', !forward);
+			self.prefs.on('prefsHistoryStatus', function (back, forward) {
+				backBtn.attr('disabled', !back);
+				forwardBtn.attr('disabled', !forward);
+			});
 		});
 	});
 };
@@ -1724,6 +1739,8 @@ Grid.prototype._normalizeColumns = function (defn) {
 		}
 	}
 
+	self.initColConfig = self.colConfig.clone();
+
 	_.each(getPropDef([], defn, 'table', 'columnConfig'), function (colConfig, colName) {
 
 		// When you want to show a checkbox to represent the value, it only makes sense to have a
@@ -1787,4 +1804,39 @@ Grid.prototype._setExportStatus = function (status) {
 	default:
 		throw new Error('Call Error: invalid status "' + status + '"');
 	}
+};
+
+// #setColConfig {{{2
+
+Grid.prototype.setColConfig = function (colConfig, caller) {
+	var self = this;
+
+	self.colConfig = colConfig.clone();
+
+	if (caller !== 'colConfigWin') {
+		self.colConfigWin.setColConfig(self.colConfig);
+	}
+
+	self.view.setColConfig(self.colConfig);
+	self.redraw();
+
+	if (caller !== 'prefs') {
+		self.prefs.save();
+	}
+};
+
+// #getColConfig {{{2
+
+Grid.prototype.getColConfig = function (colConfig) {
+	var self = this;
+
+	return self.colConfig;
+};
+
+// #resetColConfig {{{2
+
+Grid.prototype.resetColConfig = function (caller) {
+	var self = this;
+
+	self.setColConfig(self.initColConfig, caller);
 };

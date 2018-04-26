@@ -1502,6 +1502,14 @@ var PrefsModuleGrid = makeSubclass(PrefsModule);
 
 PrefsModuleGrid.prototype.load = function (config) {
 	var self = this;
+
+	if (config == null) {
+		return;
+	}
+
+	if (config.colConfig != null) {
+		self.target.setColConfig(OrdMap.deserialize(config.colConfig), 'prefs');
+	}
 };
 
 // #save {{{2
@@ -1511,6 +1519,11 @@ PrefsModuleGrid.prototype.save = function () {
 
 	var prefs = {};
 
+	var colConfig = self.target.getColConfig();
+	if (colConfig != null) {
+		prefs.colConfig = colConfig.serialize();
+	}
+
 	return prefs;
 };
 
@@ -1518,6 +1531,8 @@ PrefsModuleGrid.prototype.save = function () {
 
 PrefsModuleGrid.prototype.reset = function () {
 	var self = this;
+
+	self.target.resetColConfig('prefs');
 };
 
 // PrefsModuleGraph {{{1
