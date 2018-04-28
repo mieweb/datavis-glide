@@ -77,7 +77,7 @@ var GridFilter = (function () {
 		self.limit = 0;
 		self.applyImmediately = false;
 		self.div = jQuery('<div>')
-			.css({'white-space': 'nowrap', 'padding-top': 2, 'padding-bottom': 2});
+			.addClass('wcdv_filter_control_filter');
 
 		if (self.opts.makeRemoveButton) {
 			self.removeBtn = self.makeRemoveBtn();

@@ -316,7 +316,11 @@ li.wcdv_aggregate_field {
 }
 
 .wcdv_filter_control ul li .wcdv_field > .wcdv_filter_control_filter_container > div {
+	align-items: center;
 	display: flex;
+	white-space: nowrap;
+	padding-top: 2px;
+	padding-bottom: 2px;
 }
 
 /* WARNING - MAY NEED TUNED IN THE FUTURE */
