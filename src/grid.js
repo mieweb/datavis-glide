@@ -1780,33 +1780,7 @@ Grid.prototype.export = function () {
 	var fileName = (self.tagOpts.title || self.id) + '.csv';
 	var csv = self.gridTable.getCsv();
 	var contentType = 'text/csv';
+	var blob = new Blob([csv], {'type': contentType});
 
-	// TODO Remove this old approach.
-
-	if (window.Blob == null /* old browser */) {
-		var form = jQuery('<form>', {'method': 'POST', 'action': MIE.WC_DataVis.EXPORT_URL}).appendTo(document.body);
-		jQuery('<input>', {'type': 'hidden', 'name': 'format'}).val('csv').appendTo(form);
-		jQuery('<input>', {'type': 'hidden', 'name': 'filename'}).val(fileName).appendTo(form);
-		jQuery('<input>', {'type': 'hidden', 'name': 'content'}).val(csv).appendTo(form);
-		form.submit();
-		form.remove();
-	}
-	else {
-		var blob = new Blob([csv], {'type': contentType});
-
-		// IE11 supports Blob, but doesn't allow you to fake a click on the download link.  Fortunately
-		// for us, it has a function which does all of that for you in one step!
-
-		if (window.navigator.msSaveBlob != null) {
-			window.navigator.msSaveBlob(blob, fileName);
-		}
-		else {
-			var a = document.createElement('a');
-			a.download = fileName;
-			a.href = URL.createObjectURL(blob);
-			jQuery(document.body).append(a);
-			a.click();
-			a.remove();
-		}
-	}
+	presentDownload(blob, fileName);
 };

@@ -19,7 +19,8 @@ button.wcdv_icon_button span.fa {
 	font-size: 120%;
 }
 
-.wcdv_grid button > span.fa {
+.wcdv_grid button > span.fa,
+.wcdv_graph button > span.fa {
 	margin-right: 0.25em;
 }
 
@@ -37,7 +38,7 @@ li.wcdv_aggregate_field {
 	vertical-align: middle;
 }
 
-.wcdv_grid {
+.wcdv_grid, .wcdv_graph {
 	margin-top: 1em;
 	display: flex;
 	flex-direction: column;
@@ -345,7 +346,8 @@ div.SumoSelect > div.optWrapper {
 
 /******************************************************************************/
 
-.wcdv_grid_table {
+.wcdv_grid_table,
+.wcdv_graph_render {
 	border-left: solid 1px #666;
 	border-right: solid 1px #666;
 	border-bottom: solid 1px #666;

@@ -61,9 +61,7 @@ $(document).ready(function () {
 		}
 	});
 	var view = new MIE.WC_DataVis.View(source);
-	new MIE.WC_DataVis.Graph('graph', view, {
-		title: 'Google Charts Example',
-		height: 400,
+	new MIE.WC_DataVis.Graph('graph', view, /*{
 		whenPlain: {
 			graphType: 'area',
 			categoryField: 'Date',
@@ -90,6 +88,9 @@ $(document).ready(function () {
 				fields: ['Amount']
 			}]
 		}
+	}*/ null, {
+		title: 'Google Charts Example',
+		height: 400,
 	});
 	new MIE.WC_DataVis.Grid('grid', view, {
 		id: 'grid',

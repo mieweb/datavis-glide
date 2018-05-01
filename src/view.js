@@ -197,6 +197,7 @@ var View = function (source, name, opts) {
 	});
 
 	self.name = name || source.getName() || gensym();
+	self.colConfig = new OrdMap();
 
 	self.timing = new Timing();
 
