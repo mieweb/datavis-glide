@@ -763,6 +763,8 @@ GraphRendererGoogle.prototype.draw_group = function (data, typeInfo, dt, config)
 		}]
 	});
 
+	var valueAxis = config.graphType === 'bar' ? 'hAxis' : 'vAxis';
+
 	// dt.addColumn(typeInfo.get(config.categoryField).type, config.categoryField);
 	dt.addColumn('string', config.categoryField);
 
@@ -773,11 +775,11 @@ GraphRendererGoogle.prototype.draw_group = function (data, typeInfo, dt, config)
 
 		if (aggType === 'currency') {
 			aggType = 'number';
-			setProp('currency', config, 'options', 'vAxis', 'format');
+			setProp('currency', config, 'options', valueAxis, 'format');
 		}
 
 		dt.addColumn(aggType, name);
-		setProp(name, config, 'options', 'vAxis', 'title');
+		setProp(name, config, 'options', valueAxis, 'title');
 
 		_.each(data.rowVals, function (rowVal, rowValIdx) {
 			newRow = [rowVal.join(', ')];
@@ -843,6 +845,8 @@ GraphRendererGoogle.prototype.draw_pivot = function (data, typeInfo, dt, config)
 		}
 	});
 
+	var valueAxis = config.graphType === 'bar' ? 'hAxis' : 'vAxis';
+
 	dt.addColumn('string', config.categoryField);
 
 	if (config.aggNum != null) {
@@ -852,14 +856,14 @@ GraphRendererGoogle.prototype.draw_pivot = function (data, typeInfo, dt, config)
 
 		if (aggType === 'currency') {
 			aggType = 'number';
-			setProp('currency', config, 'options', 'vAxis', 'format');
+			setProp('currency', config, 'options', valueAxis, 'format');
 		}
 
 		_.each(data.colVals, function (colVal) {
 			dt.addColumn(aggType, colVal.join(', '));
 		});
 
-		setProp(name, config, 'options', 'vAxis', 'title');
+		setProp(name, config, 'options', valueAxis, 'title');
 
 		_.each(data.rowVals, function (rowVal, rowValIdx) {
 			newRow = [rowVal.join(', ')];
@@ -978,11 +982,12 @@ GraphRendererGoogle.prototype.redraw = function () {
 					title: self.opts.title,
 					width: self.opts.width,
 					height: self.opts.height,
-					isStacked: config.stacked,
-					hAxis: {
-						title: config.categoryField
-					}
+					isStacked: config.stacked
 				};
+
+				var categoryAxis = config.graphType === 'bar' ? 'vAxis' : 'hAxis';
+
+				setProp(config.categoryField, options, categoryAxis, 'title');
 
 				jQuery.extend(true, options, config.options);
 
