@@ -2092,9 +2092,7 @@ GridTablePlain.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 					var cell = row.rowData[field];
 
 					var td = jQuery('<td>');
-					var value = format(fcc, typeInfo.get(field), cell, {
-						debug: field === 'Birth Date'
-					});
+					var value = format(fcc, typeInfo.get(field), cell);
 
 					if (value instanceof Element || value instanceof jQuery) {
 						td.append(value);
