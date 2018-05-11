@@ -1,0 +1,387 @@
+/*
+ * @import url("http://fonts.googleapis.com/css?family=PT+Sans:400,400italic,700");
+ * @import url("http://fonts.googleapis.com/css?family=Asap:400,400italic,700");
+ * @import url("http://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700");
+ * @import url("http://fonts.googleapis.com/css?family=Droid+Serif:regular,italic,bold,bolditalic&subset=latin");
+ * @import url("http://fonts.googleapis.com/css?family=Droid+Sans:regular,bold&subset=latin");
+ * @import url("http://fonts.googleapis.com/css?family=Rosario:400,400italic,700");
+ * @import url("http://fonts.googleapis.com/css?family=Crimson+Text:400,400italic,700");
+ * @import url("http://fonts.googleapis.com/css?family=UnifrakturCook:700");
+ * @import url("http://fonts.googleapis.com/css?family=Alegreya:400,400italic,700");
+ * @import url("http://fonts.googleapis.com/css?family=PT+Mono");
+ */
+
+@import url("http://fonts.googleapis.com/css?family=UnifrakturMaguntia");
+@import url("http://fonts.googleapis.com/css?family=PT+Mono");
+@import url("http://fonts.googleapis.com/css?family=PT+Serif:400,400italic,700");
+@import url("http://fonts.googleapis.com/css?family=PT+Sans:400,400italic,700");
+
+body {
+    font-family: "PT Serif", serif;
+    font-size: 13pt;
+    width: 60em;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: left;
+}
+
+nav {
+    font-family: "PT Sans", sans-serif;
+    float: right;
+    background-color: white;
+    border: solid 2px #9fa8da;
+    border-radius: 1em;
+    margin-left: 1em;
+    padding-right: 1em;
+}
+
+nav ul {
+    list-style: none;
+    padding-left: 1.2em;
+}
+
+nav > ul > li > a {
+    font-weight: bold;
+}
+
+nav > ul > li:before {
+    content: "❖";
+    display: inline-block;
+    width: 1.2em;
+}
+
+nav > ul > li > ul > li:before {
+    content: "◆";
+    display: inline-block;
+    width: 1.2em;
+}
+
+nav > ul > li > ul > li > ul > li:before {
+    content: "◇";
+    display: inline-block;
+    width: 1.2em;
+}
+
+nav a {
+    color: inherit;
+    text-decoration: none;
+}
+
+/*
+ * =============================================================================
+ *
+ *   HEADINGS
+ *
+ * =============================================================================
+ */
+
+h1, h2, h3, h4 {
+    overflow: hidden;
+    font-family: "PT Sans", sans-serif;
+}
+
+h1 a, h2 a, h3 a, h4 a {
+    text-decoration: none;
+}
+
+header h1.title {
+    font-size: 32pt;
+    text-align: center;
+}
+
+h1 {
+    font-size: 26pt;
+    border-bottom: solid 8px #b71c1c;
+}
+
+h2 {
+    font-size: 20pt;
+    border-bottom: solid 4px #c62828;
+}
+
+h3 {
+    font-size: 16pt;
+    border-bottom: solid 2px #d32f2f;
+}
+
+h4 {
+    font-size: 14pt;
+    border-bottom: solid 1px #e53935;
+}
+
+/*
+ * =============================================================================
+ *
+ *   SOURCE CODE
+ *
+ * =============================================================================
+ */
+
+div.sourceCode {
+    border: 1pt solid #AEBDCC;
+    background-color: #F3F5F7;
+    padding: 5pt;
+}
+
+pre {
+    font-family: "PT Mono", monospace;
+    font-size: 90%;
+}
+
+pre.small {
+	font-size: 80%;
+}
+
+pre.output {
+    background: -moz-repeating-linear-gradient(-45deg, #F3F5F7, #F3F5F7 40px, #DAE6F2 50px, #DAE6F2 60px, #F3F5F7 70px);
+}
+
+code {
+    font-family: "PT Mono", monospace;
+    color: #008000;
+}
+
+.mono, tt {
+    font-family: "PT Mono", monospace;
+}
+
+var {
+    color: #2060A0;
+    font-style: normal;
+}
+
+blockquote {
+    border-top: solid 1px black;
+}
+
+blockquote.standalone {
+    border-top: none;
+}
+
+blockquote p.attrib {
+    text-align: right;
+    font-style: italic;
+}
+
+a img {
+    border: none;
+}
+
+/*
+li a {
+    text-decoration: none;
+}
+*/
+
+/*
+ * =============================================================================
+ *
+ *   TABLES
+ *
+ * =============================================================================
+ */
+
+table {
+    border-collapse: collapse;
+    border: solid 1px black;
+    width: 100%;
+}
+
+thead > tr > td, thead > tr > th {
+    background-color: #C0C0C0;
+    border-bottom: solid 1px black;
+}
+
+tfoot > tr > td {
+    background-color: #C0C0C0;
+    border-top: solid 1px black;
+}
+
+tbody > tr > td {
+    vertical-align: top;
+}
+
+table td {
+    padding: 4px;
+}
+
+table.light-1 > thead > tr > th:nth-child(1) { width: 18%; } /* model */
+table.light-1 > thead > tr > th:nth-child(2) { width: 10%; } /* batteries */
+table.light-1 > thead > tr > th:nth-child(3) { width: 12%; } /* output */
+table.light-1 > thead > tr > th:nth-child(4) { width: 60%; } /* notes */
+
+table.light-2 > thead > tr > th:nth-child(1) { width: 18%; } /* model */
+table.light-2 > thead > tr > th:nth-child(2) { width: 10%; } /* batteries */
+table.light-2 > thead > tr > th:nth-child(3) { width: 12%; } /* output 1 */
+table.light-2 > thead > tr > th:nth-child(4) { width: 12%; } /* output 2 */
+table.light-2 > thead > tr > th:nth-child(5) { width: 48%; } /* notes */
+
+table.light-3 > thead > tr > th:nth-child(1) { width: 18%; } /* model */
+table.light-3 > thead > tr > th:nth-child(2) { width: 10%; } /* batteries */
+table.light-3 > thead > tr > th:nth-child(3) { width: 12%; } /* output 1 */
+table.light-3 > thead > tr > th:nth-child(4) { width: 12%; } /* output 2 */
+table.light-3 > thead > tr > th:nth-child(5) { width: 12%; } /* output 3 */
+table.light-3 > thead > tr > th:nth-child(6) { width: 36%; } /* notes */
+
+/*
+ * =============================================================================
+ *
+ *   LISTS
+ *
+ * =============================================================================
+ */
+
+dd {
+    padding-top: 1.5ex;
+}
+
+dt {
+    padding-top: 1.5ex;
+    font-weight: bold;
+}
+
+dl > dt:first-child {
+    padding-top: inherit;
+}
+
+ul.tall > li:first-child,
+ol.tall > li:first-child {
+    margin-top: 0px;
+    padding-top: 0px;
+}
+
+ul.tall > li, ul.nested-tall > li,
+ol.tall > li, ol.nested-tall > li {
+    margin-top: 8px;
+    padding-top: 8px;
+}
+
+p.buttons a {
+    background-color: #C0C0C0;
+    padding: 4px 6px 4px 6px;
+    margin-left: 8px;
+    border: solid 1px black;
+    text-decoration: none;
+}
+
+p.buttons {
+    padding-bottom: 18px;
+    border-bottom: dotted 2px #808080;
+}
+
+div#updated {
+    color: #808080;
+    font-weight: bold;
+    text-align: right;
+    float: right;
+}
+
+span.sf {
+    font-family: sans-serif;
+}
+
+span.sc {
+    font-variant: small-caps;
+}
+
+body.links h2 {
+    padding-left: 40px;
+}
+
+body.links h2 + p {
+    padding-left: 40px;
+}
+
+body.links h2 + ul {
+    padding-left: 80px;
+}
+
+body.links h3 {
+    padding-left: 80px;
+}
+
+body.links h3 + p {
+    padding-left: 80px;
+}
+
+body.links h3 + ul {
+    padding-left: 120px;
+}
+
+h1.blog-title {
+    margin-bottom: 0px;
+}
+
+h2.blog-subtitle {
+    margin-top: 0px;
+    margin-bottom: 0px;
+    border-bottom: none;
+}
+
+div.blog-date {
+    font-size: 12pt;
+    font-style: italic;
+    text-align: right;
+    margin-top: -18pt;
+    padding-bottom: 0.5ex;
+    border-bottom: solid 4px #800020;
+}
+
+div.blog-description {
+    font-family: "PT Sans", sans-serif;
+    margin-left: 2em;
+    margin-right: 2em;
+    margin-top: 3ex;
+    padding-left: 1em;
+    padding-right: 1em;
+    padding-top: 1ex;
+    padding-bottom: 1ex;
+    border-left: solid 4px #C0C0C0;
+}
+
+span.tag {
+    padding: 4px;
+    border: solid 1px black;
+    border-radius: 1ex;
+    background-color: #C0C0C0;
+}
+
+span.cloud-tag {
+    padding: 4px;
+}
+
+span.tag a, span.cloud-tag a {
+    color: black;
+    text-decoration: none;
+}
+
+div.tags-label {
+    border-bottom: solid 1px black;
+    padding-top: 2ex;
+}
+
+div.tags-label a {
+    color: black;
+    text-decoration: none;
+}
+
+div.tags {
+    padding-top: 1ex;
+}
+
+div.tags span.tag {
+    margin-right: 0.5em;
+}
+
+a.footnote-ref {
+    text-decoration: none;
+}
+
+.centering {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.gold {
+    color: #B80;
+}
