@@ -120,17 +120,18 @@ var Graph = function (id, view, devConfig, opts) {
 		if (config != null) {
 			debug.info('GRAPH // HANDLER (View.workEnd)',
 				'Matching configuration: %O', config);
+
+			var graphType = config.graphType;
+			var axis = graphType === 'bar' ? 'hAxis' : 'vAxis';
+			self.ui.graphTypeDropdown.val(config.graphType);
 		}
-
-		var graphType = config.graphType;
-		var axis = graphType === 'bar' ? 'hAxis' : 'vAxis';
-
-		self.ui.graphTypeDropdown.val(config.graphType);
 
 		if (ops.group) {
 			self.ui.toolbar_aggregates.show();
-			self.ui.aggDropdown.val(config.aggNum);
-			self.ui.zeroAxisCheckbox.prop('checked', getProp(config, 'options', axis, 'minValue') == 0);
+			if (config != null) {
+				self.ui.aggDropdown.val(config.aggNum);
+				self.ui.zeroAxisCheckbox.prop('checked', getProp(config, 'options', axis, 'minValue') == 0);
+			}
 		}
 		else {
 			self.ui.toolbar_aggregates.hide();
@@ -138,7 +139,9 @@ var Graph = function (id, view, devConfig, opts) {
 
 		if (ops.pivot) {
 			self.ui.toolbar_pivot.show();
-			self.ui.stackCheckbox.prop('checked', !!getProp(config, 'options', 'isStacked'));
+			if (config != null) {
+				self.ui.stackCheckbox.prop('checked', !!getProp(config, 'options', 'isStacked'));
+			}
 		}
 		else {
 			self.ui.toolbar_pivot.hide();
