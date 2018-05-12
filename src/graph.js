@@ -352,10 +352,11 @@ Graph.prototype._addAggregateButtons = function (toolbar) {
 		.on('change', function () {
 			self.drawInteractive();
 		})
-		.append('<option value="column">Vertical Bar Chart</option>')
-		.append('<option value="bar">Horizontal Bar Chart</option>')
-		.append('<option value="pie">Pie Chart</option>')
 		.appendTo(toolbar);
+
+	GRAPH_TYPES.each(function (gt) {
+		self.ui.graphTypeDropdown.append(jQuery('<option>', { 'value': gt.value }).text(gt.name));
+	});
 
 	var aggDropdownId = gensym();
 	jQuery('<label>', { 'for': aggDropdownId }).text('Aggregate: ').appendTo(toolbar);
@@ -463,7 +464,7 @@ Graph.prototype._clearExportBlob = function () {
 Graph.prototype.drawFromConfig = function () {
 	var self = this;
 
-	self.renderer.draw(deepCopy(self.devConfig));
+	self.renderer.draw(self.devConfig, self.userConfig);
 }
 
 // #drawInteractive {{{2
@@ -486,7 +487,7 @@ Graph.prototype.drawInteractive = function () {
 	};
 
 	// NOTE The `graphType` field here is useless except that it makes the rendering function (e.g.
-	// GoogleGraphRenderer#draw_plain) more convenient to implement.
+	// GraphRendererGoogle#draw_plain) more convenient to implement.
 
 	config.group.graphs[graphType] = {
 		graphType: graphType,
@@ -526,7 +527,7 @@ Graph.prototype.drawInteractive = function () {
 		self.prefs.save();
 	}
 
-	self.renderer.draw(self.userConfig);
+	self.renderer.draw(self.devConfig, self.userConfig);
 };
 
 // #checkGraphConfig {{{2
@@ -752,7 +753,7 @@ Graph.prototype.setUserConfig = function (config) {
 	var self = this;
 
 	self.userConfig = config;
-	self.renderer.draw(self.userConfig);
+	self.renderer.draw(self.devConfig, self.userConfig);
 };
 
 // GraphRenderer {{{1
@@ -803,6 +804,16 @@ GraphRenderer.prototype.addRedrawHandlers = function () {
 	}, {
 		who: self
 	});
+};
+
+// #draw {{{2
+
+GraphRenderer.prototype.draw = function (devConfig, userConfig) {
+	var self = this;
+
+	self.devConfig = devConfig;
+	self.userConfig = userConfig;
+	self.redraw();
 };
 
 // GraphRendererGoogle {{{1
@@ -872,7 +883,6 @@ GraphRendererGoogle.prototype.draw_plain = function (data, typeInfo, dt, config)
 
 		_.each(configOpts, function (opt) {
 			if (config[opt.name + 'Field'] != null) {
-				console.log(config[opt.name + 'Field']);
 				self.view.source.convertAll(data.dataByRowId, config[opt.name + 'Field']);
 			}
 		});
@@ -893,7 +903,6 @@ GraphRendererGoogle.prototype.draw_plain = function (data, typeInfo, dt, config)
 					newRow.push(opt.default);
 				}
 			});
-			console.log(newRow);
 			dt.addRow(newRow);
 		});
 
@@ -1115,14 +1124,7 @@ GraphRendererGoogle.prototype._ensureGoogleChartsLoaded = function (cont) {
 	});
 };
 
-// #draw {{{2
-
-GraphRendererGoogle.prototype.draw = function (config) {
-	var self = this;
-
-	self.config = config;
-	self.redraw();
-};
+// #redraw {{{2
 
 GraphRendererGoogle.prototype.redraw = function () {
 	var self = this;
@@ -1136,13 +1138,13 @@ GraphRendererGoogle.prototype.redraw = function () {
 				var dt = new google.visualization.DataTable();
 
 				if (data.isPlain) {
-					config = self.draw_plain(data, typeInfo, dt, self.config.whenPlain || getProp(self.config, 'plain', 'graphs', getProp(self.config, 'plain', 'current')));
+					config = self.draw_plain(data, typeInfo, dt, getProp(self.userConfig, 'plain', 'graphs', getProp(self.userConfig, 'plain', 'current')) || self.devConfig.whenPlain);
 				}
 				else if (data.isGroup) {
-					config = self.draw_group(data, typeInfo, dt, self.config.whenGroup || getProp(self.config, 'group', 'graphs', getProp(self.config, 'group', 'current')));
+					config = self.draw_group(data, typeInfo, dt, getProp(self.userConfig, 'group', 'graphs', getProp(self.userConfig, 'group', 'current')) || self.devConfig.whenGroup);
 				}
 				else if (data.isPivot) {
-					config = self.draw_pivot(data, typeInfo, dt, self.config.whenPivot || getProp(self.config, 'pivot', 'graphs', getProp(self.config, 'pivot', 'current')));
+					config = self.draw_pivot(data, typeInfo, dt, getProp(self.userConfig, 'pivot', 'graphs', getProp(self.userConfig, 'pivot', 'current')) || self.devConfig.whenPivot);
 				}
 
 				if (config == null) {
@@ -1281,16 +1283,10 @@ GraphControl.prototype.draw = function () {
 
 		// Graph Type Dropdown
 
-		var graphTypes = {
-			'area': 'Area Chart',
-			'bar': 'Bar Chart',
-			'column': 'Column Chart'
-		};
-
 		self.ui.graphType = jQuery('<select>');
 
-		_.each(graphTypes, function (graphType, graphTypeName) {
-			self.ui.graphType.append(jQuery('<option>', { 'value': graphType }).text(graphTypeName));
+		GRAPH_TYPES.each(function (gt) {
+			self.ui.graphType.append(jQuery('<option>', { 'value': gt.value }).text(gt.name));
 		});
 
 		self.ui.root.append(jQuery('<div>').append(self.ui.graphType));
@@ -1362,3 +1358,33 @@ var GraphControlField = function () {
 
 GraphControlField.prototype = Object.create(Object.prototype);
 GraphControlField.prototype.constructor = GraphControlField;
+
+// GRAPH_TYPES {{{1
+
+var GRAPH_TYPES = OrdMap.fromArray([{
+	value: 'area',
+	name: 'Area Chart',
+	modes: ['plain'],
+	renderers: [GraphRendererGoogle],
+}, {
+	value: 'bar',
+	name: 'Bar Chart',
+	modes: ['plain', 'group', 'pivot'],
+	renderers: [GraphRendererGoogle],
+}, {
+	value: 'column',
+	name: 'Column Chart',
+	modes: ['plain', 'group', 'pivot'],
+	renderers: [GraphRendererGoogle],
+}, {
+	value: 'pie',
+	name: 'Pie Chart',
+	modes: ['plain', 'group', 'pivot'],
+	renderers: [GraphRendererGoogle],
+}, {
+	value: 'gantt',
+	name: 'Gantt Chart',
+	modes: ['plain'],
+	renderers: [GraphRendererGoogle],
+}], 'value');
+
