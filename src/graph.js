@@ -51,7 +51,7 @@ var Graph = function (id, view, devConfig, opts) {
 
 	self.id = id;
 	self.view = view;
-	self.devConfig = devConfig;
+	self.devConfig = devConfig || {};
 	self.userConfig = {
 		plain: {},
 		group: {},
