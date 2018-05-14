@@ -1337,8 +1337,11 @@ GridTable.prototype.drawBody_rowVals = function (data, tr, groupNum) {
 		var groupField = data.groupFields[rowValIndex];
 		var fcc = self.colConfig.get(groupField) || {};
 
+		rowVal = format(fcc, self.typeInfo.get(groupField), rowVal);
+
 		var th = jQuery('<th>');
 		var span = jQuery('<span>');
+
 		if (rowVal instanceof Element || rowVal instanceof jQuery) {
 			span.append(rowVal);
 		}
@@ -1348,6 +1351,7 @@ GridTable.prototype.drawBody_rowVals = function (data, tr, groupNum) {
 		else {
 			span.text(rowVal);
 		}
+
 		span.appendTo(th);
 		th.appendTo(tr);
 		self.csv.addCol(span.text());
@@ -2101,9 +2105,7 @@ GridTablePlain.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 					var cell = row.rowData[field];
 
 					var td = jQuery('<td>');
-					var value = format(fcc, typeInfo.get(field), cell, {
-						debug: field === 'Birth Date'
-					});
+					var value = format(fcc, typeInfo.get(field), cell);
 
 					if (value instanceof Element || value instanceof jQuery) {
 						td.append(value);
@@ -2941,6 +2943,7 @@ GridTableGroupDetail.prototype.drawBody = function (data, typeInfo, columns, con
 
 			var groupField = data.groupFields[rowValIdx];
 			var fcc = self.colConfig.get(groupField) || {};
+			rowValElt = format(fcc, self.typeInfo.get(groupField), rowValElt);
 			var span = jQuery('<span>');
 			if (rowValElt instanceof Element || rowValElt instanceof jQuery) {
 				span.append(rowValElt);

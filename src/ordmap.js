@@ -15,6 +15,7 @@ function OrdMap() {
 	this._keyIndex = {};
 	this._map = {};
 	this._size = 0;
+	this._setHandlers = {};
 }
 
 OrdMap.prototype = Object.create(Object.prototype);
@@ -69,7 +70,17 @@ OrdMap.prototype.set = function (k, v) {
 		this._keyIndex[k] = this._keys.length - 1;
 		this._size += 1;
 	}
+
 	this._map[k] = v;
+
+	// Invoke all the handlers for when this value was set.
+
+	if (this._setHandlers[k] != null) {
+		for (var i = 0; i < this._setHandlers[k].length; i += 1) {
+			this._setHandlers[k][i](v);
+		}
+		this._setHandlers[k] = null;
+	}
 };
 
 OrdMap.prototype.append = function (k, v) {
@@ -184,4 +195,38 @@ OrdMap.prototype.asMap = function () {
 
 OrdMap.prototype.size = function () {
 	return this._keys.length;
+};
+
+/**
+ * Call an event handler when a key is set in this map.  If the key is already set, then the handler
+ * is invoked immediately.
+ *
+ * @param {string} k
+ * The key to monitor.
+ *
+ * @param {function} h
+ * The handler to set.
+ */
+
+OrdMap.prototype.whenSet = function (k, h, opts) {
+	opts = opts || {};
+
+	if (opts.prepend == null) {
+		opts.prepend = false;
+	}
+
+	if (this.isSet(k)) {
+		return h(this.get(k));
+	}
+
+	if (this._setHandlers[k] == null) {
+		this._setHandlers[k] = [];
+	}
+
+	if (opts.prepend) {
+		this._setHandlers[k].unshift(h);
+	}
+	else {
+		this._setHandlers[k].push(h);
+	}
 };

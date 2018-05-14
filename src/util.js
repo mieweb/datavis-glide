@@ -1806,22 +1806,27 @@ var loadScript = (function () {
 // makeCheckbox {{{2
 
 function makeCheckbox(startChecked, onChange, text, parent) {
-	return jQuery('<label>')
-		.append(jQuery('<input>', { 'type': 'checkbox', 'checked': startChecked })
-						.on('change', onChange))
-		.append(text)
-		.appendTo(parent);
+	var label = jQuery('<label>');
+	var input = jQuery('<input>', { 'type': 'checkbox', 'checked': startChecked }).on('change', onChange);
+
+	label.append(input).append(text).appendTo(parent);
+
+	return input;
 }
 
 // makeToggleCheckbox {{{2
 
 function makeToggleCheckbox(rootObj, path, startChecked, text, parent, after) {
-	setPropDef(startChecked, rootObj, path);
+	if (rootObj != null) {
+		setPropDef(startChecked, rootObj, path);
+	}
 
-	return makeCheckbox(getProp(rootObj, path), function () {
+	return makeCheckbox(rootObj != null ? getProp(rootObj, path) : startChecked, function () {
 		var isChecked = jQuery(this).prop('checked');
-		debug.info('GRID // TOOLBAR', 'Setting `' + path.join('.') + '` to ' + isChecked);
-		setProp(isChecked, rootObj, path);
+		if (rootObj != null) {
+			debug.info('GRID // TOOLBAR', 'Setting `' + path.join('.') + '` to ' + isChecked);
+			setProp(isChecked, rootObj, path);
+		}
 		if (typeof after === 'function') {
 			after(isChecked);
 		}
@@ -3021,4 +3026,74 @@ function determineColumns(colConfig, data, typeInfo) {
 	debug.info('DETERMINE COLUMNS', 'Columns = %O', columns);
 
 	return columns;
+}
+
+// Downloading {{{1
+
+/**
+ * Present a blob as a download.  This works even in IE10!
+ *
+ * @param {Blob} blob
+ * The content to download.
+ *
+ * @param {string} fileName
+ * Default name to use for the file.
+ */
+
+function presentDownload(blob, fileName) {
+	if (!(blob instanceof Blob)) {
+		throw new Error('Call Error: `blob` must be a Blob');
+	}
+
+	// IE11 supports Blob, but doesn't allow you to fake a click on the download link.  Fortunately
+	// for us, it has a function which does all of that for you in one step!
+
+	if (window.navigator.msSaveBlob != null) {
+		window.navigator.msSaveBlob(blob, fileName);
+	}
+	else {
+		var a = document.createElement('a');
+		a.download = fileName;
+		a.href = URL.createObjectURL(blob);
+		jQuery(document.body).append(a);
+		a.click();
+		a.remove();
+	}
+}
+
+// https://stackoverflow.com/a/12300351
+
+/**
+ * Convert a data URI to a blob which can be downloaded.  This works even in IE10!
+ *
+ * @param {string} dataURI
+ * The URI to convert into a blob.
+ *
+ * @return {Blob}
+ * A blob that can be downloaded.
+ */
+
+function dataURItoBlob(dataURI) {
+  // convert base64 to raw binary data held in a string
+  // doesn't handle URLEncoded DataURIs - see SO answer #6850276 for code that does this
+  var byteString = atob(dataURI.split(',')[1]);
+
+  // separate out the mime component
+  var mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0]
+
+  // write the bytes of the string to an ArrayBuffer
+  var ab = new ArrayBuffer(byteString.length);
+
+  // create a view into the buffer
+  var ia = new Uint8Array(ab);
+
+  // set the bytes of the buffer to the correct values
+  for (var i = 0; i < byteString.length; i++) {
+      ia[i] = byteString.charCodeAt(i);
+  }
+
+  // write the ArrayBuffer to a blob, and you're done
+  var blob = new Blob([ab], {type: mimeString});
+  return blob;
+
 }

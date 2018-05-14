@@ -672,6 +672,11 @@ Source.prototype.getTypeInfo = function (cont) {
 					log.warn('Overriding type information on field "' + field + '" which is not present in the source.');
 					typeInfo.set(field, {});
 				}
+				if (typeof fieldTypeInfo === 'string') {
+					fieldTypeInfo = {
+						type: fieldTypeInfo
+					};
+				}
 				_.extend(typeInfo.get(field), fieldTypeInfo);
 				typeInfo.get(field).overridden = true;
 				debug.info('SOURCE // GET TYPE INFO', 'Overriding origin type information { field = "' + field + '", typeInfo = %O }', fieldTypeInfo);
@@ -773,6 +778,8 @@ Source.prototype.postProcess = function (data, cont) {
 			});
 		});
 
+		self.guessTypes(data, typeInfo);
+
 		// Step #2 - Update the type information with whether the internal representation (i.e. numeral
 		// or moment) conversion of a field should be deferred or not.
 
@@ -826,6 +833,59 @@ Source.prototype.getConversionFuncs = function (fieldName) {
 	return conversionFuncs;
 };
 
+// #guessTypes {{{2
+
+Source.prototype.guessTypes = function (data, typeInfo) {
+	var self = this;
+
+	var guessType = function (val) {
+		if (val.match(/^\d\d\d\d-\d\d-\d\d$/)) {
+			return 'date';
+		}
+		else if (val.match(/^\d\d:\d\d:\d\d$/)) {
+			return 'time';
+		}
+		else if (val.match(/^\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d$/)) {
+			return 'datetime';
+		}
+		else if (val.match(/^[-+]?[\d,.]+$/)) {
+			return 'number';
+		}
+		else if (val.match(/^\$[-+]?[\d,.]+$/)) {
+			return 'currency';
+		}
+		else {
+			return 'string';
+		}
+	};
+
+	typeInfo.each(function (fti, f) {
+		if (fti.overridden || fti.type !== 'string') {
+			return;
+		}
+
+		var guess = null;
+
+		for (var i = 0; guess !== 'string' && i < data.length; i += 1) {
+			var val = data[i][f].value;
+			var newGuess = guessType(val);
+
+			if (guess == null) {
+				guess = newGuess;
+			}
+			else if (newGuess !== guess) {
+				debug.info('DATA SOURCE // CONVERSION // TYPE GUESSING', 'For field "%s", previous guess "%s" disagrees with current guess "%s" (rowNum = %d, value = %O)', f, guess, newGuess, i, val);
+				guess = 'string';
+			}
+		}
+
+		if (guess != null) {
+			debug.info('DATA SOURCE // CONVERSION // TYPE GUESSING', 'For field "%s", successfully guessed new type "%s"', f, guess);
+			fti.type = guess;
+		}
+	});
+};
+
 // #setConversionTypeInfo {{{2
 
 Source.prototype.setConversionTypeInfo = function (data, typeInfo) {
@@ -837,23 +897,25 @@ Source.prototype.setConversionTypeInfo = function (data, typeInfo) {
 
 			if (fti.type === 'number' || fti.type === 'currency') {
 				fti.needsDecoding = true;
-				fti.internalType = 'numeral';
 
-				// This value might not exist if:
-				//
-				//   - There's no data.
-				//   - The typeInfo is for a field that doesn't exist in the data.
-				//
-				// But those aren't error conditions, so we shouldn't let them stop us.  We'll simplify by
-				// using `getProp()` to extract the value if it exists.
+				var stop = false;
+				for (var i = 0; !stop && i < data.length; i += 1) {
+					if (isInt(data[i][f].value) || isFloat(data[i][f].value)) {
+						// Looks like it can be decoded into a primitive number, so there's no need for
+						// Numeral's advanced parsing.
+						//
+						// However, we do need to keep checking other rows, e.g. when the first row is "123.45"
+						// (toFloat will work) but the second row is "1,234.56" (we need to use Numeral).
 
-				var exampleValue = getProp(data, 0, f, 'value');
+						fti.internalType = 'primitive';
+					}
+					else {
+						// We need to use Numeral's parser, which means there's no point in checking any other
+						// rows... we don't have any better tools than that.
 
-				if (isInt(exampleValue) || isFloat(exampleValue)) {
-					// Looks like it can be decoded into a primitive number, so there's no need for Numeral's
-					// advanced parsing.
-
-					fti.internalType = 'primitive';
+						fti.internalType = 'numeral';
+						stop = true;
+					}
 				}
 			}
 			else if (fti.type === 'date' || fti.type === 'datetime') {
@@ -911,7 +973,7 @@ Source.prototype.convertCell = function (row, field) {
 				cell.value = numeral(cell.value);
 				break;
 			default:
-				log.error('Unable to convert cell value, invalid internal type: field = "%s" ; type = %s ; internalType = %s ; valueTypeOf = %s', field, fti.type, fti.internalType, typeof(cell.value));
+				log.error('Unable to convert cell value, invalid internal type: field = "%s" ; type = %s ; internalType = %s ; valueTypeOf = %s ; value = %O', field, fti.type, fti.internalType, typeof(cell.value), cell.value);
 			}
 		}
 		else if (typeof cell.value === 'string') {
@@ -929,7 +991,7 @@ Source.prototype.convertCell = function (row, field) {
 						cell.value = toFloat(cell.value);
 					}
 					else {
-						log.error('Unable to convert cell value, cannot decode to primitive number: field = "%s" ; type = %s ; internalType = %s ; valueTypeOf = %s', field, fti.type, fti.internalType, typeof(cell.value));
+						log.error('Unable to convert cell value, cannot decode to primitive number: field = "%s" ; type = %s ; internalType = %s ; valueTypeOf = %s ; value = %O', field, fti.type, fti.internalType, typeof(cell.value), cell.value);
 					}
 					break;
 				case 'numeral':
@@ -937,7 +999,7 @@ Source.prototype.convertCell = function (row, field) {
 					cell.value = numeral(cell.value);
 					break;
 				default:
-					log.error('Unable to convert cell value, invalid internal type: field = "%s" ; type = %s ; internalType = %s ; valueTypeOf = %s', field, fti.type, fti.internalType, typeof(cell.value));
+					log.error('Unable to convert cell value, invalid internal type: field = "%s" ; type = %s ; internalType = %s ; valueTypeOf = %s ; value = %O', field, fti.type, fti.internalType, typeof(cell.value), cell.value);
 				}
 			}
 		}

@@ -38,59 +38,32 @@ $(document).ready(function () {
 
 	var source = new MIE.WC_DataVis.Source({
 		type: 'http',
-		url: '../fruit.csv'
+		url: '../gantt.csv'
 	}, null, {
-		'Order ID': {
-			type: 'number'
-		},
-		'Product': {
-			type: 'string'
-		},
-		'Category': {
-			type: 'string'
-		},
-		'Amount': {
-			type: 'currency'
-		},
-		'Date': {
-			type: 'date',
-			format: 'M/D/YYYY'
-		},
-		'Country': {
-			type: 'string'
-		}
+		'ID': 'string',
+		'Name': 'string',
+		'Start': { 'type': 'date', 'format': 'M/D/YY', },
+		'End': { 'type': 'date', 'format': 'M/D/YY' },
+		'Duration': 'number',
+		'Completion': 'number',
+		'Dependencies': 'string'
 	});
 	var view = new MIE.WC_DataVis.View(source);
-	new MIE.WC_DataVis.Graph('graph', view, /*{
+	new MIE.WC_DataVis.Graph('graph', view, {
 		whenPlain: {
-			graphType: 'area',
-			categoryField: 'Date',
-			valueField: 'Amount'
+			graphType: 'gantt',
+			idField: 'ID',
+			nameField: 'Name',
+			resourceField: 'Resource',
+			startField: 'Start',
+			endField: 'End',
+			durationField: 'Duration',
+			completionField: 'Completion',
+			dependenciesField: 'Dependencies'
 		},
-		whenGroup: function (groupFields) {
-			var config = {
-				graphType: 'pie'
-			};
-
-			if (groupFields[0] === 'Country') {
-				config.valueFields = [{
-					fun: 'sum',
-					fields: ['Amount']
-				}];
-			}
-			
-			return config;
-		},
-		whenPivot: {
-			name: 'Total Amount ($)',
-			valueFields: [{
-				fun: 'sum',
-				fields: ['Amount']
-			}]
-		}
-	}*/ null, {
+	}, {
 		title: 'Google Charts Example',
-		height: 400,
+		height: 600,
 	});
 	new MIE.WC_DataVis.Grid('grid', view, {
 		id: 'grid',
@@ -109,8 +82,7 @@ $(document).ready(function () {
 		},
 		source: source
 	}, {
-		title: 'Fruit Sales',
-		runImmediately: true
+		title: 'Gantt Chart Data'
 	});
 });
 		</script>

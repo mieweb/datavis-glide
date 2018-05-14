@@ -77,7 +77,7 @@ var GridFilter = (function () {
 		self.limit = 0;
 		self.applyImmediately = false;
 		self.div = jQuery('<div>')
-			.css({'white-space': 'nowrap', 'padding-top': 2, 'padding-bottom': 2});
+			.addClass('wcdv_filter_control_filter');
 
 		if (self.opts.makeRemoveButton) {
 			self.removeBtn = self.makeRemoveBtn();
@@ -213,7 +213,7 @@ GridFilter.prototype.makeOperatorDrop = function (include) {
 
 	// These are all the operators that are possible.
 
-	var operators = [['$contains', '∈'], ['$notcontains', '∉'], ['$eq', '='], ['$ne', '≠'], ['$gt', '>'], ['$gte', '≥'], ['$lt', '<'], ['$lte', '≤']];
+	var operators = [['$contains', '∈'], ['$notcontains', '∉'], ['$eq', '='], ['$ne', '≠'], ['$gt', '>'], ['$gte', '≥'], ['$lt', '<'], ['$lte', '≤'], ['$in', 'in'], ['$nin', 'not in']];
 
 	// Remove anything that user didn't ask for.
 
@@ -459,6 +459,9 @@ var StringDropdownGridFilterSumo = makeSubclass(GridFilter, function () {
 			self.gridFilterSet.update(false);
 		});
 
+	self.operatorDrop = self.makeOperatorDrop(['$in', '$nin']);
+
+	self.div.append(self.operatorDrop);
 	self.div.append(self.input);
 
 	if (self.removeBtn) {
@@ -470,7 +473,7 @@ var StringDropdownGridFilterSumo = makeSubclass(GridFilter, function () {
 			_.each(getPropDef([], uniqueVals, self.field, 'values'), function (val) {
 				jQuery('<option>').attr({
 					'value': val
-				}).text(val).appendTo(self.input);
+				}).text(val === '' ? '[blank]' : val).appendTo(self.input);
 			});
 			self.input.SumoSelect({
 				triggerChangeCombined: true,
@@ -509,9 +512,11 @@ StringDropdownGridFilterSumo.prototype.adjustInputWidth = function (opts) {
 
 // #getOperator {{{3
 
+/*
 StringDropdownGridFilterSumo.prototype.getOperator = function () {
 	return '$in';
 };
+*/
 
 // #getValue {{{3
 

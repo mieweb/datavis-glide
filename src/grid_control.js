@@ -247,7 +247,6 @@ AggregateControlField.prototype.draw = function () {
 		._makeIconCheckbox('fa-eye-slash', 'fa-eye')
 	;
 
-	/*
 	if (self.control.view.hasClientKind('graph')) {
 		self.ui.graphBtn = jQuery('<button>', {
 			'type': 'button'
@@ -263,7 +262,6 @@ AggregateControlField.prototype.draw = function () {
 			.appendTo(self.ui.root)
 		;
 	}
-	*/
 
 	if (aggDefn.prototype.options != null) {
 		jQuery('<button>', {
@@ -420,7 +418,7 @@ AggregateControlField.prototype.getInfo = function () {
 			return dropdown.val();
 		}),
 		isHidden: self.ui.isHiddenCheckbox._isChecked(),
-		//shouldGraph: self.shouldGraph,
+		shouldGraph: self.shouldGraph,
 		opts: _.mapObject(self.aggFunOpts, function (input, optName) {
 			return input.val();
 		})
@@ -1167,7 +1165,7 @@ AggregateControl.prototype.clearGraphFlag = function () {
 	});
 };
 
-// #triggerAggChange {{{2
+// #triggerAggChange (PROTOTYPE) {{{2
 
 /**
  * Perform necessary actions when the aggregate function is changed.
@@ -1199,7 +1197,7 @@ AggregateControl.prototype.triggerAggChange = function () {
 	});
 };
 
-// #showHideFields {{{2
+// #showHideFields (PROTOTYPE) {{{2
 
 AggregateControl.prototype.showHideFields = function (agg) {
 	var self = this;
@@ -1214,7 +1212,14 @@ AggregateControl.prototype.showHideFields = function (agg) {
 	}
 };
 
-// #addFieldDropdowns {{{2
+// #addFieldDropdowns (PROTOTYPE) {{{2
+
+/**
+ * For each field that an aggregate function requires, add a dropdown for it to the user interface.
+ * This is used by some prototype code that allows changing the aggregate function dynamically.  If
+ * the new aggregate function needs more fields than the old one (e.g. going from "count" to "sum")
+ * then this function adds the extra UI elements needed to get those fields from the user.
+ */
 
 AggregateControl.prototype.addFieldDropdowns = function (agg) {
 	var self = this;
@@ -1235,7 +1240,12 @@ AggregateControl.prototype.addFieldDropdowns = function (agg) {
 	self.updateFieldDropdowns();
 };
 
-// #updateFieldDropdowns {{{2
+// #updateFieldDropdowns (PROTOTYPE) {{{2
+
+/**
+ * Populate the field dropdowns with the list of fields that are available in the view.  This is
+ * used by prototype code that allows changing the aggregate function dynamically.
+ */
 
 AggregateControl.prototype.updateFieldDropdowns = function () {
 	var self = this;

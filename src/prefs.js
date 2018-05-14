@@ -1518,6 +1518,48 @@ PrefsModuleGrid.prototype.reset = function () {
 	var self = this;
 };
 
+// PrefsModuleGraph {{{1
+
+/**
+ * @class
+ */
+
+var PrefsModuleGraph = makeSubclass(PrefsModule);
+
+// #load {{{2
+
+PrefsModuleGraph.prototype.load = function (config) {
+	var self = this;
+
+	if (config == null) {
+		return;
+	}
+
+	self.target.setUserConfig(config);
+};
+
+// #save {{{2
+
+PrefsModuleGraph.prototype.save = function () {
+	var self = this;
+
+	var prefs = deepDefaults(self.target.userConfig, {
+		plain: {},
+		group: {},
+		pivot: {}
+	});
+
+	
+
+	return prefs;
+};
+
+// #reset {{{2
+
+PrefsModuleGraph.prototype.reset = function () {
+	var self = this;
+};
+
 // Perspective {{{1
 
 // Constructor {{{2
@@ -1665,5 +1707,6 @@ var PREFS_BACKEND_REGISTRY = {
 
 var PREFS_MODULE_REGISTRY = {
 	view: PrefsModuleView,
-	grid: PrefsModuleGrid
+	grid: PrefsModuleGrid,
+	graph: PrefsModuleGraph
 };
