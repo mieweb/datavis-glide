@@ -2730,8 +2730,8 @@ GridTableGroupDetail.prototype.drawBody = function (data, typeInfo, columns, con
 	var isRendered = [];
 	var groupId = 0;
 	_.each(data.rowVals, function (rowVal, rowValIdx) {
-		setProp(0, groupIds, rowVal, '_groupId');
-		setProp(rowValIdx, groupIds, rowVal, '_rowValIdx');
+		setProp(0, groupIds, _.map(rowVal, getNatRep), '_groupId');
+		setProp(rowValIdx, groupIds, _.map(rowVal, getNatRep), '_rowValIdx');
 	});
 
 	(function RECUR(o) {
@@ -2763,7 +2763,7 @@ GridTableGroupDetail.prototype.drawBody = function (data, typeInfo, columns, con
 
 		_.each(rowGroup, function (row, rowNum) {
 			tr = jQuery('<tr>', {id: self.defn.table.id + '_' + rowNum, 'data-row-num': row.rowNum})
-				.attr('data-wcdv-group', getProp(groupIds, rowVal, '_groupId'))
+				.attr('data-wcdv-group', getProp(groupIds, _.map(rowVal, getNatRep), '_groupId'))
 				.hide();
 
 			// Create the check box which selects the row.
@@ -2890,8 +2890,8 @@ GridTableGroupDetail.prototype.drawBody = function (data, typeInfo, columns, con
 			//						+ ' ; toggles = ' + getProp(groupIds, rowVal.slice(0, rowValIdx + 1), '_groupId') + ' }');
 
 			tr = jQuery('<tr>')
-				.attr('data-wcdv-group', getProp(groupIds, rowVal.slice(0, rowValIdx), '_groupId'))
-				.attr('data-wcdv-toggles-group', getProp(groupIds, rowVal.slice(0, rowValIdx + 1), '_groupId'))
+				.attr('data-wcdv-group', getProp(groupIds, _.map(rowVal.slice(0, rowValIdx), getNatRep), '_groupId'))
+				.attr('data-wcdv-toggles-group', getProp(groupIds, _.map(rowVal.slice(0, rowValIdx + 1), getNatRep), '_groupId'))
 				.attr('data-wcdv-collapsed', '1')
 			;
 
