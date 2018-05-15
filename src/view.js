@@ -1767,6 +1767,65 @@ View.prototype.group = function () {
 		return rowVals;
 	};
 
+	var buildData = function (data, rowVals) {
+		var result = new Array(rowVals.length);
+		var metadataTree = {};
+		var metadataLeaves = new Array(rowVals.length);
+
+		for (var rowValIndex = 0; rowValIndex < rowVals.length; rowValIndex += 1) {
+			var rowVal = rowVals[rowValIndex];
+			var metadata = {
+				rowValIndex: rowValIndex,
+				parent: null,
+				numRows: 0
+			};
+
+			setProp(metadata, metadataTree, 'children', interleaveWith(rowVal, 'children'));
+			metadataLeaves[rowValIndex] = metadata;
+		}
+
+		for (var rowIndex = 0; rowIndex < data.length; rowIndex += 1) {
+			var row = data[rowIndex];
+			var needsStored = false;
+			var rowVal = new Array(groupFields.length);
+
+			for (var groupFieldIndex = 0; groupFieldIndex < groupFields.length; groupFieldIndex += 1) {
+				rowVal[groupFieldIndex] = getNatRep(row.rowData[groupFields[groupFieldIndex]].value);
+			}
+
+			var rowValMetadata = getProp(metadataTree, 'children', interleaveWith(rowVal, 'children'));
+
+			if (rowValMetadata.rows == null) {
+				rowValMetadata.rows = [];
+				result[rowValMetadata.rowValIndex] = rowValMetadata.rows;
+			}
+
+			rowValMetadata.rows.push(row);
+		}
+
+		var postorder = function (node) {
+			if (node.children == null) {
+				node.numRows = node.rows.length;
+			}
+			else {
+				node.numRows = 0;
+				_.each(node.children, function (child) {
+					child.parent = node;
+					postorder(child);
+					node.numRows += child.numRows;
+				});
+			}
+		};
+
+		postorder(metadataTree);
+
+		return {
+			data: result,
+			metadata: metadataTree,
+			metadataIndex: metadataLeaves
+		};
+	};
+
 	// buildData(plainData, rowVals) => groupedData
 	//
 	//   Groups the data.  This is done by comparing the natrep of the groupField's value in the row
@@ -1783,7 +1842,7 @@ View.prototype.group = function () {
 	//        , [data[0], ...]    // natrep = rowVals[0]
 	//        , ... ]
 
-	var buildData = function (data, rowVals) {
+	var buildData_orig = function (data, rowVals) {
 		var result = [];
 		var tree = {};
 		var leaves = [];
