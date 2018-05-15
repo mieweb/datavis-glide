@@ -1788,18 +1788,29 @@ View.prototype.group = function () {
 		var tree = {};
 		var leaves = [];
 
-		_.each(rowVals, function (rowVal, rowValIndex) {
+		// Every rowVal is a group, so go through them and figure out what rows belong in each one.
+
+		for (var rowValIndex = 0; rowValIndex < rowVals.length; rowValIndex += 1) {
+			var rowVal = rowVals[rowValIndex];
+
 			var metadata = {
 				rowValIndex: rowValIndex,
 				parent: null,
 				numRows: 0
 			};
 
+			// Store the metadata for the group in the metadata tree.
+
 			setProp(metadata, tree, 'children', interleaveWith(rowVal, 'children'));
 			leaves[rowValIndex] = metadata;
 
 			var groupedRows = [];
-			_.each(data, function (row) {
+
+			// Go through all the rows to find which ones match the current rowVal.
+
+			for (var rowIndex = 0; rowIndex < data.length; rowIndex += 1) {
+				var row = data[rowIndex];
+
 				if (_.every(rowVal, function (rowValElt, rowValNum) {
 					var groupField = groupFields[rowValNum];
 					var value = row.rowData[groupField].value;
@@ -1808,11 +1819,11 @@ View.prototype.group = function () {
 				})) {
 					groupedRows.push(row);
 				}
-			});
+			}
 
 			metadata.numRows = groupedRows.length;
 			result.push(groupedRows);
-		});
+		}
 
 		var postorder = function (node) {
 			if (node.children != null) {
