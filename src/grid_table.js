@@ -963,36 +963,6 @@ GridTable.prototype.addFilterHandler = function () {
 //	}
 };
 
-// #_addRowReorderHandler {{{2
-
-GridTable.prototype._addRowReorderHandler = function () {
-	var self = this;
-
-	configureRowReordering(self.ui.tbody, _.bind(self.view.source.swapRows, self.view.source));
-};
-
-// #_addRowSelectHandler {{{2
-
-/**
- * Add an event handler for the row select checkboxes.  The event is bound on `self.ui.tbody` and
- * looks for checkbox inputs inside TD elements with class `wcdv-row-select-col` to actually handle
- * the events.  The handler calls `self.select(ROW_NUM)` or `self.unselect(ROW_NUM)` when the
- * checkbox is changed.
- */
-
-GridTable.prototype._addRowSelectHandler = function () {
-	var self = this;
-
-	self.ui.tbody.on('change', 'td.wcdv-row-select-col > input[type="checkbox"]', function () {
-		if (this.checked) {
-			self.select(+(jQuery(this).attr('data-row-num')));
-		}
-		else {
-			self.unselect(+(jQuery(this).attr('data-row-num')));
-		}
-	});
-};
-
 // #_getAggInfo {{{2
 
 GridTable.prototype._getAggInfo = function (data) {
@@ -1143,7 +1113,12 @@ GridTable.prototype.draw = function (root, tableDoneCont, opts) {
 			self.addSortHandler();
 
 			if (self.features.rowSelect) {
-				self._addRowSelectHandler();
+				if (typeof self._addRowSelectHandler !== 'function') {
+					log.warn('Requested feature "rowSelect" is not available: `_addRowSelectHandler` method does not exist');
+				}
+				else {
+					self._addRowSelectHandler();
+				}
 			}
 
 			if (self.features.rowReorder) {
@@ -1548,11 +1523,6 @@ GridTable.prototype.getSelection = function () {
 GridTable.prototype.setSelection = function (what) {
 	var self = this;
 
-	if (!self.data.isPlain) {
-		log.error('GridTable#select(): Only works for plain data');
-		return;
-	}
-
 	if (what == null) {
 		self.selection = [];
 	}
@@ -1647,11 +1617,6 @@ GridTable.prototype.select = function (what) {
 
 GridTable.prototype.unselect = function (what) {
 	var self = this;
-
-	if (!self.data.isPlain) {
-		log.error('GridTable#unselect(): Only works for plain data');
-		return;
-	}
 
 	if (what == null) {
 		// Unselect all.
@@ -2091,7 +2056,10 @@ GridTablePlain.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 				// Create the check box which selects the row.
 
 				if (self.features.rowSelect) {
-					var checkbox = jQuery('<input>', { 'type': 'checkbox', 'data-row-num': row.rowNum });
+					var checkbox = jQuery('<input>', {
+						'type': 'checkbox',
+						'data-row-num': row.rowNum,
+					});
 					td = jQuery('<td>').addClass('wcdv-row-select-col').append(checkbox).appendTo(tr);
 					if (self.opts.drawInternalBorders) {
 						td.addClass('wcdv_pivot_colval_boundary');
@@ -2547,6 +2515,36 @@ GridTablePlain.prototype.checkAll = function (evt) {
 	}
 }
 
+// #_addRowReorderHandler {{{2
+
+GridTablePlain.prototype._addRowReorderHandler = function () {
+	var self = this;
+
+	configureRowReordering(self.ui.tbody, _.bind(self.view.source.swapRows, self.view.source));
+};
+
+// #_addRowSelectHandler {{{2
+
+/**
+ * Add an event handler for the row select checkboxes.  The event is bound on `self.ui.tbody` and
+ * looks for checkbox inputs inside TD elements with class `wcdv-row-select-col` to actually handle
+ * the events.  The handler calls `self.select(ROW_NUM)` or `self.unselect(ROW_NUM)` when the
+ * checkbox is changed.
+ */
+
+GridTablePlain.prototype._addRowSelectHandler = function () {
+	var self = this;
+
+	self.ui.tbody.on('change', 'td.wcdv-row-select-col > input[type="checkbox"]', function () {
+		if (this.checked) {
+			self.select(+(jQuery(this).attr('data-row-num')));
+		}
+		else {
+			self.unselect(+(jQuery(this).attr('data-row-num')));
+		}
+	});
+};
+
 // GridTableGroupDetail {{{1
 // Constructor {{{2
 
@@ -2738,10 +2736,18 @@ GridTableGroupDetail.prototype.drawBody = function (data, typeInfo, columns, con
 		var checked = false;
 		var indeterminate = false;
 
-		if (node.metadata.children) {
+		// When a node has no children ...
+		//
+		//   - it contains data rows in the UI
+		//   - its height in the metadata tree is the # of group fields
+		//   - it represents a complete rowval
+		//
+		// ... the number of selected rows is meant to be determined by the caller.
+
+		if (node.metadata.children != null) {
 			node.numSelected = 0;
 			_.each(node.metadata.children, function (child) {
-				node.numSelected += child.numSelected;
+				node.numSelected += groupInfo[child.id].numSelected;
 			});
 		}
 
@@ -2750,6 +2756,7 @@ GridTableGroupDetail.prototype.drawBody = function (data, typeInfo, columns, con
 			checked = false;
 		}
 		else {
+			console.log('groupInfo = %O, node = %O, id = %d, numSelected = %d, numRows = %d', groupInfo, node, node.metadata.id, node.numSelected, node.metadata.numRows);
 			if (node.numSelected === 0) {
 				checked = false;
 			}
@@ -2767,6 +2774,34 @@ GridTableGroupDetail.prototype.drawBody = function (data, typeInfo, columns, con
 
 		if (node.metadata.parent) {
 			percolateUp(groupInfo[node.metadata.parent.id]);
+		}
+	}
+
+	function percolateDown(node /* groupInfo elt */, isChecked) {
+		node.checkbox.prop('disabled', false);
+		node.checkbox.prop('checked', isChecked);
+		node.checkbox.prop('indeterminate', false);
+
+		node.numSelected = isChecked ? node.metadata.numRows : 0;
+
+		if (node.metadata.children == null) {
+			self.ui.tbody
+				.find('tr[data-wcdv-group=' + node.metadata.id + ']')
+				.find('input[type="checkbox"].wcdv_select_row')
+				.prop('checked', isChecked);
+			_.each(data.data[node.metadata.rowValIndex], function (row) {
+				if (isChecked) {
+					self.select(row.rowNum);
+				}
+				else {
+					self.unselect(row.rowNum);
+				}
+			});
+		}
+		else {
+			_.each(node.metadata.children, function (child) {
+				percolateDown(groupInfo[child.id], isChecked);
+			});
 		}
 	}
 
@@ -2791,9 +2826,10 @@ GridTableGroupDetail.prototype.drawBody = function (data, typeInfo, columns, con
 		var elt = jQuery(this);
 		var tr = elt.closest('tr');
 		var isChecked = elt.prop('checked');
-		var groupMetadataId = +tr.attr('data-wcdv-group');
+		var groupMetadataId = +tr.attr('data-wcdv-toggles-group');
 
-		console.log('### SELECTING GROUP: %s', tr.attr('data-wcdv-group'));
+		percolateDown(groupInfo[groupMetadataId], isChecked);
+		percolateUp(groupInfo[groupMetadataId]);
 	});
 
 	var isRendered = [];
@@ -2827,7 +2863,12 @@ GridTableGroupDetail.prototype.drawBody = function (data, typeInfo, columns, con
 			// Create the check box which selects the row.
 
 			if (self.features.rowSelect) {
-				var checkbox = jQuery('<input>', { 'type': 'checkbox', 'data-row-num': row.rowNum, 'class': 'wcdv_select_row' });
+				var checkbox = jQuery('<input>', {
+					'type': 'checkbox',
+					'data-row-num': row.rowNum,
+					'class': 'wcdv_select_row',
+					'checked': self.isSelected(row.rowNum)
+				});
 				td = jQuery('<td>').addClass('wcdv-row-select-col').append(checkbox).appendTo(tr);
 			}
 
