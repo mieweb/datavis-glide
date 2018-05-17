@@ -3044,6 +3044,22 @@ GridTableGroupDetail.prototype.drawBody = function (data, typeInfo, columns, con
 				tr.hide();
 			}
 
+			// Insert spacer columns for previous group fields.
+
+			for (var i = 0; i < rowValIdx; i += 1) {
+				tr.append(jQuery('<th>', { 'class': 'wcdv_group_col_spacer' }));
+			}
+
+			// Create the button that expands this grouping.
+
+			tr
+				.append(jQuery('<th>', { 'class': 'wcdv_group_col_spacer' })
+					.append(jQuery('<div>', { 'class': 'wcdv_button wcdv_expand_button' })
+						.html(fontAwesome('F196'))
+						.on('click', toggleGroup)
+					)
+				);
+
 			// Create the check box which selects the row.
 
 			if (self.features.rowSelect) {
@@ -3052,29 +3068,8 @@ GridTableGroupDetail.prototype.drawBody = function (data, typeInfo, columns, con
 					'class': 'wcdv_select_group'
 				});
 				groupInfo[childMetadata.id].checkbox = checkbox;
-				td = jQuery('<td>').addClass('wcdv-row-select-col').append(checkbox).appendTo(tr);
+				td = jQuery('<th>').addClass('wcdv-row-select-col').append(checkbox).appendTo(tr);
 			}
-
-			// Insert spacer columns for previous group fields.
-
-			for (var i = 0; i < rowValIdx; i += 1) {
-				jQuery('<th>')
-					.addClass('wcdv_group_col_spacer')
-					.appendTo(tr)
-				;
-			}
-
-			var expandBtn = jQuery('<div>')
-				.addClass('wcdv_button wcdv_expand_button')
-				.html(fontAwesome('F196'))
-				.on('click', toggleGroup)
-			;
-
-			jQuery('<th>')
-				.append(expandBtn)
-				.addClass('wcdv_group_col_spacer')
-				.appendTo(tr)
-			;
 
 			if (data.groupMetadata) {
 				var infoText = ' (';

@@ -361,7 +361,8 @@ div.SumoSelect > div.optWrapper {
 
 .wcdv_grid_table .wcdv_group_col_spacer {
 	width: 1em;
-	padding-right: 0px;
+	/*padding-right: 0px;*/
+        text-align: center;
 }
 
 .wcdv_filter_icon {
@@ -602,7 +603,7 @@ tr.wcdvgrid_more td {
  */
 
 .wcdv-row-select-col {
-    width: 1px;
+    width: 1em;
 }
 
 /*
