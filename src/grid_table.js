@@ -2956,8 +2956,9 @@ GridTableGroupDetail.prototype.drawBody = function (data, typeInfo, columns, con
 	var toggleGroup = function () {
 		var toggle = function (groupId, show, tr) {
 			var rowValIndex = self.data.groupMetadata.lookup.byId[groupId].rowValIndex;
+			debug.info('GRID TABLE // GROUP (DETAIL) // TOGGLE', 'show = %s, id = %s, rowValIndex = %s', show, groupId, rowValIndex);
 			if (show && rowValIndex != null && !isRendered[groupId]) {
-				debug.info('GRID TABLE // GROUP [DETAIL] // TOGGLE', 'Rendering: group metadata ID = %s, rowValIndex = %s', groupId, rowValIndex);
+				debug.info('GRID TABLE // GROUP (DETAIL) // TOGGLE', 'Rendering: group metadata ID = %s, rowValIndex = %s', groupId, rowValIndex);
 				render(groupId, rowValIndex, tr);
 				isRendered[groupId] = true;
 			}
@@ -2997,6 +2998,7 @@ GridTableGroupDetail.prototype.drawBody = function (data, typeInfo, columns, con
 	_.each(data.data, function (rowGroup, groupNum) {
 		var tr;
 		var rowVal = data.rowVals[groupNum];
+		var canSkip = true;
 
 		// Create the cells that show the rowVal for this group.
 		//
@@ -3006,7 +3008,7 @@ GridTableGroupDetail.prototype.drawBody = function (data, typeInfo, columns, con
 		//   groupFields = ["First Name", "Last Name"]
 		//   rowVals = [["Luke", "Skywalker"], ...]
 		//                ^^^^    ^^^^^^^^^ = rowValElt
-		//                0       1         = rowValIdx
+		//                0       1         = rowValEltIndex
 		//
 		// <tr>
 		//   <th colspan="N">Luke</th>
@@ -3016,7 +3018,7 @@ GridTableGroupDetail.prototype.drawBody = function (data, typeInfo, columns, con
 		//   <th colspan="N-1">Skywalker</th>
 		// </tr>
 
-		_.each(rowVal, function (rowValElt, rowValIdx) {
+		_.each(rowVal, function (rowValElt, rowValEltIndex) {
 			var th;
 
 			// Skip rendering this <TR> if it's for an ancestor of the previously rendered rowVal.
@@ -3024,11 +3026,11 @@ GridTableGroupDetail.prototype.drawBody = function (data, typeInfo, columns, con
 			// Example:
 			//
 			//   1. rowVal = ['Elric', 'Alphonse']
-			//     -> rowValIdx = 0, render 'Elric' <---+
-			//     -> rowValIdx = 1, render 'Alphonse'  |
+			//     -> rowValEltIndex = 0, render 'Elric' <---+
+			//     -> rowValEltIndex = 1, render 'Alphonse'  |
 			//   2. rowVal = ['Elric', 'Edward']        |
-			//     -> rowValIdx = 0, SKIP 'Elric' ------+
-			//     -> rowValIdx = 1, render 'Edward'
+			//     -> rowValEltIndex = 0, SKIP 'Elric' ------+
+			//     -> rowValEltIndex = 1, render 'Edward'
 			//
 			// You end up getting this:
 			//
@@ -3036,12 +3038,16 @@ GridTableGroupDetail.prototype.drawBody = function (data, typeInfo, columns, con
 			//       [+] Alphonse
 			//       [+] Edward
 
-			if (lastRowVal[rowValIdx] === rowValElt) {
+			if (canSkip && lastRowVal[rowValEltIndex] === rowValElt) {
+				debug.info('GRID TABLE // GROUP (DETAILS) // DRAW BODY', 'Skipping row for "%s" [%d] in row val %s because we already rendered it', rowValElt, rowValEltIndex, JSON.stringify(rowVal));
 				return;
 			}
+			else {
+				canSkip = false;
+			}
 
-			var parentMetadata = rowValIdx === 0 ? data.groupMetadata : getProp(data.groupMetadata, 'children', interleaveWith(_.map(rowVal.slice(0, rowValIdx), getNatRep), 'children'));
-			var childMetadata = parentMetadata.children[getNatRep(rowVal[rowValIdx])];
+			var parentMetadata = rowValEltIndex === 0 ? data.groupMetadata : getProp(data.groupMetadata, 'children', interleaveWith(_.map(rowVal.slice(0, rowValEltIndex), getNatRep), 'children'));
+			var childMetadata = parentMetadata.children[getNatRep(rowVal[rowValEltIndex])];
 
 			tr = jQuery('<tr>')
 				.attr('data-wcdv-group', parentMetadata.id)
@@ -3049,13 +3055,13 @@ GridTableGroupDetail.prototype.drawBody = function (data, typeInfo, columns, con
 				.attr('data-wcdv-collapsed', '1')
 			;
 
-			if (rowValIdx > 0) {
+			if (rowValEltIndex > 0) {
 				tr.hide();
 			}
 
 			// Insert spacer columns for previous group fields.
 
-			for (var i = 0; i < rowValIdx; i += 1) {
+			for (var i = 0; i < rowValEltIndex; i += 1) {
 				tr.append(jQuery('<th>', { 'class': 'wcdv_group_col_spacer' }));
 			}
 
@@ -3083,9 +3089,9 @@ GridTableGroupDetail.prototype.drawBody = function (data, typeInfo, columns, con
 
 			if (data.groupMetadata) {
 				var infoText = ' (';
-				var path = interleaveWith(_.map(data.rowVals[groupNum].slice(0, rowValIdx + 1), getNatRep), 'children');
+				var path = interleaveWith(_.map(data.rowVals[groupNum].slice(0, rowValEltIndex + 1), getNatRep), 'children');
 
-				if (rowValIdx < data.groupFields.length - 1) {
+				if (rowValEltIndex < data.groupFields.length - 1) {
 					var numSubGroups = getProp(data.groupMetadata, 'children', path, 'numChildren');
 					infoText += '' + numSubGroups + ' group' + (numSubGroups > 1 ? 's' : '');
 					infoText += ', ';
@@ -3096,7 +3102,7 @@ GridTableGroupDetail.prototype.drawBody = function (data, typeInfo, columns, con
 				infoText += ')';
 			}
 
-			var groupField = data.groupFields[rowValIdx];
+			var groupField = data.groupFields[rowValEltIndex];
 			var fcc = self.colConfig.get(groupField) || {};
 			rowValElt = format(fcc, self.typeInfo.get(groupField), rowValElt);
 			var span = jQuery('<span>');
@@ -3112,7 +3118,7 @@ GridTableGroupDetail.prototype.drawBody = function (data, typeInfo, columns, con
 
 			th = jQuery('<th>')
 				.addClass('wcdv_group_value')
-				.attr('colspan', columns.length - rowValIdx)
+				.attr('colspan', columns.length - rowValEltIndex)
 				.append(span)
 			;
 
