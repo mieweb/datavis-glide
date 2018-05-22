@@ -1137,36 +1137,36 @@ var AggregateInfo = makeSubclass(Object, function (aggType, spec, aggNum, colCon
 
 	if (spec.fields) {
 		self.fields = spec.fields;
+	}
 
-		// Check to see if the number of fields supplied matches the number requested by the aggregate
-		// function class.
-		//
-		// TODO Make this into an error?
+	// Check to see if the number of fields supplied matches the number requested by the aggregate
+	// function class.
 
-		if (spec.fields.length !== aggClass.prototype.fieldCount) {
-			log.warn('Creating ' + aggType + '[' + aggNum + '] aggregate function "' + spec.fun + '" to be applied over fields ' + JSON.stringify(spec.fields) + ', which doesn\'t match the number of fields supported by the aggregate function (' + aggClass.prototype.fieldCount + ')... expect trouble.');
-		}
+	if (self.fields.length !== aggClass.prototype.fieldCount) {
+		log.warn('Creating ' + aggType + '[' + aggNum + '] aggregate function "' + spec.fun + '" to be applied over fields ' + JSON.stringify(self.fields) + ', which doesn\'t match the number of fields supported by the aggregate function (' + aggClass.prototype.fieldCount + ')... expect trouble.');
+	}
 
+	if (self.fields.length > 0) {
 		// Set the colConfig array for the supplied fields.
 
 		if (colConfig != null) {
-			self.colConfig = _.map(spec.fields, function (f) {
+			self.colConfig = _.map(self.fields, function (f) {
 				return colConfig.get(f);
 			});
 		}
 		else {
-			log.warn('Creating ' + aggType + '[' + aggNum + '] aggregate function "' + spec.fun + '" to be applied over fields ' + JSON.stringify(spec.fields) + ', but no column config was provided.');
+			log.warn('Creating ' + aggType + '[' + aggNum + '] aggregate function "' + spec.fun + '" to be applied over fields ' + JSON.stringify(self.fields) + ', but no column config was provided.');
 		}
 
 		// Set the typeInfo array for the supplied fields.
 
 		if (typeInfo != null) {
-			self.typeInfo = _.map(spec.fields, function (f) {
+			self.typeInfo = _.map(self.fields, function (f) {
 				return typeInfo.get(f);
 			});
 		}
 		else {
-			log.warn('Creating ' + aggType + '[' + aggNum + '] aggregate function "' + spec.fun + '" to be applied over fields ' + JSON.stringify(spec.fields) + ', but no type info was provided.');
+			log.warn('Creating ' + aggType + '[' + aggNum + '] aggregate function "' + spec.fun + '" to be applied over fields ' + JSON.stringify(self.fields) + ', but no type info was provided.');
 		}
 
 		// Perform type decoding if needed, before we calculate the aggregate results.  This is
@@ -1175,7 +1175,7 @@ var AggregateInfo = makeSubclass(Object, function (aggType, spec, aggNum, colCon
 
 		_.each(self.typeInfo, function (fti, i) {
 			if (fti == null) {
-				throw new InvalidAggregateError('Aggregate function applied to unknown field: "' + spec.fields[i] + '"');
+				throw new InvalidAggregateError('Aggregate function applied to unknown field: "' + self.fields[i] + '"');
 			}
 
 			if (fti.needsDecoding) {
