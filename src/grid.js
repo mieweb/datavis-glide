@@ -403,9 +403,11 @@ var Grid = function (id, view, defn, tagOpts, cb) {
 		self.prefs = defn.prefs;
 	}
 	else if (self.view.prefs != null) {
+		debug.info('GRID (' + self.id + ') // PREFS', 'Using prefs from connected view');
 		self.prefs = self.view.prefs;
 	}
 	else {
+		debug.info('GRID (' + self.id + ') // PREFS', 'Creating new prefs');
 		self.prefs = new Prefs(self.id);
 	}
 
@@ -589,6 +591,9 @@ var Grid = function (id, view, defn, tagOpts, cb) {
 	});
 
 	self.view.on(View.events.dataUpdated, function () {
+		if (self.tagOpts.showOnDataChange && !self.isVisible()) {
+			self.show({ redraw: false });
+		}
 		self.redraw();
 	});
 
@@ -1180,10 +1185,6 @@ Grid.prototype.clear = function () {
 
 Grid.prototype.redraw = function () {
 	var self = this;
-
-	if (!self.isVisible()) {
-		return;
-	}
 
 	debug.info('GRID', 'Redrawing...');
 
