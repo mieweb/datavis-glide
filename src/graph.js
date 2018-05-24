@@ -540,6 +540,8 @@ Graph.prototype.drawInteractive = function () {
 		self.prefs.save();
 	}
 
+	debug.info('GRAPH', 'Drawing graph based on interactive config [userConfig = %O]', self.userConfig);
+
 	self.renderer.draw(self.devConfig, self.userConfig);
 };
 
@@ -785,7 +787,7 @@ GraphRenderer = makeSubclass(Object, function (graph, elt, view, opts) {
 	self.opts = opts;
 });
 
-// #_validateConfig
+// #_validateConfig {{{2
 
 GraphRenderer.prototype._validateConfig = function (config) {
 	var self = this;
@@ -1160,13 +1162,13 @@ GraphRendererGoogle.prototype._draw = function (devConfig, userConfig) {
 				var dt = new google.visualization.DataTable();
 
 				if (data.isPlain) {
-					config = self.draw_plain(data, typeInfo, dt, getProp(self.userConfig, 'plain', 'graphs', getProp(self.userConfig, 'plain', 'current')) || devConfig.whenPlain);
+					config = self.draw_plain(data, typeInfo, dt, getProp(userConfig, 'plain', 'graphs', getProp(userConfig, 'plain', 'current')) || devConfig.whenPlain);
 				}
 				else if (data.isGroup) {
-					config = self.draw_group(data, typeInfo, dt, getProp(self.userConfig, 'group', 'graphs', getProp(self.userConfig, 'group', 'current')) || devConfig.whenGroup);
+					config = self.draw_group(data, typeInfo, dt, getProp(userConfig, 'group', 'graphs', getProp(userConfig, 'group', 'current')) || devConfig.whenGroup);
 				}
 				else if (data.isPivot) {
-					config = self.draw_pivot(data, typeInfo, dt, getProp(self.userConfig, 'pivot', 'graphs', getProp(self.userConfig, 'pivot', 'current')) || devConfig.whenPivot);
+					config = self.draw_pivot(data, typeInfo, dt, getProp(userConfig, 'pivot', 'graphs', getProp(userConfig, 'pivot', 'current')) || devConfig.whenPivot);
 				}
 
 				if (config == null) {
@@ -1223,7 +1225,7 @@ GraphRendererGoogle.prototype._draw = function (devConfig, userConfig) {
 					self.graph._setExportBlob(blob);
 				});
 
-				debug.info('GRAPH // GOOGLE // DRAW', 'Starting draw...');
+				debug.info('GRAPH // GOOGLE // DRAW', 'Starting draw: [config = %O ; options = %O]', config, options);
 
 				chart.draw(dt, options);
 			});
