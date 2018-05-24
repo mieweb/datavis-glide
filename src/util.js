@@ -1505,8 +1505,11 @@ Lock._id = 1;
  */
 
 Lock.prototype.lock = function () {
+	var self = this;
+
 	this._lockCount += 1;
-	debug.info('LOCK // ' + this._name, 'Locking to level: ' + this._lockCount);
+	debug.info('LOCK // ' + self._name + ' (' + self._lockCount + ')',
+		'Locking to level: ' + self._lockCount);
 };
 
 // #unlock {{{2
@@ -1522,7 +1525,8 @@ Lock.prototype.unlock = function () {
 	var self = this;
 
 	self._lockCount -= 1;
-	debug.info('LOCK // ' + self._name, 'Unlocking to level: ' + self._lockCount);
+	debug.info('LOCK // ' + self._name + ' (' + self._lockCount + ')',
+		'Unlocking to level: ' + self._lockCount);
 
 	// If we're completely unlocked, start going through the functions that were registered to be run.
 	// The only problem is that these functions can cause us to be locked again.  If that happens, we
@@ -1536,13 +1540,8 @@ Lock.prototype.unlock = function () {
 		i += 1;
 		var onUnlock = self._onUnlock.shift();
 
-		debug.info('LOCK // ' + self._name,
-							 'Running onUnlock function (#'
-							 + i
-							 + '/'
-							 + onUnlockLen
-							 + ') - '
-							 + (onUnlock.info || '[NO INFO]'));
+		debug.info('LOCK // ' + self._name + ' (' + self._lockCount + ')',
+			'Running onUnlock function (%d of %d) - %s', i, onUnlockLen, onUnlock.info || '[NO INFO]');
 
 		onUnlock.f();
 	}
@@ -1559,7 +1558,9 @@ Lock.prototype.unlock = function () {
  */
 
 Lock.prototype.isLocked = function () {
-	return this._lockCount !== 0;
+	var self = this;
+
+	return self._lockCount !== 0;
 };
 
 // #onUnlock {{{2
@@ -1580,7 +1581,7 @@ Lock.prototype.onUnlock = function (f, info) {
 	// logic in callers (i.e. they don't have to do the check).
 
 	if (!self.isLocked()) {
-		f();
+		return f();
 	}
 
 	self._onUnlock.push({
@@ -1588,11 +1589,8 @@ Lock.prototype.onUnlock = function (f, info) {
 		info: info
 	});
 
-	debug.info('LOCK // ' + self._name,
-		'Saved onUnlock function (#'
-		+ self._onUnlock.length
-		+ ') - '
-		+ (info || '[NO INFO]'));
+	debug.info('LOCK // ' + self._name + ' (' + self._lockCount + ')',
+		'Saved onUnlock function (#%d) - %s', self._onUnlock.length, info || '[NO INFO]');
 };
 
 // HTML {{{1
@@ -1814,7 +1812,7 @@ var loadScript = (function () {
 				lock.lock();
 				load(url, makeCb(false));
 			}
-		});
+		}, sprintf('Waiting to load [url = %s]', url));
 	};
 })();
 
