@@ -632,3 +632,14 @@ tr.wcdvgrid_more td {
 .wcdv_grid_table table .fa-stack {
 	width: 1.5em;
 }
+
+.wcdv_graph_message {
+    font-size: 36pt;
+    font-weight: bold;
+    letter-spacing: 0.1em;
+    color: #C0C0C0;
+    text-align: center;
+    position: relative;
+    top: 50%;
+    transform: translateY(-50%);
+}

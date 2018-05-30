@@ -59,7 +59,9 @@ var Graph = function (id, view, devConfig, opts) {
 	};
 	self.opts = deepDefaults(opts, {
 		title: 'Graph',
-		runImmediately: true
+		runImmediately: true,
+		showToolbar: true,
+		showOnDataChange: false,
 	});
 
 	if (typeof id !== 'string') {
@@ -220,6 +222,10 @@ Graph.prototype._makeUserInterface = function () {
 		.addClass('wcdv_grid_toolbar')
 		.appendTo(self.ui.content)
 	;
+
+	if (!self.opts.showToolbar) {
+		self.ui.toolbar.hide();
+	}
 
 	// The "source" toolbar section lets the user refresh the data being displayed.
 
@@ -1158,6 +1164,23 @@ GraphRendererGoogle.prototype._draw = function (devConfig, userConfig) {
 			self.view.getTypeInfo(function (typeInfo) {
 				self.elt.children().remove();
 
+				var makeMessage = function (msg) {
+					jQuery('<div>')
+						.css({
+							'height': self.opts.height + 'px'
+						})
+						.append(
+							jQuery('<div>', { 'class': 'wcdv_graph_message' })
+							.text(msg)
+						)
+						.appendTo(self.elt);
+				};
+
+				if (data.data.length === 0) {
+					makeMessage('No Data');
+					return;
+				}
+
 				var config = null;
 				var dt = new google.visualization.DataTable();
 
@@ -1172,25 +1195,7 @@ GraphRendererGoogle.prototype._draw = function (devConfig, userConfig) {
 				}
 
 				if (config == null) {
-					jQuery('<div>')
-						.css({
-							'height': self.opts.height + 'px'
-						})
-						.append(
-							jQuery('<div>')
-							.css({
-								'font-size': '36pt',
-								'font-weight': 'bold',
-								'letter-spacing': '0.1em',
-								'color': '#C0C0C0',
-								'text-align': 'center',
-								'position': 'relative',
-								'top': '50%',
-								'transform': 'translateY(-50%)'
-							})
-							.text('Nothing to Graph')
-						)
-						.appendTo(self.elt);
+					makeMessage('Nothing to Graph');
 					return;
 				}
 
@@ -1202,11 +1207,20 @@ GraphRendererGoogle.prototype._draw = function (devConfig, userConfig) {
 					gantt: 'Gantt'
 				};
 
+				// This is the object that's actually passed to the chart's draw() method.  All the options
+				// in the Google documentation should go into this object.
+
 				var options = {
 					title: self.opts.title,
 					width: self.opts.width,
 					height: self.opts.height,
-					isStacked: config.stacked
+					isStacked: config.stacked,
+					chartArea: {
+						top: '5%',
+						left: '5%',
+						width: '90%',
+						height: '90%'
+					}
 				};
 
 				var categoryAxis = config.graphType === 'bar' ? 'vAxis' : 'hAxis';
