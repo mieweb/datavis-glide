@@ -1222,6 +1222,32 @@ var mergeSort4 = function (data, cmp, cont, update) {
 	sortWindow(1);
 };
 
+function pigeonHoleSort(data, values, cont) {
+	var o = {}
+		, r = []
+		, i
+		, j
+	;
+
+	for (i = 0; i < values.length; i += 1) {
+		o[values[i]] = [];
+	}
+
+	for (i = 0; i < data.length; i += 1) {
+		if (o[data[i].sortSource] != null) {
+			o[data[i].sortSource].push(data[i]);
+		}
+	}
+
+	for (i = 0; i < values.length; i += 1) {
+		for (j = 0; j < o[values[i]].length; j += 1) {
+			r.push(o[values[i]][j]);
+		}
+	}
+
+	return cont(r);
+};
+
 function objGetPath(obj, fieldPath) {
 	var i, len = fieldPath.length;
 	for (i = 0; i < len && obj !== undefined; i += 1) {

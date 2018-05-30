@@ -712,7 +712,8 @@ View.prototype.sort = function (cont) {
 
 		var fti
 			, sortSourceFn
-			, spec = getProp(self, 'sortSpec', orientation);
+			, spec = getProp(self, 'sortSpec', orientation)
+			, sortAlgorithm = 'mergeSort';
 
 		var rvi, cvi;
 
@@ -724,7 +725,12 @@ View.prototype.sort = function (cont) {
 
 		if (self.data.isPlain) {
 			if (spec.field) {
-				fti = self.typeInfo.get(spec.field);
+				if (spec.values) {
+					sortAlgorithm = 'pigeonHole';
+				}
+				else {
+					fti = self.typeInfo.get(spec.field);
+				}
 
 				// The sort source function accesses the value of the field in the indexed row.  This is as
 				// simple as it can get.
@@ -735,6 +741,18 @@ View.prototype.sort = function (cont) {
 			}
 		}
 		else if (self.data.isGroup) {
+			if (spec.field != null) {
+				var gfi = self.data.groupFields.indexOf(spec.field);
+
+				if (gfi < 0) {
+					log.error('Unable to sort: `field` property does not refer to a grouped field ' +
+						'{field = "%s", groupFields = %s}', spec.field, self.data.groupFields);
+				}
+				else {
+					spec.groupFieldIndex = gfi;
+				}
+			}
+
 			if (spec.groupFieldIndex != null) {
 
 				// SORT GROUPS BY GROUP FIELD VALUE
@@ -752,7 +770,13 @@ View.prototype.sort = function (cont) {
 					return next(false);
 				}
 
-				fti = self.typeInfo.get(self.data.groupFields[spec.groupFieldIndex]);
+				if (spec.values) {
+					sortAlgorithm = 'pigeonHole';
+				}
+				else {
+					fti = self.typeInfo.get(self.data.groupFields[spec.groupFieldIndex]);
+				}
+
 				sortSourceFn = function (i) {
 					return self.data.rowVals[i][spec.groupFieldIndex];
 				};
@@ -804,7 +828,13 @@ View.prototype.sort = function (cont) {
 					return next(false);
 				}
 
-				fti = self.typeInfo.get(self.data.groupFields[spec.groupFieldIndex]);
+				if (spec.values) {
+					sortAlgorithm = 'pigeonHole';
+				}
+				else {
+					fti = self.typeInfo.get(self.data.groupFields[spec.groupFieldIndex]);
+				}
+
 				sortSourceFn = function (i) {
 					return self.data.rowVals[i][spec.groupFieldIndex];
 				};
@@ -952,9 +982,25 @@ View.prototype.sort = function (cont) {
 		//console.log(self.typeInfo.asMap());
 		//console.log(self.data.agg);
 
-		var cmp = determineCmp(spec, fti);
-		if (cmp == null) {
-			return next(false);
+		var cmp, comparison;
+		
+		if (sortAlgorithm === 'mergeSort') {
+			cmp = determineCmp(spec, fti);
+			if (cmp == null) {
+				return next(false);
+			}
+
+			comparison = function (a, b) {
+				if (spec.dir.toUpperCase() === 'ASC') {
+					return cmp(a.sortSource, b.sortSource) < 0;
+				}
+				else if (spec.dir.toUpperCase() === 'DESC') {
+					return cmp(a.sortSource, b.sortSource) > 0;
+				}
+				else {
+					throw new Error('Invalid sort spec: `dir` must be either "ASC" or "DESC"');
+				}
+			};
 		}
 
 		var bundle = packBundle(spec, orientation, sortSourceFn);
@@ -966,21 +1012,18 @@ View.prototype.sort = function (cont) {
 		//console.log(cmp);
 		//console.log(bundle);
 
-		var comparison = function (a, b) {
-			if (spec.dir.toUpperCase() === 'ASC') {
-				return cmp(a.sortSource, b.sortSource) < 0;
-			}
-			else if (spec.dir.toUpperCase() === 'DESC') {
-				return cmp(a.sortSource, b.sortSource) > 0;
-			}
-			else {
-				throw new Error('Invalid sort spec: `dir` must be either "ASC" or "DESC"');
-			}
-		};
-
 		var finish = makeFinishCb(unpackBundle(orientation), next);
 
-		return mergeSort4(bundle, comparison, finish, self.sortProgress && self.sortProgress.update);
+		debug.info('VIEW (' + self.name + ') // SORT', 'Performing sort using %s algorithm', sortAlgorithm);
+
+		switch (sortAlgorithm) {
+		case 'mergeSort':
+			return mergeSort4(bundle, comparison, finish, self.sortProgress && self.sortProgress.update);
+		case 'pigeonHole':
+			return pigeonHoleSort(bundle, spec.values, finish);
+		default:
+			throw new Error('Internal Error: Invalid sort algorithm: ' + sortAlgorithm);
+		}
 	};
 
 
