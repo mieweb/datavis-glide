@@ -1678,7 +1678,7 @@ View.prototype.group = function () {
 	//   As a side effect, the `origKeys[groupFieldIndex]` object is updated with how to reverse the
 	//   natrep transform.  This will be used later.
 
-	var buildRowVals = function (groupFields) {
+	var buildRowVals = function (groupFields, addRowVals) {
 		var rowVals = [];
 
 		for (var rowIndex = 0; rowIndex < self.data.data.length; rowIndex += 1) {
@@ -1695,6 +1695,31 @@ View.prototype.group = function () {
 				return arrayEqual(rowVal, x);
 			}) === -1) {
 				rowVals.push(rowVal);
+			}
+		}
+
+		if (addRowVals != null) {
+			for (var arvIndex = 0; arvIndex < addRowVals.length; arvIndex += 1) {
+				var rowVal = addRowVals[arvIndex];
+
+				if (rowVal.length != groupFields.length) {
+					log.error('Unable to add rowVal %s when grouping by %s: the lengths must be the same',
+						JSON.stringify(rowVal), JSON.stringify(groupFields));
+					continue;
+				}
+
+				for (var groupFieldIndex = 0; groupFieldIndex < rowVal.length; groupFieldIndex += 1) {
+					var value = rowVal[groupFieldIndex];
+					var natRep = getNatRep(value);
+					origKeys[groupFieldIndex][natRep] = value;
+					rowVal[groupFieldIndex] = natRep;
+				}
+
+				if (_.findIndex(rowVals, function (x) {
+					return arrayEqual(rowVal, x);
+				}) === -1) {
+					rowVals.push(rowVal);
+				}
 			}
 		}
 
@@ -1795,7 +1820,7 @@ View.prototype.group = function () {
 		origKeys[groupFieldIndex] = {};
 	}
 
-	rowVals = buildRowVals(groupFields);
+	rowVals = buildRowVals(groupFields, self.groupSpec.addRowVals);
 	newData = buildData(self.data.data, rowVals);
 	rowVals = convertRowVals(rowVals);
 
