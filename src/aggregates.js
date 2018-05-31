@@ -826,7 +826,7 @@ FirstAggregate.prototype.checkData = function (data) {
 	var self = this;
 
 	if (data.length === 0) {
-		log.error('Aggregate ' + self.name + ': `data` has no elements');
+		//log.error('Aggregate ' + self.name + ': `data` has no elements');
 		return false;
 	}
 
@@ -855,11 +855,11 @@ LastAggregate = makeSubclass(Aggregate, null, {
 
 // #checkData {{{2
 
-FirstAggregate.prototype.checkData = function (data) {
+LastAggregate.prototype.checkData = function (data) {
 	var self = this;
 
 	if (data.length === 0) {
-		log.error('Aggregate ' + self.name + ': `data` has no elements');
+		//log.error('Aggregate ' + self.name + ': `data` has no elements');
 		return false;
 	}
 
@@ -907,11 +907,11 @@ NthAggregate.prototype.checkOpts = function () {
 
 // #checkData {{{2
 
-FirstAggregate.prototype.checkData = function (data) {
+NthAggregate.prototype.checkData = function (data) {
 	var self = this;
 
 	if (data.length === 0) {
-		log.error('Aggregate ' + self.name + ': `data` has no elements');
+		//log.error('Aggregate ' + self.name + ': `data` has no elements');
 		return false;
 	}
 
