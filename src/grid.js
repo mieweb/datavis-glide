@@ -433,13 +433,7 @@ var Grid = function (id, view, defn, tagOpts, cb) {
 		});
 	}
 
-	self.ui.titlebar = jQuery('<div class="wcdv_grid_titlebar">')
-		.attr('title', MIE.trans('SHOWHIDE'))
-		.on('click', function (evt) {
-			evt.stopPropagation();
-			self.toggle();
-		})
-		.appendTo(self.ui.root);
+	self.ui.titlebar = jQuery('<div class="wcdv_grid_titlebar">').appendTo(self.ui.root);
 
 	self._addTitleWidgets(self.ui.titlebar, doingServerFilter, !!self.tagOpts.runImmediately, id);
 
@@ -461,17 +455,6 @@ var Grid = function (id, view, defn, tagOpts, cb) {
 		})
 		.appendTo(self.ui.content)
 	;
-
-	self.ui.toolbar_source = jQuery('<div>')
-		.addClass('wcdv_toolbar_section')
-		.appendTo(self.ui.toolbar);
-	self._addSourceButtons(self.ui.toolbar_source);
-	self.view.setToolbar(self.ui.toolbar_source);
-
-	self.ui.toolbar_common = jQuery('<div>')
-		.addClass('wcdv_toolbar_section')
-		.appendTo(self.ui.toolbar);
-	self._addCommonButtons(self.ui.toolbar_common);
 
 	self.ui.toolbar_prefs = jQuery('<div>')
 		.addClass('wcdv_toolbar_section')
@@ -497,18 +480,6 @@ var Grid = function (id, view, defn, tagOpts, cb) {
 		.hide()
 		.appendTo(self.ui.toolbar);
 	self._addPivotButtons(self.ui.toolbar_pivot);
-
-	// This is the "gear" icon that shows/hides the controls below the toolbar.  The controls are used
-	// to set the group, pivot, aggregate, and filters.  Ideally the user only has to utilize these
-	// once, and then switches between perspectives to get the same effect.
-
-	jQuery(fontAwesome('f013'))
-		.addClass('wcdv_button pull-right')
-		.attr('title', MIE.trans('SHOWHIDEOPTS'))
-		.click(function (evt) {
-			self.toggleControls();
-		})
-		.appendTo(self.ui.toolbar);
 
 	self.ui.controls = jQuery('<div>', { 'class': 'wcdv_grid_control' });
 	self.ui.filterControl = jQuery('<div>', { 'class': 'wcdv_filter_control' });
@@ -714,7 +685,7 @@ Grid.prototype._addTitleWidgets = function (titlebar, doingServerFilter, runImme
 	self._setSpinner(self.tagOpts.runImmediately ? 'loading' : 'not-loaded');
 
 	jQuery('<strong>', {'id': id + '_title', 'data-parent': id})
-		.text(self.tagOpts.title)
+		.text(self.tagOpts.title + ',')
 		.appendTo(titlebar);
 
 	var notHeader = jQuery('<span>', {'class': 'headingInfo'})
@@ -764,64 +735,55 @@ Grid.prototype._addTitleWidgets = function (titlebar, doingServerFilter, runImme
 			.append(')')
 			.appendTo(notHeader);
 	}
+	
+	// Create container to hold all the controls in the titlebar
+	
+	self.ui.titlebar_controls = jQuery('<div>')
+		.addClass('wcdv_titlebar_controls pull-right')
+		.appendTo(titlebar);
+	
+	// Create the Export button
+		
+	self.ui.exportBtn = jQuery(fontAwesome('f019'))
+		.addClass('wcdv_text-primary')
+		.attr('title', 'Export')
+		.on('click', function () {
+			self.export();
+		})
+		.appendTo(self.ui.titlebar_controls);
+	
+	// Create the Refresh button
+	
+	self.ui.refreshBtn = jQuery(fontAwesome('f021'))
+		.addClass('wcdv_text-primary')
+		.attr('title', 'Refresh')
+		.on('click', function () {
+			self.refresh();
+		})
+		.appendTo(self.ui.titlebar_controls);
+		
+	// This is the "gear" icon that shows/hides the controls below the toolbar.  The controls are used
+	// to set the group, pivot, aggregate, and filters.  Ideally the user only has to utilize these
+	// once, and then switches between perspectives to get the same effect.
 
-	// Create the down-chevron button that opens the grid toolbar.
-
-	self.ui.showHideButton = jQuery('<button type="button">')
-		.append(fontAwesome(runImmediately ? 'f077' : 'f078'))
-		.addClass('showhide pull-right')
+	jQuery(fontAwesome('f013'))
+		.addClass('wcdv_text-primary')
 		.attr('title', MIE.trans('SHOWHIDEOPTS'))
+		.click(function (evt) {
+			self.toggleControls();
+		})
+		.appendTo(self.ui.titlebar_controls);
+		
+	// Create the down-chevron button that shows/hides everything under the titlebar.
+
+	self.ui.showHideButton = jQuery(fontAwesome('f078'))
+		.addClass('showhide wcdv_text-primary')
+		.attr('title', MIE.trans('SHOWHIDE'))
 		.click(function (evt) {
 			evt.stopPropagation();
 			self.toggle();
 		})
-		.appendTo(titlebar);
-};
-
-// #_addSourceButtons {{{2
-
-/**
- * Add buttons that perform operations on the source.
- *
- * @method
- *
- * @param {jQuery} toolbar
- * Toolbar section that will contain the buttons.
- */
-
-Grid.prototype._addSourceButtons = function (toolbar) {
-	var self = this;
-
-	self.ui.refreshBtn = jQuery('<button>', {'type': 'button'})
-		.append(fontAwesome('F021'))
-		.append('Refresh')
-		.on('click', function () {
-			self.refresh();
-		})
-		.appendTo(toolbar);
-};
-
-// #_addCommonButtons {{{2
-
-/**
- * Add common controls to the grid's toolbar.
- *
- * @method
- *
- * @param {jQuery} toolbar
- * Toolbar section that will contain the buttons.
- */
-
-Grid.prototype._addCommonButtons = function (toolbar) {
-	var self = this;
-
-	self.ui.exportBtn = jQuery('<button>', {'type': 'button', 'disabled': true})
-		.append(fontAwesome('F14C'))
-		.append('Export')
-		.on('click', function () {
-			self.export();
-		})
-		.appendTo(toolbar);
+		.appendTo(self.ui.titlebar_controls);		
 };
 
 // #_addLimitButtons {{{2
@@ -918,7 +880,7 @@ Grid.prototype._addPivotButtons = function (toolbar) {
 		self.defn,
 		['table', 'whenPivot', 'showTotalCol'],
 		true,
-		'Total Row/Col',
+		'Total Row/Column',
 		toolbar,
 		function (isChecked) {
 			var agg = self.view.getAggregate();
@@ -957,6 +919,7 @@ Grid.prototype._addPrefsButtons = function (toolbar) {
 	var self = this;
 
 	var div = jQuery('<div>')
+		.addClass('wcdv_toolbar_view')
 		.css({'display': 'inline-block'})
 		.appendTo(toolbar)
 	;
@@ -1010,7 +973,7 @@ Grid.prototype._addPrefsButtons = function (toolbar) {
 	;
 	*/
 
-	div.append(jQuery('<span>').text('View: '))
+	div.append(jQuery('<span>').text('View '))
 
 	// Dropdown of all the available perspectives, plus an entry that (when selected) prompts for the
 	// name of a new perspective.
@@ -1048,7 +1011,7 @@ Grid.prototype._addPrefsButtons = function (toolbar) {
 	// XXX: What if the user types in "Main" ?
 	// XXX: What if the user types in "NEW" ?
 
-	var renameBtn = jQuery(fontAwesome('F040', 'wcdv_button', 'Rename'))
+	var renameBtn = jQuery(fontAwesome('F040', 'wcdv_button wcdv_text-primary', 'Rename'))
 		.on('click', function () {
 			var oldName = dropdown.val();
 
@@ -1073,7 +1036,7 @@ Grid.prototype._addPrefsButtons = function (toolbar) {
 	// "Main" perspective.  It is only shown when the currently selected perspective is not "Main" as
 	// it cannot be deleted.
 
-	var deleteBtn = jQuery(fontAwesome('F1F8', 'wcdv_button', 'Delete'))
+	var deleteBtn = jQuery(fontAwesome('F1F8', 'wcdv_button wcdv_text-primary', 'Delete'))
 		.on('click', function () {
 			if (dropdown.val() === 'Main') {
 				alert('Cannot delete "Main" view!');
@@ -1096,7 +1059,7 @@ Grid.prototype._addPrefsButtons = function (toolbar) {
 	// perspectives set, but I feel better having it as a safety in case your prefs somehow get really
 	// messed up and don't work at all anymore.  This button is always shown.
 
-	var resetBtn = jQuery(fontAwesome('F0E2', 'wcdv_button', 'Reset'))
+	var resetBtn = jQuery(fontAwesome('F0E2', 'wcdv_button wcdv_text-primary', 'Reset'))
 		.on('click', function () {
 			self.prefs.reset();
 			dropdown.children().filter(function (i, elt) {
@@ -1390,7 +1353,7 @@ Grid.prototype._updateRowCount = function (info, ops) {
 		self.ui.rowCount.text(info.numGroups + ' group(s)');
 	}
 	else if (info.isPivot) {
-		self.ui.rowCount.text('Pivotted');
+		self.ui.rowCount.text('pivoted');
 	}
 
 	if (self.ui.clearFilter) {
@@ -1421,7 +1384,7 @@ Grid.prototype.hide = function () {
 		duration: 0,
 		done: function () {
 			if (self.tagOpts.title) {
-				self.ui.showHideButton.removeClass('open').html(fontAwesome('f078'));
+				self.ui.showHideButton.removeClass('open fa-rotate-180');
 			}
 		}
 	});
@@ -1452,7 +1415,7 @@ Grid.prototype.show = function (opts) {
 		duration: 0,
 		done: function () {
 			if (self.tagOpts.title) {
-				self.ui.showHideButton.addClass('open').html(fontAwesome('f077'));
+				self.ui.showHideButton.addClass('open fa-rotate-180');
 			}
 			if (!self.hasRun && opts.redraw) {
 				self.hasRun = true;
@@ -1509,6 +1472,14 @@ Grid.prototype.hideControls = function () {
 			self.fire(Grid.events.hideControls);
 		}
 	});
+	
+	//Hide the toolbar
+	self.ui.toolbar.hide({
+		duration: 0,
+		complete: function () {
+			//self.fire(Grid.events.hideToolbar);
+		}
+	});
 };
 
 // showControls {{{2
@@ -1524,6 +1495,14 @@ Grid.prototype.showControls = function () {
 		duration: 0,
 		complete: function () {
 			self.fire(Grid.events.showControls);
+		}
+	});
+	
+	//Show the toolbar
+	self.ui.toolbar.show({
+		duration: 0,
+		complete: function () {
+			//self.fire(Grid.events.showToolbar);
 		}
 	});
 };

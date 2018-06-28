@@ -82,7 +82,7 @@ GridControlField.prototype.draw = function () {
 	self.ui.removeButton = jQuery('<button>', {'type': 'button'})
 		.append(fontAwesome('F146'))
 		.attr('title', 'Remove')
-		.addClass('wcdv_icon_button wcdv_remove')
+		.addClass('wcdv_icon_button wcdv_remove wcdv_text-primary')
 		.on('click', function () {
 			self.control.removeField(self);
 		})
@@ -244,7 +244,7 @@ AggregateControlField.prototype.draw = function () {
 			self.control.updateView();
 		})
 		.appendTo(self.ui.root)
-		._makeIconCheckbox('fa-eye-slash', 'fa-eye')
+		._makeIconCheckbox('fa-eye-slash wcdv_text-primary', 'fa-eye wcdv_text-primary')
 	;
 
 	if (self.control.view.hasClientKind('graph')) {
@@ -268,7 +268,7 @@ AggregateControlField.prototype.draw = function () {
 			'type': 'button',
 			title: 'Edit Options'
 		})
-			.addClass('wcdv_icon_button wcdv_button_left')
+			.addClass('wcdv_icon_button wcdv_button_left wcdv_text-primary')
 			.on('click', function () {
 				self.ui.optionsDialog.dialog('open');
 			})
@@ -518,7 +518,7 @@ GridControl.prototype.makeAddButton = function (target) {
 	var self = this;
 
 	return jQuery(fontAwesome('F0FE'))
-		.addClass('wcdv_button')
+		.addClass('wcdv_button wcdv_text-primary')
 		.css({'margin-left': '4px'})
 		.on('click', function () {
 			self.addField(self.ui.dropdown.val(), self.ui.dropdown.find('option:selected').text());
@@ -542,7 +542,7 @@ GridControl.prototype.makeClearButton = function (target) {
 	var self = this;
 
 	return jQuery(fontAwesome('F05E'))
-		.addClass('wcdv_button wcdv_control_clear_button')
+		.addClass('wcdv_button wcdv_text-primary wcdv_control_clear_button')
 		.hide()
 		.on('click', function () {
 			jQuery(this).hide();

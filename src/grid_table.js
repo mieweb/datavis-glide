@@ -604,10 +604,10 @@ GridTable.prototype._addSortingToHeader = function (data, orientation, spec, th,
 		}
 
 		span.children().removeClass('wcdv_sort_arrow_active');
-		th.removeClass('wcdv_sort_column_active');
+		th.removeClass('wcdv_sort_column_active wcdv_bg-primary');
 
 		if (dir != null) {
-			th.addClass('wcdv_sort_column_active');
+			th.addClass('wcdv_sort_column_active wcdv_bg-primary');
 
 			// Yes, this is backwards.  The FontAwesome icon for "ascending" points upwards, but I want to
 			// color the one that points dowards, indicating that is the direction of increasing values.
@@ -811,7 +811,7 @@ GridTable.prototype._addFilterToHeader = function (th, field, displayText) {
 		})
 		.tooltip({
 			classes: {
-				'ui-tooltip': 'ui-corner-all ui-widget-shadow wcdv_info_tooltip'
+				'ui-tooltip': 'ui-corner-all ui-widget-shadow wcdv_info_tooltip wcdv_border-primary'
 			},
 			show: { delay: 1000 }
 		})
@@ -1749,14 +1749,12 @@ GridTablePlain.prototype.drawHeader = function (columns, data, typeInfo, opts) {
 	var headingTr, headingSpan, headingTh;
 
 	var headingThCss = {
-		'white-space': 'nowrap',
-		'padding-bottom': 0
+		'white-space': 'nowrap'
 	};
 
 	var filterThCss = {
 		'white-space': 'nowrap',
 		'padding-top': 4,
-		'padding-bottom': 0,
 		'vertical-align': 'top'
 	};
 
@@ -1831,9 +1829,9 @@ GridTablePlain.prototype.drawHeader = function (columns, data, typeInfo, opts) {
 
 		// In the plain grid table output, the only way to sort is vertically by field.
 
-		self._addSortingToHeader(data, 'vertical', {field: field}, headingTh);
-
 		self._addFilterToHeader(headingTh, field, headingText);
+		
+		self._addSortingToHeader(data, 'vertical', {field: field}, headingTh);
 
 		if (self.opts.drawInternalBorders) {
 			headingTh.addClass('wcdv_pivot_colval_boundary');
@@ -2591,14 +2589,12 @@ GridTableGroupDetail.prototype.drawHeader = function (columns, data, typeInfo, o
 	var headingTr, headingSpan, headingTh;
 
 	var headingThCss = {
-		'white-space': 'nowrap',
-		'padding-bottom': 0
+		'white-space': 'nowrap'
 	};
 
 	var filterThCss = {
 		'white-space': 'nowrap',
 		'padding-top': 4,
-		'padding-bottom': 0,
 		'vertical-align': 'top'
 	};
 

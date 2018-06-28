@@ -205,7 +205,6 @@ Graph.prototype._makeUserInterface = function () {
 
 	self.ui.titlebar = jQuery('<div>')
 		.addClass('wcdv_grid_titlebar')
-		.attr('title', MIE.trans('SHOWHIDE'))
 		.on('click', function (evt) {
 			evt.stopPropagation();
 			self.toggle();
@@ -227,26 +226,11 @@ Graph.prototype._makeUserInterface = function () {
 		self.ui.toolbar.hide();
 	}
 
-	// The "source" toolbar section lets the user refresh the data being displayed.
-
-	self.ui.toolbar_source = jQuery('<div>')
-		.addClass('wcdv_toolbar_section')
-		.appendTo(self.ui.toolbar);
-	self._addSourceButtons(self.ui.toolbar_source);
-
-	// The "common" toolbar section lets the user export (and download) the currently displayed graph
-	// as a PNG image file.
-
-	self.ui.toolbar_common = jQuery('<div>')
-		.addClass('wcdv_toolbar_section')
-		.appendTo(self.ui.toolbar);
-	self._addCommonButtons(self.ui.toolbar_common);
-
 	// The "aggregates" toolbar section lets the user control what is drawn based on the aggregate
 	// functions calculated by the view.
 
 	self.ui.toolbar_aggregates = jQuery('<div>')
-		.addClass('wcdv_toolbar_section')
+		.addClass('wcdv_toolbar_section pull-right')
 		.hide()
 		.appendTo(self.ui.toolbar);
 	self._addAggregateButtons(self.ui.toolbar_aggregates);
@@ -287,7 +271,7 @@ Graph.prototype._addTitleWidgets = function (titlebar) {
 	self._setSpinner(self.opts.runImmediately ? 'loading' : 'not-loaded');
 
 	jQuery('<strong>')
-		.text(self.opts.title)
+		.text(self.opts.title + ',')
 		.appendTo(titlebar);
 
 	// The "notHeader" is the extension point for adding information into the titlebar.  It's really
@@ -301,67 +285,54 @@ Graph.prototype._addTitleWidgets = function (titlebar) {
 		})
 		.appendTo(titlebar);
 
-	// Create the down-chevron button that opens the grid toolbar.
+	// Create container to hold all the controls in the titlebar
+	
+	self.ui.titlebar_controls = jQuery('<div>')
+		.addClass('wcdv_titlebar_controls pull-right')
+		.appendTo(titlebar);
+		
+	// Create the Export button
+		
+	self.ui.exportBtn = jQuery(fontAwesome('f019'))
+		.addClass('wcdv_text-primary')
+		.attr('title', 'Export')
+		.on('click', function () {
+			self.export();
+		})
+		.appendTo(self.ui.titlebar_controls);
+	
+	// Create the Refresh button
+	
+	self.ui.refreshBtn = jQuery(fontAwesome('f021'))
+		.addClass('wcdv_text-primary')
+		.attr('title', 'Refresh')
+		.on('click', function () {
+			self.refresh();
+		})
+		.appendTo(self.ui.titlebar_controls);
+		
+	// This is the "gear" icon that shows/hides the controls below the toolbar.  The controls are used
+	// to set the group, pivot, aggregate, and filters.  Ideally the user only has to utilize these
+	// once, and then switches between perspectives to get the same effect.
 
-	self.ui.showHideButton = jQuery('<button type="button">')
-		.append(fontAwesome('f077'))
-		.addClass('showhide pull-right')
+	jQuery(fontAwesome('f013'))
+		.addClass('wcdv_button wcdv_text-primary')
 		.attr('title', MIE.trans('SHOWHIDEOPTS'))
+		.click(function (evt) {
+			self.toggleControls();
+		})
+		.appendTo(self.ui.titlebar_controls);
+		
+	// Create the down-chevron button that shows/hides everything under the titlebar.
+
+	self.ui.showHideButton = jQuery(fontAwesome('f078'))
+		.addClass('showhide wcdv_text-primary')
+		.attr('title', MIE.trans('SHOWHIDE'))
 		.click(function (evt) {
 			evt.stopPropagation();
 			self.toggle();
 		})
-		.appendTo(titlebar);
-};
-
-// #_addSourceButtons {{{2
-
-/**
- * Add buttons that perform operations on the source.
- *
- * @method
- * @memberof Graph
- * @private
- *
- * @param {jQuery} toolbar
- * Toolbar section that will contain the buttons.
- */
-
-Graph.prototype._addSourceButtons = function (toolbar) {
-	var self = this;
-
-	self.ui.refreshBtn = jQuery('<button>', {'type': 'button'})
-		.append(fontAwesome('F021'))
-		.append('Refresh')
-		.on('click', function () {
-			self.refresh();
-		})
-		.appendTo(toolbar);
-};
-
-// #_addCommonButtons {{{2
-
-/**
- * Add common controls to the grid's toolbar.
- *
- * @method
- * @memberof Graph
- * @private
- *
- * @param {jQuery} toolbar
- * Toolbar section that will contain the buttons.
- */
-
-Graph.prototype._addCommonButtons = function (toolbar) {
-	var self = this;
-
-	self.ui.exportBtn = jQuery('<button>', {'type': 'button', 'disabled': true})
-		.append(fontAwesome('F14C'))
-		.append('Export')
-		.on('click', function () {
-			self.export();
-		})
-		.appendTo(toolbar);
+		.appendTo(self.ui.titlebar_controls);
 };
 
 // #_addAggregateButtons {{{2
@@ -646,7 +617,7 @@ Graph.prototype.hide = function () {
 		duration: 0,
 		done: function () {
 			if (self.opts.title) {
-				self.ui.showHideButton.removeClass('open').html(fontAwesome('f078'));
+				self.ui.showHideButton.removeClass('open fa-rotate-180');
 			}
 		}
 	});
@@ -677,7 +648,7 @@ Graph.prototype.show = function (opts) {
 		duration: 0,
 		done: function () {
 			if (self.opts.title) {
-				self.ui.showHideButton.addClass('open').html(fontAwesome('f077'));
+				self.ui.showHideButton.addClass('open fa-rotate-180');
 			}
 			if (opts.redraw) {
 				self.drawFromConfig();
