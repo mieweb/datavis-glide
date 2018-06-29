@@ -570,7 +570,7 @@ GridTable.prototype.setAlignment = function (elt, fcc, fti, overrideType, fallba
  * Aggregate functions which we can sort by their results.
  */
 
-GridTable.prototype._addSortingToHeader = function (data, orientation, spec, th, agg) {
+GridTable.prototype._addSortingToHeader = function (data, orientation, spec, container, agg) {
 	var self = this;
 
 	if (!self.features.sort) {
@@ -604,10 +604,10 @@ GridTable.prototype._addSortingToHeader = function (data, orientation, spec, th,
 		}
 
 		span.children().removeClass('wcdv_sort_arrow_active');
-		th.removeClass('wcdv_sort_column_active wcdv_bg-primary');
+		container.closest('th').removeClass('wcdv_sort_column_active wcdv_bg-primary');
 
 		if (dir != null) {
-			th.addClass('wcdv_sort_column_active wcdv_bg-primary');
+			container.closest('th').addClass('wcdv_sort_column_active wcdv_bg-primary');
 
 			// Yes, this is backwards.  The FontAwesome icon for "ascending" points upwards, but I want to
 			// color the one that points dowards, indicating that is the direction of increasing values.
@@ -757,7 +757,7 @@ GridTable.prototype._addSortingToHeader = function (data, orientation, spec, th,
 		items: sortIcon_menu_items
 	});
 
-	th.append(sortIcon_span);
+	container.append(sortIcon_span);
 
 	// Now check the existing sort specification in the view to see if any of the sort icons that we
 	// just created should be lit up.
@@ -796,7 +796,7 @@ GridTable.prototype._addSortingToHeader = function (data, orientation, spec, th,
 
 // #_addFilterToHeader {{{2
 
-GridTable.prototype._addFilterToHeader = function (th, field, displayText) {
+GridTable.prototype._addFilterToHeader = function (container, field, displayText) {
 	var self = this;
 
 	if (self.grid.filterControl == null) {
@@ -815,7 +815,7 @@ GridTable.prototype._addFilterToHeader = function (th, field, displayText) {
 			},
 			show: { delay: 1000 }
 		})
-		.appendTo(th);
+		.appendTo(container);
 };
 
 // #_addDrillDownHandler {{{2
@@ -1231,13 +1231,19 @@ GridTable.prototype.drawHeader_aggregates = function (data, tr, displayOrderInde
 	var ai = self._getAggInfo(data);
 
 	_.each(ai.group, function (aggInfo, aggIndex) {
-		var aggNum = aggInfo.aggNum;
-		var text = aggInfo.instance.getFullName();
-		var span = jQuery('<span>')
-			.text(text);
-		var th = jQuery('<th>')
-			.append(span)
-			.appendTo(tr);
+		var aggNum = aggInfo.aggNum,
+			text = aggInfo.instance.getFullName(),
+			span = jQuery('<span>')
+				.addClass('wcdv_heading_title')
+				.text(text),
+			headingThControls = jQuery('<div>'),
+			headingThContainer = jQuery('<div>')
+				.addClass('wcdv_heading_container')
+				.append(span, headingThControls),
+			th = jQuery('<th>')
+				.append(headingThContainer)
+				.appendTo(tr);
+
 		if (self.opts.drawInternalBorders || data.agg.info.group.length > 1) {
 			if (displayOrderIndex > 0 && aggIndex === 0) {
 				th.addClass('wcdv_bld'); // border-left: double
@@ -1250,7 +1256,7 @@ GridTable.prototype.drawHeader_aggregates = function (data, tr, displayOrderInde
 			}
 		}
 		self.csv.addCol(text);
-		self._addSortingToHeader(data, 'vertical', {aggType: 'group', aggNum: aggNum}, th, ai.group);
+		self._addSortingToHeader(data, 'vertical', {aggType: 'group', aggNum: aggNum}, headingThControls, ai.group);
 		self.setAlignment(th, aggInfo.colConfig[0], aggInfo.typeInfo[0], aggInfo.instance.getType());
 	});
 };
@@ -1315,7 +1321,13 @@ GridTable.prototype.drawBody_rowVals = function (data, tr, groupNum) {
 		rowVal = format(fcc, self.typeInfo.get(groupField), rowVal);
 
 		var th = jQuery('<th>');
-		var span = jQuery('<span>');
+		var span = jQuery('<span>').addClass('wcdv_heading_title');
+
+		var headingThControls = jQuery('<div>');
+
+		var headingThContainer = jQuery('<div>')
+			.addClass('wcdv_heading_container')
+			.append(span, headingThControls);
 
 		if (rowVal instanceof Element || rowVal instanceof jQuery) {
 			span.append(rowVal);
@@ -1327,12 +1339,12 @@ GridTable.prototype.drawBody_rowVals = function (data, tr, groupNum) {
 			span.text(rowVal);
 		}
 
-		span.appendTo(th);
+		headingThContainer.appendTo(th);
 		th.appendTo(tr);
 		self.csv.addCol(span.text());
 
 		if (data.isPivot && rowValIndex === data.groupFields.length - 1) {
-			self._addSortingToHeader(data, 'horizontal', {rowVal: data.rowVals[groupNum], aggNum: 0}, th, getPropDef([], data, 'agg', 'info', 'cell'));
+			self._addSortingToHeader(data, 'horizontal', {rowVal: data.rowVals[groupNum], aggNum: 0}, headingThControls, getPropDef([], data, 'agg', 'info', 'cell'));
 		}
 	});
 };
@@ -1818,20 +1830,28 @@ GridTablePlain.prototype.drawHeader = function (columns, data, typeInfo, opts) {
 				'data-wcdv-field': field,
 				'data-wcdv-draggable-origin': 'GRID_TABLE_HEADER'
 			})
+			.addClass('wcdv_heading_title')
 			.text(headingText)
 			._makeDraggableField();
 
 		self.csv.addCol(headingText);
 
+		var headingThControls = jQuery('<div>');
+
+		var headingThContainer = jQuery('<div>')
+			.addClass('wcdv_heading_container')
+			.append(headingSpan, headingThControls);
+
 		var headingTh = jQuery('<th>', { id: gensym() })
 			.css(headingThCss)
-			.append(headingSpan);
+			.append(headingThContainer);
 
 		// In the plain grid table output, the only way to sort is vertically by field.
 
-		self._addFilterToHeader(headingTh, field, headingText);
+		self._addSortingToHeader(data, 'vertical', {field: field}, headingThControls);
+
+		self._addFilterToHeader(headingThControls, field, headingText);
 		
-		self._addSortingToHeader(data, 'vertical', {field: field}, headingTh);
 
 		if (self.opts.drawInternalBorders) {
 			headingTh.addClass('wcdv_pivot_colval_boundary');
@@ -2584,19 +2604,20 @@ GridTableGroupDetail.prototype.canRender = function (what) {
 // #drawHeader {{{2
 
 GridTableGroupDetail.prototype.drawHeader = function (columns, data, typeInfo, opts) {
-	var self = this;
-
-	var headingTr, headingSpan, headingTh;
-
-	var headingThCss = {
-		'white-space': 'nowrap'
-	};
-
-	var filterThCss = {
-		'white-space': 'nowrap',
-		'padding-top': 4,
-		'vertical-align': 'top'
-	};
+	var self = this,
+		headingTr,
+		headingSpan,
+		headingTh,
+		headingThContainer,
+		headingThControls,
+		headingThCss = {
+			'white-space': 'nowrap'
+		},
+		filterThCss = {
+			'white-space': 'nowrap',
+			'padding-top': 4,
+			'vertical-align': 'top'
+		};
 
 	_.each(data.groupFields, function (fieldName, fieldIdx) {
 		headingTr = jQuery('<tr>');
@@ -2639,17 +2660,24 @@ GridTableGroupDetail.prototype.drawHeader = function (columns, data, typeInfo, o
 				'data-wcdv-field': fieldName,
 				'data-wcdv-draggable-origin': 'GRID_TABLE_HEADER'
 			})
+			.addClass('wcdv_heading_title')
 			.text(fieldName)
 			._makeDraggableField()
 		;
 
+		headingThControls = jQuery('<div>');
+
+		headingThContainer = jQuery('<div>')
+			.addClass('wcdv_heading_container')
+			.append(headingSpan, headingThControls);
+
 		headingTh = jQuery('<th>')
 			.attr('colspan', columns.length - fieldIdx)
 			.css(headingThCss)
-			.append(headingSpan)
+			.append(headingThContainer)
 		;
 
-		self._addSortingToHeader(data, 'vertical', {groupFieldIndex: fieldIdx}, headingTh);
+		self._addSortingToHeader(data, 'vertical', {groupFieldIndex: fieldIdx}, headingThControls);
 
 		self.setCss(headingTh, fieldName);
 
@@ -2690,19 +2718,26 @@ GridTableGroupDetail.prototype.drawHeader = function (columns, data, typeInfo, o
 				'data-wcdv-field': field,
 				'data-wcdv-draggable-origin': 'GRID_TABLE_HEADER'
 			})
+			.addClass('wcdv_heading_title')
 			.text(field)
 			._makeDraggableField()
 		;
 
+		headingThControls = jQuery('<div>');
+
+		headingThContainer = jQuery('<div>')
+			.addClass('wcdv_heading_container')
+			.append(headingSpan, headingThControls);
+
 		headingTh = jQuery('<th>')
 			.css(headingThCss)
-			.append(headingSpan);
+			.append(headingThContainer);
 
 		if (colIndex > 0) {
 			headingTh.addClass('wcdv_pivot_colval_boundary');
 		}
 
-		self._addSortingToHeader(data, 'vertical', {field: field}, headingTh);
+		self._addSortingToHeader(data, 'vertical', {field: field}, headingThControls);
 
 		self.setCss(headingTh, field);
 		self.setAlignment(headingTh, fcc, typeInfo.get(field));
@@ -3403,11 +3438,12 @@ GridTableGroupSummary.prototype.canRender = function (what) {
 // #drawHeader {{{2
 
 GridTableGroupSummary.prototype.drawHeader = function (columns, data, typeInfo, opts) {
-	var self = this;
-
-	var tr = jQuery('<tr>')
-	var span;
-	var th;
+	var self = this,
+		tr = jQuery('<tr>'),
+		span,
+		th,
+		headingThControls,
+		headingThContainer;
 
 	self.csv.addRow();
 
@@ -3415,19 +3451,25 @@ GridTableGroupSummary.prototype.drawHeader = function (columns, data, typeInfo, 
 		if (typeof what === 'string') {
 			if (what === 'rowVals') {
 				_.each(data.groupFields, function (field, fieldIdx) {
-					span = jQuery('<span>').text(field);
+					span = jQuery('<span>').addClass('wcdv_heading_title').text(field);
+
+					headingThControls = jQuery('<div>');
+
+					headingThContainer = jQuery('<div>')
+						.addClass('wcdv_heading_container')
+						.append(span, headingThControls);
 
 					th = jQuery('<th>')
 						.attr({
 							'data-wcdv-field': field,
 							'data-wcdv-draggable-origin': 'GRID_TABLE_HEADER'
 						})
-						.append(span)
+						.append(headingThContainer)
 						._makeDraggableField();
 
 					self.csv.addCol(field);
 
-					self._addSortingToHeader(data, 'vertical', {groupFieldIndex: fieldIdx}, th, getProp(data, 'agg', 'info', 'group'));
+					self._addSortingToHeader(data, 'vertical', {groupFieldIndex: fieldIdx}, headingThControls, getProp(data, 'agg', 'info', 'group'));
 
 					self.setCss(th, field);
 
@@ -3593,25 +3635,34 @@ GridTablePivot.prototype.canRender = function (what) {
 // #drawHeader {{{2
 
 GridTablePivot.prototype.drawHeader = function (columns, data, typeInfo, opts) {
-	var self = this;
-	var aggInfo;
-
-	var tr, span, th;
+	var self = this,
+		aggInfo,
+		tr,
+		span,
+		headingThControls,
+		headingThContainer,
+		th;
 
 	var addGroupFields = function (tr) {
 		_.each(data.groupFields, function (field, fieldIdx) {
-			span = jQuery('<span>').text(field);
+			span = jQuery('<span>').addClass('wcdv_heading_title').text(field);
 			self.csv.addCol(field);
 
-			var th = jQuery('<th>')
+			headingThControls = jQuery('<div>');
+
+			headingThContainer = jQuery('<div>')
+				.addClass('wcdv_heading_container')
+				.append(span, headingThControls);
+
+			th = jQuery('<th>')
 				.attr({
 					'data-wcdv-field': field,
 					'data-wcdv-draggable-origin': 'GRID_TABLE_HEADER'
 				})
-				.append(span)
+				.append(headingThContainer)
 				._makeDraggableField();
 
-			self._addSortingToHeader(data, 'vertical', {groupFieldIndex: fieldIdx}, th, getPropDef([], data, 'agg', 'info', 'cell'));
+			self._addSortingToHeader(data, 'vertical', {groupFieldIndex: fieldIdx}, headingThControls, getPropDef([], data, 'agg', 'info', 'cell'));
 
 			self.setCss(th, field);
 
@@ -3701,18 +3752,24 @@ GridTablePivot.prototype.drawHeader = function (columns, data, typeInfo, opts) {
 				lastColVal = colVal;
 				lastColValCount = 1;
 
-				span = jQuery('<span>').text(colVal);
+				span = jQuery('<span>').addClass('wcdv_heading_title').text(colVal);
 				self.csv.addCol(colVal);
 
+				headingThControls = jQuery('<div>');
+
+				headingThContainer = jQuery('<div>')
+					.addClass('wcdv_heading_container')
+					.append(span, headingThControls);
+
 				th = jQuery('<th>')
-					.append(span);
+					.append(headingThContainer);
 
 				self.setCss(th, colVal);
 
 				// We only allow sorting on the final
 
 				if (isLastPivotField) {
-					self._addSortingToHeader(data, 'vertical', {colVal: data.colVals[colValIndex], aggNum: 0}, th, getPropDef([], data, 'agg', 'info', 'cell'));
+					self._addSortingToHeader(data, 'vertical', {colVal: data.colVals[colValIndex], aggNum: 0}, headingThControls, getPropDef([], data, 'agg', 'info', 'cell'));
 				}
 
 				if (ai.cell.length === 1) {
@@ -3984,9 +4041,12 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 	// ===========================================================================
 
 	_.each(ai.pivot, function (aggInfo, aiPivotIndex) {
-		var span;
-		var text;
-		var aggNum = aggInfo.aggNum;
+		var span,
+			text,
+			aggNum = aggInfo.aggNum,
+			headingThControls,
+			headingThContainer,
+			th;
 
 		tr = jQuery('<tr>');
 		self.csv.addRow();
@@ -4012,17 +4072,22 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 					}
 
 					self.csv.addCol(aggInfo.instance.getFullName());
+					span = jQuery('<span>').addClass('wcdv_heading_title').text(aggInfo.instance.getFullName());
 
-					var th = jQuery('<th>')
+					headingThControls = jQuery('<div>');
+
+					headingThContainer = jQuery('<div>')
+						.addClass('wcdv_heading_container')
+						.append(span, headingThControls);
+
+					th = jQuery('<th>')
 						.attr({'colspan': data.groupFields.length})
-						.append(jQuery('<span>')
-							.text(aggInfo.instance.getFullName()))
-						.appendTo(tr)
-					;
+						.append(headingThContainer)
+						.appendTo(tr);
 
 					// Add sorting to the header we just created.
 
-					self._addSortingToHeader(data, 'horizontal', {aggType: 'pivot', aggNum: aggNum}, th, getPropDef([], data, 'agg', 'info', 'cell'));
+					self._addSortingToHeader(data, 'horizontal', {aggType: 'pivot', aggNum: aggNum}, headingThControls, getPropDef([], data, 'agg', 'info', 'cell'));
 
 					break;
 				case 'cells':

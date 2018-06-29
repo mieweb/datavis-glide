@@ -61,17 +61,15 @@ li.wcdv_aggregate_field {
 	flex: 0 0 0;
 }
 
-.wcdv_grid_titlebar #grid_title{
-	line-height: 30px;
-}
-
 .wcdv_grid_titlebar strong {
 	font-size: 1em;
+	line-height: 30px;
 }
 
 .wcdv_grid_titlebar .headingInfo {
 	cursor: default;
 	font-size: 0.9em;
+	line-height: 30px;
 }
 
 .wcdv_grid_titlebar .showhide {
@@ -144,12 +142,12 @@ li.wcdv_aggregate_field {
 }
 
 .wcdv_grid_toolbar button .fa {
-	color: #737373;
 	font-size: 1.15em;
 	padding-right: 3px;
 }
 .wcdv_grid_toolbar button[disabled=disabled] .fa {
-	color: #999;
+	color: #c7c7c77a;
+	cursor: not-allowed;
 }
 
 .wcdv_grid_toolbar .wcdv_button.pull-right {
@@ -175,6 +173,15 @@ li.wcdv_aggregate_field {
 
 .wcdv_toolbar_section input[type="radio"] {
 	margin-top: -1px;
+}
+
+.wcdv_toolbar_view select{
+	margin-left: 0.5em;
+}
+
+.wcdv_toolbar_view .wcdv_icon_button span{
+	margin: 0 !important;
+	padding: 0;
 }
 
 /******************************************************************************/
@@ -649,6 +656,19 @@ tr.wcdvgrid_more td {
 	padding-top: 4px;
 }
 
+.wcdv_heading_container{
+	display: flex;
+}
+
+.wcdv_heading_container .wcdv_heading_title{
+	flex-grow: 1;
+	margin-right: 25px;
+}
+
+.wcdv_heading_container div{
+	display: inline-block;
+}
+
 .wcdv_grid_table table .wcdv_bld {
 	border-left: double #c7c7c7;
 }
@@ -718,7 +738,6 @@ tr.wcdvgrid_more td {
 
 .wcdv_grid th .fa{
 	font-size: 15px;
-	float: right;
 	opacity: 0.8;
 }
 
@@ -734,6 +753,7 @@ tr.wcdvgrid_more td {
     width: 1.5em;
     line-height: 1.86667em;
     height: 1.86667em;
+	top: -1px;
 }
 
 /*
@@ -746,13 +766,7 @@ tr.wcdvgrid_more td {
 }
 
 .wcdv_grid select + .fa{
-	margin-left: 4px !important;
 	vertical-align: middle;
-}
-
-/*Hide forward/back view buttons*/
-button[title="Forward"], button[title="Back"] {
-	display: none;
 }
 
 /*

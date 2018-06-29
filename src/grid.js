@@ -944,8 +944,7 @@ Grid.prototype._addPrefsButtons = function (toolbar) {
 		.append(fontAwesome('fa-chevron-circle-left'))
 		.attr('title', 'Back')
 		.attr('disabled', true)
-		.addClass('wcdv_icon_button')
-		.css('margin', 0)
+		.addClass('wcdv_icon_button wcdv_text-primary')
 		.on('click', function () {
 			self.prefs.back();
 		})
@@ -956,8 +955,7 @@ Grid.prototype._addPrefsButtons = function (toolbar) {
 		.append(fontAwesome('fa-chevron-circle-right'))
 		.attr('title', 'Forward')
 		.attr('disabled', true)
-		.addClass('wcdv_icon_button')
-		.css('margin', 0)
+		.addClass('wcdv_icon_button wcdv_text-primary')
 		.on('click', function () {
 			self.prefs.forward();
 		})
@@ -972,8 +970,6 @@ Grid.prototype._addPrefsButtons = function (toolbar) {
 		.appendTo(div)
 	;
 	*/
-
-	div.append(jQuery('<span>').text('View '))
 
 	// Dropdown of all the available perspectives, plus an entry that (when selected) prompts for the
 	// name of a new perspective.
