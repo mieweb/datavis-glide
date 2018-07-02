@@ -500,32 +500,6 @@ mixinEventHandling(GridControl, 'GridControl', [
 	, 'cleared'
 ]);
 
-// #makeAddButton {{{2
-
-/**
- * Make a button that calls the `addField` method when clicked.
- *
- * @private
- *
- * @param {jQuery} target
- * Where to append the button.
- *
- * @returns {jQuery}
- * The button created.
- */
-
-GridControl.prototype.makeAddButton = function (target) {
-	var self = this;
-
-	return jQuery(fontAwesome('F0FE'))
-		.addClass('wcdv_button wcdv_text-primary')
-		.css({'margin-left': '4px'})
-		.on('click', function () {
-			self.addField(self.ui.dropdown.val(), self.ui.dropdown.find('option:selected').text());
-		})
-		.appendTo(target);
-};
-
 // #makeClearButton {{{2
 
 /**
@@ -851,7 +825,9 @@ GroupControl.prototype.draw = function (parent) {
 
 	var dropdownContainer = jQuery('<div>').appendTo(self.ui.root);
 	self.ui.dropdown = jQuery('<select>').appendTo(dropdownContainer);
-	self.makeAddButton(dropdownContainer);
+	self.ui.dropdown.on('change', function () {
+		self.addField(self.ui.dropdown.val(), self.ui.dropdown.find('option:selected').text());
+	});
 
 	jQuery('<option>', { 'value': '', 'disabled': true, 'selected': true })
 		.text('Select Field')
@@ -973,7 +949,9 @@ PivotControl.prototype.draw = function (parent) {
 
 	var dropdownContainer = jQuery('<div>').appendTo(self.ui.root);
 	self.ui.dropdown = jQuery('<select>').appendTo(dropdownContainer);
-	self.makeAddButton(dropdownContainer);
+	self.ui.dropdown.on('change', function () {
+		self.addField(self.ui.dropdown.val(), self.ui.dropdown.find('option:selected').text());
+	});
 
 	jQuery('<option>', { 'value': '', 'disabled': true, 'selected': true })
 		.text('Select Field')
@@ -1071,7 +1049,9 @@ AggregateControl.prototype.draw = function (parent) {
 	self.ui.fields = jQuery('<ul>').appendTo(self.ui.root);
 	var dropdownContainer = jQuery('<div>').appendTo(self.ui.root);
 	self.ui.dropdown = jQuery('<select>').appendTo(dropdownContainer);
-	self.makeAddButton(dropdownContainer);
+	self.ui.dropdown.on('change', function () {
+		self.addField(self.ui.dropdown.val(), self.ui.dropdown.find('option:selected').text());
+	});
 
 	jQuery('<option>', { 'value': '', 'disabled': true, 'selected': true })
 		.text('Select Aggregate')
@@ -1381,7 +1361,9 @@ FilterControl.prototype.draw = function (parent) {
 
 	var dropdownContainer = jQuery('<div>').appendTo(self.ui.root);
 	self.ui.dropdown = jQuery('<select>').appendTo(dropdownContainer);
-	self.makeAddButton(dropdownContainer);
+	self.ui.dropdown.on('change', function () {
+		self.addField(self.ui.dropdown.val(), self.ui.dropdown.find('option:selected').text());
+	});
 
 	jQuery('<option>', { 'value': '', 'disabled': true, 'selected': true })
 		.text('Select Field')
