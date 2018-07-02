@@ -353,6 +353,9 @@ var Grid = function (id, view, defn, tagOpts, cb) {
 	var doingServerFilter = getProp(defn, 'server', 'filter') && getProp(defn, 'server', 'limit') !== -1;
 	var viewDropdown = null;
 
+	self.generateCsv = false;
+	self.csvReady = false;
+
 	self.rootHasFixedHeight = false;
 	self.timing = new Timing();
 
@@ -744,13 +747,14 @@ Grid.prototype._addTitleWidgets = function (titlebar, doingServerFilter, runImme
 	
 	// Create the Export button
 		
-	self.ui.exportBtn = jQuery(fontAwesome('f019'))
-		.addClass('wcdv_text-primary')
-		.attr('title', 'Export')
+	self.ui.exportBtn = jQuery('<button>', {'type': 'button'})
+		.addClass('wcdv_icon_button wcdv_text-primary')
 		.on('click', function () {
 			self.export();
 		})
 		.appendTo(self.ui.titlebar_controls);
+
+	self._setExportStatus('notReady');
 	
 	// Create the Refresh button
 	
@@ -1273,11 +1277,23 @@ Grid.prototype.redraw = function () {
 			self.gridTable.clear();
 		}
 
+		gridTableOpts.generateCsv = self.generateCsv;
 		gridTableOpts.fixedHeight = self.rootHasFixedHeight;
 
 		self.ui.exportBtn.attr('disabled', true);
 		self.gridTable = new gridTableCtor(self, self.defn, self.view, self.features, gridTableOpts, self.timing, self.id);
-		self.gridTable.on(GridTable.events.unableToRender, makeGridTable);
+		self.gridTable.on(GridTable.events.unableToRender, function () {
+			self._setExportStatus('notReady');
+			makeGridTable();
+		});
+
+		self.gridTable.on('csvReady', function () {
+			self._setExportStatus('ready');
+		});
+		self.gridTable.on('generateCsvProgress', function (progress) {
+			debug.info('GRID', 'CSV generation progress: ' + progress);
+		});
+
 		if (self.features.limit) {
 			self.gridTable.on(GridTable.events.limited, function () {
 				self.ui.toolbar_limit.show();
@@ -1753,10 +1769,39 @@ Grid.prototype._normalizeColumns = function (defn) {
 Grid.prototype.export = function () {
 	var self = this;
 
-	var fileName = (self.tagOpts.title || self.id) + '.csv';
-	var csv = self.gridTable.getCsv();
-	var contentType = 'text/csv';
-	var blob = new Blob([csv], {'type': contentType});
+	if (self.csvReady) {
+		var fileName = (self.tagOpts.title || self.id) + '.csv';
+		var csv = self.gridTable.getCsv();
+		var contentType = 'text/csv';
+		var blob = new Blob([csv], {'type': contentType});
 
-	presentDownload(blob, fileName);
+		presentDownload(blob, fileName);
+	}
+	else {
+		self.generateCsv = true;
+		self.redraw();
+	}
+};
+
+// #_setExportStatus {{{2
+
+Grid.prototype._setExportStatus = function (status) {
+	var self = this;
+
+	switch (status) {
+	case 'notReady':
+		self.csvReady = false;
+		self.ui.exportBtn.attr('title', 'Generate CSV');
+		self.ui.exportBtn.children().remove();
+		self.ui.exportBtn.append(fontAwesome('fa-file-o'));
+		break;
+	case 'ready':
+		self.csvReady = true;
+		self.ui.exportBtn.attr('title', 'Download CSV');
+		self.ui.exportBtn.children().remove();
+		self.ui.exportBtn.append(fontAwesome('fa-download'));
+		break;
+	default:
+		throw new Error('Call Error: invalid status "' + status + '"');
+	}
 };

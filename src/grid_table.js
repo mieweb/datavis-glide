@@ -359,7 +359,8 @@ var GridTable = (function () {
 
 		_.defaults(self.opts, {
 			drawInternalBorders: true,
-			zebraStriping: true
+			zebraStriping: true,
+			generateCsv: true
 		});
 	};
 })();
@@ -368,10 +369,12 @@ GridTable.prototype = Object.create(Object.prototype);
 GridTable.prototype.constructor = GridTable;
 
 mixinEventHandling(GridTable, 'GridTable', [
-		'columnResize' // Fired when a column is resized.
-	, 'unableToRender' // Fired when a grid table can't render the data in the view it's bound to.
-	, 'limited' // Fired when the grid table isn't rendering all possible rows.
-	, 'unlimited' // Fired when the grid table is rendering all possible rows.
+		'columnResize'        // A column is resized.
+	, 'unableToRender'      // A grid table can't render the data in the view it's bound to.
+	, 'limited'             // The grid table isn't rendering all possible rows.
+	, 'unlimited'           // The grid table is rendering all possible rows.
+	, 'csvReady'            // CSV data has been generated.
+	, 'generateCsvProgress' // CSV generation progress.
 ]);
 
 // #_validateFeatures {{{2
@@ -1981,7 +1984,9 @@ GridTablePlain.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 		incrementalConfig = self.defn.table.incremental;
 	}
 
-	self.addDataToCsv(data);
+	if (self.opts.generateCsv) {
+		self.addDataToCsv(data);
+	}
 
 	// Clear out the body of the table.  We do this in case somebody invokes this function multiple
 	// times.  This function draws the entirety of the data, we certainly don't want to just tack rows
@@ -2417,9 +2422,20 @@ GridTablePlain.prototype.addWorkHandler = function () {
 
 // #addDataToCsv {{{2
 
+/**
+ * Add all data to the CSV file.  Because plain tables frequently don't show all the data, it's not
+ * enough to perform the CSV generation inside the `render()` method like we do with other GridTable
+ * implementations.
+ *
+ * @param {object} data
+ */
+
 GridTablePlain.prototype.addDataToCsv = function (data) {
 	var self = this;
 	var columns = determineColumns(self.colConfig, data, self.typeInfo);
+
+	debug.info('GRID TABLE - PLAIN // GENERATE CSV', 'Started generating CSV file');
+	self.fire('generateCsvProgress', null, 0);
 
 	self.csv.clear();
 
@@ -2450,6 +2466,10 @@ GridTablePlain.prototype.addDataToCsv = function (data) {
 			}
 		});
 	});
+
+	debug.info('GRID TABLE - PLAIN // GENERATE CSV', 'Finished generating CSV file');
+	self.fire('generateCsvProgress', null, 100);
+	self.fire('csvReady');
 
 	return self.csv.toString();
 };
@@ -3180,6 +3200,8 @@ GridTableGroupDetail.prototype.drawBody = function (data, typeInfo, columns, con
 		}
 	}
 
+	self.fire('csvReady');
+
 	if (typeof cont === 'function') {
 		return cont();
 	}
@@ -3564,6 +3586,8 @@ GridTableGroupSummary.prototype.drawBody = function (data, typeInfo, columns, co
 			break;
 		}
 	}
+
+	self.fire('csvReady');
 
 	if (typeof cont === 'function') {
 		return cont();
@@ -4194,6 +4218,8 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 
 		tr.appendTo(self.ui.tbody);
 	});
+
+	self.fire('csvReady');
 
 	if (typeof cont === 'function') {
 		return cont();
