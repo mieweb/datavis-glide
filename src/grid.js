@@ -437,7 +437,13 @@ var Grid = function (id, view, defn, tagOpts, cb) {
 		});
 	}
 
-	self.ui.titlebar = jQuery('<div class="wcdv_grid_titlebar">').appendTo(self.ui.root);
+	self.ui.titlebar = jQuery('<div class="wcdv_grid_titlebar">')
+		.attr('title', MIE.trans('SHOWHIDE'))
+		.on('click', function (evt) {
+			evt.stopPropagation();
+			self.toggle();
+		})
+		.appendTo(self.ui.root);
 
 	self._addTitleWidgets(self.ui.titlebar, doingServerFilter, !!self.tagOpts.runImmediately, id);
 
@@ -753,7 +759,8 @@ Grid.prototype._addTitleWidgets = function (titlebar, doingServerFilter, runImme
 		'style': 'font-size: 18px',
 		'class': 'wcdv_icon_button wcdv_text-primary'
 	})
-		.on('click', function () {
+		.on('click', function (evt) {
+			evt.stopPropagation();
 			self.export();
 		})
 		.appendTo(self.ui.titlebar_controls)
@@ -769,7 +776,8 @@ Grid.prototype._addTitleWidgets = function (titlebar, doingServerFilter, runImme
 		'class': 'wcdv_icon_button wcdv_text-primary'
 	})
 		.attr('title', 'Refresh')
-		.on('click', function () {
+		.on('click', function (evt) {
+			evt.stopPropagation();
 			self.refresh();
 		})
 		.append(fontAwesome('f021'))
@@ -787,6 +795,7 @@ Grid.prototype._addTitleWidgets = function (titlebar, doingServerFilter, runImme
 	})
 		.attr('title', MIE.trans('SHOWHIDEOPTS'))
 		.click(function (evt) {
+			evt.stopPropagation();
 			self.toggleControls();
 		})
 		.append(jQuery(fontAwesome('f013')))

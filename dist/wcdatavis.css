@@ -57,6 +57,7 @@ li.wcdv_aggregate_field {
 .wcdv_grid_titlebar {
 	border: 1px solid #c7c7c7;
 	padding: 0 0 0 8px;
+        cursor: pointer;
 	color: #737373;
 	flex: 0 0 0;
 }
