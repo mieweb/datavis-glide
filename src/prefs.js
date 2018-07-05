@@ -102,6 +102,8 @@ var Prefs = makeSubclass(Object, function (id, moduleBindings, opts) {
 	}
 });
 
+Prefs.MAIN_PERSPECTIVE_NAME = 'Main Perspective';
+
 mixinEventHandling(Prefs, function (self) {
 	return 'PREFS (' + self.id + ')';
 }, [
@@ -168,7 +170,7 @@ Prefs.prototype.prime = function (cont) {
 
 		return self.backend.getCurrent(function (currentName) {
 			if (currentName == null || self.availablePerspectives.indexOf(currentName) < 0) {
-				currentName = 'Main';
+				currentName = Prefs.MAIN_PERSPECTIVE_NAME;
 			}
 
 			return self.backend.load(currentName, function (currentConfig) {
@@ -435,7 +437,7 @@ Prefs.prototype.deletePerspective = function (name, cont, opts) {
 
 	// Make sure that we're not trying to delete "Main."
 
-	if (name == 'Main') {
+	if (name == Prefs.MAIN_PERSPECTIVE_NAME) {
 		log.error('Not allowed to delete "Main" perspective');
 		return typeof cont === 'function' ? cont(false) : false;
 	}
@@ -501,7 +503,7 @@ Prefs.prototype.deletePerspective = function (name, cont, opts) {
 				//   [ Main ]
 				//     ^ (history index)
 
-				self.setCurrentPerspective('Main');
+				self.setCurrentPerspective(Prefs.MAIN_PERSPECTIVE_NAME);
 			}
 
 			//var currentIndex;
@@ -1036,7 +1038,7 @@ PrefsBackendLocalStorage.prototype.getPerspectives = function (cont) {
 	var perspectives = _.keys(getPropDef({}, storedPrefData, self.id, 'perspectives'));
 
 	if (perspectives.length === 0) {
-		perspectives = ['Main'];
+		perspectives = [Prefs.MAIN_PERSPECTIVE_NAME];
 	}
 
 	self.debug('Found %d perspectives: %s', perspectives.length, JSON.stringify(perspectives));
@@ -1054,7 +1056,7 @@ PrefsBackendLocalStorage.prototype.getCurrent = function (cont) {
 	}
 
 	var storedPrefData = JSON.parse(localStorage.getItem(self.localStorageKey) || '{}');
-	var current = getPropDef('Main', storedPrefData, self.id, 'current')
+	var current = getPropDef(Prefs.MAIN_PERSPECTIVE_NAME, storedPrefData, self.id, 'current')
 
 	self.debug('Current perspective is "%s"', current);
 
@@ -1098,7 +1100,7 @@ PrefsBackendLocalStorage.prototype.rename = function (oldName, newName, cont) {
 		throw new Error('Call Error: `cont` must be null or a function');
 	}
 
-	if (oldName === 'Main') {
+	if (oldName === Prefs.MAIN_PERSPECTIVE_NAME) {
 		log.error('Not allowed to rename "Main" perspective');
 		return typeof cont === 'function' ? cont(false) : false;
 	}
@@ -1125,7 +1127,7 @@ PrefsBackendLocalStorage.prototype.delete = function (name, cont) {
 		throw new Error('Call Error: `cont` must be null or a function');
 	}
 
-	if (name === 'Main') {
+	if (name === Prefs.MAIN_PERSPECTIVE_NAME) {
 		log.error('Not allowed to delete "Main" perspective');
 		return typeof cont === 'function' ? cont(false) : false;
 	}
@@ -1231,7 +1233,7 @@ PrefsBackendTemporary.prototype.getPerspectives = function (cont) {
 	var perspectives = _.keys(self.storage.perspectives);
 
 	if (perspectives.length === 0) {
-		perspectives = ['Main'];
+		perspectives = [Prefs.MAIN_PERSPECTIVE_NAME];
 	}
 
 	self.debug('Found %d perspectives: %s', perspectives.length, JSON.stringify(perspectives));
@@ -1248,7 +1250,7 @@ PrefsBackendTemporary.prototype.getCurrent = function (cont) {
 		throw new Error('Call Error: `cont` must be a function');
 	}
 
-	var current = self.storage.current || 'Main';
+	var current = self.storage.current || Prefs.MAIN_PERSPECTIVE_NAME;
 
 	self.debug('Current perspective is "%s"', current);
 
@@ -1289,7 +1291,7 @@ PrefsBackendTemporary.prototype.rename = function (oldName, newName, cont) {
 		throw new Error('Call Error: `cont` must be null or a function');
 	}
 
-	if (oldName === 'Main') {
+	if (oldName === Prefs.MAIN_PERSPECTIVE_NAME) {
 		log.error('Not allowed to rename "Main" perspective');
 		return typeof cont === 'function' ? cont(false) : false;
 	}
@@ -1314,7 +1316,7 @@ PrefsBackendTemporary.prototype.delete = function (name, cont) {
 		throw new Error('Call Error: `cont` must be null or a function');
 	}
 
-	if (name === 'Main') {
+	if (name === Prefs.MAIN_PERSPECTIVE_NAME) {
 		log.error('Not allowed to delete "Main" perspective');
 		return typeof cont === 'function' ? cont(false) : false;
 	}

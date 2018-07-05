@@ -951,10 +951,10 @@ Grid.prototype._addPrefsButtons = function (toolbar) {
 	var options = {};
 
 	// A shortcut for doing the "right thing" with the rename & delete buttons, which are only shown
-	// when the currently selected perspective isn't "Main".
+	// when the currently selected perspective isn't "Main Perspective".
 
 	var showHideBtns = function () {
-		if (dropdown.val() === 'Main') {
+		if (dropdown.val() === Prefs.MAIN_PERSPECTIVE_NAME) {
 			deleteBtn.hide();
 			renameBtn.hide();
 		}
@@ -1025,18 +1025,18 @@ Grid.prototype._addPrefsButtons = function (toolbar) {
 
 	// Clicking this button will show a prompt to rename the currently selected perspective.  If you
 	// cancel the prompt, nothing will happen.  This button is only shown when the currently selected
-	// perspective is not "Main" as it cannot be renamed.
+	// perspective is not "Main Perspective" as it cannot be renamed.
 	//
 	// XXX: What if the user types in the name of an existing perspective?
-	// XXX: What if the user types in "Main" ?
+	// XXX: What if the user types in "Main Perspective" ?
 	// XXX: What if the user types in "NEW" ?
 
 	var renameBtn = jQuery(fontAwesome('F040', 'wcdv_button wcdv_text-primary', 'Rename'))
 		.on('click', function () {
 			var oldName = dropdown.val();
 
-			if (oldName === 'Main') {
-				alert('Cannot rename "Main" view!');
+			if (oldName === Prefs.MAIN_PERSPECTIVE_NAME) {
+				alert('Cannot rename main perspective!');
 			}
 			else {
 				var newName = prompt('Rename view "' + oldName + '" to what?');
@@ -1052,14 +1052,14 @@ Grid.prototype._addPrefsButtons = function (toolbar) {
 		.appendTo(div)
 	;
 
-	// Clicking this button will delete the currently selected perspective and switch back to the
-	// "Main" perspective.  It is only shown when the currently selected perspective is not "Main" as
-	// it cannot be deleted.
+	// Clicking this button will delete the currently selected perspective and switch back to "Main
+	// Perspective".  It is only shown when the currently selected perspective is not "Main
+	// Perspective" as it cannot be deleted.
 
 	var deleteBtn = jQuery(fontAwesome('F1F8', 'wcdv_button wcdv_text-primary', 'Delete'))
 		.on('click', function () {
-			if (dropdown.val() === 'Main') {
-				alert('Cannot delete "Main" view!');
+			if (dropdown.val() === Prefs.MAIN_PERSPECTIVE_NAME) {
+				alert('Cannot delete main perspective!');
 			}
 			else {
 				var toDelete = dropdown.val();
@@ -1074,10 +1074,10 @@ Grid.prototype._addPrefsButtons = function (toolbar) {
 		.appendTo(div)
 	;
 
-	// Clicking this button will reset all preferences back to the initial set (i.e. just "Main" and
-	// no changes in the view from its default).  Perhaps useful when you have too many different
-	// perspectives set, but I feel better having it as a safety in case your prefs somehow get really
-	// messed up and don't work at all anymore.  This button is always shown.
+	// Clicking this button will reset all preferences back to the initial set (i.e. just "Main
+	// Perspective" and no changes in the view from its default).  Perhaps useful when you have too
+	// many different perspectives set, but I feel better having it as a safety in case your prefs
+	// somehow get really messed up and don't work at all anymore.  This button is always shown.
 
 	var resetBtn = jQuery(fontAwesome('F0E2', 'wcdv_button wcdv_text-primary', 'Reset'))
 		.on('click', function () {
