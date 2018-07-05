@@ -1828,12 +1828,16 @@ GridTablePlain.prototype.drawHeader = function (columns, data, typeInfo, opts) {
 
 		var headingText = fcc.displayText || field;
 
-		var headingSpan = jQuery('<span>')
-			.attr({
-				'data-wcdv-field': field,
-				'data-wcdv-draggable-origin': 'GRID_TABLE_HEADER'
-			})
-			.addClass('wcdv_heading_title')
+		// headingTh <TH>
+		//   headingThContainer <DIV>
+		//     headingThSpan <SPAN>
+		//     headingThControls <DIV>
+
+		var headingSpan = jQuery('<span>', {
+			'class': 'wcdv_heading_title',
+			'data-wcdv-field': field,
+			'data-wcdv-draggable-origin': 'GRID_TABLE_HEADER',
+		})
 			.text(headingText)
 			._makeDraggableField();
 
@@ -2690,6 +2694,11 @@ GridTableGroupDetail.prototype.drawHeader = function (columns, data, typeInfo, o
 			;
 		}
 
+		// headingTh <TH>
+		//   headingThContainer <DIV>
+		//     headingSpan <SPAN>
+		//     headingThControls <DIV>
+
 		headingSpan = jQuery('<span>')
 			.attr({
 				'data-wcdv-field': fieldName,
@@ -3477,8 +3486,8 @@ GridTableGroupSummary.prototype.canRender = function (what) {
 GridTableGroupSummary.prototype.drawHeader = function (columns, data, typeInfo, opts) {
 	var self = this,
 		tr = jQuery('<tr>'),
-		span,
-		th,
+		headingSpan,
+		headingTh,
 		headingThControls,
 		headingThContainer;
 
@@ -3488,30 +3497,39 @@ GridTableGroupSummary.prototype.drawHeader = function (columns, data, typeInfo, 
 		if (typeof what === 'string') {
 			if (what === 'rowVals') {
 				_.each(data.groupFields, function (field, fieldIdx) {
-					span = jQuery('<span>').addClass('wcdv_heading_title').text(field);
+					var fcc = self.colConfig.get(field) || {};
+					var headingText = fcc.displayText || field;
+
+					// headingTh <TH>
+					//   headingThContainer <DIV>
+					//     headingThSpan <SPAN>
+					//     headingThControls <DIV>
+
+					headingSpan = jQuery('<span>', {
+						'class': 'wcdv_heading_title',
+						'data-wcdv-field': field,
+						'data-wcdv-draggable-origin': 'GRID_TABLE_HEADER',
+					})
+						.text(headingText)
+						._makeDraggableField();
 
 					headingThControls = jQuery('<div>');
 
 					headingThContainer = jQuery('<div>')
 						.addClass('wcdv_heading_container')
-						.append(span, headingThControls);
+						.append(headingSpan, headingThControls);
 
-					th = jQuery('<th>')
-						.attr({
-							'data-wcdv-field': field,
-							'data-wcdv-draggable-origin': 'GRID_TABLE_HEADER'
-						})
-						.append(headingThContainer)
-						._makeDraggableField();
+					headingTh = jQuery('<th>')
+						.append(headingThContainer);
 
 					self.csv.addCol(field);
 
 					self._addSortingToHeader(data, 'vertical', {groupFieldIndex: fieldIdx}, headingThControls, getProp(data, 'agg', 'info', 'group'));
 
-					self.setCss(th, field);
+					self.setCss(headingTh, field);
 
-					self.ui.thMap[field] = th;
-					tr.append(th);
+					self.ui.thMap[field] = headingTh;
+					tr.append(headingTh);
 				});
 			}
 			else if (what === 'groupAggregates') {
