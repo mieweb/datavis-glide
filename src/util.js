@@ -1916,6 +1916,19 @@ function makeRadioButtons(rootObj, path, def, label, name, values, conv, onChang
 	var initial = getProp(rootObj, path);
 
 	var root = jQuery('<div>').css('display', 'inline-block').appendTo(parent);
+
+	var handler = function () {
+		var selected = root.find('input[type=radio]:checked').val();
+		if (typeof conv === 'function') {
+			selected = conv(selected);
+		}
+		debug.info('GRID // TOOLBAR', 'Setting `' + path.join('.') + '` to ' + selected);
+		setProp(selected, rootObj, path);
+		if (typeof onChange === 'function') {
+			onChange(selected);
+		}
+	};
+
 	if (label) {
 		jQuery('<label>').text(label).appendTo(root);
 	}
@@ -1924,17 +1937,7 @@ function makeRadioButtons(rootObj, path, def, label, name, values, conv, onChang
 		var value = _.isString(v) ? v : v.value;
 		jQuery('<label>')
 			.append(jQuery('<input>', { 'type': 'radio', 'name': name, 'value': value })
-							.on('change', function () {
-								var selected = root.find('input[type=radio]:checked').val();
-								if (typeof conv === 'function') {
-									selected = conv(selected);
-								}
-								debug.info('GRID // TOOLBAR', 'Setting `' + path.join('.') + '` to ' + selected);
-								setProp(selected, rootObj, path);
-								if (typeof onChange === 'function') {
-									onChange(selected);
-								}
-							}))
+							.on('change', handler))
 			.append(label)
 			.appendTo(root);
 	});
@@ -2813,15 +2816,17 @@ var mixinEventHandling = (function () {
 
 		// #off {{{2
 
-		obj.prototype.off = function (evt, who) {
+		obj.prototype.off = function (evt, who, opts) {
 			var self = this
 				, myName = typeof name === 'function' ? name(self) : name;
+
+			opts = opts || {};
 
 			self._initEventHandlers();
 
 			if (evt === '*') {
 				_.each(obj.events, function (e) {
-					self.off(e, who);
+					self.off(e, who, opts);
 				});
 				return;
 			}
@@ -2844,7 +2849,9 @@ var mixinEventHandling = (function () {
 				}
 			});
 
-			debug.info(myName + ' // OFF', 'Removed ' + (self.eventHandlers[evt].length - newHandlers.length) + ' handlers from ' + who + ' on "' + evt + '" event');
+			if (!opts.silent) {
+				debug.info(myName + ' // OFF', 'Removed ' + (self.eventHandlers[evt].length - newHandlers.length) + ' handlers from ' + who + ' on "' + evt + '" event');
+			}
 
 			self.eventHandlers[evt] = newHandlers;
 		};

@@ -1412,7 +1412,7 @@ GridTable.prototype.clear = function () {
 		jQuery(self.scrollEventElement).off(self.scrollEvents);
 	}
 
-	self.view.off('*', self);
+	self.view.off('*', self, {silent: true});
 
 	self.root.children().remove();
 };
