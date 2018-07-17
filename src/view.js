@@ -2503,7 +2503,7 @@ View.prototype.aggregate = function (cont) {
 		});
 	}
 
-	if (self.data.isPivot && info.all) {
+	if (info.all && (self.data.isGroup || self.data.isPivot)) {
 		_.each(info.all, function (aggInfo, aggNum) {
 			var aggResult = aggInfo.instance.calculate(_.flatten(self.data.data));
 			allResults[aggNum] = aggResult;

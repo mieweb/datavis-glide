@@ -3549,6 +3549,7 @@ GridTableGroupSummary.prototype.drawHeader = function (columns, data, typeInfo, 
 
 GridTableGroupSummary.prototype.drawBody = function (data, typeInfo, columns, cont, opts) {
 	var self = this;
+	var ai = self._getAggInfo(data);
 
 	_.each(data.data, function (rowGroup, groupNum) {
 		var tr = jQuery('<tr>');
@@ -3611,6 +3612,67 @@ GridTableGroupSummary.prototype.drawBody = function (data, typeInfo, columns, co
 
 		self.ui.tbody.append(tr);
 	});
+
+	var renderTotalRow = function () {
+		var tr;
+
+		tr = jQuery('<tr>', {'class': 'wcdv_btd'});
+		self.csv.addRow();
+
+		_.each(self.opts.displayOrder, function (what) {
+			switch (what) {
+			case 'rowVals':
+				self.csv.addCol('Total');
+
+				var span = jQuery('<span>', {'class': 'wcdv_heading_title'})
+					.text('Total');
+				var headingThControls = jQuery('<div>');
+				var headingThContainer = jQuery('<div>')
+					.addClass('wcdv_heading_container')
+					.append(span, headingThControls);
+				var th = jQuery('<th>')
+					.attr({'colspan': data.groupFields.length})
+					.append(headingThContainer)
+					.appendTo(tr);
+
+				break;
+			case 'groupAggregates':
+				_.each(ai.all, function (aggInfo, aiAllIndex) {
+					var aggResult
+						, text
+						, td;
+
+					aggResult = data.agg.results.all[aggInfo.aggNum];
+
+					if (aggInfo.instance.inheritFormatting) {
+						text = format(aggInfo.colConfig[0], aggInfo.typeInfo[0], aggResult, {
+							overrideType: aggInfo.instance.getType()
+						});
+					}
+					else {
+						text = format(null, null, aggResult, {
+							overrideType: aggInfo.instance.getType()
+						});
+					}
+
+					td = jQuery('<td>').text(text);
+
+					if (self.opts.drawInternalBorders || ai.cell.length > 1) {
+						td.addClass(aiAllIndex === 0 ? 'wcdv_pivot_aggregate_boundary' : 'wcdv_pivot_colval_boundary');
+					}
+
+					self.csv.addCol(text);
+					self.setAlignment(td, aggInfo.colConfig[0], aggInfo.typeInfo[0], aggInfo.instance.getType());
+					td.appendTo(tr);
+				});
+				break;
+			}
+		});
+
+		tr.appendTo(self.ui.tbody);
+	};
+
+	renderTotalRow();
 
 	if (self.features.floatingHeader) {
 		switch (getProp(self.defn, 'table', 'floatingHeader', 'method')) {
