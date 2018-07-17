@@ -925,6 +925,8 @@ Grid.prototype._addLimitButtons = function (toolbar) {
 
 Grid.prototype._addGroupButtons = function (toolbar) {
 	var self = this;
+	var aggSpec;
+	var showTotalRow;
 
 	// Create radio buttons to switch between summary and detail group grid tables.
 
@@ -937,9 +939,41 @@ Grid.prototype._addGroupButtons = function (toolbar) {
 		, [{label: 'Summary', value: 'summary'}
 			, {label: 'Detail', value: 'detail'}]
 		, null
-		, function () { self.redraw() }
+		, function (selected) {
+			showTotalRow.prop('disabled', selected !== 'summary');
+			self.redraw();
+		}
 		, toolbar
 	);
+
+	self.view.on(View.events.aggregateSet, function (a) {
+		aggSpec = deepCopy(a);
+	});
+
+	showTotalRow = makeToggleCheckbox(
+		self.defn,
+		['table', 'whenGroup', 'showTotalRow'],
+		true,
+		'Total Row',
+		toolbar,
+		function (isChecked) {
+			var agg = self.view.getAggregate();
+
+			if (!isChecked) {
+				aggSpec = deepCopy(agg);
+				delete agg.all;
+			}
+			else {
+				agg.all = aggSpec.all;
+			}
+
+			self.view.setAggregate(agg, {
+				sendEvent: false
+			});
+		}
+	);
+
+	showTotalRow.prop('disabled', self.defn.table.groupMode !== 'summary');
 };
 
 // #_addPivotButtons {{{2

@@ -3672,7 +3672,9 @@ GridTableGroupSummary.prototype.drawBody = function (data, typeInfo, columns, co
 		tr.appendTo(self.ui.tbody);
 	};
 
-	renderTotalRow();
+	if (ai.all.length > 0) {
+		renderTotalRow();
+	}
 
 	if (self.features.floatingHeader) {
 		switch (getProp(self.defn, 'table', 'floatingHeader', 'method')) {
