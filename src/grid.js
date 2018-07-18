@@ -1094,7 +1094,7 @@ Grid.prototype._addPrefsButtons = function (toolbar) {
 	// name of a new perspective.
 
 	var dropdown = jQuery('<select>')
-		.append(jQuery('<option>', { value: 'NEW' }).text('New View...'))
+		.append(jQuery('<option>', { value: 'NEW' }).text('New Perspective...'))
 		.on('change', function (evt) {
 			if (dropdown.val() === 'NEW') {
 				var name = prompt('Enter new view name', self.prefs.getCurrentPerspective());
