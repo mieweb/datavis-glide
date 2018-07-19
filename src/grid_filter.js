@@ -510,14 +510,6 @@ StringDropdownGridFilterSumo.prototype.adjustInputWidth = function (opts) {
 	self.super.adjustInputWidth(opts);
 };
 
-// #getOperator {{{3
-
-/*
-StringDropdownGridFilterSumo.prototype.getOperator = function () {
-	return '$in';
-};
-*/
-
 // #getValue {{{3
 
 StringDropdownGridFilterSumo.prototype.getValue = function () {
@@ -541,6 +533,19 @@ StringDropdownGridFilterSumo.prototype.setValue = function (val) {
 		self.input.get(0).sumo.selectItem(v);
 	});
 };
+
+// #setOperator {{{3
+
+StringDropdownGridFilterSumo.prototype.setOperator = function (op) {
+	var self = this;
+
+	if (op === '$eq') {
+		op = '$in';
+	}
+
+	return self.super.setOperator(op);
+};
+
 
 // NumberTextboxGridFilter {{{2
 
