@@ -193,11 +193,17 @@ var FilterControlField = makeSubclass(GridControlField);
 FilterControlField.prototype.draw = function () {
 	var self = this;
 
+	console.log('################################################################################');
+	console.log(self.colConfig);
+	console.log('################################################################################');
+
 	self.super.draw();
 	self.ui.filterContainer = jQuery('<div>')
 		.addClass('wcdv_filter_control_filter_container')
 		.appendTo(self.ui.root);
-	self.control.gfs.add(self.field, self.ui.filterContainer);
+	self.control.gfs.add(self.field, self.ui.filterContainer, {
+		filterType: self.colConfig && self.colConfig.filter
+	});
 
 	return self.ui.root;
 };
@@ -553,7 +559,7 @@ GridControl.prototype.addField = function (field, displayText, opts, controlFiel
 		self.grid.showControls();
 	}
 
-	var cf = new self.controlFieldCtor(self, field, displayText, self.useColConfig ? self.colConfig[field] : null, controlFieldOpts);
+	var cf = new self.controlFieldCtor(self, field, displayText, self.useColConfig ? self.colConfig.get(field) : null, controlFieldOpts);
 
 	self.controlFields.push(cf);
 	

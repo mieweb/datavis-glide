@@ -590,7 +590,7 @@ var NumberCheckboxGridFilter = makeSubclass(GridFilter, function () {
 		self.div.append(self.removeBtn);
 	}
 
-	self.applyImmediately = true;
+	//self.applyImmediately = true;
 	self.limit = 1;
 });
 
@@ -600,7 +600,102 @@ NumberCheckboxGridFilter.prototype.getValue = function () {
 	return this.input[0].checked ? 1 : 0;
 };
 
+// #getOperator {{{3
+
 NumberCheckboxGridFilter.prototype.getOperator = function () {
+	return '$eq';
+};
+
+// NumberTriBoolGridFilter {{{2
+
+var NumberTriBoolGridFilter = makeSubclass(GridFilter, function () {
+	var self = this;
+
+	GridFilter.apply(self, arguments);
+
+	self.inputName = gensym();
+
+	var trueRadio = jQuery('<input>', {'type': 'radio', 'name': self.inputName, 'value': 'true'});
+	var falseRadio = jQuery('<input>', {'type': 'radio', 'name': self.inputName, 'value': 'false'});
+	var bothRadio = jQuery('<input>', {'type': 'radio', 'name': self.inputName, 'value': 'both'});
+
+	self.inputs = jQuery([trueRadio.get(0), falseRadio.get(0), bothRadio.get(0)]);
+
+	self.inputs.css('margin-right', '0.4em');
+
+	self.inputs.each(function (i, elt) {
+		elt = jQuery(elt);
+
+		elt.on('change', function (evt) {
+			self.gridFilterSet.update(false);
+		});
+	});
+
+	self.div
+		.append(jQuery('<label>')
+			.append(trueRadio)
+			.append('True'))
+		.append(jQuery('<label>')
+			.css('padding-left', '0.8em')
+			.append(falseRadio)
+			.append('False'))
+		.append(jQuery('<label>')
+			.css('padding-left', '0.8em')
+			.append(bothRadio)
+			.append('Both'))
+	;
+
+	if (self.removeBtn) {
+		self.div.append(self.removeBtn);
+	}
+
+	//self.applyImmediately = true;
+	self.limit = 1;
+});
+
+// #getValue {{{3
+
+NumberTriBoolGridFilter.prototype.getValue = function () {
+	var self = this;
+
+	var val = self.inputs.filter(':checked').val();
+
+	switch (val) {
+	case 'true':
+		return 1;
+	case 'false':
+		return 0;
+	case 'both':
+		return undefined;
+	default:
+		throw new Error('Impossible');
+	}
+};
+
+// #setValue {{{3
+
+NumberTriBoolGridFilter.prototype.setValue = function (val) {
+	var self = this;
+
+	var internalVal;
+
+	switch (val) {
+	case 0:
+		internalVal = 'false';
+		break;
+	case 1:
+		internalVal = 'true';
+		break;
+	default:
+		internalVal = 'both';
+	}
+
+	self.inputs.filter('[value="' + internalVal + '"]').prop('checked', true);
+};
+
+// #getOperator {{{3
+
+NumberTriBoolGridFilter.prototype.getOperator = function () {
 	return '$eq';
 };
 
@@ -696,8 +791,6 @@ DateRangeGridFilter.prototype.getValue = function () {
 	var self = this
 		, result;
 
-	console.log(self.isRange());
-
 	if (self.isRange()) {
 		result = {
 			'start': moment(self.selectedDates[0]),
@@ -771,21 +864,23 @@ BooleanCheckboxGridFilter.prototype.getId = function () {
 GridFilter.widgets = {
 	'string': {
 		'textbox': StringTextboxGridFilter,
-		'dropdown': StringDropdownGridFilterSumo
+		'dropdown': StringDropdownGridFilterSumo,
 	},
 	'number': {
-		'textbox': NumberTextboxGridFilter
+		'textbox': NumberTextboxGridFilter,
+		'checkbox': NumberCheckboxGridFilter,
+		'tribool': NumberTriBoolGridFilter,
 	},
 	'currency': {
-		'textbox': NumberTextboxGridFilter
+		'textbox': NumberTextboxGridFilter,
 	},
 	'date': {
 		'single': DateSingleGridFilter,
-		'range': DateRangeGridFilter
+		'range': DateRangeGridFilter,
 	},
 	'datetime': {
 		'single': DateSingleGridFilter,
-		'range': DateRangeGridFilter
+		'range': DateRangeGridFilter,
 	}
 };
 
