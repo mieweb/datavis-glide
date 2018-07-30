@@ -467,7 +467,13 @@ var Source = function (spec, params, userTypeInfo, opts) {
 	});
 
 	self.guessColumnTypes = true;
-	self.userTypeInfo = userTypeInfo;
+
+	if (_.isArray(userTypeInfo)) {
+		self.userTypeInfo = _.indexBy(userTypeInfo, 'field');
+	}
+	else {
+		self.userTypeInfo = userTypeInfo;
+	}
 
 	if (Source.sources[self.type] === undefined) {
 		throw new SourceError('Unsupported data source type: ' + self.type);
