@@ -18,7 +18,7 @@ ColConfigWin.prototype.setColConfig = function (colConfig) {
 
 // #show {{{2
 
-ColConfigWin.prototype.show = function (onSave) {
+ColConfigWin.prototype.show = function (posElt, onSave) {
 	var self = this;
 
 	var current = self.colConfig.clone();
@@ -31,6 +31,11 @@ ColConfigWin.prototype.show = function (onSave) {
 	var orderWin = jQuery('<div>', { title: 'Columns' }).dialog({
 		autoOpen: false,
 		modal: true,
+		position: {
+			my: 'top',
+			at: 'bottom',
+			of: posElt
+		},
 		buttons: [{
 			text: 'OK',
 			icon: 'ui-icon-check',

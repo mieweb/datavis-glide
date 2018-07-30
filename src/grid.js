@@ -473,13 +473,11 @@ var Grid = function (id, view, defn, tagOpts, cb) {
 		.appendTo(self.ui.toolbar);
 	self._addPrefsButtons(self.ui.toolbar_prefs);
 
-	if (self.features.limit) {
-		self.ui.toolbar_limit = jQuery('<div>')
-			.addClass('wcdv_toolbar_section')
-			.hide()
-			.appendTo(self.ui.toolbar);
-		self._addLimitButtons(self.ui.toolbar_limit);
-	}
+	self.ui.toolbar_plain = jQuery('<div>')
+		.addClass('wcdv_toolbar_section')
+		.hide()
+		.appendTo(self.ui.toolbar);
+	self._addPlainButtons(self.ui.toolbar_plain);
 
 	self.ui.toolbar_group = jQuery('<div>')
 		.addClass('wcdv_toolbar_section')
@@ -856,17 +854,6 @@ Grid.prototype._addTitleWidgets = function (titlebar, doingServerFilter, runImme
 		.appendTo(self.ui.titlebar_controls)
 	;
 
-	self.ui.configBtn = jQuery('<button>', {'type': 'button'})
-		.append(fontAwesome('fa-columns'))
-		.append('Columns')
-		.on('click', function () {
-			self.colConfigWin.show(function (colConfig) {
-				self.setColConfig(colConfig, 'colConfigWin');
-			});
-		})
-		.appendTo(self.ui.titlebar_controls)
-	;
-		
 	// Create the down-chevron button that shows/hides everything under the titlebar.
 
 	self.ui.showHideButton = jQuery('<button>', {
@@ -884,7 +871,7 @@ Grid.prototype._addTitleWidgets = function (titlebar, doingServerFilter, runImme
 	;
 };
 
-// #_addLimitButtons {{{2
+// #_addPlainButtons {{{2
 
 /**
  * Add plain-related controls to the grid's toolbar.
@@ -895,14 +882,17 @@ Grid.prototype._addTitleWidgets = function (titlebar, doingServerFilter, runImme
  * Toolbar section that will contain the buttons.
  */
 
-Grid.prototype._addLimitButtons = function (toolbar) {
+Grid.prototype._addPlainButtons = function (toolbar) {
 	var self = this;
+	var aggSpec;
+	var showTotalRow;
 
 	if (self.features.limit) {
+		self.ui.limit_div = jQuery('<div>').css({'display': 'inline-block'}).appendTo(toolbar);
 
 		// Create a checkbox that will toggle the "automatically show more" feature for the grid table.
 
-		makeToggleCheckbox(self.defn, ['table', 'limit', 'autoShowMore'], true, 'Show More on Scroll', toolbar);
+		makeToggleCheckbox(self.defn, ['table', 'limit', 'autoShowMore'], true, 'Show More on Scroll', self.ui.limit_div);
 
 		// Create a button that will show all the rows when clicked.  We fake this a little bit by just
 		// turning off the "limit" feature and letting the grid table be redrawn (changing the features
@@ -921,8 +911,22 @@ Grid.prototype._addLimitButtons = function (toolbar) {
 				});
 			})
 			.text('Show All Rows')
-			.appendTo(toolbar);
+			.appendTo(self.ui.limit_div)
+		;
 	}
+
+	self.ui.configBtn = jQuery('<button>', {
+		'type': 'button'
+	})
+		.append(fontAwesome('fa-columns'))
+		.append('Columns')
+		.on('click', function (evt) {
+			self.colConfigWin.show(self.ui.controls, function (colConfig) {
+				self.setColConfig(colConfig, 'colConfigWin');
+			});
+		})
+		.appendTo(toolbar)
+	;
 };
 
 // #_addGroupButtons {{{2
@@ -1296,9 +1300,7 @@ Grid.prototype.redraw = function () {
 
 			debug.info('GRID', 'Creating pivot grid table');
 
-			if (self.features.limit) {
-				self.ui.toolbar_limit.hide();
-			}
+			self.ui.toolbar_plain.hide();
 			self.ui.toolbar_group.hide();
 			self.ui.toolbar_pivot.show();
 		}
@@ -1316,9 +1318,7 @@ Grid.prototype.redraw = function () {
 
 			debug.info('GRID', 'Creating group grid table');
 
-			if (self.features.limit) {
-				self.ui.toolbar_limit.hide();
-			}
+			self.ui.toolbar_plain.hide();
 			self.ui.toolbar_group.show();
 			self.ui.toolbar_pivot.hide();
 		}
@@ -1328,9 +1328,7 @@ Grid.prototype.redraw = function () {
 
 			debug.info('GRID', 'Creating plain grid table');
 
-			if (self.features.limit) {
-				self.ui.toolbar_limit.hide();
-			}
+			self.ui.toolbar_plain.show();
 			self.ui.toolbar_group.hide();
 			self.ui.toolbar_pivot.hide();
 		}
@@ -1364,10 +1362,10 @@ Grid.prototype.redraw = function () {
 
 		if (self.features.limit) {
 			self.gridTable.on(GridTable.events.limited, function () {
-				self.ui.toolbar_limit.show();
+				self.ui.limit_div.show();
 			});
 			self.gridTable.on(GridTable.events.unlimited, function () {
-				self.ui.toolbar_limit.hide();
+				self.ui.limit_div.hide();
 			});
 		}
 		self.gridTable.draw(self.ui.grid, function () {

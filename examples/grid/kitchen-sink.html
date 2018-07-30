@@ -81,11 +81,14 @@ $(document).ready(function () {
 			}],
 			features: {
 				rowSelect: true,
-				floatingHeader: false, // XXX
-				limit: false, // XXX
+				floatingHeader: false,
+				limit: true,
 			},
 			floatingHeader: {
 				method: 'floatThead'
+			},
+			limit: {
+				threshold: 50,
 			},
 			footer: {
 				'Amount': {
