@@ -1,16 +1,19 @@
 {
-    "plugins": ["plugins/markdown"],
+    "plugins": [
+        "plugins/markdown"
+    ],
     "opts": {
         "template": "node_modules/ink-docstrap/template",
         "destination": "jsdoc"
     },
-	"templates": {
-		"systemName": "WC DataVis",
-		"copyright": "Copyright © Medical Informatics Engineering, Inc.",
-		"theme": "spacelab",
-		"linenums": true,
-		"collapseSymbols": false,
-		"inverseNav": true,
-		"methodHeadingReturns": true
-	}
+    "templates": {
+        "systemName": "WC DataVis",
+        "copyright": "Copyright © Medical Informatics Engineering, Inc.",
+        "theme": "spacelab",
+        "linenums": true,
+        "collapseSymbols": false,
+        "inverseNav": true,
+        "methodHeadingReturns": true,
+        "outputSourceFiles": true
+    }
 }
