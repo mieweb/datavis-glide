@@ -139,6 +139,7 @@ mixinEventHandling(Prefs, function (self) {
 	, 'perspectiveRenamed' // Fired when a perspective is renamed.
 	, 'perspectiveChanged' // Fired when the current perspective has changed.
 	, 'prefsHistoryStatus'
+	, 'prefsReset'
 ]);
 mixinDebugging(Prefs, function () {
 	return 'PREFS (' + this.id + ')';
@@ -840,6 +841,8 @@ Prefs.prototype.reset = function (cont) {
 	self.backend.reset(function () {
 		self.isInitialized = false;
 		self.init();
+
+		self.fire('prefsReset');
 
 		_.each(self.modules, function (module, moduleName) {
 			if (typeof module.reset === 'function') {

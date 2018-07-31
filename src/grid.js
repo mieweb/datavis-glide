@@ -1271,6 +1271,13 @@ Grid.prototype._addPrefsButtons = function (toolbar) {
 				showHideBtns();
 			});
 
+			self.prefs.on('prefsReset', function () {
+				_.each(options, function (elt) {
+					elt.remove();
+				});
+				options = [];
+			});
+
 			self.prefs.on('prefsHistoryStatus', function (back, forward) {
 				backBtn.attr('disabled', !back);
 				forwardBtn.attr('disabled', !forward);
