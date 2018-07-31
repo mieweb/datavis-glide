@@ -185,6 +185,11 @@ li.wcdv_aggregate_field {
 	padding: 0;
 }
 
+.wcdv_grid_toolbar span.fa.wcdv_info_icon {
+	color: #737373;
+	margin-left: 0.5em;
+}
+
 /******************************************************************************/
 
 .wcdv_grid_control {

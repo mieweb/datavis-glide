@@ -1062,9 +1062,6 @@ Grid.prototype._addPrefsButtons = function (toolbar) {
 
 	var options = {};
 
-	// A shortcut for doing the "right thing" with the rename & delete buttons, which are only shown
-	// when the currently selected perspective isn't "Main Perspective".
-
 	var showHideBtns = function () {
 		var p = self.prefs.getPerspective(dropdown.val());
 
@@ -1073,16 +1070,18 @@ Grid.prototype._addPrefsButtons = function (toolbar) {
 		}
 
 		if (p.opts.isTemporary) {
-			renameBtn.hide();
+			saveBtn.show();
 		}
 		else {
-			renameBtn.show();
+			saveBtn.hide();
 		}
 
 		if (p.opts.isEssential) {
+			renameBtn.hide();
 			deleteBtn.hide();
 		}
 		else {
+			renameBtn.show();
 			deleteBtn.show();
 		}
 	};
@@ -1148,6 +1147,42 @@ Grid.prototype._addPrefsButtons = function (toolbar) {
 
 			self.prefs.setCurrentPerspective(dropdown.val());
 			showHideBtns();
+		})
+		.appendTo(div)
+	;
+
+	var warnMsg = fontAwesome('fa-info-circle', 'wcdv_info_icon')
+		.hide()
+		.tooltip({
+			classes: {
+				'ui-tooltip': 'ui-corner-all ui-widget-shadow wcdv_info_tooltip wcdv_border-primary'
+			},
+			show: { delay: 1000 }
+		})
+		.appendTo(div)
+	;
+
+	var saveBtnTooltipContent = jQuery('<div>')
+		.append(fontAwesome('fa-info-circle').css('padding-right', '0.25em').addClass('wcdv_text-primary'))
+		.append('This pre-defined perspective cannot be saved with this name.  Click to save with a new name.  After that, any changes will be saved under the new name.');
+
+	var saveBtn = jQuery('<button>', {'type': 'button', 'title': 'XXX'})
+		.append(fontAwesome('fa-save'))
+		.attr('title', 'Save...')
+		.addClass('wcdv_icon_button wcdv_text-primary')
+		.tooltip({
+			classes: {
+				'ui-tooltip': 'ui-corner-all ui-widget-shadow wcdv_info_tooltip wcdv_border-primary'
+			},
+			show: { delay: 1000 },
+			content: saveBtnTooltipContent
+		})
+		.on('click', function () {
+			var name = prompt('Enter new view name', self.prefs.getCurrentPerspective());
+			if (name != null) {
+				self.prefs.addPerspective(name);
+				self.prefs.save();
+			}
 		})
 		.appendTo(div)
 	;
