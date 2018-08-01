@@ -2657,10 +2657,9 @@ View.prototype.getTypeInfo = function (cont) {
 	}
 
 	self.fire('getTypeInfo', null, self.typeInfo, self.colConfig);
-
-	return self.init(function () {
+	//return self.init(function () {
 		return cont(self.typeInfo);
-	});
+	//});
 };
 
 // #clearCache {{{2
@@ -2772,4 +2771,36 @@ View.prototype.setColConfig = function (colConfig) {
 	debug.info('VIEW (' + self.name + ')', 'Setting column configuration');
 
 	self.colConfig = colConfig;
+};
+
+// #prime {{{2
+
+View.prototype.prime = function (cont) {
+	var self = this;
+
+	if (typeof cont !== 'function') {
+		throw new Error('Call Error: `cont` must be a function');
+	}
+
+	if (self.isPrimed) {
+		return cont(false);
+	}
+
+	if (self.lock.isLocked()) {
+		self.lock.onUnlock(function () {
+			self.prime.apply(self, args);
+		});
+	}
+	else {
+		self.lock.lock();
+
+		self.prefs.prime(function () {
+			self.source.getData(function () {
+				self.prefs.bind('view', self);
+				self.isPrimed = true;
+				self.lock.unlock();
+				cont(true);
+			});
+		});
+	}
 };

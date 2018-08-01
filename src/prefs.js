@@ -1523,10 +1523,14 @@ PrefsModuleView.prototype.load = function (config) {
 	}
 
 	if (config.aggregate == null) {
-		self.target.clearAggregate();
+		self.target.clearAggregate({
+			updateData: false
+		});
 	}
 	else {
-		self.target.setAggregate(config.aggregate);
+		self.target.setAggregate(config.aggregate, {
+			updateData: false
+		});
 	}
 };
 

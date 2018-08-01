@@ -1297,6 +1297,7 @@ Grid.prototype._addPrefsButtons = function (toolbar) {
 			self.prefs.on('perspectiveChanged', function (name) {
 				dropdown.val(name);
 				showHideBtns();
+				self.redraw();
 			});
 
 			self.prefs.on('prefsReset', function () {
@@ -1333,8 +1334,6 @@ Grid.prototype.clear = function () {
 
 Grid.prototype.redraw = function () {
 	var self = this;
-
-	debug.info('GRID', 'Redrawing...');
 
 	var makeGridTable = function () {
 		var gridTableCtor
@@ -1425,7 +1424,12 @@ Grid.prototype.redraw = function () {
 		});
 	};
 
-	makeGridTable();
+	self.prefs.prime(function () {
+		self.view.prime(function () {
+			debug.info('GRID', 'Redrawing...');
+			makeGridTable();
+		});
+	});
 };
 
 // #refresh {{{2
@@ -1870,10 +1874,9 @@ Grid.prototype.setColConfig = function (colConfig, caller) {
 
 	self.view.setColConfig(self.colConfig);
 
-	self.redraw();
-
 	if (caller !== 'prefs') {
 		self.prefs.save();
+		self.redraw();
 	}
 };
 
