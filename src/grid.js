@@ -787,7 +787,7 @@ Grid.prototype._addTitleWidgets = function (titlebar, doingServerFilter, runImme
 			.append(' (')
 			.append(
 							jQuery('<span>', {'class': 'link'})
-							.text('reset')
+							.text('clear filter')
 							.on('click', function (evt) {
 								evt.stopPropagation();
 								self.ui.clearFilter.hide();
@@ -1477,10 +1477,10 @@ Grid.prototype._updateRowCount = function (info, ops) {
 
 	if (info.numRows != null) {
 		if (info.totalRows != null) {
-			text.push(info.numRows + ' / ' + info.totalRows + ' row' + (info.numRows === 1 ? '' : 's') + ', filtered');
+			text.push(info.numRows + ' / ' + info.totalRows + ' record' + (info.numRows === 1 ? '' : 's'));
 		}
 		else {
-			text.push(info.numRows + ' row' + (info.numRows === 1 ? '' : 's'));
+			text.push(info.numRows + ' record' + (info.numRows === 1 ? '' : 's'));
 		}
 	}
 

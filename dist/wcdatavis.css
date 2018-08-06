@@ -73,6 +73,14 @@ li.wcdv_aggregate_field {
 	line-height: 30px;
 }
 
+.wcdv_grid_titlebar .link {
+	cursor: pointer;
+}
+
+.wcdv_grid_titlebar .link:hover {
+	text-decoration: underline;
+}
+
 .wcdv_grid_titlebar .showhide {
 	background-color: transparent;
 	border: 0;
