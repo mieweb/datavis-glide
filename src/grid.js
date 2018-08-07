@@ -915,7 +915,7 @@ Grid.prototype._addPlainButtons = function (toolbar) {
 		;
 	}
 
-	self.ui.configBtn = jQuery('<button>', {
+	jQuery('<button>', {
 		'type': 'button'
 	})
 		.append(fontAwesome('fa-columns'))
@@ -943,7 +943,20 @@ Grid.prototype._addPlainButtons = function (toolbar) {
 Grid.prototype._addGroupButtons = function (toolbar) {
 	var self = this;
 	var aggSpec;
-	var showTotalRow;
+	var showTotalRow, colConfigWinBtn;
+
+	var enableDisable = function (selected) {
+		switch (selected) {
+		case 'summary':
+			showTotalRow.prop('disabled', false);
+			colConfigWinBtn.prop('disabled', true);
+			break;
+		case 'detail':
+			showTotalRow.prop('disabled', true);
+			colConfigWinBtn.prop('disabled', false);
+			break;
+		}
+	};
 
 	// Create radio buttons to switch between summary and detail group grid tables.
 
@@ -957,7 +970,7 @@ Grid.prototype._addGroupButtons = function (toolbar) {
 			, {label: 'Detail', value: 'detail'}]
 		, null
 		, function (selected) {
-			showTotalRow.prop('disabled', selected !== 'summary');
+			enableDisable(selected);
 			self.redraw();
 		}
 		, toolbar
@@ -990,7 +1003,20 @@ Grid.prototype._addGroupButtons = function (toolbar) {
 		}
 	);
 
-	showTotalRow.prop('disabled', self.defn.table.groupMode !== 'summary');
+	colConfigWinBtn = jQuery('<button>', {
+		'type': 'button'
+	})
+		.append(fontAwesome('fa-columns'))
+		.append('Columns')
+		.on('click', function (evt) {
+			self.colConfigWin.show(self.ui.controls, function (colConfig) {
+				self.setColConfig(colConfig, 'colConfigWin');
+			});
+		})
+		.appendTo(toolbar)
+	;
+
+	enableDisable(self.defn.table.groupMode);
 };
 
 // #_addPivotButtons {{{2
