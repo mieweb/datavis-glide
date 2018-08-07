@@ -823,6 +823,11 @@ tr.wcdvgrid_more td {
 	width: 100%;
 }
 
+.wcdv_colconfigwin_table th {
+	text-align: left;
+	color: #808080;
+}
+
 .wcdv_colconfigwin_table tr {
 	background-color: white;
 }

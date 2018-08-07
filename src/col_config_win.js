@@ -31,6 +31,7 @@ ColConfigWin.prototype.show = function (posElt, onSave) {
 	var orderWin = jQuery('<div>', { title: 'Columns' }).dialog({
 		autoOpen: false,
 		modal: true,
+		width: 600,
 		position: {
 			my: 'top',
 			at: 'bottom',
@@ -69,6 +70,9 @@ ColConfigWin.prototype.show = function (posElt, onSave) {
 		.addClass('wcdv_colconfigwin_table')
 		.appendTo(orderWin);
 
+	var colTableHeader = jQuery('<thead><th></th><th>Field</th><th>Display</th><th></th><th></th>')
+		.appendTo(colTable);
+
 	var colTableBody = jQuery('<tbody>')
 		._makeSortableTable(function (oldIndex, newIndex) {
 			colTableBody.children('tr').eq(newIndex).effect('highlight', 750);
@@ -78,7 +82,7 @@ ColConfigWin.prototype.show = function (posElt, onSave) {
 
 	var keys = current.keys();
 
-	current.each(function (colConfig, colName) {
+	current.each(function (colConfig, field) {
 		var tr, td;
 
 		tr = jQuery('<tr>');
@@ -92,8 +96,34 @@ ColConfigWin.prototype.show = function (posElt, onSave) {
 			.appendTo(td);
 
 		td = jQuery('<td>')
-			.text(colName)
+			.text(field)
 			.appendTo(tr);
+
+		td = jQuery('<td>')
+			.css('color', colConfig.displayText ? '#000000' : '#C0C0C0')
+			.text(colConfig.displayText || field)
+			.appendTo(tr);
+		var displayTextTd = td;
+
+		td = jQuery('<td>')
+			.addClass('wcdv_minimal_width')
+			.appendTo(tr);
+
+		var renameBtn = jQuery('<button>', {'type': 'button', 'title': 'Rename'})
+			.addClass('wcdv_icon_button')
+			.append(fontAwesome('fa-pencil'))
+			.on('click', function () {
+				var newName = prompt('Rename field "' + field + '" to what?');
+
+				if (newName) {
+					colConfig.displayText = newName;
+					displayTextTd
+						.css('color', colConfig.displayText ? '#000000' : '#C0C0C0')
+						.text(newName);
+				}
+			})
+			.appendTo(td)
+		;
 
 		td = jQuery('<td>')
 			.addClass('wcdv_minimal_width')
@@ -116,7 +146,7 @@ ColConfigWin.prototype.show = function (posElt, onSave) {
 			.addClass('wcdv_icon_button')
 			.append(fontAwesome('fa-gear'))
 			.on('click', function () {
-				self.showConfigWin(colName);
+				self.showConfigWin(field);
 			})
 			.appendTo(td);
 		*/
