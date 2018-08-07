@@ -436,8 +436,16 @@ Aggregate.prototype.getFullName = function () {
 	if (self.opts.name != null) {
 		return self.opts.name;
 	}
+	else if (self.fieldCount > 0 && _.isArray(self.opts.fields) && self.opts.fields.length > 0) {
+		return self.name + ' of ' + (
+			_.map(self.opts.fields, function (field, fieldIdx) {
+				var fcc = getPropDef({}, self.opts, 'colConfig', fieldIdx);
+				return fcc.displayText || field;
+			})
+		).join(', ');
+	}
 	else {
-		return self.name + (self.fieldCount > 0 && _.isArray(self.opts.fields) && self.opts.fields.length > 0 ? (' of ' + self.opts.fields.join(', ')) : '');
+		return self.name;
 	}
 };
 
@@ -993,7 +1001,7 @@ SumOverSumAggregate.prototype.calculateDone = function (obj) {
 SumOverSumAggregate.prototype.getFullName = function () {
 	var self = this;
 
-	return 'Sum(' + self.opts.fields[0] + ') / Sum(' + self.opts.fields[1] + ')';
+	return 'Sum(' + getPropDef(self.opts.fields[0], self.opts, 'colConfig', 0, 'displayText') + ') / Sum(' + getPropDef(self.opts.fields[1], self.opts, 'colConfig', 1, 'displayText') + ')';
 };
 
 // Count / Count {{{1

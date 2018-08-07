@@ -2571,7 +2571,9 @@ GridTableGroupDetail.prototype.drawHeader = function (columns, data, typeInfo, o
 			'vertical-align': 'top'
 		};
 
-	_.each(data.groupFields, function (fieldName, fieldIdx) {
+	_.each(data.groupFields, function (field, fieldIdx) {
+		var fcc = self.colConfig.get(field) || {};
+
 		headingTr = jQuery('<tr>');
 
 		if (self.features.rowSelect) {
@@ -2614,11 +2616,11 @@ GridTableGroupDetail.prototype.drawHeader = function (columns, data, typeInfo, o
 
 		headingSpan = jQuery('<span>')
 			.attr({
-				'data-wcdv-field': fieldName,
+				'data-wcdv-field': field,
 				'data-wcdv-draggable-origin': 'GRID_TABLE_HEADER'
 			})
 			.addClass('wcdv_heading_title')
-			.text(fieldName)
+			.text(fcc.displayText || field)
 			._makeDraggableField()
 		;
 
@@ -2636,9 +2638,9 @@ GridTableGroupDetail.prototype.drawHeader = function (columns, data, typeInfo, o
 
 		self._addSortingToHeader(data, 'vertical', {groupFieldIndex: fieldIdx}, headingThControls);
 
-		self.setCss(headingTh, fieldName);
+		self.setCss(headingTh, field);
 
-		self.ui.thMap[fieldName] = headingTh;
+		self.ui.thMap[field] = headingTh;
 
 		headingTr.append(headingTh);
 		self.ui.thead.append(headingTr);
@@ -2676,7 +2678,7 @@ GridTableGroupDetail.prototype.drawHeader = function (columns, data, typeInfo, o
 				'data-wcdv-draggable-origin': 'GRID_TABLE_HEADER'
 			})
 			.addClass('wcdv_heading_title')
-			.text(field)
+			.text(fcc.displayText || field)
 			._makeDraggableField()
 		;
 
@@ -3456,7 +3458,7 @@ GridTableGroupSummary.prototype.drawHeader = function (columns, data, typeInfo, 
 					headingTh = jQuery('<th>')
 						.append(headingThContainer);
 
-					self.csv.addCol(field);
+					self.csv.addCol(fcc.displayText || field);
 
 					self._addSortingToHeader(data, 'vertical', {groupFieldIndex: fieldIdx}, headingThControls, getProp(data, 'agg', 'info', 'group'));
 
@@ -3700,8 +3702,9 @@ GridTablePivot.prototype.drawHeader = function (columns, data, typeInfo, opts) {
 
 	var addGroupFields = function (tr) {
 		_.each(data.groupFields, function (field, fieldIdx) {
-			span = jQuery('<span>').addClass('wcdv_heading_title').text(field);
-			self.csv.addCol(field);
+			var fcc = self.colConfig.get(field) || {};
+			span = jQuery('<span>').addClass('wcdv_heading_title').text(fcc.displayText || field);
+			self.csv.addCol(fcc.displayText || field);
 
 			headingThControls = jQuery('<div>');
 
