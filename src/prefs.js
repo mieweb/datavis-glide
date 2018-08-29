@@ -89,6 +89,7 @@ var Prefs = makeSubclass(Object, function (id, moduleBindings, opts) {
 	self.id = id;
 	self.modules = {};
 	self.bardo = {};
+	self.primeLock = new Lock();
 
 	opts = deepDefaults(opts, {
 		saveCurrent: true,
@@ -195,16 +196,25 @@ Prefs.prototype.prime = function (cont) {
 		throw new Error('Call Error: `cont` must be null or a function');
 	}
 
+	if (self.isPrimed) {
+		return typeof cont === 'function' ? cont(false) : false;
+	}
+
+	if (self.primeLock.isLocked()) {
+		return self.primeLock.onUnlock(function () {
+			self.prime.apply(self, arguments);
+		});
+	}
+
+	self.primeLock.lock();
+
 	var finish = function (status) {
 		return function () {
 			self.isPrimed = true;
+			self.primeLock.unlock();
 			return typeof cont === 'function' ? cont(status) : status;
 		};
 	};
-
-	if (self.isPrimed) {
-		return finish(false)();
-	}
 
 	self.init();
 
