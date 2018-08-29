@@ -528,7 +528,7 @@ Prefs.prototype.deletePerspective = function (name, cont, opts) {
 
 	// Delete the perspective in the backend.
 
-	self.backend.delete(name, function (ok) {
+	self.backend.deletePerspective(name, function (ok) {
 		var newCurrent;
 		var i;
 
@@ -986,7 +986,7 @@ PrefsBackend.prototype.rename = function (oldName, newName, cont) {
  * @param {function} [cont]
  */
 
-PrefsBackend.prototype.delete = function (name, cont) {
+PrefsBackend.prototype.deletePerspective = function (name, cont) {
 	throw new Error('ABSTRACT');
 };
 
@@ -1236,7 +1236,7 @@ PrefsBackendLocalStorage.prototype.rename = function (oldName, newName, cont) {
 
 // #delete {{{2
 
-PrefsBackendLocalStorage.prototype.delete = function (name, cont) {
+PrefsBackendLocalStorage.prototype.deletePerspective = function (name, cont) {
 	var self = this;
 
 	if (typeof name !== 'string') {
@@ -1411,7 +1411,7 @@ PrefsBackendTemporary.prototype.rename = function (oldName, newName, cont) {
 
 // #delete {{{2
 
-PrefsBackendTemporary.prototype.delete = function (name, cont) {
+PrefsBackendTemporary.prototype.deletePerspective = function (name, cont) {
 	var self = this;
 
 	if (typeof name !== 'string') {
