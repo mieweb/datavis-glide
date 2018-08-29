@@ -307,3 +307,27 @@ OrdMap.prototype.clone = function () {
 
 	return result;
 };
+
+// #clear {{{2
+
+OrdMap.prototype.clear = function () {
+	this._keys = [];
+	this._keyIndex = {};
+	this._map = {};
+	this._size = 0;
+};
+
+// #replaceWith {{{2
+
+OrdMap.prototype.replaceWith = function (o) {
+	var self = this;
+
+	if (!(o instanceof OrdMap)) {
+		throw new Error('Call Error: `o` must be an instance of OrdMap');
+	}
+
+	self.clear();
+	o.each(function (v, k) {
+		self.set(k, v);
+	});
+};
