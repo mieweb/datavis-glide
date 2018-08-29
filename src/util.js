@@ -821,7 +821,7 @@ function setProp() {
 	args = _.flatten(args);
 
 	for (var i = 0; i < args.length - 1; i += 1) {
-		if (o[args[i]] === undefined) {
+		if (o[args[i]] == null) {
 			o[args[i]] = {};
 		}
 
