@@ -91,6 +91,28 @@
 
 * `unlimited`
 
+## Prefs
+
+* `perspectiveAdded(name)`
+
+* `perspectiveDeleted(name)`
+
+* `perspectiveRenamed(oldName, newName)`
+
+* `perspectiveChanged(newName)`
+
+* `moduleBound(moduleName, module, target, opts)`
+
+  Fired when something calls `Prefs#bind()` to bind an object to the prefs system using a `PrefsModule`.
+
+* `prefsHistoryStatus(canGoForward, canGoBack)`
+
+  Fired when something causes the history stack to be changed.
+
+* `prefsReset`
+
+  Fired when the preferences system is reset.
+
 [Source JSDoc]: https://zeus.med-web.com/~tvenable/doc/wcdatavis/jsdoc/Source.html
 [View JSDoc]: https://zeus.med-web.com/~tvenable/doc/wcdatavis/jsdoc/View.html
 [Grid JSDoc]: https://zeus.med-web.com/~tvenable/doc/wcdatavis/jsdoc/Grid.html

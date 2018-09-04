@@ -1,12 +1,25 @@
 # Preferences
 
-The preferences system is used to save the current configuration of an interactive grid to the server. Later, when that grid is used again, the configuration is loaded. This makes the user's configuration changes persistent. The kinds of things that are stored as part of the preferences vary depending on the output mode of the grid, but here are the basics:
+The preferences system is used to save the current interactive configuration of DataVis components.  Later, when those components are used again, the configuration is loaded.  This makes the user's configuration changes persistent.
 
--   sorting
-    -   column name
-    -   direction
--   filtering
-    -   column name
-    -   operator
--   grouping
-    -   column name
+* `version` — number
+
+  Describes the serialization format for the preferences.  As the prefs system changes, things may be serialized differently; a migration process will update prefs to newer serialization formats.
+
+* `current` — string
+
+  Name of the current perspective.
+
+* `perspectives` — object
+
+  Stores each perspective by its name.  See [below](#perspectives) for more.
+
+## Preferences Version History
+
+* Version 0
+
+  The only supported backend is "localStorage."  There is no `version` property stored anywhere.
+
+* Version 1
+
+  Adds support for versioning, modules, different backends, and storing perspectives separately.

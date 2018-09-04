@@ -1,20 +1,20 @@
 /*
- * @import url("http://fonts.googleapis.com/css?family=PT+Sans:400,400italic,700");
- * @import url("http://fonts.googleapis.com/css?family=Asap:400,400italic,700");
- * @import url("http://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700");
- * @import url("http://fonts.googleapis.com/css?family=Droid+Serif:regular,italic,bold,bolditalic&subset=latin");
- * @import url("http://fonts.googleapis.com/css?family=Droid+Sans:regular,bold&subset=latin");
- * @import url("http://fonts.googleapis.com/css?family=Rosario:400,400italic,700");
- * @import url("http://fonts.googleapis.com/css?family=Crimson+Text:400,400italic,700");
- * @import url("http://fonts.googleapis.com/css?family=UnifrakturCook:700");
- * @import url("http://fonts.googleapis.com/css?family=Alegreya:400,400italic,700");
- * @import url("http://fonts.googleapis.com/css?family=PT+Mono");
+ * @import url("//fonts.googleapis.com/css?family=PT+Sans:400,400italic,700");
+ * @import url("//fonts.googleapis.com/css?family=Asap:400,400italic,700");
+ * @import url("//fonts.googleapis.com/css?family=Ubuntu+Mono:400,700");
+ * @import url("//fonts.googleapis.com/css?family=Droid+Serif:regular,italic,bold,bolditalic&subset=latin");
+ * @import url("//fonts.googleapis.com/css?family=Droid+Sans:regular,bold&subset=latin");
+ * @import url("//fonts.googleapis.com/css?family=Rosario:400,400italic,700");
+ * @import url("//fonts.googleapis.com/css?family=Crimson+Text:400,400italic,700");
+ * @import url("//fonts.googleapis.com/css?family=UnifrakturCook:700");
+ * @import url("//fonts.googleapis.com/css?family=Alegreya:400,400italic,700");
+ * @import url("//fonts.googleapis.com/css?family=PT+Mono");
  */
 
-@import url("http://fonts.googleapis.com/css?family=UnifrakturMaguntia");
-@import url("http://fonts.googleapis.com/css?family=PT+Mono");
-@import url("http://fonts.googleapis.com/css?family=PT+Serif:400,400italic,700");
-@import url("http://fonts.googleapis.com/css?family=PT+Sans:400,400italic,700");
+@import url("//fonts.googleapis.com/css?family=UnifrakturMaguntia");
+@import url("//fonts.googleapis.com/css?family=PT+Mono");
+@import url("//fonts.googleapis.com/css?family=PT+Serif:400,400italic,700");
+@import url("//fonts.googleapis.com/css?family=PT+Sans:400,400italic,700");
 
 body {
     font-family: "PT Serif", serif;
@@ -75,12 +75,12 @@ nav a {
  * =============================================================================
  */
 
-h1, h2, h3, h4 {
+h1, h2, h3, h4, h5, h6 {
     overflow: hidden;
     font-family: "PT Sans", sans-serif;
 }
 
-h1 a, h2 a, h3 a, h4 a {
+h1 a, h2 a, h3 a, h4 a, h5 a, h6 a {
     text-decoration: none;
 }
 
@@ -107,6 +107,16 @@ h3 {
 h4 {
     font-size: 14pt;
     border-bottom: solid 1px #e53935;
+}
+
+h5 {
+    font-size: 14pt;
+    color: #666;
+}
+
+h6 {
+    font-size: 12pt;
+    color: #666;
 }
 
 /*
@@ -384,4 +394,21 @@ a.footnote-ref {
 
 .gold {
     color: #B80;
+}
+
+figure {
+    text-align: center;
+}
+
+figure > figcaption {
+    font-size: 10pt;
+    color: #666;
+    font-style: italic;
+}
+
+span.math {
+    background-color: #DDD;
+    padding-left: 0.25em;
+    padding-right: 0.25em;
+    padding-bottom: 0.25ex;
 }
