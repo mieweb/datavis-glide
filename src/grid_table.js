@@ -2854,7 +2854,7 @@ GridTableGroupDetail.prototype.drawBody = function (data, typeInfo, columns, con
 
 		if (node.metadata.children == null) {
 			self.ui.tbody
-				.find('tr[data-wcdv-group=' + node.metadata.id + ']')
+				.find('tr[data-wcdv-in-group=' + node.metadata.id + ']')
 				.find('input[type="checkbox"].wcdv_select_row')
 				.prop('checked', isChecked);
 			_.each(data.data[node.metadata.rowValIndex], function (row) {
@@ -2906,8 +2906,21 @@ GridTableGroupDetail.prototype.drawBody = function (data, typeInfo, columns, con
 
 	var lastRowVal = [];
 
+	/*
+	 * Render the rows that are in a group.
+	 *
+	 *   - groupMetadataId: number
+	 *     Used to look up the metadata for the group that we're showing.
+	 *
+	 *   - groupNum: number
+	 *     Used to find the rowVal & rows in the group.
+	 *
+	 *   - placeAfter: jQuery (TR)
+	 *     The table row for the last rowValElt in the rowVal, below which these rows will be put.
+	 */
+
 	var render = function (groupMetadataId, groupNum, placeAfter) {
-		var rowGroup = data.data[groupNum];
+		var rowsInGroup = data.data[groupNum];
 		var rowVal = data.rowVals[groupNum];
 		var tr;
 		var isSelected;
@@ -2922,11 +2935,11 @@ GridTableGroupDetail.prototype.drawBody = function (data, typeInfo, columns, con
 		//   ... row[col] | col ∉ groupFields ...
 		// </tr>
 
-		_.each(rowGroup, function (row, rowNum) {
+		_.each(rowsInGroup, function (row, rowNum) {
 			tr = jQuery('<tr>', {
 				id: self.defn.table.id + '_' + rowNum,
 				'data-row-num': row.rowNum,
-				'data-wcdv-group': groupMetadataId,
+				'data-wcdv-in-group': groupMetadataId,
 				'data-wcdv-rowValIndex': self.data.groupMetadata.lookup.byId[groupMetadataId].rowValIndex
 			})
 				.hide();
@@ -3033,19 +3046,52 @@ GridTableGroupDetail.prototype.drawBody = function (data, typeInfo, columns, con
 		return mapping;
 	})();
 
+	/*
+	 * Toggle a sub-group open/closed.  This is meant to be used as a jQuery event handler, e.g. for a
+	 * click event.
+	 */
+
 	var toggleGroup = function () {
+
+		/*
+		 * Toggle the visibility of the subgroup.
+		 *
+		 *   - groupId: number
+		 *     What group we are expanding/collapsing.
+		 *
+		 *   - show: boolean
+		 *     If true, show the rows in the group; otherwise hide them.
+		 *
+		 *   - tr: jQuery (TR)
+		 *     The table row for the subgroup header.
+		 */
+
 		var toggle = function (groupId, show, tr) {
+			// Within the group metadata, the rowValIndex is only defined for things which are leaves in
+			// the grouping tree and therefore complete a rowVal.
+
 			var rowValIndex = self.data.groupMetadata.lookup.byId[groupId].rowValIndex;
+
 			debug.info('GRID TABLE // GROUP (DETAIL) // TOGGLE', 'show = %s, id = %s, rowValIndex = %s', show, groupId, rowValIndex);
+
+			// Check if we're expanding a leaf, thus fully expanding an entire group, and see if we need
+			// to render table rows for all the records in that group.
+
 			if (show && rowValIndex != null && !isRendered[groupId]) {
 				debug.info('GRID TABLE // GROUP (DETAIL) // TOGGLE', 'Rendering: group metadata ID = %s, rowValIndex = %s', groupId, rowValIndex);
 				render(groupId, rowValIndex, tr);
 				isRendered[groupId] = true;
 			}
+
+			// Set the visibility for all affected table rows.  These can be for children of the current
+			// node in the tree (i.e. when expanding the current node does not complete a group), or for
+			// records in a fully expanded group: we don't distinguish between these two when it comes to
+			// showing/hiding as the attributes used on the elements are the same.
+
 			self.ui.tbody
 				.find('tr')
 				.filter(function (i, elt) {
-					return jQuery(elt).attr('data-wcdv-group') === groupId;
+					return jQuery(elt).attr('data-wcdv-in-group') === groupId;
 				})
 				.each(function (i, elt) {
 					elt = jQuery(elt);
@@ -3058,7 +3104,8 @@ GridTableGroupDetail.prototype.drawBody = function (data, typeInfo, columns, con
 					else {
 						elt.hide();
 					}
-				});
+				})
+			;
 
 			if (self.ui.tbl.floatThead) {
 				self.ui.tbl.floatThead('reflow');
@@ -3130,7 +3177,7 @@ GridTableGroupDetail.prototype.drawBody = function (data, typeInfo, columns, con
 			var childMetadata = parentMetadata.children[getNatRep(rowVal[rowValEltIndex])];
 
 			tr = jQuery('<tr>')
-				.attr('data-wcdv-group', parentMetadata.id)
+				.attr('data-wcdv-in-group', parentMetadata.id)
 				.attr('data-wcdv-toggles-group', childMetadata.id)
 				.attr('data-wcdv-collapsed', '1')
 			;
