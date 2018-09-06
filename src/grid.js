@@ -178,8 +178,6 @@ GridError.prototype.constructor = GridError;
  * @property {Grid~Features} [table.features]
  * The features that are enabled for this grid.
  *
- * @property {object} [table.limit]
- *
  * @property {object} [table.floatingHeader]
  * Configuration for the "floating header" feature.
  *
@@ -201,6 +199,21 @@ GridError.prototype.constructor = GridError;
  *
  * The perspective will override this.
  *
+ * @property {object} [table.incremental]
+ * Configuration for the "incremental" feature.
+ *
+ * @property {boolean} [table.incremental.appendBodyLast=false]
+ *
+ * @property {string} [table.incremental.method="setTimeout"]
+ * Must be one of the following:
+ *
+ *   - `setTimeout`
+ *   - `requestAnimationFrame`
+ *
+ * @property {number} [table.incremental.delay=10]
+ *
+ * @property {number} [table.incremental.chunkSize=100]
+ *
  * @property {object} [table.limit]
  * Configuration for the "limit" feature.
  *
@@ -209,11 +222,11 @@ GridError.prototype.constructor = GridError;
  *
  *   - `more` — Show a row at the bottom, which when clicked, loads more rows.
  *
- * @property {number} table.limit.threshold
+ * @property {number} [table.limit.threshold=100]
  * The total number of rows must exceed this in order to trigger using the limit method.  If
  * omitted, then the "limit" feature is effectively disabled.
  *
- * @property {number} table.limit.chunkSize
+ * @property {number} [table.limit.chunkSize=50]
  * When using the "more" limit method, how many additional rows to load each time.
  */
 
@@ -340,6 +353,9 @@ GridError.prototype.constructor = GridError;
  * If true, then the root DIV element has a fixed height (e.g. "600px") and the grid must fit within
  * that size.  Basically, this controls the "overflow" CSS property of the grid table, and also the
  * scroll handler for when a grid table automatically shows more rows.
+ *
+ * @property {boolean} _isIdle
+ * If true, then the grid currently has no pending operations that would require the UI to change.
  *
  * @borrows GridTable#getSelection
  * @borrows GridTable#setSelection
@@ -1503,10 +1519,12 @@ Grid.prototype.redraw = function () {
 		self.gridTable = new gridTableCtor(self, self.defn, self.view, self.features, gridTableOpts, self.timing, self.id);
 
 		self.gridTable.on('renderBegin', function () {
+			self._isIdle = false;
 			self.fire('renderBegin');
 		});
 		self.gridTable.on('renderEnd', function () {
 			self.fire('renderEnd');
+			self._isIdle = true;
 		});
 
 		self.gridTable.on(GridTable.events.unableToRender, function () {
@@ -1565,6 +1583,7 @@ Grid.prototype.refresh = function () {
 		return;
 	}
 
+	self._isIdle = true;
 	self.view.clearSourceData();
 };
 
@@ -1866,12 +1885,18 @@ Grid.prototype._normalize = function (defn) {
 				progress: false
 			},
 			limit: {
+				appendBodyLast: false,
 				method: 'more',
 				threshold: 100,
 				chunkSize: 50
 			},
 			floatingHeader: {
 				method: 'tabletool'
+			},
+			incremental: {
+				method: 'setTimeout',
+				delay: 10,
+				chunkSize: 100
 			}
 		}
 	});
@@ -2012,4 +2037,27 @@ Grid.prototype.resetColConfig = function (caller) {
 	var self = this;
 
 	self.setColConfig(self.initColConfig, caller);
+};
+
+// #isIdle {{{2
+
+/**
+ * Ask the grid whether there are currently any pending operations that would change the UI.
+ *
+ * Caveats:
+ *
+ *   - If you yield after checking this, then it's no longer guaranteed to be true; some other
+ *     asynchronous event could cause the grid to become active.
+ *
+ *   - If you have `renderEnd` event handlers that yield, it is possible that those event handlers
+ *     will continue executing after the grid has been marked idle.
+ *
+ * @returns {boolean} True if the grid is currently idle, false if there are changes pending which
+ * might cause the grid to be redrawn.
+ */
+
+Grid.prototype.isIdle = function () {
+	var self = this;
+
+	return self._isIdle;
 };
