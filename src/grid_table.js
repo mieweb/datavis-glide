@@ -1956,18 +1956,6 @@ GridTablePlain.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 		debug.info('GRID TABLE - PLAIN // DRAW', 'Limiting output to first ' + limitConfig.threshold + ' rows');
 	}
 
-	/*
-	 * Check to see if we should be rendering incrementally (add a few rows at a time).
-	 */
-
-	var useIncremental = false;
-	var incrementalConfig;
-
-	if (self.defn.table.incremental) {
-		useIncremental = true;
-		incrementalConfig = self.defn.table.incremental;
-	}
-
 	if (self.opts.generateCsv) {
 		self.addDataToCsv(data);
 	}
@@ -2158,7 +2146,8 @@ GridTablePlain.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 		return;
 	};
 
-	if (useIncremental) {
+	if (self.features.incremental) {
+		var incrementalConfig = self.defn.table.incremental;
 		if (incrementalConfig.method === 'setTimeout') {
 			var nextChunk = function (startIndex, howMany) {
 				window.setTimeout(function () {

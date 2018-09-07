@@ -312,6 +312,10 @@ GridError.prototype.constructor = GridError;
  *
  * @property {boolean} [nprogress=false] If true, use nprogress to show the progress of sort/filter
  * operations that the View is performing.
+ *
+ * @property {boolean} [incremental=false] If true, render rows in the table incrementally, which
+ * prevents UI freezes while doing so.  However, the overall time required to finish rendering the
+ * table goes way up.
  */
 
 // Constructor {{{2
@@ -728,7 +732,8 @@ Grid.prototype._validateFeatures = function () {
 		'limit',
 		'floatingHeader',
 		'block',
-		'progress'
+		'progress',
+		'incremental'
 	];
 
 	// When the user has specified the `footer` option, enable the footer feature (if it hasn't
