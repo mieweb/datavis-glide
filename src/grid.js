@@ -1583,7 +1583,7 @@ Grid.prototype.refresh = function () {
 		return;
 	}
 
-	self._isIdle = true;
+	self._isIdle = false;
 	self.view.clearSourceData();
 };
 
