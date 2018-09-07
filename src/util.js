@@ -3177,3 +3177,19 @@ function dataURItoBlob(dataURI) {
   return blob;
 
 }
+
+function makeColConfigFromTypeInfo(typeInfo) {
+	if (!(typeInfo instanceof OrdMap)) {
+		throw new Error('Call Error: `typeInfo` must be an OrdMap');
+	}
+
+	var colConfig = new OrdMap();
+
+	typeInfo.each(function (fti, fieldName) {
+		colConfig.set(fieldName, {
+			field: fieldName
+		});
+	});
+
+	return colConfig;
+}

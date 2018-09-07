@@ -45,6 +45,31 @@ OrdMap.fromArray = function (values, keyField) {
 	return o;
 };
 
+// .fromMerge {{{2
+
+/**
+ * Construct a new OrdMap by merging several OrdMaps together.
+ *
+ * @param {Array.<OrdMap>} maps
+ * The OrdMaps to merge.
+ */
+
+OrdMap.fromMerge = function (maps) {
+	var o = new OrdMap();
+
+	for (var i = 0; i < maps.length; i += 1) {
+		if (!(maps[i] instanceof OrdMap)) {
+			throw new Error('Call Error: `maps[' + i + ']` must be an OrdMap');
+		}
+		maps[i].each(function (v, k) {
+			if (!o.isSet(k)) {
+				o.set(k, v);
+			}
+		});
+	}
+
+	return o;
+};
 // .deserialize {{{2
 
 OrdMap.deserialize = function (x) {
@@ -329,5 +354,21 @@ OrdMap.prototype.replaceWith = function (o) {
 	self.clear();
 	o.each(function (v, k) {
 		self.set(k, v);
+	});
+};
+
+// #mergeWith {{{2
+
+OrdMap.prototype.mergeWith = function (o) {
+	var self = this;
+
+	if (!(o instanceof OrdMap)) {
+		throw new Error('Call Error: `o` must be an instance of OrdMap');
+	}
+
+	o.each(function (v, k) {
+		if (!self.isSet(k)) {
+			self.set(k, v);
+		}
 	});
 };

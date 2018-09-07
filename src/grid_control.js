@@ -482,10 +482,6 @@ var GridControl = makeSubclass(Object, function (grid, colConfig, view, features
 		throw new Error('Call Error: `grid` must be an instance of MIE.WC_DataVis.Grid');
 	}
 
-	if (!(colConfig instanceof OrdMap)) {
-		throw new Error('Call Error: `colConfig` must be an instance of MIE.OrdMap');
-	}
-
 	self.grid = grid;
 	self.colConfig = colConfig;
 	self.view = view;
@@ -496,6 +492,10 @@ var GridControl = makeSubclass(Object, function (grid, colConfig, view, features
 	self.controlFieldsByField = {};
 
 	self.ui = {};
+
+	self.grid.on('colConfigUpdate', function (colConfig) {
+		self.colConfig = colConfig;
+	});
 }, {
 	isHorizontal: false,
 	disableUsedItems: true,

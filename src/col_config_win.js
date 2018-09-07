@@ -1,20 +1,15 @@
 // ColConfigWin {{{1
 
-var ColConfigWin = makeSubclass(Object, function (colConfig) {
+var ColConfigWin = makeSubclass(Object, function (grid, colConfig) {
 	var self = this;
 
-	if (colConfig != null) {
-		self.setColConfig(colConfig);
-	}
-});
-
-// #setColConfig {{{2
-
-ColConfigWin.prototype.setColConfig = function (colConfig) {
-	var self = this;
-
+	self.grid = grid;
 	self.colConfig = colConfig;
-};
+
+	grid.on('colConfigUpdate', function (colConfig) {
+		self.colConfig = colConfig;
+	});
+});
 
 // #show {{{2
 

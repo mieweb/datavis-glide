@@ -376,6 +376,8 @@ var Grid = function (id, view, defn, tagOpts, cb) {
 	var doingServerFilter = getProp(defn, 'server', 'filter') && getProp(defn, 'server', 'limit') !== -1;
 	var viewDropdown = null;
 
+	self.view = view;
+
 	self.generateCsv = false;
 	self.csvReady = false;
 	self.exportLock = new Lock();
@@ -387,12 +389,6 @@ var Grid = function (id, view, defn, tagOpts, cb) {
 
 	defn = defn || {};
 	self._normalize(defn);
-
-	// HACK The *only* reason we need this is so that the aggregate functions which do formatting
-	// (e.g. group concat) know how to format non-string values like currency.  There's got to be a
-	// better way to do this.
-
-	view.setColConfig(self.colConfig);
 
 	debug.info('GRID', 'Definition: %O', defn);
 
@@ -413,7 +409,6 @@ var Grid = function (id, view, defn, tagOpts, cb) {
 	self.grid = null; // List of all grids generated as a result.
 	self.ui = {}; // User interface elements.
 	self.selected = {}; // Information about what rows are selected.
-	self.view = view;
 
 	self.view.addClient(self, 'grid');
 
@@ -438,7 +433,7 @@ var Grid = function (id, view, defn, tagOpts, cb) {
 		self.prefs = new Prefs(self.id);
 	}
 
-	self.colConfigWin = new ColConfigWin(self.colConfig);
+	self.colConfigWin = new ColConfigWin(self, self.colConfig);
 
 	/*
 	 * Set up other container elements.
@@ -700,11 +695,18 @@ Grid.prototype.constructor = Grid;
  * @event Grid#renderEnd
  */
 
+/**
+ * Fired when column configuration has changed.
+ *
+ * @event Grid#colConfigUpdate
+ */
+
 mixinEventHandling(Grid, 'Grid', [
 		'showControls'
 	, 'hideControls'
 	, 'renderBegin'
 	, 'renderEnd'
+	, 'colConfigUpdate'
 ]);
 
 // Delegate {{{2
@@ -1013,7 +1015,7 @@ Grid.prototype._addPlainButtons = function (toolbar) {
 		.append('Columns')
 		.on('click', function (evt) {
 			self.colConfigWin.show(self.ui.controls, function (colConfig) {
-				self.setColConfig(colConfig, 'colConfigWin');
+				self.setColConfig(colConfig);
 			});
 		})
 		.appendTo(toolbar)
@@ -1101,7 +1103,7 @@ Grid.prototype._addGroupButtons = function (toolbar) {
 		.append('Columns')
 		.on('click', function (evt) {
 			self.colConfigWin.show(self.ui.controls, function (colConfig) {
-				self.setColConfig(colConfig, 'colConfigWin');
+				self.setColConfig(colConfig);
 			});
 		})
 		.appendTo(toolbar)
@@ -1434,7 +1436,7 @@ Grid.prototype._addPrefsButtons = function (toolbar) {
 				_.each(options, function (elt) {
 					elt.remove();
 				});
-				options = [];
+				options = {};
 			});
 
 			self.prefs.on('prefsHistoryStatus', function (back, forward) {
@@ -1914,46 +1916,63 @@ Grid.prototype._normalize = function (defn) {
 Grid.prototype._normalizeColumns = function (defn) {
 	var self = this;
 
-	self.colConfig = new OrdMap();
+	// When the developer did not provider column configuration, take it from the View via typeInfo.
+	// Potentially the source could change what fields it contains (e.g. add/remove a field to/from a
+	// report) and this would all still work OK, we would stay up-to-date because every time the View
+	// got new typeInfo we would update our colConfig.
 
-	if (getProp(defn, 'table', 'columns')) {
-		for (var i = 0; i < defn.table.columns.length; i += 1) {
-			var cc = defn.table.columns[i];
-
-			if (_.isString(cc)) {
-				cc = { field: cc };
-			}
-
-			if (typeof cc.field !== 'string') {
-				log.warn('Column Configuration: `field` must be a string');
-				continue;
-			}
-
-			cc = deepDefaults(cc, {
-				hideMidnight: false,
-				format_dateOnly: 'LL',
-				allowHtml: false,
-				canHide: true
-			});
-
-			self.colConfig.set(cc.field, cc);
-		}
+	if (getProp(defn, 'table', 'columns') == null) {
+		self.initColConfig = new OrdMap();
+		self.view.on('getTypeInfo', function (typeInfo) {
+			var typeInfoColConfig = makeColConfigFromTypeInfo(typeInfo);
+			debug.info('GRID', 'Creating column config from typeInfo: %O -> %O', typeInfo, typeInfoColConfig);
+			self.setColConfig(self.colConfig == null
+				? typeInfoColConfig
+				: OrdMap.fromMerge([self.colConfig, typeInfoColConfig]));
+		});
+		return;
 	}
 
-	self.initColConfig = self.colConfig.clone();
+	var colConfig = new OrdMap();
 
-	_.each(getPropDef([], defn, 'table', 'columnConfig'), function (colConfig, colName) {
+	for (var i = 0; i < defn.table.columns.length; i += 1) {
+		var cc = defn.table.columns[i];
+
+		if (_.isString(cc)) {
+			cc = { field: cc };
+		}
+
+		if (typeof cc.field !== 'string') {
+			log.warn('Column Configuration: `field` must be a string');
+			continue;
+		}
+
+		cc = deepDefaults(cc, {
+			hideMidnight: false,
+			format_dateOnly: 'LL',
+			allowHtml: false,
+			canHide: true
+		});
+
+		colConfig.set(cc.field, cc);
+	}
+
+	self.initColConfig = colConfig.clone();
+
+	_.each(getPropDef([], defn, 'table', 'columnConfig'), function (cc, colName) {
 
 		// When you want to show a checkbox to represent the value, it only makes sense to have a
 		// checkbox for the filter widget.
 
-		if (colConfig.widget === 'checkbox') {
-			if (colConfig.filter !== undefined && colConfig.filter !== 'checkbox') {
-				log.warn('Overriding configuration to use filter type "' + colConfig.filter + '" for checkbox widgets.');
+		if (cc.widget === 'checkbox') {
+			if (cc.filter !== undefined && cc.filter !== 'checkbox') {
+				log.warn('Overriding configuration to use filter type "' + cc.filter + '" for checkbox widgets.');
 			}
-			colConfig.filter = 'checkbox';
+			cc.filter = 'checkbox';
 		}
 	});
+
+	self.setColConfig(colConfig);
 };
 
 // #export {{{2
@@ -2009,21 +2028,31 @@ Grid.prototype._setExportStatus = function (status) {
 
 // #setColConfig {{{2
 
-Grid.prototype.setColConfig = function (colConfig, caller) {
+Grid.prototype.setColConfig = function (colConfig, opts) {
 	var self = this;
 
-	debug.info('GRID', 'Setting column config (caller = "%s"): %O', caller, colConfig);
+	opts = deepDefaults(opts, {
+		sendEvent: true,
+		dontSendEventTo: [],
+		redraw: true,
+		savePrefs: true
+	});
+
+	debug.info('GRID', 'Setting column config: %O', colConfig);
 
 	self.colConfig = colConfig;
+	if (opts.savePrefs) {
+		self.prefs.save();
+	}
+	self.view.setColConfig(self.colConfig); // TODO Convert to event model.
 
-	if (caller !== 'colConfigWin') {
-		self.colConfigWin.setColConfig(self.colConfig);
+	if (opts.sendEvent) {
+		self.fire('colConfigUpdate', {
+			notTo: opts.dontSendEventTo
+		}, colConfig);
 	}
 
-	self.view.setColConfig(self.colConfig);
-
-	if (caller !== 'prefs') {
-		self.prefs.save();
+	if (opts.redraw) {
 		self.redraw();
 	}
 };
@@ -2038,10 +2067,13 @@ Grid.prototype.getColConfig = function (colConfig) {
 
 // #resetColConfig {{{2
 
-Grid.prototype.resetColConfig = function (caller) {
+Grid.prototype.resetColConfig = function (opts) {
 	var self = this;
 
-	self.setColConfig(self.initColConfig, caller);
+	opts = opts || {};
+	opts.savePrefs = false;
+
+	self.setColConfig(self.initColConfig, opts);
 };
 
 // #isIdle {{{2

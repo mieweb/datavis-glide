@@ -1807,7 +1807,7 @@ PrefsModuleGrid.prototype.load = function (config) {
 	}
 
 	if (config.colConfig != null) {
-		self.target.setColConfig(OrdMap.deserialize(config.colConfig), 'prefs');
+		self.target.setColConfig(OrdMap.deserialize(config.colConfig));
 	}
 };
 
@@ -1831,7 +1831,7 @@ PrefsModuleGrid.prototype.save = function () {
 PrefsModuleGrid.prototype.reset = function () {
 	var self = this;
 
-	self.target.resetColConfig('prefs');
+	self.target.resetColConfig();
 };
 
 // PrefsModuleGraph {{{1

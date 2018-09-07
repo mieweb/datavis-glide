@@ -212,7 +212,7 @@ var View = function (source, name, opts) {
 
 	self.source.on(Source.events.dataUpdated, function () {
 		self.clearCache();
-		self.fire(View.events.dataUpdated);
+		self.fire('dataUpdated');
 	});
 
 	self.name = name || source.getName() || gensym();
@@ -561,7 +561,7 @@ View.prototype.setSort = function (spec, opts) {
 	self.sortSpec = spec;
 
 	if (opts.sendEvent) {
-		self.fire(View.events.sortSet, {
+		self.fire('sortSet', {
 			notTo: opts.dontSendEventTo
 		}, spec);
 	}
@@ -758,7 +758,7 @@ View.prototype.sort = function (cont) {
 					// all of them) can just be shuffled around, and the table doesn't have to be recreated.
 
 					if (self.data.isPlain) {
-						self.fire(View.events.sort, {
+						self.fire('sort', {
 							silent: true
 						}, origData[s.oldIndex].rowNum, newIndex);
 					};
@@ -1231,7 +1231,7 @@ View.prototype.sort = function (cont) {
 
 
 
-	self.fire(View.events.sortBegin);
+	self.fire('sortBegin');
 	self.timing.start(timingEvt);
 
 	if (self.sortProgress
@@ -1247,7 +1247,7 @@ View.prototype.sort = function (cont) {
 			}
 
 			self.timing.stop(timingEvt);
-			self.fire(View.events.sortEnd);
+			self.fire('sortEnd');
 
 			return cont(didHorizontal || didVertical);
 		});
@@ -1328,7 +1328,7 @@ View.prototype.setFilter = function (spec, progress, opts) {
 	self.filterProgress = progress;
 
 	if (opts.sendEvent) {
-		self.fire(View.events.filterSet, {
+		self.fire('filterSet', {
 			notTo: opts.dontSendEventTo
 		}, spec);
 	}
@@ -1414,7 +1414,7 @@ View.prototype.filter = function (cont) {
 
 		if (fti === undefined) {
 			log.error('Filter field does not exist in the source: ' + filterField);
-			self.fire(View.events.invalidFilterField, null, filterField);
+			self.fire('invalidFilterField', null, filterField);
 			delete self.filterSpec[filterField];
 			return;
 		}
@@ -1550,7 +1550,7 @@ View.prototype.filter = function (cont) {
 
 		var passes = self.filterSpec == null ? true : eachUntilObj(self.filterSpec, passesFilter, false, row.rowData);
 
-		self.fire(View.events.filter, {
+		self.fire('filter', {
 			silent: true
 		}, row.rowNum, !passes);
 
@@ -1608,7 +1608,7 @@ View.prototype.filter = function (cont) {
 			}
 
 			// Fire the event for finishing the filter.
-			self.fire(View.events.filterEnd);
+			self.fire('filterEnd');
 
 			// Stop the timer for the filter.
 			self.timing.stop(timingEvt);
@@ -1628,7 +1628,7 @@ View.prototype.filter = function (cont) {
 	}
 
 	// Fire the event for starting the filter.
-	self.fire(View.events.filterBegin);
+	self.fire('filterBegin');
 
 	return doFilter();
 };
@@ -1707,7 +1707,7 @@ View.prototype.setGroup = function (spec, opts, cont) {
 	self.groupSpec = spec;
 
 	if (opts.sendEvent) {
-		self.fire(View.events.groupSet, {
+		self.fire('groupSet', {
 			notTo: opts.dontSendEventTo
 		}, spec);
 	}
@@ -1842,7 +1842,7 @@ View.prototype.group = function () {
 	_.each(self.groupSpec.fieldNames, function (field, fieldIdx) {
 		if (!self.typeInfo.isSet(field)) {
 			log.error('Group field does not exist in the source: ' + field);
-			self.fire(View.events.invalidGroupField, null, field);
+			self.fire('invalidGroupField', null, field);
 		}
 		else {
 			groupFields.push(field);
@@ -2118,7 +2118,7 @@ View.prototype.setPivot = function (spec, opts) {
 	self.pivotSpec = spec;
 
 	if (opts.sendEvent) {
-		self.fire(View.events.pivotSet, {
+		self.fire('pivotSet', {
 			notTo: opts.dontSendEventTo
 		}, spec);
 	}
@@ -2204,7 +2204,7 @@ View.prototype.pivot_orig = function () {
 	_.each(self.pivotSpec.fieldNames, function (field, fieldIdx) {
 		if (!self.typeInfo.isSet(field)) {
 			log.error('Pivot field does not exist in the source: ' + field);
-			self.fire(View.events.invalidPivotField, null, field);
+			self.fire('invalidPivotField', null, field);
 		}
 		else {
 			pivotFields.push(field);
@@ -2347,7 +2347,7 @@ View.prototype.pivot = function () {
 	_.each(self.pivotSpec.fieldNames, function (field, fieldIdx) {
 		if (!self.typeInfo.isSet(field)) {
 			log.error('Pivot field does not exist in the source: ' + field);
-			self.fire(View.events.invalidPivotField, null, field);
+			self.fire('invalidPivotField', null, field);
 		}
 		else {
 			pivotFields.push(field);
@@ -2584,7 +2584,7 @@ View.prototype.setAggregate = function (spec, opts) {
 	}
 
 	if (opts.sendEvent) {
-		self.fire(View.events.aggregateSet, {
+		self.fire('aggregateSet', {
 			notTo: opts.dontSendEventTo
 		}, spec, shouldGraph);
 	}
@@ -2664,7 +2664,7 @@ View.prototype.aggregate = function (cont) {
 
 					// Let the UI know there was a problem with this aggregate, so the user can fix it or
 					// remove the aggregate from the output entirely.
-					self.fire(View.events.invalidAggregate, null, aggNum, e.message);
+					self.fire('invalidAggregate', null, aggNum, e.message);
 				}
 				else {
 					throw e;
@@ -2785,11 +2785,11 @@ View.prototype.getData = function (cont) {
 
 	self.lock.lock();
 
-	self.fire(View.events.fetchDataBegin);
+	self.fire('fetchDataBegin');
 	return self.source.getData(function (data) {
 		return self.getTypeInfo(function (typeInfo) {
-			self.fire(View.events.fetchDataEnd);
-			self.fire(View.events.workBegin);
+			self.fire('fetchDataEnd');
+			self.fire('workBegin');
 
 			var ops = {
 				filter: false,
@@ -2850,7 +2850,7 @@ View.prototype.getData = function (cont) {
 						}
 
 						self.lastOps = ops;
-						self.fire(View.events.workEnd, null, workEndObj, ops);
+						self.fire('workEnd', null, workEndObj, ops);
 
 						self.lock.unlock();
 						debug.info('VIEW (' + self.name + ')', 'Got new data: %O', self.data);
@@ -2877,19 +2877,15 @@ View.prototype.getTypeInfo = function (cont) {
 		throw new Error('Call Error: `cont` must be a function');
 	}
 
-	// Retrieve type info from the source and cache it, then re-enter this function.
-
-	if (self.typeInfo === undefined) {
-		return self.source.getTypeInfo(function (typeInfo) {
-			self.typeInfo = typeInfo;
-			return self.getTypeInfo(cont);
-		});
+	if (self.typeInfo != null) {
+		return cont(self.typeInfo);
 	}
 
-	self.fire('getTypeInfo', null, self.typeInfo, self.colConfig);
-	//return self.init(function () {
+	return self.source.getTypeInfo(function (typeInfo) {
+		self.typeInfo = typeInfo;
+		self.fire('getTypeInfo', null, self.typeInfo);
 		return cont(self.typeInfo);
-	//});
+	});
 };
 
 // #clearCache {{{2
