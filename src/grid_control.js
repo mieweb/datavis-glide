@@ -756,28 +756,42 @@ GridControl.prototype.destroy = function () {
  * loading preferences, but also possibly by another grid connected to the same view).
  */
 
-GridControl.prototype.addViewConfigChangeHandler = function (kind) {
+GridControl.prototype.addViewConfigChangeHandler = function (event, sync) {
 	var self = this;
 
-	var synchronize = function (spec) {
-		var fields = (spec && spec.fieldNames) || [];
-
-		self.clear({ updateView: false });
-
-		debug.info('GRID // ' + kind.toUpperCase() + ' CONTROL',
-							 'View set ' + kind + ' fields to: ' + JSON.stringify(fields));
-
-		_.each(fields, function (field) {
-			self.addField(field, getProp(self.colConfig.get(field), 'displayText'), { updateView: false });
-		});
+	var clearDropdown = function () {
+		self.ui.dropdown.children().remove();
+		jQuery('<option>', {
+			'value': '',
+			'disabled': true,
+			'selected': true
+		})
+			.text('Select Field')
+			.appendTo(self.ui.dropdown);
 	};
 
-	self.view.on(View.events[kind + 'Set'], function (spec) {
-		synchronize(spec)
-	}, { who: self });
+	var sync_colConfig = function (colConfig) {
+		self.colConfig = colConfig;
+		if (self.disableUsedItems) {
+			clearDropdown();
+			colConfig.each(function (fcc) {
+				jQuery('<option>', { 'value': fcc.field }).text(fcc.displayText || fcc.field).appendTo(self.ui.dropdown);
+			});
+		}
+	};
 
-	var methodName = 'get' + kind.substr(0, 1).toUpperCase() + kind.substr(1);
-	//synchronize(self.view[methodName]());
+	// This setup of event handlers forces us to receive one `colConfigUpdate` event before we allow
+	// any `*Set` events to come through.  This is important because the `*Set` events will cause us
+	// to disable elements in the dropdown, so we need to have populated it first.
+
+	self.grid.on('colConfigUpdate', function (colConfig) {
+		sync_colConfig(colConfig);
+		self.grid.on('colConfigUpdate', sync_colConfig);
+		self.view.on('getTypeInfo', function () {
+			sync();
+			self.view.on(event, sync, { who: self });
+		}, { limit: 1 });
+	}, { limit: 1 });
 };
 
 // #getListElement {{{2
@@ -894,18 +908,16 @@ GroupControl.prototype.draw = function (parent) {
 		self.addField(self.ui.dropdown.val(), self.ui.dropdown.find('option:selected').text());
 	});
 
-	jQuery('<option>', { 'value': '', 'disabled': true, 'selected': true })
-		.text('Select Field')
-		.appendTo(self.ui.dropdown);
-
-	self.view.on('getTypeInfo', function (typeInfo) {
-		_.each(determineColumns(self.colConfig, null, typeInfo), function (fieldName) {
-			var text = getProp(self.colConfig.get(fieldName), 'displayText') || fieldName;
-			jQuery('<option>', { 'value': fieldName }).text(text).appendTo(self.ui.dropdown);
+	self.addViewConfigChangeHandler('groupSet', function () {
+		var spec = self.view.getGroup();
+		var fields = (spec && spec.fieldNames) || [];
+		self.clear({ updateView: false });
+		debug.info('GRID // GROUP CONTROL',
+			'View set group fields to: ' + JSON.stringify(fields));
+		_.each(fields, function (field) {
+			self.addField(field, getProp(self.colConfig.get(field), 'displayText'), { updateView: false });
 		});
-	}, { limit: 1 });
-
-	self.addViewConfigChangeHandler('group');
+	});
 
 	return self.ui.root;
 };
@@ -1018,18 +1030,16 @@ PivotControl.prototype.draw = function (parent) {
 		self.addField(self.ui.dropdown.val(), self.ui.dropdown.find('option:selected').text());
 	});
 
-	jQuery('<option>', { 'value': '', 'disabled': true, 'selected': true })
-		.text('Select Field')
-		.appendTo(self.ui.dropdown);
-
-	self.view.on('getTypeInfo', function (typeInfo) {
-		_.each(determineColumns(self.colConfig, null, typeInfo), function (fieldName) {
-			var text = getProp(self.colConfig.get(fieldName), 'displayText') || fieldName;
-			jQuery('<option>', { 'value': fieldName }).text(text).appendTo(self.ui.dropdown);
+	self.addViewConfigChangeHandler('pivotSet', function (spec) {
+		var spec = self.view.getPivot();
+		var fields = (spec && spec.fieldNames) || [];
+		self.clear({ updateView: false });
+		debug.info('GRID // PIVOT CONTROL',
+			'View set pivot fields to: ' + JSON.stringify(fields));
+		_.each(fields, function (field) {
+			self.addField(field, getProp(self.colConfig.get(field), 'displayText'), { updateView: false });
 		});
-	}, { limit: 1 });
-
-	self.addViewConfigChangeHandler('pivot');
+	});
 
 	return self.ui.root;
 };
@@ -1184,7 +1194,21 @@ AggregateControl.prototype.draw = function (parent) {
 	}, { who: self });
 	*/
 
-	self.addViewConfigChangeHandler();
+	self.addViewConfigChangeHandler('aggregateSet', function () {
+		var spec = self.view.getAggregate();
+		self.clear({ updateView: false });
+		if (spec != null) {
+			debug.info('GRID // AGGREGATE CONTROL',
+				'View set aggregate to: ' + JSON.stringify(spec.all));
+
+			_.each(spec.all, function (agg) {
+				self.addField(agg.fun, AGGREGATE_REGISTRY.get(agg.fun).prototype.name, { updateView: false }, {
+					fields: agg.fields,
+					isHidden: agg.isHidden
+				});
+			});
+		}
+	});
 	return self.ui.root;
 };
 
@@ -1313,31 +1337,6 @@ AggregateControl.prototype.updateFieldDropdowns = function () {
 	});
 };
 
-// #addViewConfigChangeHandler {{{2
-
-AggregateControl.prototype.addViewConfigChangeHandler = function () {
-	var self = this;
-
-	var synchronize = function (spec) {
-		self.clear({ updateView: false });
-		if (spec != null) {
-			debug.info('GRID // AGGREGATE CONTROL',
-				'View set aggregate to: ' + JSON.stringify(spec.all));
-
-			_.each(spec.all, function (agg) {
-				self.addField(agg.fun, AGGREGATE_REGISTRY.get(agg.fun).prototype.name, { updateView: false }, {
-					fields: agg.fields,
-					isHidden: agg.isHidden
-				});
-			});
-		}
-	};
-
-	self.view.on(View.events.aggregateSet, function (spec) {
-		synchronize(spec)
-	}, { who: self });
-};
-
 // #addField {{{2
 
 AggregateControl.prototype.addField = function () {
@@ -1431,18 +1430,15 @@ FilterControl.prototype.draw = function (parent) {
 		self.addField(self.ui.dropdown.val(), self.ui.dropdown.find('option:selected').text());
 	});
 
-	jQuery('<option>', { 'value': '', 'disabled': true, 'selected': true })
-		.text('Select Field')
-		.appendTo(self.ui.dropdown);
-
-	self.view.on('getTypeInfo', function (typeInfo) {
-		_.each(determineColumns(self.colConfig, null, typeInfo), function (fieldName) {
-			var text = getProp(self.colConfig.get(fieldName), 'displayText') || fieldName;
-			jQuery('<option>', { 'value': fieldName }).text(text).appendTo(self.ui.dropdown);
+	self.addViewConfigChangeHandler('filterSet', function () {
+		var spec = self.view.getFilter();
+		debug.info('GRID // FILTER CONTROL', 'View set filter to: %O', spec);
+		self.clear({ updateView: false });
+		_.each(spec, function (fieldSpec, field) {
+			self.addField(field, getProp(self.colConfig.get(field), 'displayText'), { updateView: false });
+			self.gfs.set(field, fieldSpec);
 		});
-	}, { limit: 1 });
-
-	self.addViewConfigChangeHandler();
+	});
 
 	return self.ui.root;
 };
@@ -1476,28 +1472,6 @@ FilterControl.prototype.clear = function (opts) {
 // #updateView {{{2
 
 FilterControl.prototype.updateView = function () {
-};
-
-// #addViewConfigChangeHandler {{{2
-
-FilterControl.prototype.addViewConfigChangeHandler = function () {
-	var self = this;
-
-	var synchronize = function (spec) {
-		debug.info('GRID // FILTER CONTROL', 'View set filter to: %O', spec);
-
-		self.clear({ updateView: false });
-		_.each(spec, function (fieldSpec, field) {
-			self.addField(field, getProp(self.colConfig.get(field), 'displayText'), { updateView: false });
-			self.gfs.set(field, fieldSpec);
-		});
-	};
-
-	self.view.on('getTypeInfo', function () {
-		self.view.on(View.events.filterSet, function (spec) {
-			synchronize(spec)
-		}, { who: self });
-	}, { limit: 1 });
-
-	//synchronize(self.view.getFilter());
+	// NOTE This function intentionally does nothing!
+	//      It overrides the behavior of the superclass' method.
 };
