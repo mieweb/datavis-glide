@@ -1016,7 +1016,9 @@ Grid.prototype._addPlainButtons = function (toolbar) {
 		.append('Columns')
 		.on('click', function (evt) {
 			self.colConfigWin.show(self.ui.controls, function (colConfig) {
-				self.setColConfig(colConfig);
+				self.setColConfig(colConfig, {
+					from: 'colConfigWin'
+				});
 			});
 		})
 		.appendTo(toolbar)
@@ -1934,7 +1936,7 @@ Grid.prototype._normalizeColumns = function (defn) {
 	// got new typeInfo we would update our colConfig.
 
 	if (getProp(defn, 'table', 'columns') == null) {
-		self.initColConfig = new OrdMap();
+		self.initColConfig = null;
 		self.colConfig = null;
 		self.view.on('getTypeInfo', function (typeInfo) {
 			if (!self.colConfigLock.isLocked()) {
@@ -2041,6 +2043,7 @@ Grid.prototype._setExportStatus = function (status) {
 
 Grid.prototype.setColConfig = function (colConfig, opts) {
 	var self = this;
+	var updated = false;
 
 	opts = deepDefaults(opts, {
 		sendEvent: true,
@@ -2049,9 +2052,29 @@ Grid.prototype.setColConfig = function (colConfig, opts) {
 		savePrefs: true
 	});
 
-	debug.info('GRID // COLCONFIG', 'Setting to: %O', colConfig);
+	switch (opts.from) {
+	case 'typeInfo':
+		if (self.colConfig == null) {
+			debug.info('GRID // COLCONFIG', 'Setting from typeInfo: %O', colConfig);
+			self.colConfig = colConfig;
+			updated = true;
+		}
+		if (self.initColConfig == null) {
+			debug.info('GRID // COLCONFIG', 'Setting initial from typeInfo: %O', colConfig);
+			self.initColConfig = colConfig.clone();
+		}
+		break;
+	default:
+		debug.info('GRID // COLCONFIG', 'Setting from %s: %O', opts.from || '[unknown]', colConfig);
+		self.colConfig = colConfig;
+		updated = true;
+		break;
+	}
 
-	self.colConfig = colConfig;
+	if (!updated) {
+		return;
+	}
+
 	if (opts.savePrefs) {
 		self.prefs.save();
 	}
@@ -2083,8 +2106,10 @@ Grid.prototype.resetColConfig = function (opts) {
 
 	debug.info('GRID // COLCONFIG', 'Resetting to: %O', self.initColConfig);
 
-	opts = opts || {};
-	opts.savePrefs = false;
+	opts = deepDefaults(opts, {
+		from: 'reset',
+		savePrefs: false
+	});
 
 	self.setColConfig(self.initColConfig, opts);
 };
@@ -2117,6 +2142,10 @@ Grid.prototype.isIdle = function () {
 Grid.prototype.colConfigFromTypeInfo = function (typeInfo, opts) {
 	var self = this;
 
+	opts = deepDefaults(opts, {
+		from: 'typeInfo'
+	});
+
 	if (!(typeInfo instanceof OrdMap)) {
 		throw new Error('Call Error: `typeInfo` must be an OrdMap');
 	}
@@ -2131,7 +2160,8 @@ Grid.prototype.colConfigFromTypeInfo = function (typeInfo, opts) {
 
 	debug.info('GRID', 'Creating colConfig from typeInfo: %O -> %O', typeInfo.asMap(), typeInfoColConfig.asMap());
 
-	self.setColConfig(self.colConfig == null
-		? typeInfoColConfig
-		: OrdMap.fromMerge([self.colConfig, typeInfoColConfig]), opts);
+	//self.setColConfig(self.colConfig == null
+	//	? typeInfoColConfig
+	//	: OrdMap.fromMerge([self.colConfig, typeInfoColConfig]), opts);
+	self.setColConfig(typeInfoColConfig, opts);
 };

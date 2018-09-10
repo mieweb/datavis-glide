@@ -1812,6 +1812,7 @@ PrefsModuleGrid.prototype.load = function (config) {
 
 	if (config.colConfig != null) {
 		self.target.setColConfig(OrdMap.deserialize(config.colConfig), {
+			from: 'prefs',
 			redraw: false,
 			savePrefs: false
 		});
