@@ -2049,7 +2049,7 @@ Grid.prototype.setColConfig = function (colConfig, opts) {
 		savePrefs: true
 	});
 
-	debug.info('GRID', 'Setting colConfig: %O', colConfig);
+	debug.info('GRID // COLCONFIG', 'Setting to: %O', colConfig);
 
 	self.colConfig = colConfig;
 	if (opts.savePrefs) {
@@ -2080,6 +2080,8 @@ Grid.prototype.getColConfig = function (colConfig) {
 
 Grid.prototype.resetColConfig = function (opts) {
 	var self = this;
+
+	debug.info('GRID // COLCONFIG', 'Resetting to: %O', colConfig);
 
 	opts = opts || {};
 	opts.savePrefs = false;

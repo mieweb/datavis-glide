@@ -35,6 +35,7 @@ var GridRenderer = (function () {
 		self.features = deepCopy(features);
 		self.opts = opts;
 		self.timing = timing;
+		self.colConfig = colConfig;
 		self.hasRendered = false;
 
 		self._validateFeatures();
