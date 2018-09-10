@@ -1983,7 +1983,7 @@ Grid.prototype._normalizeColumns = function (defn) {
 		}
 	});
 
-	self.setColConfig(colConfig);
+	self.setColConfig(colConfig, { savePrefs: false });
 };
 
 // #export {{{2
