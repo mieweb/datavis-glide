@@ -85,7 +85,7 @@ GridRenderer.prototype.draw = function (root, opts, cont) {
 
 	if (self.drawLock.isLocked()) {
 		return self.drawLock.onUnlock(function () {
-			self.draw.apply(self, args);
+			GridRenderer.prototype.draw.apply(self, args);
 		});
 	}
 

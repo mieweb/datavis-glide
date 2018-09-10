@@ -930,7 +930,7 @@ GridTable.prototype._getAggInfo = function (data) {
 
 // #draw {{{2
 
-GridTable.prototype.draw = function (root, tableDoneCont, opts) {
+GridTable.prototype.draw = function (root, opts, cont) {
 	var self = this;
 
 	return self.super.draw(root, opts, function (data, typeInfo) {
@@ -1136,8 +1136,8 @@ GridTable.prototype.draw = function (root, tableDoneCont, opts) {
 		self.fire('renderEnd');
 		self.drawLock.unlock();
 
-		if (typeof tableDoneCont === 'function') {
-			return tableDoneCont();
+		if (typeof cont === 'function') {
+			return cont();
 		}
 	});
 };

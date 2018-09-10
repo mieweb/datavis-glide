@@ -1565,7 +1565,7 @@ Grid.prototype.redraw = function () {
 				self.ui.limit_div.hide();
 			});
 		}
-		self.renderer.draw(self.ui.grid, function () {
+		self.renderer.draw(self.ui.grid, null, function () {
 			self.ui.exportBtn.attr('disabled', false);
 			self.tableDoneCont();
 		});
