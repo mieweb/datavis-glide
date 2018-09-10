@@ -285,7 +285,8 @@ Prefs.prototype.init = function () {
  */
 
 Prefs.prototype.prime = function (cont) {
-	var self = this;
+	var self = this
+		, args = Array.prototype.slice.call(arguments);
 
 	if (cont != null && typeof cont !== 'function') {
 		throw new Error('Call Error: `cont` must be null or a function');
@@ -297,7 +298,7 @@ Prefs.prototype.prime = function (cont) {
 
 	if (self.primeLock.isLocked()) {
 		return self.primeLock.onUnlock(function () {
-			self.prime.apply(self, arguments);
+			self.prime.apply(self, args);
 		});
 	}
 
@@ -1204,7 +1205,8 @@ PrefsBackend.prototype.reset = function (cont) {
  */
 
 var PrefsBackendLocalStorage = makeSubclass(PrefsBackend, function () {
-	var self = this;
+	var self = this
+		, args = Array.prototype.slice.call(arguments);
 
 	try {
 		var storage = window.localStorage;
@@ -1214,7 +1216,7 @@ var PrefsBackendLocalStorage = makeSubclass(PrefsBackend, function () {
 		throw e;
 	}
 
-	self.super.ctor.apply(self, arguments);
+	self.super.ctor.apply(self, args);
 
 	self.opts = deepDefaults(self.opts, {
 		key: 'WC_DataVis_Prefs'
@@ -1470,8 +1472,10 @@ PrefsBackendLocalStorage.prototype.reset = function (cont) {
  */
 
 var PrefsBackendTemporary = makeSubclass(PrefsBackend, function () {
-	var self = this;
-	self.super.ctor.apply(self, arguments);
+	var self = this
+		, args = Array.prototype.slice.call(arguments);
+
+	self.super.ctor.apply(self, args);
 	self.storage = {
 		perspectives: {}
 	};
