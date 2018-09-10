@@ -2081,7 +2081,7 @@ Grid.prototype.getColConfig = function (colConfig) {
 Grid.prototype.resetColConfig = function (opts) {
 	var self = this;
 
-	debug.info('GRID // COLCONFIG', 'Resetting to: %O', colConfig);
+	debug.info('GRID // COLCONFIG', 'Resetting to: %O', self.initColConfig);
 
 	opts = opts || {};
 	opts.savePrefs = false;

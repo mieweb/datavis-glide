@@ -780,18 +780,28 @@ GridControl.prototype.addViewConfigChangeHandler = function (event, sync) {
 		}
 	};
 
-	// This setup of event handlers forces us to receive one `colConfigUpdate` event before we allow
-	// any `*Set` events to come through.  This is important because the `*Set` events will cause us
-	// to disable elements in the dropdown, so we need to have populated it first.
-
-	self.grid.on('colConfigUpdate', function (colConfig) {
-		sync_colConfig(colConfig);
+	if (self.grid.colConfig != null) {
+		sync_colConfig(self.grid.colConfig);
 		self.grid.on('colConfigUpdate', sync_colConfig);
 		self.view.on('getTypeInfo', function () {
 			sync();
 			self.view.on(event, sync, { who: self });
 		}, { limit: 1 });
-	}, { limit: 1 });
+	}
+	else {
+		// This setup of event handlers forces us to receive one `colConfigUpdate` event before we allow
+		// any `*Set` events to come through.  This is important because the `*Set` events will cause us
+		// to disable elements in the dropdown, so we need to have populated it first.
+
+		self.grid.on('colConfigUpdate', function (colConfig) {
+			sync_colConfig(colConfig);
+			self.grid.on('colConfigUpdate', sync_colConfig);
+			self.view.on('getTypeInfo', function () {
+				sync();
+				self.view.on(event, sync, { who: self });
+			}, { limit: 1 });
+		}, { limit: 1 });
+	}
 };
 
 // #getListElement {{{2
