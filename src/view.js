@@ -2883,7 +2883,7 @@ View.prototype.getTypeInfo = function (cont) {
 
 	return self.source.getTypeInfo(function (typeInfo) {
 		self.typeInfo = typeInfo;
-		self.fire('getTypeInfo', null, self.typeInfo);
+		self.fire('getTypeInfo', null, self.typeInfo, self.colConfig);
 		return cont(self.typeInfo);
 	});
 };
