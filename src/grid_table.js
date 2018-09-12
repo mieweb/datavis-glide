@@ -2150,7 +2150,7 @@ GridTablePlain.prototype.drawFooter = function (columns, data, typeInfo) {
 		tr.append(jQuery('<td>').append(self.ui.checkAll_tfoot));
 	}
 
-	if (self.opts.footer) {
+	if (self.opts.footer != null && self.opts.stealGridFooter) {
 		tr.append(jQuery('<td>', {'colspan': columns.length}).append(self.opts.footer));
 	}
 	else {
