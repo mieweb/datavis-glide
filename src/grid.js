@@ -722,7 +722,7 @@ mixinEventHandling(Grid, 'Grid', [
 
 // Delegate {{{2
 
-delegate(Grid, 'gridTable', ['setSelection', 'getSelection', 'select', 'unselect', 'isSelected']);
+delegate(Grid, 'renderer', ['setSelection', 'getSelection', 'select', 'unselect', 'isSelected']);
 
 // #_validateFeatures {{{2
 
