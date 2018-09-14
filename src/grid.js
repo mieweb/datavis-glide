@@ -808,11 +808,18 @@ Grid.prototype._validateId = function (id) {
 Grid.prototype._addTitleWidgets = function (titlebar, doingServerFilter, runImmediately, id) {
 	var self = this;
 
-	self.ui.spinner = jQuery('<strong>').css({'font-weight': 'normal', 'margin-right': '0.5em'}).appendTo(titlebar);
+	self.ui.spinner = jQuery('<span>', {
+		'style': 'font-size: 18px',
+		'class': 'wcdv_icon_button wcdv_spinner'
+	})
+		.appendTo(titlebar)
+	;
+
 	self._setSpinner(self.tagOpts.runImmediately ? 'loading' : 'not-loaded');
 
-	jQuery('<strong>', {'id': id + '_title', 'data-parent': id})
-		.text(self.tagOpts.title + ',')
+	self.ui.title = jQuery('<strong>', {'id': id + '_title', 'data-parent': id})
+		.addClass('wcdv_title')
+		.text(self.tagOpts.title)
 		.appendTo(titlebar);
 
 	var notHeader = jQuery('<span>', {'class': 'headingInfo'})
@@ -1675,6 +1682,10 @@ Grid.prototype._updateRowCount = function (info, ops) {
 		else {
 			self.ui.clearFilter.hide();
 		}
+	}
+
+	if (self.ui.title.text().slice(-1) !== ','){
+		self.ui.title.append(',');
 	}
 };
 

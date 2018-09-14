@@ -230,15 +230,6 @@ Graph.prototype._makeUserInterface = function () {
 		self.ui.toolbar.hide();
 	}
 
-	// The "aggregates" toolbar section lets the user control what is drawn based on the aggregate
-	// functions calculated by the view.
-
-	self.ui.toolbar_aggregates = jQuery('<div>')
-		.addClass('wcdv_toolbar_section pull-right')
-		.hide()
-		.appendTo(self.ui.toolbar);
-	self._addAggregateButtons(self.ui.toolbar_aggregates);
-
 	// The "pivot" toolbar section lets the user decide if colvals should show up stacked or as
 	// separate bars (for bar & column charts).
 
@@ -247,6 +238,15 @@ Graph.prototype._makeUserInterface = function () {
 		.hide()
 		.appendTo(self.ui.toolbar);
 	self._addPivotButtons(self.ui.toolbar_pivot);
+
+	// The "aggregates" toolbar section lets the user control what is drawn based on the aggregate
+	// functions calculated by the view.
+
+	self.ui.toolbar_aggregates = jQuery('<div>')
+		.addClass('wcdv_toolbar_section pull-right')
+		.hide()
+		.appendTo(self.ui.toolbar);
+	self._addAggregateButtons(self.ui.toolbar_aggregates);
 
 	self.ui.graph = jQuery('<div>', { 'id': self.id, 'class': 'wcdv_graph_render' });
 
@@ -271,11 +271,17 @@ Graph.prototype._makeUserInterface = function () {
 Graph.prototype._addTitleWidgets = function (titlebar) {
 	var self = this;
 
-	self.ui.spinner = jQuery('<strong>').css({'font-weight': 'normal', 'margin-right': '0.5em'}).appendTo(titlebar);
+	self.ui.spinner = jQuery('<span>', {
+		'style': 'font-size: 18px',
+		'class': 'wcdv_icon_button wcdv_spinner'
+	})
+		.appendTo(titlebar)
+	;
+
 	self._setSpinner(self.opts.runImmediately ? 'loading' : 'not-loaded');
 
 	jQuery('<strong>')
-		.text(self.opts.title + ',')
+		.text(self.opts.title)
 		.appendTo(titlebar);
 
 	// The "notHeader" is the extension point for adding information into the titlebar.  It's really
@@ -297,46 +303,68 @@ Graph.prototype._addTitleWidgets = function (titlebar) {
 		
 	// Create the Export button
 		
-	self.ui.exportBtn = jQuery(fontAwesome('f019'))
-		.addClass('wcdv_text-primary')
-		.attr('title', 'Export')
-		.on('click', function () {
+	self.ui.exportBtn = jQuery('<button>', {
+		'type': 'button',
+		'style': 'font-size: 18px',
+		'class': 'wcdv_icon_button wcdv_text-primary'
+	})
+		.on('click', function (evt) {
+			evt.stopPropagation();
 			self.export();
 		})
-		.appendTo(self.ui.titlebar_controls);
+		.append(fontAwesome('f019'))
+		.appendTo(self.ui.titlebar_controls)
+	;
 	
 	// Create the Refresh button
 	
-	self.ui.refreshBtn = jQuery(fontAwesome('f021'))
-		.addClass('wcdv_text-primary')
+	self.ui.refreshBtn = jQuery('<button>', {
+		'type': 'button',
+		'style': 'font-size: 18px',
+		'class': 'wcdv_icon_button wcdv_text-primary'
+	})
 		.attr('title', 'Refresh')
-		.on('click', function () {
+		.on('click', function (evt) {
+			evt.stopPropagation();
 			self.refresh();
 		})
-		.appendTo(self.ui.titlebar_controls);
-		
+		.append(fontAwesome('f021'))
+		.appendTo(self.ui.titlebar_controls)
+	;
+
 	// This is the "gear" icon that shows/hides the controls below the toolbar.  The controls are used
 	// to set the group, pivot, aggregate, and filters.  Ideally the user only has to utilize these
 	// once, and then switches between perspectives to get the same effect.
 
-	jQuery(fontAwesome('f013'))
-		.addClass('wcdv_button wcdv_text-primary')
+	jQuery('<button>', {
+		'type': 'button',
+		'style': 'font-size: 18px',
+		'class': 'wcdv_icon_button wcdv_text-primary'
+	})
 		.attr('title', MIE.trans('SHOWHIDEOPTS'))
 		.click(function (evt) {
+			evt.stopPropagation();
 			self.toggleControls();
 		})
-		.appendTo(self.ui.titlebar_controls);
+		.append(jQuery(fontAwesome('fa-cog')))
+		.appendTo(self.ui.titlebar_controls)
+	;
 		
 	// Create the down-chevron button that shows/hides everything under the titlebar.
 
-	self.ui.showHideButton = jQuery(fontAwesome('f078'))
-		.addClass('showhide wcdv_text-primary')
+	self.ui.showHideButton = jQuery('<button>', {
+		'type': 'button',
+		'style': 'font-size: 18px',
+		'class': 'wcdv_icon_button wcdv_text-primary showhide'
+	})
 		.attr('title', MIE.trans('SHOWHIDE'))
 		.click(function (evt) {
 			evt.stopPropagation();
 			self.toggle();
 		})
-		.appendTo(self.ui.titlebar_controls);
+		.append(jQuery(fontAwesome('f078')))
+		.appendTo(self.ui.titlebar_controls)
+	;
 };
 
 // #_addAggregateButtons {{{2

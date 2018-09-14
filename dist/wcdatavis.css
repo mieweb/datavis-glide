@@ -5,7 +5,8 @@
 	vertical-align: middle;
 }
 
-button.wcdv_icon_button {
+button.wcdv_icon_button,
+.wcdv_spinner {
 	border: none;
 	background-color: inherit;
 	padding: 0;
@@ -23,7 +24,8 @@ button.wcdv_icon_button span.fa {
 }
 
 .wcdv_grid button > span.fa,
-.wcdv_graph button > span.fa {
+.wcdv_graph button > span.fa,
+.wcdv_spinner > span.fa {
 	margin-right: 0.25em;
 }
 
@@ -78,6 +80,10 @@ li.wcdv_aggregate_field {
 	cursor: default;
 	font-size: 0.9em;
 	line-height: 30px;
+}
+
+.wcdv_grid_titlebar .wcdv_spinner{
+	color: #737373
 }
 
 .wcdv_grid_titlebar .link {
@@ -684,6 +690,7 @@ tr.wcdvgrid_more td {
 .wcdv_heading_container .wcdv_heading_title{
 	flex-grow: 1;
 	margin-right: 25px;
+	line-height: 20px;
 }
 
 .wcdv_heading_container div{
@@ -703,14 +710,12 @@ tr.wcdvgrid_more td {
 }
 
 .wcdv_graph_message {
-    font-size: 36pt;
+    font-size: 30px;
     font-weight: bold;
-    letter-spacing: 0.1em;
     color: #C0C0C0;
     text-align: center;
     position: relative;
-    top: 50%;
-    transform: translateY(-50%);
+	padding: 10px 0;
 }
 
 /*
@@ -753,7 +758,7 @@ tr.wcdvgrid_more td {
 * Font Awesome Tweaks
 */
 
-.wcdv_grid .fa{
+.wcdv_grid .fa, .wcdv_graph .fa{
 	font-size: 18px;
 }
 
@@ -818,8 +823,12 @@ tr.wcdvgrid_more td {
 	color: #0095D6;
 }
 
-.SumoSelect .select-all.partial>span i, .SumoSelect .select-all.selected>span i, .SumoSelect>.optWrapper.multiple>.options li.opt.selected span i{
+.SumoSelect .select-all.selected>span i, .SumoSelect>.optWrapper.multiple>.options li.opt.selected span i{
 	background-color: #0095D6;
+}
+
+.SumoSelect .select-all.partial>span i{
+	background-color: #c7c7c77a;
 }
 
 /*
