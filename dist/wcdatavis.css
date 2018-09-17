@@ -5,6 +5,10 @@
 	vertical-align: middle;
 }
 
+button.wcdv_icon_button {
+	cursor: pointer;
+}
+
 button.wcdv_icon_button,
 .wcdv_spinner {
 	border: none;
