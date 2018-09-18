@@ -651,6 +651,10 @@ var Grid = function (id, view, defn, tagOpts, cb) {
 		self.redraw();
 	});
 
+	self.view.on('getTypeInfo', function (typeInfo) {
+		self.colConfigFromTypeInfo(typeInfo);
+	});
+
 	if (self.tagOpts.runImmediately) {
 		self.show();
 	}
@@ -1613,13 +1617,6 @@ Grid.prototype.redraw = function () {
 
 	self.prefs.prime(function () {
 		self.view.prime(function () {
-			if (self.colConfig == null) {
-				self.colConfigLock.lock();
-				self.view.getTypeInfo(function (typeInfo) {
-					self.colConfigFromTypeInfo(typeInfo, { redraw: false });
-					self.colConfigLock.unlock();
-				});
-			}
 			debug.info('GRID', 'Redrawing...');
 			makeGridTable();
 		});
@@ -1980,11 +1977,6 @@ Grid.prototype._normalizeColumns = function (defn) {
 	if (getProp(defn, 'table', 'columns') == null) {
 		self.initColConfig = null;
 		self.colConfig = null;
-		self.view.on('getTypeInfo', function (typeInfo) {
-			if (!self.colConfigLock.isLocked()) {
-				self.colConfigFromTypeInfo(typeInfo);
-			}
-		});
 		return;
 	}
 
