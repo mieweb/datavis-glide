@@ -893,6 +893,10 @@ View.prototype.sort = function (cont) {
 		spec = deepCopy(spec);
 
 		if (self.data.isPlain) {
+			if (orientation === 'horizontal') {
+				log.error('Unable to sort: cannot perform horizontal sort on plain data');
+				return next(false);
+			}
 			if (spec.field) {
 				if (spec.values) {
 					sortAlgorithm = 'pigeonHole';
@@ -910,6 +914,10 @@ View.prototype.sort = function (cont) {
 			}
 		}
 		else if (self.data.isGroup) {
+			if (orientation === 'horizontal') {
+				log.error('Unable to sort: cannot perform horizontal sort on grouped data');
+				return next(false);
+			}
 			if (spec.field != null) {
 				var gfi = self.data.groupFields.indexOf(spec.field);
 
