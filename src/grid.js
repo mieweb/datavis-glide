@@ -2199,3 +2199,12 @@ Grid.prototype.colConfigFromTypeInfo = function (typeInfo, opts) {
 	//	: OrdMap.fromMerge([self.colConfig, typeInfoColConfig]), opts);
 	self.setColConfig(typeInfoColConfig, opts);
 };
+
+// #toString {{{2
+
+Grid.prototype.toString = function () {
+	var self = this;
+
+	return '#<Grid ' + self.id + '>';
+};
+

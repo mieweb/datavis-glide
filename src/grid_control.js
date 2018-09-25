@@ -755,6 +755,12 @@ GridControl.prototype.destroy = function () {
 /**
  * Registers an event handler on the view to update the UI when the view is changed (typically by
  * loading preferences, but also possibly by another grid connected to the same view).
+ *
+ * @param {string} event
+ * Name of the event to register on in the view.
+ *
+ * @param {function} sync
+ * Event handler for the specified event.
  */
 
 GridControl.prototype.addViewConfigChangeHandler = function (event, sync) {
@@ -772,6 +778,7 @@ GridControl.prototype.addViewConfigChangeHandler = function (event, sync) {
 	};
 
 	var sync_colConfig = function (colConfig) {
+		debug.info('GRID (' + self.grid.id + ') // ' + self.controlType.toUpperCase() + ' CONTROL', 'Synchronizing column configuration with grid');
 		self.colConfig = colConfig;
 		if (self.disableUsedItems) {
 			clearDropdown();
@@ -781,13 +788,24 @@ GridControl.prototype.addViewConfigChangeHandler = function (event, sync) {
 		}
 	};
 
+	var sync_view = function () {
+		debug.info('GRID (' + self.grid.id + ') // ' + self.controlType.toUpperCase() + ' CONTROL', 'Synchronizing user interface with view');
+		sync();
+	};
+
 	if (self.grid.colConfig != null) {
 		sync_colConfig(self.grid.colConfig);
 		self.grid.on('colConfigUpdate', sync_colConfig);
-		self.view.on('getTypeInfo', function () {
-			sync();
-			self.view.on(event, sync, { who: self });
-		}, { limit: 1 });
+		if (self.view.typeInfo != null) {
+			sync_view();
+			self.view.on(event, sync_view, { who: self });
+		}
+		else {
+			self.view.on('getTypeInfo', function () {
+				sync_view();
+				self.view.on(event, sync_view, { who: self });
+			}, { limit: 1 });
+		}
 	}
 	else {
 		// This setup of event handlers forces us to receive one `colConfigUpdate` event before we allow
@@ -797,10 +815,16 @@ GridControl.prototype.addViewConfigChangeHandler = function (event, sync) {
 		self.grid.on('colConfigUpdate', function (colConfig) {
 			sync_colConfig(colConfig);
 			self.grid.on('colConfigUpdate', sync_colConfig);
-			self.view.on('getTypeInfo', function () {
-				sync();
-				self.view.on(event, sync, { who: self });
-			}, { limit: 1 });
+			if (self.view.typeInfo != null) {
+				sync_view();
+				self.view.on(event, sync_view, { who: self });
+			}
+			else {
+				self.view.on('getTypeInfo', function () {
+					sync_view();
+					self.view.on(event, sync_view, { who: self });
+				}, { limit: 1 });
+			}
 		}, { limit: 1 });
 	}
 };
@@ -864,7 +888,8 @@ var GroupControl = makeSubclass(GridControl, function () {
 	});
 }, {
 	isHorizontal: true,
-	controlFieldCtor: GroupControlField
+	controlFieldCtor: GroupControlField,
+	controlType: 'Group'
 });
 
 // #draw {{{2
@@ -954,6 +979,14 @@ GroupControl.prototype.updateView = function () {
 	}
 };
 
+// #toString {{{2
+
+GroupControl.prototype.toString = function () {
+	var self = this;
+
+	return self.grid.id + ', Group';
+};
+
 // PivotControl {{{1
 
 // Constructor {{{2
@@ -985,7 +1018,8 @@ var PivotControl = makeSubclass(GridControl, function () {
 	});
 }, {
 	isHorizontal: true,
-	controlFieldCtor: PivotControlField
+	controlFieldCtor: PivotControlField,
+	controlType: 'Pivot'
 });
 
 // #draw {{{2
@@ -1082,6 +1116,14 @@ PivotControl.prototype.updateView = function () {
 	}
 };
 
+// #toString {{{2
+
+PivotControl.prototype.toString = function () {
+	var self = this;
+
+	return self.grid.id + ', Pivot';
+};
+
 // AggregateControl {{{1
 
 // Constructor {{{2
@@ -1108,7 +1150,8 @@ var AggregateControl = makeSubclass(GridControl, function () {
 }, {
 	disableUsedItems: false,
 	updateCanHide: false,
-	controlFieldCtor: AggregateControlField
+	controlFieldCtor: AggregateControlField,
+	controlType: 'Aggregate'
 });
 
 // #draw {{{2
@@ -1364,6 +1407,14 @@ AggregateControl.prototype.addField = function () {
 	self.super.addField.apply(self, args);
 };
 
+// #toString {{{2
+
+AggregateControl.prototype.toString = function () {
+	var self = this;
+
+	return self.grid.id + ', Aggregate';
+};
+
 // FilterControl {{{1
 
 // Constructor {{{2
@@ -1391,7 +1442,8 @@ var FilterControl = makeSubclass(GridControl, function () {
 		dontSendEventTo: self
 	});
 }, {
-	controlFieldCtor: FilterControlField
+	controlFieldCtor: FilterControlField,
+	controlType: 'Filter'
 });
 
 // #draw {{{2
@@ -1485,4 +1537,12 @@ FilterControl.prototype.clear = function (opts) {
 FilterControl.prototype.updateView = function () {
 	// NOTE This function intentionally does nothing!
 	//      It overrides the behavior of the superclass' method.
+};
+
+// #toString {{{2
+
+FilterControl.prototype.toString = function () {
+	var self = this;
+
+	return self.grid.id + ', Filter';
 };
