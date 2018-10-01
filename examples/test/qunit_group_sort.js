@@ -28,15 +28,14 @@ window.test_group_sort = function (view) {
 		info: 'integer (number → number)'
 	}, {
 		field: 'int2',
-		min: '1',
-		max: '9996',
+		min: 1,
+		max: 9996,
 		info: 'integer (string → number)'
 	}, {
 		field: 'int3',
-		min: '1',
-		max: '9,996',
-		extract: extract.numeral,
-		info: 'integer (string → numeral)'
+		min: 1,
+		max: 9996,
+		info: 'integer (string w/ comma → number)'
 	}, {
 		field: 'float1',
 		min: 2.4067245551437795,
@@ -44,15 +43,14 @@ window.test_group_sort = function (view) {
 		info: 'float (number → number)'
 	}, {
 		field: 'float2',
-		min: '2.4067245551437795',
-		max: '9995.851570643537',
+		min: 2.4067245551437795,
+		max: 9995.851570643537,
 		info: 'float (string → number)'
 	}, {
 		field: 'float3',
-		min: '2.407',
-		max: '9,995.852',
-		extract: extract.numeral,
-		info: 'float (string → numeral)'
+		min: 2.407,
+		max: 9995.852,
+		info: 'float (string w/ comma → number)'
 	}, {
 		field: 'currency1',
 		min: 2.41,
@@ -60,22 +58,19 @@ window.test_group_sort = function (view) {
 		info: 'currency (number : currency → number)'
 	}, {
 		field: 'currency2',
-		min: '2.41',
-		max: '9,995.85',
-		extract: extract.numeral,
-		info: 'currency (string : currency → numeral)'
+		min: 2.41,
+		max: 9995.85,
+		info: 'currency (string w/ comma : currency → number)'
 	}, {
 		field: 'currency3',
-		min: '$2.41',
-		max: '$9,995.85',
-		extract: extract.numeral,
-		info: 'currency (string : currency → numeral)'
+		min: 2.41,
+		max: 9995.85,
+		info: 'currency (string w/ comma & dollar : currency → number)'
 	}, {
 		field: 'currency4',
-		min: '$2.41',
-		max: '$9,995.85',
-		extract: extract.numeral,
-		info: 'currency (string : string → numeral)'
+		min: 2.41,
+		max: 9995.85,
+		info: 'currency (string : string → number)'
 	}, {
 		field: 'date1',
 		min: '1900-07-12',
@@ -110,7 +105,7 @@ window.test_group_sort = function (view) {
 				if (si.extract) {
 					actual = si.extract(actual);
 				}
-				console.log('QUNIT << %s // %s // min >> Expected = %O, Actual = %O', si.field, si.info, si.min, actual);
+				console.log('QUNIT : GROUP SORT << %s // %s // min >> Expected = %O, Actual = %O', si.field, si.info, si.min, actual);
 				assert.equal(actual, si.min, si.field + ' // ' + si.info + ' // min');
 				view.reset();
 				view.setGroup({fieldNames: [si.field]}, {
@@ -124,7 +119,7 @@ window.test_group_sort = function (view) {
 					if (si.extract) {
 						actual = si.extract(actual);
 					}
-					console.log('QUNIT << %s // %s // max >> Expected = %O, Actual = %O', si.field, si.info, si.max, actual);
+					console.log('QUNIT : GROUP SORT << %s // %s // max >> Expected = %O, Actual = %O', si.field, si.info, si.max, actual);
 					assert.equal(actual, si.max, si.field + ' // ' + si.info + ' // max');
 					return next();
 				});

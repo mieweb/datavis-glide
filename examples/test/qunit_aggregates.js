@@ -30,7 +30,6 @@ window.test_aggregates = function (view) {
 			fields: ['int3'],
 			type: 'number',
 			result: [undefined, 3762, 2038, 2300, 619, 216, 138, 128, 4230, undefined],
-			compare: compare.numeral,
 		}, {
 			fields: ['float1'],
 			type: 'number',
@@ -43,7 +42,6 @@ window.test_aggregates = function (view) {
 			fields: ['float3'],
 			type: 'number',
 			result: [undefined, 4085.854, 3563.223, 623.995, 420.003, 126.342, 1009.111, 245.622, 77.759, undefined],
-			compare: compare.numeral,
 		}, {
 			fields: ['date1'],
 			type: 'date',
@@ -73,7 +71,6 @@ window.test_aggregates = function (view) {
 			fields: ['int3'],
 			type: 'number',
 			result: [undefined, 4768, 9559, 9777, 9966, 9934, 9671, 7649, 9921, undefined],
-			compare: compare.numeral,
 		}, {
 			fields: ['float1'],
 			type: 'number',
@@ -86,7 +83,6 @@ window.test_aggregates = function (view) {
 			fields: ['float3'],
 			type: 'number',
 			result: [undefined, 7497.946, 9761.318, 9744.631, 9168.495, 8710.055, 9873.723, 7342.059, 7892.588, undefined],
-			compare: compare.numeral,
 		}, {
 			fields: ['date1'],
 			type: 'date',
@@ -120,8 +116,8 @@ window.test_aggregates = function (view) {
 				view.setAggregate(MIE.Util.objFromArray(['group', 'pivot', 'cell', 'all'],
 					[[{
 						fun: e.fun,
+						fields: a.fields,
 						opts: {
-							fields: a.fields,
 							typeInfo: [{type: a.type}]
 						}
 					}]]));

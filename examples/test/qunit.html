@@ -22,6 +22,7 @@
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/qunit/2.4.1/qunit.min.js"></script>
 		<script src="../tabletool.js"></script>
 		<script src="../wcdatavis.js"></script>
+		<script src="qunit_number.js"></script>
 		<script src="qunit_filter.js"></script>
 		<script src="qunit_sort.js"></script>
 		<script src="qunit_group.js"></script>
@@ -48,6 +49,8 @@ $(document).ready(function () {
 	var view = new MIE.WC_DataVis.View(source, 'Test View', {
 		saveViewConfig: false
 	});
+
+	test_number();
 
 	view.init(function () {
 		test_filter(view);
