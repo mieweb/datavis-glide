@@ -377,6 +377,54 @@ function toFloat(x) {
 	return +x;
 }
 
+var stringValueType = (function () {
+	var re_date = new RegExp(/^\d{4}-\d{2}-\d{2}$/);
+	var re_time = new RegExp(/^\d{2}:\d{2}:\d{2}$/);
+	var re_datetime = new RegExp(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/);
+  var re_number = new RegExp(/(^-?[1-9]{1}[0-9]{0,2}(,?\d{3})*(\.\d+)?(e[+-]?\d+)?$)|(^-?0?\.\d+(e[+-]?\d+)?$)/);
+	var re_comma = new RegExp(/,/g);
+  return function p(s) {
+		if (re_date.test(s)) {
+			return 'date';
+		}
+		else if (re_time.test(s)) {
+			return 'time';
+		}
+		else if (re_datetime.test(s)) {
+			return 'datetime';
+		}
+		else if (s.charAt(0) === '$') {
+			var guess = p(s.substring(1));
+      return guess === 'number' ? 'currency' : 'string';
+    }
+    else if (s.charAt(0) === '(' && s.charAt(s.length - 1) === ')') {
+			var guess = p(s.substring(1, s.length - 1));
+			return ['number', 'currency'].indexOf(guess) >= 0 ? guess : 'string';
+    }
+    else {
+      return re_number.test(s) ? 'number' : 'string';
+    }
+  };
+})();
+
+var parseNumber = (function () {
+  var re_number = new RegExp(/(^-?[1-9]{1}[0-9]{0,2}(,?\d{3})*(\.\d+)?(e[+-]?\d+)?$)|(^-?0?\.\d+(e[+-]?\d+)?$)/);
+	var re_comma = new RegExp(/,/g);
+  return function p(s) {
+    if (s.charAt(0) === '$') {
+      return p(s.substring(1));
+    }
+    else if (s.charAt(0) === '(' && s.charAt(-1) === ')') {
+      return p(s.substring(1, s.length - 1)) * -1;
+    }
+    else {
+      return !re_number.test(s) ? null
+        : s.indexOf('.') >= 0 || s.indexOf('e') >= 0 ? parseFloat(s.replace(re_comma, ''))
+        : parseInt(s.replace(re_comma, ''));
+    }
+  };
+})();
+
 /**
  * Convert from a string to an integer.
  *
@@ -2430,14 +2478,24 @@ function format(fcc, fti, cell, opts) {
 		case 'number':
 		case 'currency':
 			if (typeof cell.value === 'string' && fti.needsDecoding) {
-				if (isInt(cell.value)) {
-					cell.value = toInt(cell.value);
-				}
-				else if (isFloat(cell.value)) {
-					cell.value = toFloat(cell.value);
+				if (cell.value === '') {
+					cell.value = null;
 				}
 				else {
-					cell.value = numeral(cell.value);
+					switch (fti.internalType) {
+					case 'primitive':
+						// string -> primitive
+						var newVal = parseNumber(cell.value);
+						if (newVal != null) {
+							cell.value = newVal;
+						}
+						else {
+							log.error('Unable to convert cell value, cannot decode to primitive number: field = "%s" ; type = %s ; internalType = %s ; valueTypeOf = %s ; value = %O', fti.field, fti.type, fti.internalType, typeof(cell.value), cell.value);
+						}
+						break;
+					default:
+						log.error('Unable to convert cell value, invalid internal type: field = "%s" ; type = %s ; internalType = %s ; valueTypeOf = %s ; value = %O', fti.field, fti.type, fti.internalType, typeof(cell.value), cell.value);
+					}
 				}
 			}
 

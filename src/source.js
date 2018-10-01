@@ -858,27 +858,6 @@ Source.prototype.getConversionFuncs = function (fieldName) {
 Source.prototype.guessTypes = function (data, typeInfo) {
 	var self = this;
 
-	var guessType = function (val) {
-		if (val.match(/^\d\d\d\d-\d\d-\d\d$/)) {
-			return 'date';
-		}
-		else if (val.match(/^\d\d:\d\d:\d\d$/)) {
-			return 'time';
-		}
-		else if (val.match(/^\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d$/)) {
-			return 'datetime';
-		}
-		else if (val.match(/^[-+]?[\d,.]+$/)) {
-			return 'number';
-		}
-		else if (val.match(/^\$[-+]?[\d,.]+$/)) {
-			return 'currency';
-		}
-		else {
-			return 'string';
-		}
-	};
-
 	typeInfo.each(function (fti, f) {
 		if (fti.overridden || fti.type !== 'string') {
 			return;
@@ -888,7 +867,7 @@ Source.prototype.guessTypes = function (data, typeInfo) {
 
 		for (var i = 0; guess !== 'string' && i < data.length; i += 1) {
 			var val = data[i][f].value;
-			var newGuess = guessType(val);
+			var newGuess = stringValueType(val);
 
 			if (guess == null) {
 				guess = newGuess;
@@ -917,37 +896,16 @@ Source.prototype.setConversionTypeInfo = function (data, typeInfo) {
 
 			if (fti.type === 'number' || fti.type === 'currency') {
 				fti.needsDecoding = true;
-
-				var stop = false;
-				for (var i = 0; !stop && i < data.length; i += 1) {
-					if (isInt(data[i][f].value) || isFloat(data[i][f].value)) {
-						// Looks like it can be decoded into a primitive number, so there's no need for
-						// Numeral's advanced parsing.
-						//
-						// However, we do need to keep checking other rows, e.g. when the first row is "123.45"
-						// (toFloat will work) but the second row is "1,234.56" (we need to use Numeral).
-
-						fti.internalType = 'primitive';
-					}
-					else {
-						// We need to use Numeral's parser, which means there's no point in checking any other
-						// rows... we don't have any better tools than that.
-
-						fti.internalType = 'numeral';
-						stop = true;
-					}
-				}
+				fti.internalType = 'primitive';
 			}
 			else if (fti.type === 'date' || fti.type === 'datetime') {
 				if ((fti.type === 'date' && (fti.format === undefined || fti.format === 'YYYY-MM-DD'))
 						|| (fti.type === 'datetime' && (fti.format === undefined || fti.format === 'YYYY-MM-DD HH:mm:ss'))) {
+					// The values are dates and/or times where the lexicographic sort is also chronological.
+					// So, there's no need to convert them to any special value internally to support sorting.
 					fti.internalType = 'string';
 				}
 				else {
-
-					// This is a date that can't be sorted lexicographically, so it needs to be stored and
-					// processed using Moment.
-
 					fti.needsDecoding = true;
 					fti.internalType = 'moment';
 				}
@@ -988,10 +946,6 @@ Source.prototype.convertCell = function (row, field) {
 			case 'primitive':
 				// number -> primitive ... Nothing to do.
 				break;
-			case 'numeral':
-				// number -> numeral
-				cell.value = numeral(cell.value);
-				break;
 			default:
 				log.error('Unable to convert cell value, invalid internal type: field = "%s" ; type = %s ; internalType = %s ; valueTypeOf = %s ; value = %O', field, fti.type, fti.internalType, typeof(cell.value), cell.value);
 			}
@@ -1004,26 +958,20 @@ Source.prototype.convertCell = function (row, field) {
 				switch (fti.internalType) {
 				case 'primitive':
 					// string -> primitive
-					if (isInt(cell.value)) {
-						cell.value = toInt(cell.value);
-					}
-					else if (isFloat(cell.value)) {
-						cell.value = toFloat(cell.value);
+					var newVal = parseNumber(cell.value);
+					if (newVal != null) {
+						cell.value = newVal;
 					}
 					else {
 						log.error('Unable to convert cell value, cannot decode to primitive number: field = "%s" ; type = %s ; internalType = %s ; valueTypeOf = %s ; value = %O', field, fti.type, fti.internalType, typeof(cell.value), cell.value);
 					}
-					break;
-				case 'numeral':
-					// string -> numeral
-					cell.value = numeral(cell.value);
 					break;
 				default:
 					log.error('Unable to convert cell value, invalid internal type: field = "%s" ; type = %s ; internalType = %s ; valueTypeOf = %s ; value = %O', field, fti.type, fti.internalType, typeof(cell.value), cell.value);
 				}
 			}
 		}
-		else if (window.numeral == null || !numeral.isNumeral(cell.value)) {
+		else {
 			log.error('Unable to convert cell value: { field = "%s", type = "%s", valueTypeOf = "%s" }',
 				field, fti.type, typeof(cell.value));
 		}

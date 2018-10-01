@@ -133,6 +133,7 @@
 	window.MIE.Util.getProp            = getProp;
 	window.MIE.Util.getPropDef         = getPropDef;
 	window.MIE.Util.setProp            = setProp;
+	window.MIE.Util.parseNumber        = parseNumber;
 
 	window.MIE.WC_DataVis                        = window.MIE.WC_DataVis || {};
 	window.MIE.WC_DataVis.Aggregate              = Aggregate;
