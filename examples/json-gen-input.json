@@ -1,11 +1,11 @@
 {
   "$< random_seed(0) >$": null,
   "data": [
-    "$< repeat(1000, VALUE) >$",
+    "$< repeat(ARGS['COUNT'], VALUE) >$",
     {
-        "string1": "$< word_dict() >$"
+      "string1": "$< word_dict() >$"
       , "country": "$< cycle('country', ['United States', 'Canada', 'Mexico', 'England', 'France', 'Germany', 'Switzerland', 'Japan', 'China', 'South Korea']) >$"
-	  , "fruit": "$< random_element('fruit', ['Apple', 'Banana', 'Blueberry', 'Cherry', 'Grape', 'Kiwi', 'Mango', 'Orange', 'Pineapple', 'Strawberry'], 'normal') >$"
+      , "fruit": "$< random_element('fruit', ['Apple', 'Banana', 'Blueberry', 'Cherry', 'Grape', 'Kiwi', 'Mango', 'Orange', 'Pineapple', 'Strawberry'], 'normal') >$"
       , "state": "$< state() >$"
       , "int1": "$< random_int('int1', 0, 9999, output_type='number') >$"
       , "int2": "$< random_int('int2', 0, 9999, output_type='string') >$"
@@ -20,16 +20,18 @@
       , "date1": "$< random_date('date1', format='yyyy-MM-dd') >$"
       , "date2": "$< random_date('date2', format='MMM d, yyyy') >$"
       , "date3": "$< random_date('date3', format='MM/dd/yyyy') >$"
-	  , "fixedPrecision1": 0.7
-	  , "fixedPrecision2": "0.7"
-	  , "fixedPrecision3": "$0.70"
+      , "fixedPrecision1": 0.7
+      , "fixedPrecision2": "0.7"
+      , "fixedPrecision3": "$0.70"
+      , "boolean1": "$< cycle('boolean1', [0, 1]) >$"
+      , "boolean2": "$< cycle('boolean2', [1, 0]) >$"
     }
   ],
   "typeInfo": [
-      { "field": "string1", "type": "string" }
+    { "field": "string1", "type": "string" }
     , { "field": "country", "type": "string" }
     , { "field": "state", "type": "string" }
-	, { "field": "fruit", "type": "string" }
+    , { "field": "fruit", "type": "string" }
     , { "field": "int1", "type": "number" }
     , { "field": "int2", "type": "number" }
     , { "field": "int3", "type": "number" }
@@ -46,5 +48,7 @@
     , { "field": "fixedPrecision1", "type": "number" }
     , { "field": "fixedPrecision2", "type": "number" }
     , { "field": "fixedPrecision3", "type": "currency" }
+    , { "field": "boolean1", "type": "number" }
+    , { "field": "boolean2", "type": "number" }
   ]
 }

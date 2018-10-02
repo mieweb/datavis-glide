@@ -29,12 +29,13 @@ doc/html/style.css:	doc/style.css
 	cp $^ $@
 
 examples:	$(EXAMPLE_FILES)
-	make -C examples/test
+	$(MAKE) -C examples/test
 
 $(EXAMPLE_FILES):examples/%:	dist/%
 	cp $^ $@
 
 clean:
+	$(MAKE) -C examples/test clean
 	rm -f dist/wcdatavis.js examples/wcdatavis.js examples/wcdatavis.css
 	rm -rf jsdoc
 	rm -rf doc/html
