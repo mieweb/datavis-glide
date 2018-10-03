@@ -2553,7 +2553,6 @@ var GridTableGroupDetail = makeSubclass(GridTable, function (grid, defn, view, f
 
 	self.super.ctor.apply(self, arguments);
 
-	self.features.limit = false;
 	self.features.footer = false;
 
 	debug.info('GRID TABLE - GROUP - DETAIL', 'Constructing grid table; features = %O', features);
@@ -2870,127 +2869,8 @@ GridTableGroupDetail.prototype.drawBody = function (data, typeInfo, columns, con
 	});
 	*/
 
-	var isRendered = [];
-
-	var lastRowVal = [];
-
-	// render() {{{3
-
-	/*
-	 * Render the rows that are in a group.
-	 *
-	 *   - groupMetadataId: number
-	 *     Used to look up the metadata for the group that we're showing.
-	 *
-	 *   - groupNum: number
-	 *     Used to find the rowVal & rows in the group.
-	 *
-	 *   - placeAfter: jQuery (TR)
-	 *     The table row for the last rowValElt in the rowVal, below which these rows will be put.
-	 */
-
-	var render = function (groupMetadataId, groupNum, placeAfter) {
-		var rowsInGroup = data.data[groupNum];
-		var rowVal = data.rowVals[groupNum];
-		var tr;
-		var isSelected;
-
-		// Create the cells that show the rows in this group.
-		//
-		// EXAMPLE
-		// -------
-		//
-		// <tr>
-		//   <td colspan="2"></td>
-		//   ... row[col] | col ∉ groupFields ...
-		// </tr>
-
-		_.each(rowsInGroup, function (row, rowNum) {
-			tr = jQuery('<tr>', {
-				id: self.defn.table.id + '_' + rowNum,
-				'data-row-num': row.rowNum,
-				'data-wcdv-in-group': groupMetadataId,
-				'data-wcdv-rowValIndex': self.data.groupMetadata.lookup.byId[groupMetadataId].rowValIndex
-			})
-				.hide();
-
-			tr.append(jQuery('<td>', { colspan: data.groupFields.length + 1 }));
-
-			// Create the check box which selects the row.
-
-			if (self.features.rowSelect) {
-				isSelected = self.isSelected(row.rowNum);
-
-				var checkbox = jQuery('<input>', {
-					'type': 'checkbox',
-					'data-row-num': row.rowNum,
-					'class': 'wcdv_select_row',
-					'checked': isSelected
-				});
-				td = jQuery('<td>').addClass('wcdv_group_col_spacer').append(checkbox).appendTo(tr);
-			}
-
-			// Create the data cells.
-
-			_.each(columns, function (field, colIndex) {
-				if (data.groupFields.indexOf(field) >= 0) {
-					return;
-				}
-
-				var fcc = self.colConfig.get(field) || {};
-				var cell = row.rowData[field];
-
-				var td = jQuery('<td>', {'data-wcdv-field': field});
-				if (colIndex > 0) {
-					td.addClass('wcdv_pivot_colval_boundary');
-				}
-				var value = format(fcc, typeInfo.get(field), cell);
-
-				if (value instanceof Element || value instanceof jQuery) {
-					td.append(value);
-				}
-				else if (fcc.allowHtml && typeInfo.get(field).type === 'string') {
-					td.html(value);
-				}
-				else if (value === '') {
-					td.html('&nbsp;');
-				}
-				else {
-					td.text(value);
-				}
-
-				self.setCss(td, field);
-				self.setAlignment(td, fcc, typeInfo.get(field));
-
-				tr.append(td);
-			});
-
-			if (self.features.rowSelect && isSelected) {
-				tr.children('td').addClass('wcdv_selected_row');
-			}
-
-			self.ui.tr[rowNum] = tr;
-			placeAfter.after(tr);
-
-			var rowRenderCb = getProp(self.opts, 'events', 'rowRender');
-			if (typeof rowRenderCb === 'function') {
-				rowRenderCb(tr, {
-					isGroup: true,
-					groupMode: 'details',
-					rowData: row.rowData,
-					rowNum: row.rowNum
-				});
-			}
-		});
-
-		if (self.features.floatingHeader) {
-			switch (getProp(self.defn, 'table', 'floatingHeader', 'method')) {
-			case 'tabletool':
-				TableTool.update();
-				break;
-			}
-		}
-	};
+	var isRendered = {}; // isRendered[metadataId] => boolean
+	var lastRenderedTr = {}; // lastRenderedTr[metadataId] => jQuery <TR>
 
 	// groupInfo {{{3
 
@@ -3025,12 +2905,12 @@ GridTableGroupDetail.prototype.drawBody = function (data, typeInfo, columns, con
 	 * click event.
 	 */
 
-	var toggleGroup = function () {
+	function toggleGroup() {
 
 		/*
 		 * Toggle the visibility of the subgroup.
 		 *
-		 *   - groupId: number
+		 *   - metadataId: number
 		 *     What group we are expanding/collapsing.
 		 *
 		 *   - show: boolean
@@ -3040,21 +2920,20 @@ GridTableGroupDetail.prototype.drawBody = function (data, typeInfo, columns, con
 		 *     The table row for the subgroup header.
 		 */
 
-		var toggle = function (groupId, show, tr) {
+		function toggle(metadataId, show, tr) {
 			// Within the group metadata, the rowValIndex is only defined for things which are leaves in
 			// the grouping tree and therefore complete a rowVal.
 
-			var rowValIndex = self.data.groupMetadata.lookup.byId[groupId].rowValIndex;
+			var rowValIndex = self.data.groupMetadata.lookup.byId[metadataId].rowValIndex;
 
-			debug.info('GRID TABLE // GROUP (DETAIL) // TOGGLE', 'show = %s, id = %s, rowValIndex = %s', show, groupId, rowValIndex);
+			debug.info('GRID TABLE // GROUP (DETAIL) // TOGGLE', 'show = %s, id = %s, rowValIndex = %s', show, metadataId, rowValIndex);
 
 			// Check if we're expanding a leaf, thus fully expanding an entire group, and see if we need
 			// to render table rows for all the records in that group.
 
-			if (show && rowValIndex != null && !isRendered[groupId]) {
-				debug.info('GRID TABLE // GROUP (DETAIL) // TOGGLE', 'Rendering: group metadata ID = %s, rowValIndex = %s', groupId, rowValIndex);
-				render(groupId, rowValIndex, tr);
-				isRendered[groupId] = true;
+			if (show && !isRendered[metadataId]) {
+				debug.info('GRID TABLE // GROUP (DETAIL) // TOGGLE', 'Rendering: group metadata ID = %s', metadataId);
+				render(metadataId, 0, tr);
 			}
 
 			// Set the visibility for all affected table rows.  These can be for children of the current
@@ -3065,12 +2944,12 @@ GridTableGroupDetail.prototype.drawBody = function (data, typeInfo, columns, con
 			self.ui.tbody
 				.find('tr')
 				.filter(function (i, elt) {
-					return jQuery(elt).attr('data-wcdv-in-group') === groupId;
+					return jQuery(elt).attr('data-wcdv-in-group') === '' + metadataId;
 				})
 				.each(function (i, elt) {
 					elt = jQuery(elt);
 					if (elt.attr('data-wcdv-toggles-group')) {
-						toggle(elt.attr('data-wcdv-toggles-group'), show && elt.attr('data-wcdv-expanded') === '1', elt);
+						toggle(+elt.attr('data-wcdv-toggles-group'), show && elt.attr('data-wcdv-expanded') === '1', elt);
 					}
 					if (show) {
 						elt.show();
@@ -3084,175 +2963,423 @@ GridTableGroupDetail.prototype.drawBody = function (data, typeInfo, columns, con
 			if (self.ui.tbl.floatThead) {
 				self.ui.tbl.floatThead('reflow');
 			}
-		};
+		}
 
 		var elt = jQuery(this);
 		var tr = elt.closest('tr');
-		var wasExpanded = tr.attr('data-wcdv-expanded');
+		var op = tr.attr('data-wcdv-expanded') === '0' ? 'show' : 'hide';
 
-		toggle(tr.attr('data-wcdv-toggles-group'), wasExpanded === '0', tr);
+		if (op === 'show') {
+			tr.find('.spinner').show();
+		}
+		window.setTimeout(function () {
+			toggle(+tr.attr('data-wcdv-toggles-group'), op === 'show', tr);
+			if (op === 'show') {
+				tr.find('.spinner').hide();
+			}
+			tr.attr('data-wcdv-expanded', op === 'show' ? '1' : '0');
+			elt.attr('data-wcdv-expanded', op === 'show' ? '1' : '0');
+			elt.html(fontAwesome(op === 'show' ? 'fa-minus-square-o' : 'fa-plus-square-o'));
+		});
+	}
 
-		tr.attr('data-wcdv-expanded', wasExpanded === '0' ? '1' : '0');
-		elt.attr('data-wcdv-expanded', wasExpanded === '0' ? '1' : '0');
-		elt.html(fontAwesome(wasExpanded === '0' ? 'fa-minus-square-o' : 'fa-plus-square-o'));
-	};
+	// render() {{{3
+
+	/**
+	 * @param {number} [metadataId=0]
+	 * @param {number} [startIndex=0]
+	 * @param {jQuery} [afterElement]
+	 */
+
+	function render(metadataId, startIndex, afterElement, showAll) {
+		if (metadataId != null && typeof metadataId !== 'number')
+			throw new Error('Call Error: `metadataId` must be null or a number');
+		if (startIndex != null && typeof startIndex !== 'number')
+			throw new Error('Call Error: `startIndex` must be null or a number');
+		if (afterElement != null && !(afterElement instanceof jQuery))
+			throw new Error('Call Error: `afterElement` must be null or an instance of jQuery');
+
+		if (metadataId == null) metadataId = 0;
+		if (startIndex == null) startIndex = 0;
+
+		if (startIndex > 0 && afterElement == null)
+			throw new Error('Call Error: `afterElement` required when `startIndex` > 0');
+
+		var metadataNode = data.groupMetadata.lookup.byId[metadataId];
+
+		if (metadataNode == null)
+			throw new Error('No group metadata for specified ID: ' + metadataId);
+
+		var limitConfig = self.defn.table.limit;
+
+		if (startIndex > 0) {
+			// Remove the "show more rows" button.
+			afterElement.next('tr.wcdvgrid_more').remove();
+		}
+
+		if (metadataNode.children) {
+			// We're rendering sub-groups.
+
+			var i, j;
+			var childMetadataNode;
+			var childTr;
+			var checkbox;
+			var expandBtn;
+			var infoText, infoTextSpan;
+			var fcc;
+			var rowValElt, rowValEltSpan, rowValEltTh;
+			var showMoreTd;
+			var colSpan;
+			var showMoreTr;
+
+			var trans = {
+				'group:singular': 'group',
+				'group:plural': 'groups',
+				'row:singular': 'row',
+				'row:plural': 'rows'
+			};
+
+			var childRowValElts = _.keys(metadataNode.children).sort();
+			var childRowValEltsLen = childRowValElts.length;
+
+			var howMany = !self.features.limit || showAll ? childRowValEltsLen
+				: startIndex === 0 ? limitConfig.threshold
+				: limitConfig.chunkSize;
+
+			for (i = startIndex; i < childRowValEltsLen && i < startIndex + howMany; i += 1) {
+				childMetadataNode = metadataNode.children[childRowValElts[i]];
+
+				childTr = jQuery('<tr>')
+					.attr('data-wcdv-in-group', metadataNode.id)
+					.attr('data-wcdv-toggles-group', childMetadataNode.id)
+					.attr('data-wcdv-expanded', '0')
+				;
+
+				// Insert spacer columns for previous group fields.
+
+				for (j = 0; j < childMetadataNode.groupFieldIndex; j += 1) {
+					jQuery('<th>', {'class': 'wcdv_group_col_spacer'})
+						.appendTo(childTr);
+				}
+
+				expandBtn = jQuery('<button>', {
+					'type': 'button',
+					'class': 'wcdv_icon_button wcdv_expand_button',
+					'data-wcdv-expanded': '0'
+				})
+					.html(fontAwesome('fa-plus-square-o'));
+
+				jQuery('<th>', {'class': 'wcdv_group_col_spacer'})
+					.append(expandBtn)
+					.appendTo(childTr);
+
+				// Create the check box which selects the row.
+
+				if (self.features.rowSelect) {
+					checkbox = jQuery('<input>', {
+						'type': 'checkbox',
+						'class': 'wcdv_select_group',
+						'data-group-id': childMetadataNode.id,
+					});
+					self.groupInfo[childMetadataNode.id].checkbox = checkbox;
+					jQuery('<th>', {'class': 'wcdv_group_col_spacer'})
+						.append(checkbox)
+						.appendTo(childTr);
+				}
+
+				fcc = self.colConfig.get(childMetadataNode.groupField) || {};
+
+				rowValElt = format(fcc, self.typeInfo.get(childMetadataNode.groupField), childMetadataNode.rowValCell);
+				rowValEltSpan = jQuery('<span>');
+
+				if (rowValElt instanceof Element || rowValElt instanceof jQuery) {
+					rowValEltSpan.append(rowValElt);
+				}
+				else if (fcc.allowHtml) {
+					rowValEltSpan.html(rowValElt);
+				}
+				else {
+					rowValEltSpan.text(rowValElt);
+				}
+
+				infoText = '(';
+				if (childMetadataNode.children != null) {
+					infoText += childMetadataNode.numChildren + ' ';
+					infoText += (childMetadataNode.numChildren === 1 ? trans['group:singular'] : trans['group:plural']) + ', ';
+				}
+				infoText += childMetadataNode.numRows + ' ';
+				infoText += childMetadataNode.numRows === 1 ? trans['row:singular'] : trans['row:plural'];
+				infoText += ')';
+
+				infoTextSpan = jQuery('<span>').css({'margin-left': '0.5em'}).text(infoText);
+
+				spinnerDiv = jQuery('<div>', {'class': 'spinner'})
+					.append(jQuery('<div>', {'class': 'bounce1'}))
+					.append(jQuery('<div>', {'class': 'bounce2'}))
+					.append(jQuery('<div>', {'class': 'bounce3'}))
+					.hide();
+
+				jQuery('<th>', {
+					'class': 'wcdv_group_value',
+					'data-wcdv-field': childMetadataNode.groupField,
+					'colspan': columns.length - childMetadataNode.groupFieldIndex
+				})
+					.append(rowValEltSpan)
+					.append(infoTextSpan)
+					.append(spinnerDiv)
+					.appendTo(childTr);
+
+				if (afterElement != null) {
+					afterElement.after(childTr);
+				}
+				else {
+					self.ui.tbody.append(childTr);
+				}
+
+				afterElement = childTr;
+
+				var rowRenderCb = getProp(self.opts, 'events', 'rowRender');
+				if (typeof rowRenderCb === 'function') {
+					rowRenderCb(childTr, {
+						isGroup: true,
+						groupMode: 'detail',
+						groupField: childMetadataNode.groupField,
+						rowValElt: childMetadataNode.rowValCell.value,
+						groupMetadata: childMetadataNode
+					});
+				}
+			}
+
+			isRendered[metadataNode.id] = true;
+
+			if (i < childRowValEltsLen - 1) {
+				// Not all children were rendered.
+
+				lastRenderedTr[metadataNode.id] = childTr;
+
+				showMoreTr = jQuery('<tr>', {'class': 'wcdvgrid_more', 'data-wcdv-in-group': metadataNode.id});
+
+				// Insert spacer columns for previous group fields.
+
+				for (j = 0; j < childMetadataNode.groupFieldIndex; j += 1) {
+					jQuery('<th>', {'class': 'wcdv_group_col_spacer'})
+						.appendTo(showMoreTr);
+				}
+
+				colSpan = columns.length
+					+ 1 // for the "expand" button column
+					+ (self.features.rowSelect ? 1 : 0)
+					+ (self.features.rowReorder ? 1 : 0)
+					- (metadataNode.groupFieldIndex || 0);
+
+				spinnerDiv = jQuery('<div>', {'class': 'spinner'})
+					.append(jQuery('<div>', {'class': 'bounce1'}))
+					.append(jQuery('<div>', {'class': 'bounce2'}))
+					.append(jQuery('<div>', {'class': 'bounce3'}))
+					.hide();
+
+				showMoreTd = jQuery('<td>', {
+					'class': 'wcdv_show_more',
+					'data-wcdv-in-group': metadataNode.id,
+					'data-wcdv-show-more-start': i,
+					'colspan': colSpan
+				})
+					.append(fontAwesome('F13A'))
+					.append(jQuery('<span>Showing rows ' + '1–' + i + ' of ' + childRowValEltsLen + '.</span>')
+						.css({'padding-left': '0.5em'}))
+					.append(jQuery('<button type="button">Load ' + limitConfig.chunkSize + ' more rows.</button>')
+						.css({'margin-left': '0.5em'}))
+					.append(jQuery('<button type="button" class="wcdv_show_all">Load all rows.</button>')
+						.css({'margin-left': '0.5em'})
+					)
+					.append(spinnerDiv)
+					.appendTo(showMoreTr);
+
+				childTr.after(showMoreTr);
+			}
+		}
+		else {
+			// We're rendering data rows.
+
+			var isSelected;
+			var checkbox;
+			var row;
+			var rowTr;
+			var showMoreTd;
+			var colSpan;
+			var showMoreTr;
+
+			var howMany = (!self.features.limit || showAll) ? metadataNode.rows.length - startIndex
+				: startIndex === 0 ? limitConfig.threshold
+				: limitConfig.chunkSize;
+
+			for (i = startIndex; i < metadataNode.rows.length && i < startIndex + howMany; i += 1) {
+				row = metadataNode.rows[i];
+
+				rowTr = jQuery('<tr>', {
+					'id': self.defn.table.id + '_' + i,
+					'data-row-num': row.rowNum,
+					'data-wcdv-in-group': metadataNode.id,
+					'data-wcdv-rowValIndex': metadataNode.rowValIndex
+				});
+
+				// Spacer to "indent" the data.
+
+				jQuery('<td>', {'colspan': data.groupFields.length + 1}).appendTo(rowTr);
+
+				// Create the check box which selects the row.
+
+				if (self.features.rowSelect) {
+					isSelected = self.isSelected(row.rowNum);
+					checkbox = jQuery('<input>', {
+						'type': 'checkbox',
+						'data-row-num': row.rowNum,
+						'class': 'wcdv_select_row',
+						'checked': isSelected
+					});
+					jQuery('<td>', {'class': 'wcdv_group_col_spacer'}).append(checkbox).appendTo(rowTr);
+				}
+
+				// Create the data cells.
+
+				_.each(columns, function (field, colIndex) {
+					if (data.groupFields.indexOf(field) >= 0) {
+						return;
+					}
+
+					var fcc = self.colConfig.get(field) || {};
+					var cell = row.rowData[field];
+
+					var td = jQuery('<td>', {'data-wcdv-field': field});
+					if (colIndex > 0) {
+						td.addClass('wcdv_pivot_colval_boundary');
+					}
+					var value = format(fcc, typeInfo.get(field), cell);
+
+					if (value instanceof Element || value instanceof jQuery) {
+						td.append(value);
+					}
+					else if (fcc.allowHtml && typeInfo.get(field).type === 'string') {
+						td.html(value);
+					}
+					else if (value === '') {
+						td.html('&nbsp;');
+					}
+					else {
+						td.text(value);
+					}
+
+					self.setCss(td, field);
+					self.setAlignment(td, fcc, typeInfo.get(field));
+
+					rowTr.append(td);
+				});
+
+				if (self.features.rowSelect && isSelected) {
+					rowTr.children('td').addClass('wcdv_selected_row');
+				}
+
+				self.ui.tr[i] = rowTr;
+				afterElement.after(rowTr);
+				afterElement = rowTr;
+
+				var rowRenderCb = getProp(self.opts, 'events', 'rowRender');
+				if (typeof rowRenderCb === 'function') {
+					rowRenderCb(rowTr, {
+						isGroup: true,
+						groupMode: 'details',
+						rowData: row.rowData,
+						rowNum: row.rowNum
+					});
+				}
+			}
+
+			isRendered[metadataNode.id] = true;
+
+			if (i < metadataNode.rows.length - 1) {
+				// Not all children were rendered.
+
+				lastRenderedTr[metadataNode.id] = rowTr;
+
+				showMoreTr = jQuery('<tr>', {'class': 'wcdvgrid_more', 'data-wcdv-in-group': metadataNode.id});
+
+				// Insert spacer columns for previous group fields.
+
+				for (j = 0; j < metadataNode.groupFieldIndex + 1; j += 1) {
+					jQuery('<th>', {'class': 'wcdv_group_col_spacer'})
+						.appendTo(showMoreTr);
+				}
+
+				colSpan = columns.length
+					+ 1 // for the "expand" button column
+					+ (self.features.rowSelect ? 1 : 0)
+					+ (self.features.rowReorder ? 1 : 0)
+					- (metadataNode.groupFieldIndex + 1);
+
+				spinnerDiv = jQuery('<div>', {'class': 'spinner'})
+					.append(jQuery('<div>', {'class': 'bounce1'}))
+					.append(jQuery('<div>', {'class': 'bounce2'}))
+					.append(jQuery('<div>', {'class': 'bounce3'}))
+					.hide();
+
+				showMoreTd = jQuery('<td>', {
+					'class': 'wcdv_show_more',
+					'data-wcdv-in-group': metadataNode.id,
+					'data-wcdv-show-more-start': i,
+					'colspan': colSpan
+				})
+					.append(fontAwesome('F13A'))
+					.append(jQuery('<span>Showing rows ' + '1–' + i + ' of ' + metadataNode.rows.length + '.</span>')
+						.css({'padding-left': '0.5em'}))
+					.append(jQuery('<button type="button">Load ' + limitConfig.chunkSize + ' more rows.</button>')
+						.css({'margin-left': '0.5em'}))
+					.append(jQuery('<button type="button" class="wcdv_show_all">Load all rows.</button>')
+						.css({'margin-left': '0.5em'})
+					)
+					.append(spinnerDiv)
+					.appendTo(showMoreTr);
+
+				rowTr.after(showMoreTr);
+			}
+		}
+
+		self._updateSelectionGui();
+
+		if (self.features.floatingHeader) {
+			switch (getProp(self.defn, 'table', 'floatingHeader', 'method')) {
+			case 'tabletool':
+				TableTool.update();
+				break;
+			}
+		}
+	}
+
+	// showMore() {{{3
+
+	function showMore(showAll) {
+		var elt = jQuery(this).closest('td');
+		var metadataId = +(elt.attr('data-wcdv-in-group'));
+		var startIndex = +(elt.attr('data-wcdv-show-more-start'));
+		var afterElement = lastRenderedTr[metadataId];
+
+		afterElement.next('tr.wcdvgrid_more').find('.spinner').show();
+
+		window.setTimeout(function () {
+			render(metadataId, startIndex, afterElement, showAll);
+			// No need to hide the spinner because the "show more" row should be gone.
+		});
+	}
 
 	// }}}3
 
-	_.each(data.data, function (rowGroup, groupNum) {
-		var tr;
-		var rowVal = data.rowVals[groupNum];
-		var canSkip = true;
-
-		// Create the cells that show the rowVal for this group.
-		//
-		// EXAMPLE
-		// -------
-		//
-		//   groupFields = ["First Name", "Last Name"]
-		//   rowVals = [["Luke", "Skywalker"], ...]
-		//                ^^^^    ^^^^^^^^^ = rowValElt
-		//                0       1         = rowValEltIndex
-		//
-		// <tr>
-		//   <th colspan="N">Luke</th>
-		// </tr>
-		// <tr>
-		//   <td></td>
-		//   <th colspan="N-1">Skywalker</th>
-		// </tr>
-
-		_.each(rowVal, function (rowValElt, rowValEltIndex) {
-			var th;
-
-			// Skip rendering this <TR> if it's for an ancestor of the previously rendered rowVal.
-			//
-			// Example:
-			//
-			//   1. rowVal = ['Elric', 'Alphonse']
-			//     -> rowValEltIndex = 0, render 'Elric' <---+
-			//     -> rowValEltIndex = 1, render 'Alphonse'  |
-			//   2. rowVal = ['Elric', 'Edward']             |
-			//     -> rowValEltIndex = 0, SKIP 'Elric' ------+
-			//     -> rowValEltIndex = 1, render 'Edward'
-			//
-			// You end up getting this:
-			//
-			//   [-] Elric
-			//       [+] Alphonse
-			//       [+] Edward
-
-			if (canSkip && lastRowVal[rowValEltIndex] === rowValElt) {
-				debug.info('GRID TABLE // GROUP (DETAILS) // DRAW BODY', 'Skipping row for "%s" [%d] in row val %s because we already rendered it', rowValElt, rowValEltIndex, JSON.stringify(rowVal));
-				return;
-			}
-			else {
-				canSkip = false;
-			}
-
-			var parentMetadata = rowValEltIndex === 0 ? data.groupMetadata : getProp(data.groupMetadata, 'children', interleaveWith(_.map(rowVal.slice(0, rowValEltIndex), getNatRep), 'children'));
-			var childMetadata = parentMetadata.children[getNatRep(rowVal[rowValEltIndex])];
-
-			tr = jQuery('<tr>')
-				.attr('data-wcdv-in-group', parentMetadata.id)
-				.attr('data-wcdv-toggles-group', childMetadata.id)
-				.attr('data-wcdv-expanded', '0')
-			;
-
-			if (rowValEltIndex > 0) {
-				tr.hide();
-			}
-
-			// Insert spacer columns for previous group fields.
-
-			for (var i = 0; i < rowValEltIndex; i += 1) {
-				tr.append(jQuery('<th>', { 'class': 'wcdv_group_col_spacer' }));
-			}
-
-			var expandBtn = jQuery('<button>', {
-				'type': 'button',
-				'class': 'wcdv_icon_button wcdv_expand_button',
-				'data-wcdv-expanded': '0'
-			})
-				.html(fontAwesome('fa-plus-square-o'))
-				.on('click', toggleGroup)
-			;
-
-			var expandBtnTh = jQuery('<th>', {
-				'class': 'wcdv_group_col_spacer'
-			});
-
-			tr.append(expandBtnTh.append(expandBtn));
-
-			// Create the check box which selects the row.
-
-			if (self.features.rowSelect) {
-				var checkbox = jQuery('<input>', {
-					'type': 'checkbox',
-					'class': 'wcdv_select_group',
-					'data-group-id': childMetadata.id,
-				});
-				self.groupInfo[childMetadata.id].checkbox = checkbox;
-				td = jQuery('<th>').addClass('wcdv_group_col_spacer').append(checkbox).appendTo(tr);
-			}
-
-			if (data.groupMetadata) {
-				var infoText = ' (';
-				var path = interleaveWith(_.map(data.rowVals[groupNum].slice(0, rowValEltIndex + 1), getNatRep), 'children');
-
-				if (rowValEltIndex < data.groupFields.length - 1) {
-					var numSubGroups = getProp(data.groupMetadata, 'children', path, 'numChildren');
-					infoText += '' + numSubGroups + ' group' + (numSubGroups > 1 ? 's' : '');
-					infoText += ', ';
-				}
-
-				infoText += '' + getProp(data.groupMetadata, 'children', path, 'numRows') + ' rows';
-
-				infoText += ')';
-			}
-
-			var groupField = data.groupFields[rowValEltIndex];
-			var fcc = self.colConfig.get(groupField) || {};
-			rowValElt = format(fcc, self.typeInfo.get(groupField), rowValElt);
-			var span = jQuery('<span>');
-			if (rowValElt instanceof Element || rowValElt instanceof jQuery) {
-				span.append(rowValElt);
-			}
-			else if (fcc.allowHtml) {
-				span.html(rowValElt);
-			}
-			else {
-				span.text(rowValElt);
-			}
-
-			th = jQuery('<th>')
-				.addClass('wcdv_group_value')
-				.attr('data-wcdv-field', groupField)
-				.attr('colspan', columns.length - rowValEltIndex)
-				.append(span)
-			;
-
-			if (infoText) {
-				th.append(infoText);
-			}
-
-			th.appendTo(tr);
-
-			self.ui.tbody.append(tr);
-
-			var rowRenderCb = getProp(self.opts, 'events', 'rowRender');
-			if (typeof rowRenderCb === 'function') {
-				rowRenderCb(tr, {
-					isGroup: true,
-					groupMode: 'detail',
-					groupField: groupField,
-					rowValElt: rowValElt,
-					groupMetadata: childMetadata
-				});
-			}
-		});
-
-		lastRowVal = arrayCopy(rowVal);
+	render();
+	self.ui.tbody.on('click', 'button.wcdv_expand_button', toggleGroup);
+	self.ui.tbody.on('click', 'td.wcdv_show_more button.wcdv_show_all', function (evt) {
+		evt.stopPropagation();
+		showMore.call(this, true);
+	});
+	self.ui.tbody.on('click', 'td.wcdv_show_more', function (evt) {
+		showMore.call(this, false);
 	});
 
 	self._updateSelectionGui();
@@ -3428,7 +3555,8 @@ GridTableGroupDetail.prototype._updateSelectionGui = function () {
 		var checkbox = self.root.find('input[type="checkbox"][data-group-id="' + id + '"].wcdv_select_group');
 
 		if (checkbox.length === 0) {
-			log.error('GRID TABLE // GROUP (DETAILS) // UPDATE SELECTION UI -- Unable to locate checkbox for group ' + id);
+			// This can happen when the rows for the sub-groups haven't been rendered yet.
+
 			return;
 		}
 

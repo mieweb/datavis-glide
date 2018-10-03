@@ -535,21 +535,16 @@ tr.wcdv_grid_filterrow th.wcdv_grid_filtercol {
  * The "show more rows" button, shown when using the "more" limit method.
  */
 
-tr.wcdvgrid_more {
+tr.wcdvgrid_more td {
 	background-color: #F6F6F9;
 	border-top: 3px double #808080;
 	font-weight: normal;
-}
-
-tr.wcdvgrid_more td {
 	color: #646464;
 	font-size: .85em;
 	font-weight: normal;
 	padding-bottom: 3px;
 	padding-top: 3px;
-	text-align: center;
 	text-transform: uppercase;
-	vertical-align: bottom;
 	cursor: pointer;
 }
 
@@ -861,6 +856,54 @@ tr.wcdvgrid_more td {
 
 .wcdv_minimal_width {
 	width: 1px;
+}
+
+/******************************************************************************/
+
+.wcdv_group_value > .spinner,
+.wcdvgrid_more .spinner {
+  display: inline-block;
+  margin: auto 0.5em;
+}
+
+.wcdv_group_value > .spinner > div,
+.wcdvgrid_more .spinner > div {
+  width: 10px;
+  height: 10px;
+  background-color: #737373;
+  margin: auto 0.1em;
+
+  border-radius: 100%;
+  display: inline-block;
+  -webkit-animation: sk-bouncedelay 1.4s infinite ease-in-out both;
+  animation: sk-bouncedelay 1.4s infinite ease-in-out both;
+}
+
+.wcdv_group_value > .spinner .bounce1,
+.wcdvgrid_more .spinner .bounce1 {
+  -webkit-animation-delay: -0.32s;
+  animation-delay: -0.32s;
+}
+
+.wcdv_group_value > .spinner .bounce2,
+.wcdvgrid_more .spinner .bounce2 {
+  -webkit-animation-delay: -0.16s;
+  animation-delay: -0.16s;
+}
+
+@-webkit-keyframes sk-bouncedelay {
+  0%, 80%, 100% { -webkit-transform: scale(0) }
+  40% { -webkit-transform: scale(1.0) }
+}
+
+@keyframes sk-bouncedelay {
+  0%, 80%, 100% { 
+    -webkit-transform: scale(0);
+    transform: scale(0);
+  } 40% { 
+    -webkit-transform: scale(1.0);
+    transform: scale(1.0);
+  }
 }
 
 /* vim:set noet sw=4 ts=4: */

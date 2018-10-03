@@ -1956,20 +1956,30 @@ View.prototype.group = function () {
 			}
 		};
 
+		// Build the metadata tree leaves.  Each path through the metadata tree from root to leaf
+		// represents a group, with each step along the way being an element of the rowval.
+
 		for (var rowValIndex = 0; rowValIndex < rowVals.length; rowValIndex += 1) {
 			var rowVal = rowVals[rowValIndex];
-			var metadata = {
+			var metadataLeaf = {
 				rowValIndex: rowValIndex,
 				parent: null,
 				numRows: 0,
 				rows: []
 			};
 
-			result[rowValIndex] = metadata.rows;
+			result[rowValIndex] = metadataLeaf.rows;
 
-			setProp(metadata, metadataTree, 'children', interleaveWith(rowVal, 'children'));
-			metadataTree.lookup.byRowValIndex[rowValIndex] = metadata;
+			setProp(metadataLeaf, metadataTree, 'children', interleaveWith(rowVal, 'children'));
+			metadataTree.lookup.byRowValIndex[rowValIndex] = metadataLeaf;
 		}
+
+		// Build the `rows` property of each metadata tree leaf.  These are the rows that belong in each
+		// group.  Here's how it works:
+		//
+		//   1. Construct the rowval from the data in the row.
+		//   2. Use the rowval as a path to walk the tree to the leaf.
+		//   3. Append the row to the leaf's collection.
 
 		for (var rowIndex = 0; rowIndex < data.length; rowIndex += 1) {
 			var row = data[rowIndex];
@@ -1979,14 +1989,16 @@ View.prototype.group = function () {
 				rowVal[groupFieldIndex] = getNatRep(row.rowData[groupFields[groupFieldIndex]].value);
 			}
 
-			var rowValMetadata = getProp(metadataTree, 'children', interleaveWith(rowVal, 'children'));
-			metadataTree.lookup.byRowNum[row.rowNum] = rowValMetadata;
+			var metadataLeaf = getProp(metadataTree, 'children', interleaveWith(rowVal, 'children'));
+			metadataTree.lookup.byRowNum[row.rowNum] = metadataLeaf;
 
-			rowValMetadata.rows.push(row);
+			metadataLeaf.rows.push(row);
 		}
 
+		// A post-order traversal is used to build the info in the metadata tree from the leaves up.
+
 		var metadataId = 0;
-		var postorder = function (node) {
+		var postorder = function (node, depth) {
 			node.id = metadataId++;
 			node.numRows = 0;
 
@@ -2005,14 +2017,22 @@ View.prototype.group = function () {
 				node.rows = [];
 				_.each(node.children, function (child) {
 					child.parent = node;
-					postorder(child);
+					postorder(child, depth + 1);
 					node.numRows += child.numRows;
 					node.rows = node.rows.concat(child.rows);
 				});
 			}
+
+			if (depth > 0) {
+				node.groupFieldIndex = depth - 1;
+				node.groupField = groupFields[node.groupFieldIndex];
+				if (node.rows != null) {
+					node.rowValCell = node.rows[0].rowData[node.groupField];
+				}
+			}
 		};
 
-		postorder(metadataTree);
+		postorder(metadataTree, 0);
 
 		return {
 			data: result,
