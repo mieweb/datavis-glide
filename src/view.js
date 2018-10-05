@@ -2031,7 +2031,7 @@ View.prototype.group = function () {
 			if (depth > 0) {
 				node.groupFieldIndex = depth - 1;
 				node.groupField = groupFields[node.groupFieldIndex];
-				if (node.rows != null) {
+				if (node.rows != null && node.rows.length > 0) {
 					node.rowValCell = node.rows[0].rowData[node.groupField];
 				}
 			}

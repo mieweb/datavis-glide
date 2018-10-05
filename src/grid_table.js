@@ -3064,12 +3064,15 @@ GridTableGroupDetail.prototype.drawBody = function (data, typeInfo, columns, con
 						.appendTo(childTr);
 				}
 
+				var disabled = childMetadataNode.children == null && childMetadataNode.rows.length === 0;
+
 				expandBtn = jQuery('<button>', {
 					'type': 'button',
 					'class': 'wcdv_icon_button wcdv_expand_button',
-					'data-wcdv-expanded': '0'
+					'data-wcdv-expanded': '0',
+					'disabled': disabled
 				})
-					.html(fontAwesome('fa-plus-square-o'));
+					.html(fontAwesome(disabled ? 'fa-square-o' : 'fa-plus-square-o'));
 
 				jQuery('<th>', {'class': 'wcdv_group_col_spacer'})
 					.append(expandBtn)
@@ -3091,7 +3094,7 @@ GridTableGroupDetail.prototype.drawBody = function (data, typeInfo, columns, con
 
 				fcc = self.colConfig.get(childMetadataNode.groupField) || {};
 
-				rowValElt = format(fcc, self.typeInfo.get(childMetadataNode.groupField), childMetadataNode.rowValCell);
+				rowValElt = format(fcc, self.typeInfo.get(childMetadataNode.groupField), childMetadataNode.rowValCell || childMetadataNode.rowValElt);
 				rowValEltSpan = jQuery('<span>');
 
 				if (rowValElt instanceof Element || rowValElt instanceof jQuery) {
