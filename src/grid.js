@@ -520,6 +520,12 @@ var Grid = function (id, view, defn, tagOpts, cb) {
 	self.ui.aggregateControl = jQuery('<div>', { 'class': 'wcdv_aggregate_control' });
 	self.ui.grid = jQuery('<div>', { 'id': defn.table.id, 'class': 'wcdv_grid_table' });
 
+	if (self.rootHasFixedHeight) {
+		// This is a trick to make 'flex: 1 1 auto' work right in Firefox, IE, Edge.
+		// Otherwise, the table takes up as much space as it needs and doesn't scroll.
+		self.ui.grid.css('height', '0px');
+	}
+
 	if (!self.tagOpts.showControls) {
 		self.ui.controls.hide();
 	}

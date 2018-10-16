@@ -135,7 +135,7 @@ button.wcdv_expand_button > span.fa {
 /******************************************************************************/
 
 .wcdv_grid_content {
-	flex: 1 1 0px;
+	flex: 1 1 auto;
 	display: flex;
 	flex-direction: column;
 	border: 1px solid #c7c7c7;
@@ -259,7 +259,7 @@ button.wcdv_expand_button > span.fa {
 	text-transform: uppercase;
 	font-weight: bold;
 	display: inline-block;
-	flex: 1 1 0px;
+	flex: 1 1 auto;
 }
 
 .wcdv_control_clear_button {
@@ -394,7 +394,7 @@ button.wcdv_expand_button > span.fa {
 
 .wcdv_filter_control ul li .wcdv_field > .wcdv_filter_control_filter_container {
 	margin-left: 1ex;
-	flex: 1 1 0px;
+	flex: 1 1 auto;
 }
 
 .wcdv_filter_control ul li .wcdv_field > .wcdv_filter_control_filter_container > div {
@@ -409,7 +409,7 @@ button.wcdv_expand_button > span.fa {
 
 .wcdv_filter_control ul li .wcdv_field > .wcdv_filter_control_filter_container > div > input,
 .wcdv_filter_control ul li .wcdv_field > .wcdv_filter_control_filter_container > div > div.SumoSelect {
-	flex: 1 1 0px;
+	flex: 1 1 auto;
 }
 
 /*
@@ -429,7 +429,7 @@ div.SumoSelect > div.optWrapper {
 
 .wcdv_grid_table,
 .wcdv_graph_render {
-	flex: 1 1 0px;
+	flex: 1 1 auto;
 }
 
 .wcdv_grid_table th {
