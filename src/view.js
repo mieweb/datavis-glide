@@ -2937,6 +2937,7 @@ View.prototype.clearCache = function () {
 	var self = this;
 
 	self.data = undefined;
+	self.typeInfo = undefined;
 
 	debug.info('VIEW (' + self.name + ')', 'Cleared cache');
 };
