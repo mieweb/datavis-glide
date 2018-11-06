@@ -3232,14 +3232,16 @@ function determineColumns(colConfig, data, typeInfo) {
 			return field.charAt(0) === '_';
 		});
 	}
-	else if (data.isPlain && data.data.length > 0) {
-		columns = _.keys(data.data[0].rowData);
-	}
-	else if (data.isGroup && data.data[0].length > 0) {
-		columns = _.keys(data.data[0][0].rowData);
-	}
-	else if (data.isPivot && data.data[0][0].length > 0) {
-		columns = _.keys(data.data[0][0][0].rowData);
+	else if (data != null) {
+		if (data.isPlain && data.data.length > 0) {
+			columns = _.keys(data.data[0].rowData);
+		}
+		else if (data.isGroup && data.data[0].length > 0) {
+			columns = _.keys(data.data[0][0].rowData);
+		}
+		else if (data.isPivot && data.data[0][0].length > 0) {
+			columns = _.keys(data.data[0][0][0].rowData);
+		}
 	}
 
 	debug.info('DETERMINE COLUMNS', 'Columns = %O', columns);
