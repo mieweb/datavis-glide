@@ -2392,6 +2392,20 @@ var debug = {
 	},
 };
 
+logAsync = (function () {
+	var ids = {};
+	return function (id) {
+		ids[id] = ids[id] == null ? 0 : ids[id] + 1;
+		id += '[' + ids[id] + ']';
+		console.log('~~~ ASYNC: ' + id + ' - START');
+		return {
+			finish: function () {
+				console.log('~~~ ASYNC: ' + id + ' - FINISH');
+			}
+		};
+	};
+})();
+
 /**
  * Issue a warning about deprecated usage.  This also sends an email at the warning level, so that
  * we can see any systems which are using deprecated features.

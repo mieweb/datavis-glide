@@ -156,6 +156,7 @@
 	window.MIE.WC_DataVis.Util.setProp            = setProp;
 	window.MIE.WC_DataVis.Util.parseNumber        = parseNumber;
 	window.MIE.WC_DataVis.Util.deepDefaults       = deepDefaults;
+	window.MIE.WC_DataVis.Util.logAsync           = logAsync;
 })(jQuery);
 
 // vim:set ft=javascript:

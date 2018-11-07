@@ -1606,6 +1606,7 @@ View.prototype.filter = function (cont) {
 				self.filterProgress.update(i, self.data.data.length);
 			}
 
+			logAsync('View#filter');
 			return window.setTimeout(doFilter);
 		}
 		else {
@@ -3060,7 +3061,7 @@ View.prototype.prime = function (cont) {
 	if (self.lock.isLocked()) {
 		return self.lock.onUnlock(function () {
 			self.prime.apply(self, args);
-		});
+		}, 'Waiting to prime');
 	}
 
 	self.lock.lock('Priming!');

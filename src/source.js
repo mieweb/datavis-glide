@@ -219,6 +219,7 @@ HttpSource.prototype.getData = function (params, cont) {
 	var self = this;
 
 	if (self.cache === null) {
+		logAsync('HttpSource#getData');
 		return jQuery.ajax(self.url, {
 			method: self.method,
 			dataType: self.dataType,
