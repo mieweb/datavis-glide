@@ -1011,27 +1011,19 @@ Prefs.prototype.setCurrentPerspective = function (id, cont, opts) {
 		self._resetHistory(self.currentPerspective);
 	}
 
-	self.backend.setCurrent(id, function (ok) {
-		if (!ok) {
-			return cont(false);
-		}
-
-		var f = function () {
+	if (opts.loadPerspective) {
+		return self.currentPerspective.load(null, function () {
 			if (opts.sendEvent) {
 				self.fire('perspectiveChanged', {
 					notTo: opts.dontSendEventTo
 				}, id);
 			}
+			self.backend.setCurrent(id, function (ok) {
+				return cont(ok);
+			});
+		});
+	}
 
-			return cont(true);
-		};
-
-		if (opts.loadPerspective) {
-			return self.currentPerspective.load(null, f);
-		}
-
-		return f();
-	});
 };
 
 // #setCurrentPerspectiveByName {{{2
