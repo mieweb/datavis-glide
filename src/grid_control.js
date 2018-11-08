@@ -847,7 +847,7 @@ GridControl.prototype.addViewConfigChangeHandler = function (event, sync) {
 				self.view.on(event, sync_view, { who: self });
 			}
 			else {
-				self.view.on('getTypeInfo', function () {
+				self.view.on('getTypeInfo', function (ok) {
 					sync_view();
 					self.view.on(event, sync_view, { who: self });
 				}, { limit: 1 });
@@ -1425,7 +1425,10 @@ AggregateControl.prototype.addField = function () {
 	var args = Array.prototype.slice.call(arguments);
 
 	if (self.typeInfo == null) {
-		return self.view.getTypeInfo(function (typeInfo) {
+		return self.view.getTypeInfo(function (ok, typeInfo) {
+			if (!ok) {
+				return;
+			}
 			self.typeInfo = typeInfo;
 			return self.addField.apply(self, args);
 		});

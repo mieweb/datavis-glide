@@ -9,6 +9,7 @@ SourceError.prototype.name = 'SourceError';
 SourceError.prototype.constructor = SourceError;
 
 // LocalSource {{{1
+// Constructor {{{2
 
 var LocalSource = function (spec) {
 	var self = this;
@@ -44,7 +45,7 @@ var LocalSource = function (spec) {
 LocalSource.prototype.getData = function (params, cont) {
 	var self = this;
 
-	return cont(self.cache.data);
+	return cont(true, self.cache.data);
 };
 
 // #getTypeInfo {{{2
@@ -52,7 +53,7 @@ LocalSource.prototype.getData = function (params, cont) {
 LocalSource.prototype.getTypeInfo = function (cont) {
 	var self = this;
 
-	return cont(self.cache.typeInfo);
+	return cont(true, self.cache.typeInfo);
 };
 
 // #clearCachedData {{{2
@@ -72,6 +73,7 @@ LocalSource.prototype.getName = function () {
 };
 
 // HttpSource {{{1
+// Constructor {{{2
 
 var HttpSource = function (spec, params, userTypeInfo) {
 	var self = this;
@@ -218,22 +220,25 @@ HttpSource.prototype.parseData = function (data) {
 HttpSource.prototype.getData = function (params, cont) {
 	var self = this;
 
-	if (self.cache === null) {
-		logAsync('HttpSource#getData');
-		return jQuery.ajax(self.url, {
-			method: self.method,
-			dataType: self.dataType,
-			error: function (jqXHR, textStatus, errorThrown) {
-				throw new SourceError('HTTP Data Source / AJAX Error / ' + errorThrown.message);
-			},
-			success: function (data, textStatus, jqXHR) {
-				self.cache = self.parseData(data);
-				return self.getData(params, cont);
-			}
-		});
+	if (self.cache != null) {
+		return cont(true, self.cache.data);
 	}
 
-	return cont(self.cache.data);
+	var al = logAsync('HttpSource#getData');
+	return jQuery.ajax(self.url, {
+		method: self.method,
+		dataType: self.dataType,
+		error: function (jqXHR, textStatus, errorThrown) {
+			al.finish();
+			log.error('HTTP Data Source / AJAX Error / ' + errorThrown);
+			return cont(false);
+		},
+		success: function (data, textStatus, jqXHR) {
+			al.finish();
+			self.cache = self.parseData(data);
+			return cont(true, self.cache.data);
+		}
+	});
 };
 
 // #getTypeInfo {{{2
@@ -241,13 +246,17 @@ HttpSource.prototype.getData = function (params, cont) {
 HttpSource.prototype.getTypeInfo = function (cont) {
 	var self = this;
 
-	if (self.cache === null) {
-		return self.getData(undefined, function () {
-			return self.getTypeInfo(cont);
-		});
+	if (self.cache != null) {
+		return cont(true, self.cache.typeInfo);
 	}
 
-	return cont(self.cache.typeInfo);
+	return self.getData(undefined, function (ok) {
+		if (!ok) {
+			return cont(false);
+		}
+
+		return cont(true, self.cache.typeInfo);
+	});
 };
 
 // #clearCachedData {{{2
@@ -259,6 +268,7 @@ HttpSource.prototype.clearCachedData = function () {
 };
 
 // FileSource {{{1
+// Constructor {{{2
 
 var FileSource = function (spec, params, userTypeInfo, source) {
 	var self = this;
@@ -337,7 +347,7 @@ FileSource.prototype.setFiles = function (files) {
 FileSource.prototype.getData = function (params, cont) {
 	var self = this;
 
-	return cont(self.cache.data);
+	return cont(true, self.cache.data);
 };
 
 // #getTypeInfo {{{2
@@ -345,7 +355,7 @@ FileSource.prototype.getData = function (params, cont) {
 FileSource.prototype.getTypeInfo = function (cont) {
 	var self = this;
 
-	return cont(self.cache.typeInfo);
+	return cont(true, self.cache.typeInfo);
 };
 
 // Source {{{1
@@ -590,22 +600,27 @@ Source.prototype.getData = function (cont) {
 		});
 	}
 
-	if (!isNothing(self.cache.data)) {
-		return cont(self.cache.data);
+	if (self.cache.data != null) {
+		return cont(true, self.cache.data);
 	}
 
 	self.locks.getData.lock();
-	return self.origin.getData(self.createParams(), function (data) {
+	return self.origin.getData(self.createParams(), function (ok, data) {
+		if (!ok) {
+			self.locks.getData.unlock();
+			return cont(false);
+		}
+
 		if (self.type === 'local') {
 			self.cache.data = data;
 			self.locks.getData.unlock();
-			return cont(data);
+			return cont(true, data);
 		}
 		else {
 			self.postProcess(data, function (finalData) {
 				self.cache.data = finalData;
 				self.locks.getData.unlock();
-				return cont(finalData);
+				return cont(true, finalData);
 			});
 		}
 	});
@@ -668,11 +683,15 @@ Source.prototype.getUniqueVals = function (cont) {
 Source.prototype.getTypeInfo = function (cont) {
 	var self = this;
 
-	if (!isNothing(self.cache.typeInfo)) {
-		return cont(self.cache.typeInfo);
+	if (self.cache.typeInfo != null) {
+		return cont(true, self.cache.typeInfo);
 	}
 
-	return self.origin.getTypeInfo(function (typeInfo) {
+	return self.origin.getTypeInfo(function (ok, typeInfo) {
+		if (!ok) {
+			return cont(false);
+		}
+
 		// When the type information for a field is just a string, then that's the same as setting it as
 		// the 'type' property of the full object.
 
@@ -708,7 +727,7 @@ Source.prototype.getTypeInfo = function (cont) {
 		debug.info('SOURCE // GET TYPE INFO', 'Type Info = %O', deepCopy(self.cache.typeInfo.asMap()));
 
 		self.fire(Source.events.getTypeInfo, null, self.cache.typeInfo, self);
-		return cont(self.cache.typeInfo);
+		return cont(true, self.cache.typeInfo);
 	});
 };
 
@@ -747,7 +766,11 @@ Source.prototype.postProcess = function (data, cont) {
 
 	debug.info('SOURCE // POST-PROCESSING', 'Beginning post-processing');
 
-	self.getTypeInfo(function (typeInfo) {
+	self.getTypeInfo(function (ok, typeInfo) {
+		if (!ok) {
+			return cont(data);
+		}
+
 		debug.info('SOURCE // POST-PROCESSING', 'Received type info from source origin: %O', typeInfo.asMap());
 
 		// Post-processing involves converting the data received from the source into a form that will

@@ -2814,6 +2814,10 @@ View.prototype.aggregate = function (cont) {
 View.prototype.getData = function (cont) {
 	var self = this;
 
+	if (typeof cont !== 'function') {
+		throw new Error('Call Error: `cont` must be a function');
+	}
+
 	if (self.lock.isLocked()) {
 		return self.lock.onUnlock(function () {
 			self.getData(cont);
@@ -2823,15 +2827,29 @@ View.prototype.getData = function (cont) {
 	if (self.data !== undefined) {
 		debug.info('VIEW (' + self.name + ')', 'Got cached data: %O', self.data);
 		if (typeof cont === 'function') {
-			return cont(self.data);
+			return cont(true, self.data);
 		}
+	}
+
+	var fail = function () {
+		self.fire('fetchDataEnd');
+		self.lock.unlock();
+		return cont(false);
 	}
 
 	self.lock.lock();
 
 	self.fire('fetchDataBegin');
-	return self.source.getData(function (data) {
-		return self.getTypeInfo(function (typeInfo) {
+	return self.source.getData(function (ok, data) {
+		if (!ok) {
+			return fail();
+		}
+
+		return self.getTypeInfo(function (ok, typeInfo) {
+			if (!ok) {
+				return fail();
+			}
+
 			self.fire('fetchDataEnd');
 			self.fire('workBegin');
 
@@ -2899,7 +2917,7 @@ View.prototype.getData = function (cont) {
 						self.lock.unlock();
 						debug.info('VIEW (' + self.name + ')', 'Got new data: %O', self.data);
 						if (typeof cont === 'function') {
-							return cont(self.data);
+							return cont(true, self.data);
 						}
 					}); // -- self.sort()
 				}); // -- self.aggregate()
@@ -2922,13 +2940,17 @@ View.prototype.getTypeInfo = function (cont) {
 	}
 
 	if (self.typeInfo != null) {
-		return cont(self.typeInfo);
+		return cont(true, self.typeInfo);
 	}
 
-	return self.source.getTypeInfo(function (typeInfo) {
+	return self.source.getTypeInfo(function (ok, typeInfo) {
+		if (!ok) {
+			return cont(false);
+		}
+
 		self.typeInfo = typeInfo;
 		self.fire('getTypeInfo', null, self.typeInfo, self.colConfig);
-		return cont(self.typeInfo);
+		return cont(true, self.typeInfo);
 	});
 };
 

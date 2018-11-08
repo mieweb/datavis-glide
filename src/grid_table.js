@@ -930,7 +930,11 @@ GridTable.prototype._getAggInfo = function (data) {
 GridTable.prototype.draw = function (root, opts, cont) {
 	var self = this;
 
-	return self.super.draw(root, opts, function (data, typeInfo) {
+	return self.super.draw(root, opts, function (ok, data, typeInfo) {
+		if (!ok) {
+			return cont();
+		}
+
 		if (self.features.limit && self.defn.table.limit.method === 'more') {
 			self.scrollEventElement = self.opts.fixedHeight ? self.root : window;
 			jQuery(self.scrollEventElement).on(self.scrollEvents, function () {

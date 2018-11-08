@@ -100,10 +100,18 @@ GridRenderer.prototype.draw = function (root, opts, cont) {
 
 	self.clear();
 
-	return self.view.getData(function (data) {
+	return self.view.getData(function (ok, data) {
+		if (!ok) {
+			return cont(false);
+		}
+
 		debug.info('GRID RENDERER // DRAW', 'Data = %O', data);
 
-		return self.view.getTypeInfo(function (typeInfo) {
+		return self.view.getTypeInfo(function (ok, typeInfo) {
+			if (!ok) {
+				return cont(false);
+			}
+
 			debug.info('GRID RENDERER // DRAW', 'TypeInfo = %O', typeInfo.asMap());
 
 			if ((data.isPlain && !self.canRender('plain'))
@@ -123,7 +131,7 @@ GridRenderer.prototype.draw = function (root, opts, cont) {
 
 			self.timing.start(['Grid Renderer', 'Draw']);
 
-			return cont(data, typeInfo);
+			return cont(true, data, typeInfo);
 		});
 	});
 };
@@ -278,7 +286,17 @@ GridRendererHandlebars.prototype._draw_pivot = function (root, data, typeInfo, o
 GridRendererHandlebars.prototype.draw = function (root, cont, opts) {
 	var self = this;
 
-	return self.super.draw(root, opts, function (data, typeInfo) {
+	if (cont != null && typeof cont !== 'function') {
+		throw new Error('Call Error: `cont` must be null or a function');
+	}
+
+	cont = cont || I;
+
+	return self.super.draw(root, opts, function (ok, data, typeInfo) {
+		if (!ok) {
+			return cont();
+		}
+
 		if (data.isPlain) {
 			self.template = Handlebars.compile(self.opts.whenPlain.template);
 			self._draw_plain(root, data, typeInfo, opts);
@@ -292,7 +310,7 @@ GridRendererHandlebars.prototype.draw = function (root, cont, opts) {
 			self._draw_group(root, data, typeInfo, opts);
 		}
 		self.addWorkHandler();
-		return typeof cont === 'function' ? cont() : null;
+		return cont();
 	});
 };
 
