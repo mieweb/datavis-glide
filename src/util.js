@@ -3347,3 +3347,29 @@ function uuid() {
 		return v.toString(16);
 	});
 }
+
+// EagerPipeline {{{1
+
+var EagerPipeline = makeSubclass('EagerPipeline', Object, function (x) {
+	this.x = x;
+});
+
+// #andThen {{{2
+
+EagerPipeline.prototype.andThen = function (f) {
+	var x = this.x;
+	return new EagerPipeline(f(x));
+};
+
+// #andThenCurry {{{2
+
+EagerPipeline.prototype.andThenCurry = function () {
+	var f = MIE.WC_DataVis.Util.curry.apply(null, arguments);
+	return this.andThen.call(this, f);
+};
+
+// #done {{{2
+
+EagerPipeline.prototype.done = function () {
+	return this.x;
+};
