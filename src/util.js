@@ -317,11 +317,15 @@ function trulyYours(cont, spec, thisArg, acc) {
  */
 
 function curry() {
-	var args = Array.prototype.slice.call(arguments);
-	var fn = args.shift();
-
-	return function() {
-		return fn.apply(this, args.concat(Array.prototype.slice.call(arguments)));
+	var curryArgs = Array.prototype.slice.call(arguments);
+	var fn = curryArgs.shift();
+	var placeholderIndex = curryArgs.indexOf('#');
+	return function () {
+		var args = Array.prototype.slice.call(arguments);
+		var fnArgs = curryArgs.slice();
+		var spliceArgs = placeholderIndex === -1 ? [fnArgs.length, 0] : [placeholderIndex, 1];
+		Array.prototype.splice.apply(fnArgs, spliceArgs.concat(args));
+		return fn.apply(this, fnArgs);
 	};
 }
 
