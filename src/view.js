@@ -2814,9 +2814,11 @@ View.prototype.aggregate = function (cont) {
 View.prototype.getData = function (cont) {
 	var self = this;
 
-	if (typeof cont !== 'function') {
-		throw new Error('Call Error: `cont` must be a function');
+	if (cont != null && typeof cont !== 'function') {
+		throw new Error('Call Error: `cont` must be null or a function');
 	}
+
+	cont = cont || I;
 
 	if (self.lock.isLocked()) {
 		return self.lock.onUnlock(function () {
