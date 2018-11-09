@@ -35,9 +35,17 @@ var LocalSource = function (spec) {
 		typeInfo: new OrdMap()
 	};
 
-	_.each(window[self.varName].typeInfo, function (fti) {
-		self.cache.typeInfo.set(fti.field, fti);
-	});
+	if (_.isArray(window[self.varName].typeInfo)) {
+		_.each(window[self.varName].typeInfo, function (fti) {
+			self.cache.typeInfo.set(fti.field, fti);
+		});
+	}
+	else {
+		_.each(window[self.varName].typeInfo, function (fti, field) {
+			fti.field = field;
+			self.cache.typeInfo.set(field, fti);
+		});
+	}
 };
 
 // #getData {{{2
