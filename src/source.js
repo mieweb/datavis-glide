@@ -619,7 +619,7 @@ Source.prototype.getData = function (cont) {
 			return cont(false);
 		}
 
-		if (self.type === 'local') {
+		if (/* FIXME: Add option to disable post-processing */ false && self.type === 'local') {
 			self.cache.data = data;
 			self.locks.getData.unlock();
 			return cont(true, data);
@@ -838,6 +838,26 @@ Source.prototype.postProcess = function (data, cont) {
 
 		self.guessTypes(data, typeInfo);
 
+		// Set default internal representations for all supported types.
+
+		typeInfo.each(function (fti) {
+			if (fti.internalType == null) {
+				switch (fti.type) {
+				case 'string':
+					fti.internalType = 'string';
+					break;
+				case 'number':
+				case 'currency':
+					fti.internalType = 'primitive';
+					break;
+				case 'date':
+				case 'datetime':
+					fti.internalType = 'moment';
+					break;
+				}
+			}
+		});
+
 		// Step #2 - Update the type information with whether the internal representation (i.e. numeral
 		// or moment) conversion of a field should be deferred or not.
 
@@ -851,7 +871,7 @@ Source.prototype.postProcess = function (data, cont) {
 				var fti = typeInfo.get(field);
 
 				if (fti != null && !fti.deferDecoding) {
-					self.convertCell(row, field);
+					convert(row[field], fti);
 				}
 			});
 		});
@@ -901,6 +921,8 @@ Source.prototype.guessTypes = function (data, typeInfo) {
 			return;
 		}
 
+		debug.info('DATA SOURCE // CONVERSION // TYPE GUESSING', 'Guessing type for field "%s"', fti.field);
+
 		var guess = null;
 
 		for (var i = 0; guess !== 'string' && i < data.length; i += 1) {
@@ -934,7 +956,13 @@ Source.prototype.setConversionTypeInfo = function (data, typeInfo) {
 
 			if (fti.type === 'number' || fti.type === 'currency') {
 				fti.needsDecoding = true;
-				fti.internalType = 'primitive';
+				if (fti.internalType == null) {
+					fti.internalType = 'primitive';
+				}
+				else if (['primitive', 'numeral'].indexOf(fti.internalType) < 0) {
+					log.error('Invalid internalType "' + fti.internalType + '" requested for field "' + fti.field + '" - falling back to "primitive" instead');
+					fti.internalType = 'primitive';
+				}
 			}
 			else if (fti.type === 'date' || fti.type === 'datetime') {
 				if ((fti.type === 'date' && (fti.format === undefined || fti.format === 'YYYY-MM-DD'))
@@ -957,90 +985,6 @@ Source.prototype.setConversionTypeInfo = function (data, typeInfo) {
 	});
 };
 
-// #convertCell {{{2
-
-/**
- * Converts a cell of data into an appropriate internal representation, regardless of whether
- * conversion has been deferred on that field or not.
- *
- * @param {object} row The `rowData` property of a row object.
- * @param {string} field Name of the field this data cell belongs to.
- */
-
-Source.prototype.convertCell = function (row, field) {
-	var self = this
-		, fti = self.cache.typeInfo.get(field)
-		, cell = row[field];
-
-	switch (fti.type) {
-	case 'number':
-	case 'currency':
-		if (cell.orig === undefined) {
-			cell.orig = cell.value;
-		}
-
-		if (typeof cell.value === 'number') {
-			switch (fti.internalType) {
-			case 'primitive':
-				// number -> primitive ... Nothing to do.
-				break;
-			default:
-				log.error('Unable to convert cell value, invalid internal type: field = "%s" ; type = %s ; internalType = %s ; valueTypeOf = %s ; value = %O', field, fti.type, fti.internalType, typeof(cell.value), cell.value);
-			}
-		}
-		else if (typeof cell.value === 'string') {
-			if (cell.value === '') {
-				cell.value = null;
-			}
-			else {
-				switch (fti.internalType) {
-				case 'primitive':
-					// string -> primitive
-					var newVal = parseNumber(cell.value);
-					if (newVal != null) {
-						cell.value = newVal;
-					}
-					else {
-						log.error('Unable to convert cell value, cannot decode to primitive number: field = "%s" ; type = %s ; internalType = %s ; valueTypeOf = %s ; value = %O', field, fti.type, fti.internalType, typeof(cell.value), cell.value);
-					}
-					break;
-				default:
-					log.error('Unable to convert cell value, invalid internal type: field = "%s" ; type = %s ; internalType = %s ; valueTypeOf = %s ; value = %O', field, fti.type, fti.internalType, typeof(cell.value), cell.value);
-				}
-			}
-		}
-		else {
-			log.error('Unable to convert cell value: { field = "%s", type = "%s", valueTypeOf = "%s" }',
-				field, fti.type, typeof(cell.value));
-		}
-		break;
-	case 'date':
-	case 'time':
-	case 'datetime':
-		if (cell.orig === undefined) {
-			cell.orig = cell.value;
-		}
-		if (typeof cell.value === 'string') {
-			switch (fti.internalType) {
-			case 'moment':
-				cell.value = moment(cell.value, fti.format);
-				break;
-			case 'string':
-				/* NOTHING */
-				break;
-			default:
-				log.error('Unable to convert cell value, invalid internal type "%s": { field = "%s", type = "%s", valueTypeOf = "%s" }',
-									fti.internalType, field, fti.type, typeof(cell.value));
-			}
-		}
-		else if (typeof cell.value !== 'string' && (window.moment ? !window.moment.isMoment(cell.value) : true)) {
-			log.error('Unable to convert cell value: { field = "%s", type = "%s", valueTypeOf = "%s" }',
-								field, fti.type, typeof(cell.value));
-		}
-		break;
-	}
-};
-
 // #convertAll {{{2
 
 Source.prototype.convertAll = function (data, field) {
@@ -1054,7 +998,7 @@ Source.prototype.convertAll = function (data, field) {
 	debug.info('SOURCE // CONVERSION', 'Converting all values: field = "%s" ; type = %s ; internalType = %s ; valueTypeOf = %s', field, fti.type, fti.internalType, typeof(getProp(data, 0, field, 'value')));
 
 	_.each(data, function (row) {
-		self.convertCell(row, field);
+		convert(row[field], self.cache.typeInfo.get(field));
 	});
 
 	fti.deferDecoding = false;
