@@ -107,13 +107,13 @@ function test_number() {
 		for (var i = 0; i < pass.length; i += 1) {
 			var testValue = pass[i][0];
 			var expected = pass[i][1];
-			var actual = MIE.Util.parseNumber(testValue);
+			var actual = MIE.WC_DataVis.Util.parseNumber(testValue);
 			assert.equal(actual, expected, testValue + ' → ' + actual + ' / ' + expected);
 		}
 		for (var i = 0; i < fail.length; i += 1) {
 			var testValue = fail[i];
 			var expected = null;
-			var actual = MIE.Util.parseNumber(testValue);
+			var actual = MIE.WC_DataVis.Util.parseNumber(testValue);
 			assert.equal(actual, expected, testValue + ' → ' + actual + ' / ' + expected);
 		}
 	});

@@ -39,7 +39,7 @@ window.test_group = function (view) {
 
 	QUnit.test('Group Test', function (assert) {
 		var done = assert.async();
-		MIE.Util.asyncEach(groupInfo, function (gi, next) {
+		MIE.WC_DataVis.Util.asyncEach(groupInfo, function (gi, next) {
 			var fields = gi[0];
 			var numGroups = gi[1];
 			var result = gi[2];
@@ -47,7 +47,7 @@ window.test_group = function (view) {
 			view.setGroup({ fieldNames: fields }, {
 				updateData: false
 			});
-			view.getData(function (data) {
+			view.getData(function (ok, data) {
 				var tag = JSON.stringify(fields);
 				assert.deepEqual(data.groupFields, fields, tag + ': group fields');
 				for (var i = 0; i < result.length; i += 2) {

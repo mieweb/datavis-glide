@@ -92,7 +92,7 @@ window.test_group_sort = function (view) {
 
 	QUnit.test('Group Sort Test', function (assert) {
 		var done = assert.async();
-		MIE.Util.asyncEach(sortInfo, function (si, next) {
+		MIE.WC_DataVis.Util.asyncEach(sortInfo, function (si, next) {
 			view.reset();
 			view.setGroup({fieldNames: [si.field]}, {
 				updateData: false
@@ -100,7 +100,7 @@ window.test_group_sort = function (view) {
 			view.setSort({ vertical: { groupFieldIndex: 0, dir: 'ASC' }}, {
 				updateData: false
 			});
-			view.getData(function (data) {
+			view.getData(function (ok, data) {
 				var actual = data.rowVals[0][0];
 				if (si.extract) {
 					actual = si.extract(actual);
@@ -114,7 +114,7 @@ window.test_group_sort = function (view) {
 				view.setSort({ vertical: { groupFieldIndex: 0, dir: 'DESC' }}, {
 					updateData: false
 				});
-				view.getData(function (data) {
+				view.getData(function (ok, data) {
 					var actual = data.rowVals[0][0];
 					if (si.extract) {
 						actual = si.extract(actual);

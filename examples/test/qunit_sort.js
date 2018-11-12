@@ -18,7 +18,7 @@ window.test_sort = function (view) {
 
 	QUnit.test('Sort Test', function (assert) {
 		var done = assert.async();
-		MIE.Util.asyncEach(sortInfo, function (si, next) {
+		MIE.WC_DataVis.Util.asyncEach(sortInfo, function (si, next) {
 			var field = si[0];
 			var min = si[1];
 			var max = si[2];
@@ -27,12 +27,12 @@ window.test_sort = function (view) {
 			view.setSort({ vertical: { field: field, dir: 'ASC' }}, {
 				updateData: false
 			});
-			view.getData(function (data) {
+			view.getData(function (ok, data) {
 				var cell = data.data[0].rowData[field];
 				assert.equal(cell.orig || cell.value, min, info);
 				view.reset();
 				view.setSort({ vertical: { field: field, dir: 'DESC' }});
-				view.getData(function (data) {
+				view.getData(function (ok, data) {
 					var cell = data.data[0].rowData[field];
 					assert.equal(cell.orig || cell.value, max, info);
 					return next();

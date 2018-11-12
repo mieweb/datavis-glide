@@ -111,9 +111,9 @@ window.test_aggregates = function (view) {
 			updateData: false
 		});
 
-		MIE.Util.asyncEach(expected, function (e, e_next) {
-			MIE.Util.asyncEach(e.agg, function (a, a_next) {
-				view.setAggregate(MIE.Util.objFromArray(['group', 'pivot', 'cell', 'all'],
+		MIE.WC_DataVis.Util.asyncEach(expected, function (e, e_next) {
+			MIE.WC_DataVis.Util.asyncEach(e.agg, function (a, a_next) {
+				view.setAggregate(MIE.WC_DataVis.Util.objFromArray(['group', 'pivot', 'cell', 'all'],
 					[[{
 						fun: e.fun,
 						fields: a.fields,
@@ -121,7 +121,7 @@ window.test_aggregates = function (view) {
 							typeInfo: [{type: a.type}]
 						}
 					}]]));
-				view.getData(function (data) {
+				view.getData(function (ok, data) {
 					_.each(a.result, function (r, i) {
 						var actual = data.agg.results.cell[0][i][i];
 						var info = 'fun = ' + e.fun + ' ; fields = ' + JSON.stringify(a.fields) + ' ; country = ' + country[i] + ' ; fruit = ' + fruit[i] + ' ; expected = ' + r + ' ; actual = ' + actual;
