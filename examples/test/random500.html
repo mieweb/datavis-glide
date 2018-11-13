@@ -19,6 +19,7 @@
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-contextmenu/2.6.3/jquery.contextMenu.min.js"></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.8.3/modernizr.min.js"></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/detectizr/2.2.0/detectizr.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/bignumber.js/8.0.1/bignumber.min.js"></script>
 		<script src="../tabletool.js"></script>
 		<script src="../wcdatavis.js"></script>
 		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.css"/>
@@ -39,11 +40,7 @@ $(document).ready(function () {
 		type: 'http',
 		url: 'random500.json'
 	});
-	var prefs = new MIE.WC_DataVis.Prefs('example_random500', null, {
-		backend: {
-			type: 'temporary'
-		}
-	});
+	var prefs = new MIE.WC_DataVis.Prefs('EXAMPLE:RANDOM');
 	var view = new MIE.WC_DataVis.View(source, 'Random 500', {
 		prefs: prefs
 	});

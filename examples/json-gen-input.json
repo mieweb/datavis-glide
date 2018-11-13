@@ -10,9 +10,21 @@
       , "int1": "$< random_int('int1', 0, 9999, output_type='number') >$"
       , "int2": "$< random_int('int2', 0, 9999, output_type='string') >$"
       , "int3": "$< random_int('int3', 0, 9999, output_type='string', format='#,##0') >$"
+      , "int4": "$< random_int('int4', 0, 9999, output_type='number') >$"
+      , "int5": "$< random_int('int5', 0, 9999, output_type='string') >$"
+      , "int6": "$< random_int('int6', 0, 9999, output_type='string', format='#,##0') >$"
+      , "int7": "$< random_int('int7', 0, 9999, output_type='number') >$"
+      , "int8": "$< random_int('int8', 0, 9999, output_type='string') >$"
+      , "int9": "$< random_int('int9', 0, 9999, output_type='string', format='#,##0') >$"
       , "float1": "$< random_float('float1', 0, 9999, output_type='number') >$"
       , "float2": "$< random_float('float2', 0, 9999, output_type='string') >$"
       , "float3": "$< random_float('float3', 0, 9999, output_type='string', format='#,##0.###') >$"
+      , "float4": "$< random_float('float4', 0, 9999, output_type='number') >$"
+      , "float5": "$< random_float('float5', 0, 9999, output_type='string') >$"
+      , "float6": "$< random_float('float6', 0, 9999, output_type='string', format='#,##0.###') >$"
+      , "float7": "$< random_float('float7', 0, 9999, output_type='number') >$"
+      , "float8": "$< random_float('float8', 0, 9999, output_type='string') >$"
+      , "float9": "$< random_float('float9', 0, 9999, output_type='string', format='#,##0.###') >$"
       , "currency1": "$< random_float('currency1', 0, 9999, output_type='number', fixed=2) >$"
       , "currency2": "$< random_float('currency2', 0, 9999, output_type='string', format='#,##0.##') >$"
       , "currency3": "$< random_float('currency3', 0, 9999, output_type='string', format='$#,##0.##') >$"
@@ -32,12 +44,24 @@
     , { "field": "country", "type": "string" }
     , { "field": "state", "type": "string" }
     , { "field": "fruit", "type": "string" }
-    , { "field": "int1", "type": "number" }
-    , { "field": "int2", "type": "number" }
-    , { "field": "int3", "type": "number" }
-    , { "field": "float1", "type": "number" }
-    , { "field": "float2", "type": "number" }
-    , { "field": "float3", "type": "number" }
+    , { "field": "int1", "type": "number", "internalType": "primitive" }
+    , { "field": "int2", "type": "number", "internalType": "primitive" }
+    , { "field": "int3", "type": "number", "internalType": "primitive" }
+    , { "field": "int4", "type": "number", "internalType": "numeral" }
+    , { "field": "int5", "type": "number", "internalType": "numeral" }
+    , { "field": "int6", "type": "number", "internalType": "numeral" }
+    , { "field": "int7", "type": "number", "internalType": "bignumber" }
+    , { "field": "int8", "type": "number", "internalType": "bignumber" }
+    , { "field": "int9", "type": "number", "internalType": "bignumber" }
+    , { "field": "float1", "type": "number", "internalType": "primitive" }
+    , { "field": "float2", "type": "number", "internalType": "primitive" }
+    , { "field": "float3", "type": "number", "internalType": "primitive" }
+    , { "field": "float4", "type": "number", "internalType": "numeral" }
+    , { "field": "float5", "type": "number", "internalType": "numeral" }
+    , { "field": "float6", "type": "number", "internalType": "numeral" }
+    , { "field": "float7", "type": "number", "internalType": "bignumber" }
+    , { "field": "float8", "type": "number", "internalType": "bignumber" }
+    , { "field": "float9", "type": "number", "internalType": "bignumber" }
     , { "field": "currency1", "type": "currency" }
     , { "field": "currency2", "type": "currency" }
     , { "field": "currency3", "type": "currency" }

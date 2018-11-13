@@ -4,7 +4,10 @@ window.test_aggregates = function (view) {
 
 	var compare = {
 		numeral: function (actual, expected) {
-			return expected == null ? actual == null : numeral.isNumeral(actual) && actual._value === expected;
+			return expected == null ? actual == null : numeral.isNumeral(actual) && actual.value() === expected;
+		},
+		bignumber: function (actual, expected) {
+			return expected == null ? actual == null : BigNumber.isBigNumber(actual) && actual.valueOf() === expected + '';
 		},
 		moment: function (actual, expected) {
 			return expected == null ? actual == null : moment.isMoment(actual) && actual.format('YYYY-MM-DD') == expected;
@@ -30,6 +33,36 @@ window.test_aggregates = function (view) {
 			fields: ['int3'],
 			type: 'number',
 			result: [undefined, 3762, 2038, 2300, 619, 216, 138, 128, 4230, undefined],
+		}, {
+			fields: ['int4'],
+			type: 'number',
+			result: [undefined, 3762, 2038, 2300, 619, 216, 138, 128, 4230, undefined],
+			compare: compare.numeral,
+		}, {
+			fields: ['int5'],
+			type: 'number',
+			result: [undefined, 3762, 2038, 2300, 619, 216, 138, 128, 4230, undefined],
+			compare: compare.numeral,
+		}, {
+			fields: ['int6'],
+			type: 'number',
+			result: [undefined, 3762, 2038, 2300, 619, 216, 138, 128, 4230, undefined],
+			compare: compare.numeral,
+		}, {
+			fields: ['int7'],
+			type: 'number',
+			result: [undefined, 3762, 2038, 2300, 619, 216, 138, 128, 4230, undefined],
+			compare: compare.bignumber,
+		}, {
+			fields: ['int8'],
+			type: 'number',
+			result: [undefined, 3762, 2038, 2300, 619, 216, 138, 128, 4230, undefined],
+			compare: compare.bignumber,
+		}, {
+			fields: ['int9'],
+			type: 'number',
+			result: [undefined, 3762, 2038, 2300, 619, 216, 138, 128, 4230, undefined],
+			compare: compare.bignumber,
 		}, {
 			fields: ['float1'],
 			type: 'number',
@@ -72,6 +105,36 @@ window.test_aggregates = function (view) {
 			type: 'number',
 			result: [undefined, 4768, 9559, 9777, 9966, 9934, 9671, 7649, 9921, undefined],
 		}, {
+			fields: ['int4'],
+			type: 'number',
+			result: [undefined, 4768, 9559, 9777, 9966, 9934, 9671, 7649, 9921, undefined],
+			compare: compare.numeral,
+		}, {
+			fields: ['int5'],
+			type: 'number',
+			result: [undefined, 4768, 9559, 9777, 9966, 9934, 9671, 7649, 9921, undefined],
+			compare: compare.numeral,
+		}, {
+			fields: ['int6'],
+			type: 'number',
+			result: [undefined, 4768, 9559, 9777, 9966, 9934, 9671, 7649, 9921, undefined],
+			compare: compare.numeral,
+		}, {
+			fields: ['int7'],
+			type: 'number',
+			result: [undefined, 4768, 9559, 9777, 9966, 9934, 9671, 7649, 9921, undefined],
+			compare: compare.bignumber,
+		}, {
+			fields: ['int8'],
+			type: 'number',
+			result: [undefined, 4768, 9559, 9777, 9966, 9934, 9671, 7649, 9921, undefined],
+			compare: compare.bignumber,
+		}, {
+			fields: ['int9'],
+			type: 'number',
+			result: [undefined, 4768, 9559, 9777, 9966, 9934, 9671, 7649, 9921, undefined],
+			compare: compare.bignumber,
+		}, {
 			fields: ['float1'],
 			type: 'number',
 			result: [undefined, 7497.945848259077, 9761.31834703292, 9744.630654275461, 9168.495238256613, 8710.055326779791, 9873.722758763914, 7342.059137229501, 7892.5880545143655, undefined],
@@ -100,6 +163,21 @@ window.test_aggregates = function (view) {
 		}]
 	}];
 
+	function toString(x) {
+		if (numeral.isNumeral(x)) {
+			return 'Numeral(' + x.value() + ')';
+		}
+		else if (BigNumber.isBigNumber(x)) {
+			return 'BigNumber(' + x.valueOf() + ')';
+		}
+		else if (moment.isMoment(x)) {
+			return 'Moment(' + x.toString() + ')';
+		}
+		else {
+			return x;
+		}
+	}
+
 	QUnit.test('Aggregate Test', function (assert) {
 		var done = assert.async();
 
@@ -124,7 +202,7 @@ window.test_aggregates = function (view) {
 				view.getData(function (ok, data) {
 					_.each(a.result, function (r, i) {
 						var actual = data.agg.results.cell[0][i][i];
-						var info = 'fun = ' + e.fun + ' ; fields = ' + JSON.stringify(a.fields) + ' ; country = ' + country[i] + ' ; fruit = ' + fruit[i] + ' ; expected = ' + r + ' ; actual = ' + actual;
+						var info = 'fun = ' + e.fun + ' ; fields = ' + JSON.stringify(a.fields) + ' ; country = ' + country[i] + ' ; fruit = ' + fruit[i] + ' ; expected = ' + r + ' ; actual = ' + toString(actual);
 						if (a.compare) {
 							assert.ok(a.compare(actual, r), info);
 						}
