@@ -1,5 +1,5 @@
 SOURCE=$(wildcard src/*.js)
-DIST_FILES=$(addprefix dist/,wcdatavis.js wcdatavis.css)
+DIST_FILES=$(addprefix dist/,wcdatavis.js wcdatavis.min.js wcdatavis.css)
 EXAMPLE_FILES=$(patsubst dist/%,examples/%,$(DIST_FILES))
 PANDOC_FILES=index getting_started examples overview source view grid grid_filter \
 	     grid_filter_set grid_table graph prefs perspective events performance \
@@ -8,10 +8,13 @@ PANDOC_INPUT=$(addprefix doc/,$(addsuffix .pandoc,$(PANDOC_FILES)))
 
 .PHONY:	doc jsdoc pandoc examples clean tags
 
-all:	dist/wcdatavis.js examples
+all:	dist/wcdatavis.min.js examples
 
-dist/wcdatavis.js:	wcdatavis.src $(SOURCE)
-	./bin/jspp -o $@ $<
+dist/wcdatavis.js:	rollup.config.js datavis.js $(SOURCE)
+	npm run rollup
+
+dist/wcdatavis.min.js:	dist/wcdatavis.js
+	npm run uglify
 
 doc:	jsdoc pandoc
 
@@ -36,9 +39,10 @@ $(EXAMPLE_FILES):examples/%:	dist/%
 
 clean:
 	$(MAKE) -C examples/test clean
-	rm -f dist/wcdatavis.js examples/wcdatavis.js examples/wcdatavis.css
+	rm -f dist/wcdatavis.js dist/wcdatavis.min.js 
+	rm -f examples/wcdatavis.js examples/wcdatavis.min.js examples/wcdatavis.css
 	rm -rf jsdoc
 	rm -rf doc/html
 
 tags:
-	/usr/bin/ctags -R -f TAGS --languages=JavaScript --sort=foldcase src
+	ctags -R -f TAGS --languages=JavaScript --sort=foldcase src

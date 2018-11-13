@@ -1,3 +1,36 @@
+import _ from 'underscore';
+import sprintf from 'sprintf-js';
+import jQuery from 'jquery';
+
+import {
+	debug,
+	deepCopy,
+	deepDefaults,
+	delegate,
+	fontAwesome,
+	getProp,
+	getPropDef,
+	Lock,
+	log,
+	makeLinkConfig,
+	makeRadioButtons,
+	makeSubclass,
+	makeToggleCheckbox,
+	mixinEventHandling,
+	presentDownload,
+	setProp,
+	setPropDef,
+	Timing,
+} from './util.js';
+import {OrdMap} from './ordmap.js';
+import {AggregateControl, FilterControl, GroupControl, PivotControl} from './grid_control.js';
+import {Prefs, PrefsBackendTemporary} from './prefs.js';
+import {View} from './view.js';
+import {GridRenderer} from './grid_renderer.js';
+import './grid_table.js';
+import {ColConfigWin} from './col_config_win.js';
+import {FileSource} from './source.js';
+
 // Server-Side Filter/Sort {{{1
 
 /*
@@ -100,65 +133,6 @@ function makeJsonOrderBy(o) {
 		direction: o.sortdirection.ascending ? 'ASC' : 'DESC'
 	}];
 }
-
-/**
- * Change the data in the definition without breaking any references.  This is only used by
- * dynamic server-side filtering.
- */
-
-function updateDefnDataInPlace(defn, srcIndex, data) {
-	var i;
-	var l;
-
-	/*
-	 * We need to change the data that the grid uses.  You would think that one would do this using
-	 * the data adapter, but there's no API to change the local data.  So instead we have to change
-	 * the object that it refers to out from underneath it.  This means that we must alter the
-	 * defn._data[srcIndex] object in place.  To clear it out, we shift() all the current rows out
-	 * of it.  Then we can push() the new rows into it.  This changes the data in the array without
-	 * breaking the reference from the data adapter.
-	 */
-
-	l = defn._data[srcIndex].length;
-
-	for (i = 0; i < l; i += 1) {
-		defn._data[srcIndex].shift();
-	}
-
-	for (i = 0; i < data[srcIndex].length; i += 1) {
-		defn._data[srcIndex].push(data[srcIndex][i]);
-	}
-
-	if (data[srcIndex].length > 0) {
-		_.each(data[srcIndex][0], function (value, colName) {
-			var sqlType = defn._typeInfo[srcIndex][colName];
-			if (sqlType === 'string') {
-				// This will do the work necessary to create the _ORIG_ properties.
-				makeLinkConfig(data[srcIndex], colName, defn._dataFieldConfig);
-			}
-		});
-	}
-}
-
-// GridError {{{1
-
-/**
- * @class
- *
- * @property {string} name
- * @property {object} stack
- * @property {string} message
- */
-
-var GridError = function (msg) {
-	this.name = 'GridError';
-	this.stack = (new Error()).stack;
-	this.message = msg;
-}
-
-GridError.prototype = Object.create(Error.prototype);
-GridError.prototype.constructor = GridError;
-
 
 // Grid {{{1
 // JSDoc Types {{{2
@@ -368,7 +342,7 @@ GridError.prototype.constructor = GridError;
  * @borrows GridTable#isSelected
  */
 
-var Grid = function (id, view, defn, tagOpts, cb) {
+var Grid = makeSubclass('Grid', Object, function (id, view, defn, tagOpts, cb) {
 	var self = this;
 
 	var rowCount = null; // Container span for the row counter.
@@ -393,12 +367,8 @@ var Grid = function (id, view, defn, tagOpts, cb) {
 
 	debug.info('GRID', 'Definition: %O', defn);
 
-	if (isNothing(view)) {
-		throw new GridError('The `view` argument is required');
-	}
-
 	if (!(view instanceof View)) {
-		throw new GridError('The `view` argument must be an instance of MIE.View');
+		throw new Error('Call Error: `view` must be an instance of MIE.WC_DataVis.View');
 	}
 
 	deepDefaults(true, tagOpts, {
@@ -676,10 +646,7 @@ var Grid = function (id, view, defn, tagOpts, cb) {
 
 	window.MIE.WC_DataVis.grids = window.MIE.WC_DataVis.grids || {};
 	window.MIE.WC_DataVis.grids[id] = self;
-};
-
-Grid.prototype = Object.create(Object.prototype);
-Grid.prototype.constructor = Grid;
+});
 
 // Events {{{2
 
@@ -856,40 +823,29 @@ Grid.prototype._addTitleWidgets = function (titlebar, doingServerFilter, runImme
 	self.ui.rowCount = jQuery('<span>').appendTo(notHeader);
 	self.ui.selectionInfo = jQuery('<span>').appendTo(notHeader);
 
-	/*
-	 * For SOME REASON, doing 'clearfilters' messes up our whole fragile logic around the filter
-	 * event handlers getting called twice each time you do server-side filtering.  I mean, they get
-	 * called twice UP UNTIL YOU DO 'clearfilters', after which they only get called once.  Instead
-	 * of trying to figure out what twisted logic jQWidgets is using, and then working around it,
-	 * just don't allow people this shortcut to clear the filters if we're doing it on the server.
-	 * They'll have to clear them out column-by-column.
-	 */
+	self.ui.clearFilter = jQuery('<span>')
+		.hide()
+		.append(' (')
+		.append(
+						jQuery('<span>', {'class': 'link'})
+						.text('clear filter')
+						.on('click', function (evt) {
+							evt.stopPropagation();
+							self.ui.clearFilter.hide();
+							self.view.clearFilter({ notify: true });
+						})
+		)
+		.append(')')
+		.appendTo(notHeader);
 
-	if (!doingServerFilter || true /* FILTER_MULTI_CALL */ ) {
-		self.ui.clearFilter = jQuery('<span>')
-			.hide()
-			.append(' (')
-			.append(
-							jQuery('<span>', {'class': 'link'})
-							.text('clear filter')
-							.on('click', function (evt) {
-								evt.stopPropagation();
-								self.ui.clearFilter.hide();
-								self.view.clearFilter({ notify: true });
-							})
-			)
-			.append(')')
-			.appendTo(notHeader);
-	}
-	
 	// Create container to hold all the controls in the titlebar
-	
+
 	self.ui.titlebar_controls = jQuery('<div>')
 		.addClass('wcdv_titlebar_controls pull-right')
 		.appendTo(titlebar);
-	
+
 	// Create the Export button
-		
+
 	self.ui.exportBtn = jQuery('<button>', {
 		'type': 'button',
 		'style': 'font-size: 18px',
@@ -903,9 +859,9 @@ Grid.prototype._addTitleWidgets = function (titlebar, doingServerFilter, runImme
 	;
 
 	self._setExportStatus('notReady');
-	
+
 	// Create the Refresh button
-	
+
 	self.ui.refreshBtn = jQuery('<button>', {
 		'type': 'button',
 		'style': 'font-size: 18px',
@@ -944,7 +900,7 @@ Grid.prototype._addTitleWidgets = function (titlebar, doingServerFilter, runImme
 
 	var pWinTextArea = jQuery('<textarea>', {'style': 'font-family: monospace; font-size: 10pt; width: 100%', 'rows': '20', 'readonly': true})
 		.appendTo(pWin);
-		
+
 	// This is the "gear" icon that shows/hides the controls below the toolbar.  The controls are used
 	// to set the group, pivot, aggregate, and filters.  Ideally the user only has to utilize these
 	// once, and then switches between perspectives to get the same effect.
@@ -1438,7 +1394,7 @@ Grid.prototype._addPrefsButtons = function (toolbar) {
 
 			self.prefs.on('perspectiveDeleted', function (id) {
 				if (options[id] == null) {
-					throw new Error(sprintf('Received `perspectiveDeleted` event that references unknown perspective: id = "%s"', id));
+					throw new Error(sprintf.sprintf('Received `perspectiveDeleted` event that references unknown perspective: id = "%s"', id));
 				}
 				options[id].remove();
 				delete options[id];
@@ -1446,14 +1402,14 @@ Grid.prototype._addPrefsButtons = function (toolbar) {
 
 			self.prefs.on('perspectiveRenamed', function (id, newName) {
 				if (options[id] == null) {
-					throw new Error(sprintf('Received `perspectiveRenamed` event that references unknown perspective: id = "%s"', id));
+					throw new Error(sprintf.sprintf('Received `perspectiveRenamed` event that references unknown perspective: id = "%s"', id));
 				}
 				options[id].text(newName);
 			});
 
 			self.prefs.on('perspectiveChanged', function (id) {
 				if (options[id] == null) {
-					throw new Error(sprintf('Received `perspectiveChanged` event that references unknown perspective: id = "%s"', id));
+					throw new Error(sprintf.sprintf('Received `perspectiveChanged` event that references unknown perspective: id = "%s"', id));
 				}
 				dropdown.val(id);
 				showHideBtns();
@@ -1505,11 +1461,11 @@ Grid.prototype.redraw = function () {
 		}
 
 		if (self.defn.renderer != null) {
-			rendererCtor = GridRenderer.registry.get(self.defn.renderer).cls;
+			rendererCtor = GridRenderer.registry.get(self.defn.renderer);
 			rendererCtorOpts = deepCopy(self.defn.rendererOpts);
 		}
 		else if (ops && ops.pivot) {
-			rendererCtor = GridRenderer.registry.get(getPropDef('table_pivot', self.defn, 'whenPivot', 'renderer')).cls;
+			rendererCtor = GridRenderer.registry.get(getPropDef('table_pivot', self.defn, 'whenPivot', 'renderer'));
 			rendererCtorOpts = deepCopy(self.defn.table.whenPivot);
 
 			debug.info('GRID', 'Creating pivot grid table');
@@ -1521,10 +1477,10 @@ Grid.prototype.redraw = function () {
 		else if (ops && ops.group) {
 			switch (self.defn.table.groupMode) {
 			case 'summary':
-				rendererCtor = GridRenderer.registry.get(getPropDef('table_group_summary', self.defn, 'whenGroup', 'renderer')).cls;
+				rendererCtor = GridRenderer.registry.get(getPropDef('table_group_summary', self.defn, 'whenGroup', 'renderer'));
 				break;
 			case 'detail':
-				rendererCtor = GridRenderer.registry.get(getPropDef('table_group_detail', self.defn, 'whenGroup', 'renderer')).cls;
+				rendererCtor = GridRenderer.registry.get(getPropDef('table_group_detail', self.defn, 'whenGroup', 'renderer'));
 				break;
 			}
 
@@ -1537,7 +1493,7 @@ Grid.prototype.redraw = function () {
 			self.ui.toolbar_pivot.hide();
 		}
 		else {
-			rendererCtor = GridRenderer.registry.get(getPropDef('table_plain', self.defn, 'whenPlain', 'renderer')).cls;
+			rendererCtor = GridRenderer.registry.get(getPropDef('table_plain', self.defn, 'whenPlain', 'renderer'));
 			rendererCtorOpts = deepCopy(self.defn.table.whenPlain);
 
 			if (self.ui.footer) {
@@ -1805,7 +1761,7 @@ Grid.prototype.hideControls = function () {
 			self.fire(Grid.events.hideControls);
 		}
 	});
-	
+
 	//Hide the toolbar
 	self.ui.toolbar.hide({
 		duration: 0,
@@ -1830,7 +1786,7 @@ Grid.prototype.showControls = function () {
 			self.fire(Grid.events.showControls);
 		}
 	});
-	
+
 	//Show the toolbar
 	self.ui.toolbar.show({
 		duration: 0,
@@ -2211,3 +2167,8 @@ Grid.prototype.toString = function () {
 	return '#<Grid ' + self.id + '>';
 };
 
+// Exports {{{1
+
+export {
+	Grid
+};

@@ -1,3 +1,23 @@
+import _ from 'underscore';
+import sprintf from 'sprintf-js';
+import numeral from 'numeral';
+import BigNumber from 'bignumber.js/bignumber.js';
+
+import {
+	deepDefaults,
+	format,
+	getComparisonFn,
+	getProp,
+	getPropDef,
+	isFloat,
+	isInt,
+	log,
+	makeSubclass,
+	toFloat,
+	toInt,
+} from './util.js';
+import {OrdMap} from './ordmap.js';
+
 // Utility Functions {{{1
 /* ===============================================================================================
  *  Aggregates
@@ -114,24 +134,24 @@ function invokeAggregate(data, aggregate, init) {
 
 function checkAggregate(defn, agg, source) {
 	if (!_.isObject(agg)) {
-		throw defn.error(new InvalidReportDefinitionError(source, agg, 'must be an object'));
+		throw defn.error(new Error('must be an object'));
 	}
 	// INPUT VALIDATION: [fun]
 	if (_.isUndefined(agg.fun)) {
-		throw defn.error(new InvalidReportDefinitionError(source + '.fun', agg.fun, 'must be present'));
+		throw defn.error(new Error('must be present'));
 	}
 	if (!_.isString(agg.fun)) {
-		throw defn.error(new InvalidReportDefinitionError(source + '.fun', agg.fun, 'must be a string'));
+		throw defn.error(new Error('must be a string'));
 	}
 	if (!AGGREGATE_REGISTRY.get(agg.fun)) {
-		throw defn.error(new InvalidReportDefinitionError(source + '.fun', agg.fun, 'must be a valid builtin aggregate function'));
+		throw defn.error(new Error('must be a valid builtin aggregate function'));
 	}
 	// INPUT VALIDATION: [displayText]
 	if (_.isUndefined(agg.displayText)) {
 		agg.displayText = agg.fun;
 	}
 	if (!_.isString(agg.displayText)) {
-		throw defn.error(new InvalidReportDefinitionError(source + '.displayText', agg.displayText, 'must be a string'));
+		throw defn.error(new Error('must be a string'));
 	}
 }
 
@@ -494,7 +514,7 @@ Aggregate.prototype.getType = function () {
 	// Set the type of the aggregate result.  Sometimes this is fixed (e.g. count is always a number).
 	// If that's the case, it's given by the Aggregate instance itself.
 
-	t = self.type;
+	var t = self.type;
 
 	if (getProp(self.opts, 'fields', 'length')) {
 		var uniqueTypes = _.uniq(_.pluck(self.opts.typeInfo, 'type'));
@@ -511,7 +531,7 @@ Aggregate.prototype.getType = function () {
 	}
 
 	// Default to a string type.
-	
+
 	if (t == null) {
 		t = 'string';
 	}
@@ -1011,19 +1031,19 @@ SumOverSumAggregate.prototype.calculateDone = function (obj) {
 
 	if (window.sprintf) {
 		if (self.opts.format) {
-			return sprintf(self.opts.format, result);
+			return sprintf.sprintf(self.opts.format, result);
 		}
 		if (result >= 100) {
-			return sprintf('%d', result);
+			return sprintf.sprintf('%d', result);
 		}
 		else if (result >= 10) {
-			return sprintf('%3.1f', result);
+			return sprintf.sprintf('%3.1f', result);
 		}
 		else if (result >= 1) {
-			return sprintf('%3.2f', result);
+			return sprintf.sprintf('%3.2f', result);
 		}
 		else {
-			return sprintf('%3.3f', result);
+			return sprintf.sprintf('%3.3f', result);
 		}
 	}
 	return result;
@@ -1049,7 +1069,7 @@ var CountOverCountAggregate = makeSubclass('CountOverCountAggregate', Aggregate,
 
 // Aggregate Registry {{{1
 
-AGGREGATE_REGISTRY = new OrdMap();
+var AGGREGATE_REGISTRY = new OrdMap();
 AGGREGATE_REGISTRY.set('count', CountAggregate);
 AGGREGATE_REGISTRY.set('countDistinct', CountDistinctAggregate);
 AGGREGATE_REGISTRY.set('values', ValuesAggregate);
@@ -1216,7 +1236,7 @@ var AggregateInfo = makeSubclass('AggregateInfo', Object, function (aggType, spe
 
 		_.each(self.typeInfo, function (fti, i) {
 			if (fti == null) {
-				throw new InvalidAggregateError('Aggregate function applied to unknown field: "' + self.fields[i] + '"');
+				throw new Error('Aggregate function applied to unknown field: "' + self.fields[i] + '"');
 			}
 
 			if (fti.needsDecoding) {
@@ -1239,3 +1259,11 @@ var AggregateInfo = makeSubclass('AggregateInfo', Object, function (aggType, spe
 
 	self.instance = new aggClass(ctorOpts);
 });
+
+// Exports {{{1
+
+export {
+	Aggregate,
+	AggregateInfo,
+	AGGREGATE_REGISTRY
+};

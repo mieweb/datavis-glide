@@ -1,3 +1,13 @@
+import BigNumber from 'bignumber.js/bignumber.js';
+import numeral from 'numeral';
+import moment from 'moment';
+import _ from 'underscore';
+import sprintf from 'sprintf-js';
+import jQuery from 'jquery';
+
+import {OrdMap} from './ordmap.js';
+import EXPERIMENTAL_FEATURES from './flags.js';
+
 /**
  * @namespace util
  */
@@ -16,7 +26,7 @@
  * @inner
  */
 
-var gensym = (function () {
+export var gensym = (function () {
 	var gensymSeed = 0;
 	return function () {
 		gensymSeed += 1;
@@ -31,7 +41,7 @@ var gensym = (function () {
  * @inner
  */
 
-function Y(f) {
+export function Y(f) {
 	return (function (g) {
 		return g(g);
 	})(function (g) {
@@ -48,7 +58,7 @@ function Y(f) {
  * @inner
  */
 
-function I(x) {
+export function I(x) {
 	return x;
 }
 
@@ -59,9 +69,9 @@ function I(x) {
  * @inner
  */
 
-function NOP() {
+export function NOP() {
 	return;
-};
+}
 
 /**
  * Universal comparison function.  Uses the builtin JavaScript type-safe equality and less-than
@@ -77,7 +87,7 @@ function NOP() {
  * second, and +1 if the first operand compares greater than the second.
  */
 
-function universalCmp(a, b) {
+export function universalCmp(a, b) {
 	return a === b ? 0 : a < b ? -1 : 1;
 }
 
@@ -91,7 +101,7 @@ if (Number.EPSILON == null) {
 	Number.EPSILON = Math.pow(2, -52);
 }
 
-var getComparisonFn = (function () {
+export var getComparisonFn = (function () {
 	var cmpFn = {};
 
 	var floatSafe_equalp = function (n, m) {
@@ -115,7 +125,7 @@ var getComparisonFn = (function () {
 			return a == b ? 0 : a == null ? -1 : 1;
 		}
 
-		if (window.moment === undefined || (!moment.isMoment(a) && !moment.isMoment(b))) {
+		if (!moment.isMoment(a) && !moment.isMoment(b)) {
 			return a < b ? -1 : a > b ? 1 : 0;
 		}
 		else if (moment.isMoment(a) && moment.isMoment(b)) {
@@ -163,7 +173,7 @@ var getComparisonFn = (function () {
 				return a < b ? -1 : a > b ? 1 : 0;
 			}
 		}
-		else if (window.numeral && numeral.isNumeral(a) && numeral.isNumeral(b)) {
+		else if (numeral.isNumeral(a) && numeral.isNumeral(b)) {
 			if (EXPERIMENTAL_FEATURES['Safe Float Equality']) {
 				return floatSafe_equalp(a.value(), b.value()) ? 0 : a.value() < b.value() ? -1 : 1;
 			}
@@ -171,7 +181,7 @@ var getComparisonFn = (function () {
 				return a.value() < b.value() ? -1 : a.value() > b.value() ? 1 : 0;
 			}
 		}
-		else if (window.BigNumber && BigNumber.isBigNumber(a) && BigNumber.isBigNumber(b)) {
+		else if (BigNumber.isBigNumber(a) && BigNumber.isBigNumber(b)) {
 			// No need to perform a separate check for safer float comparison because BigNumber values
 			// are inherently as precise as they need to be.
 			return a.lt(b) ? -1 : a.gt(b) ? 1 : 0;
@@ -179,8 +189,8 @@ var getComparisonFn = (function () {
 
 		// Third, handle comparisons between different representations.
 
-		if (window.numeral && numeral.isNumeral(a)) {
-			if (window.BigNumber && BigNumber.isBigNumber(b)) {
+		if (numeral.isNumeral(a)) {
+			if (BigNumber.isBigNumber(b)) {
 				return b.gt(a.value()) ? -1 : b.lt(a.value()) ? 1 : 0;
 			}
 			else if (typeof b === 'number') {
@@ -190,8 +200,8 @@ var getComparisonFn = (function () {
 				return universalCmp(a, b);
 			}
 		}
-		else if (window.BigNumber && BigNumber.isBigNumber(a)) {
-			if (window.numeral && numeral.isNumeral(b)) {
+		else if (BigNumber.isBigNumber(a)) {
+			if (numeral.isNumeral(b)) {
 				return a.lt(b.value()) ? -1 : a.gt(b.value()) ? 1 : 0;
 			}
 			else if (typeof b === 'number') {
@@ -202,10 +212,10 @@ var getComparisonFn = (function () {
 			}
 		}
 		else if (typeof a === 'number') {
-			if (window.BigNumber && BigNumber.isBigNumber(b)) {
+			if (BigNumber.isBigNumber(b)) {
 				return b.gt(a) ? -1 : b.lt(a) ? 1 : 0;
 			}
-			else if (window.numeral && numeral.isNumeral(b)) {
+			else if (numeral.isNumeral(b)) {
 				return a < b.value() ? -1 : a > b.value() ? 1 : 0;
 			}
 			else {
@@ -228,12 +238,10 @@ var getComparisonFn = (function () {
 			return cmpFn[type];
 		}),
 		byValue: (function (val) {
-			if (typeof val === 'number'
-					|| (window.numeral && window.numeral.isNumeral(val))
-					|| (window.BigNumber && window.BigNumber.isBigNumber(val))) {
+			if (typeof val === 'number' || numeral.isNumeral(val) || BigNumber.isBigNumber(val)) {
 				return cmpFn.number;
 			}
-			else if (window.moment && window.moment.isMoment(val)) {
+			else if (moment.isMoment(val)) {
 				return cmpFn.date;
 			}
 			else if (_.isArray(val)) {
@@ -246,17 +254,17 @@ var getComparisonFn = (function () {
 	};
 })();
 
-function getNatRep(x) {
-	if (window.numeral && numeral.isNumeral(x)) {
+export function getNatRep(x) {
+	if (numeral.isNumeral(x)) {
 		return x.value();
 	}
-	else if (window.moment && moment.isMoment(x)) {
+	else if (moment.isMoment(x)) {
 		return x.unix();
 	}
 	else {
 		return x;
 	}
-};
+}
 
 /**
  * Call a chain of functions, such that each function consumes as its arguments the result(s) of
@@ -271,7 +279,7 @@ function getNatRep(x) {
  * @returns {any} Whatever the result of calling the last function in the chain is.
  */
 
-function chain() {
+export function chain() {
 	var args = Array.prototype.slice.call(arguments);
 	var fnArgs = args.shift();
 	var fn;
@@ -304,7 +312,7 @@ function chain() {
  * function in the chain.  The result of the last function of the chain is the return value.
  */
 
-function makeChain() {
+export function makeChain() {
 	var fns = Array.prototype.slice.call(arguments);
 	return function () {
 		var args = Array.prototype.slice.call(arguments);
@@ -312,7 +320,7 @@ function makeChain() {
 	};
 }
 
-function makeArray() {
+export function makeArray() {
 	return Array.prototype.slice.call(arguments);
 }
 
@@ -338,7 +346,7 @@ function makeArray() {
  *   });
  * });
  */
-function trulyYours(cont, spec, thisArg, acc) {
+export function trulyYours(cont, spec, thisArg, acc) {
 	acc = acc || {};
 	return (spec.length === 0) ? cont(acc) : (function () {
 		debug.info('TRULY YOURS', 'Calling #%s() to set property .%s', spec[0].fn, spec[0].prop);
@@ -360,7 +368,7 @@ function trulyYours(cont, spec, thisArg, acc) {
  * which weren't bound by `args`.
  */
 
-function curry() {
+export function curry() {
 	var curryArgs = Array.prototype.slice.call(arguments);
 	var fn = curryArgs.shift();
 	var placeholderIndex = curryArgs.indexOf('#');
@@ -373,14 +381,14 @@ function curry() {
 	};
 }
 
-function curryCtor() {
+export function curryCtor() {
 	var args = Array.prototype.slice.call(arguments)
 		, result = curry.apply(null, args);
 	result.prototype = args[0].prototype;
 	return result;
 }
 
-function either() {
+export function either() {
 	var args = Array.prototype.slice.call(arguments);
 	for (var i = 0; i < args.length; i += 1) {
 		if (args[i] !== undefined) {
@@ -390,11 +398,11 @@ function either() {
 	return undefined;
 }
 
-function car(a) {
+export function car(a) {
 	return a[0];
 }
 
-function cdr(a) {
+export function cdr(a) {
 	return a.slice(1);
 }
 
@@ -404,11 +412,11 @@ function cdr(a) {
  * @namespace util.conversion
  */
 
-function isInt(x) {
+export function isInt(x) {
 	return (typeof x === 'string') ? String(parseInt(x, 10)) === x : +x === Math.floor(+x);
 }
 
-function isFloat(x) {
+export function isFloat(x) {
 	if (x === null || (typeof x === 'string' && x === '')) {
 		// Because: +null => 0 ; +"" => 0
 		return false;
@@ -417,21 +425,22 @@ function isFloat(x) {
 	return !isNaN(+x);
 }
 
-function toInt(x) {
+export function toInt(x) {
 	return (typeof x === 'string') ? parseInt(x, 10) : Math.floor(+x);
 }
 
-function toFloat(x) {
+export function toFloat(x) {
 	return +x;
 }
 
-var stringValueType = (function () {
+export var stringValueType = (function () {
 	var re_date = new RegExp(/^\d{4}-\d{2}-\d{2}$/);
 	var re_time = new RegExp(/^\d{2}:\d{2}:\d{2}$/);
 	var re_datetime = new RegExp(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/);
   var re_number = new RegExp(/(^-?[1-9]{1}[0-9]{0,2}(,?\d{3})*(\.\d+)?(e[+-]?\d+)?$)|(^-?0?\.\d+(e[+-]?\d+)?$)/);
 	var re_comma = new RegExp(/,/g);
   return function p(s) {
+		var guess;
 		if (re_date.test(s)) {
 			return 'date';
 		}
@@ -442,11 +451,11 @@ var stringValueType = (function () {
 			return 'datetime';
 		}
 		else if (s.charAt(0) === '$') {
-			var guess = p(s.substring(1));
+			guess = p(s.substring(1));
       return guess === 'number' ? 'currency' : 'string';
     }
     else if (s.charAt(0) === '(' && s.charAt(s.length - 1) === ')') {
-			var guess = p(s.substring(1, s.length - 1));
+			guess = p(s.substring(1, s.length - 1));
 			return ['number', 'currency'].indexOf(guess) >= 0 ? guess : 'string';
     }
     else {
@@ -455,7 +464,7 @@ var stringValueType = (function () {
   };
 })();
 
-var parseNumber = (function () {
+export var parseNumber = (function () {
   var re_number = new RegExp(/(^-?[1-9]{1}[0-9]{0,2}(,?\d{3})*(\.\d+)?(e[+-]?\d+)?$)|(^0(e[+-]?\d+)?$)|(^-?0?\.\d+(e[+-]?\d+)?$)/);
 	var re_comma = new RegExp(/,/g);
   return function p(s, resultType) {
@@ -495,7 +504,7 @@ var parseNumber = (function () {
  * be converted cleanly.
  */
 
-function tryIntConvert(x) {
+export function tryIntConvert(x) {
 	return isInt(x) ? toInt(x) : 0;
 }
 
@@ -508,7 +517,7 @@ function tryIntConvert(x) {
  * which can be converted cleanly.
  */
 
-function tryFloatConvert(x) {
+export function tryFloatConvert(x) {
 	return isFloat(x) ? toFloat(x) : 0.0;
 }
 
@@ -523,7 +532,7 @@ function tryFloatConvert(x) {
  * @inner
  */
 
-function arrayCompare(a, b) {
+export function arrayCompare(a, b) {
 	if (!_.isArray(a) || !_.isArray(b)) {
 		throw new Error('Call Error: arguments must be arrays');
 	}
@@ -549,7 +558,7 @@ function arrayCompare(a, b) {
  * @inner
  */
 
-function arrayEqual(a, b) {
+export function arrayEqual(a, b) {
 	if (!_.isArray(a) || !_.isArray(b)) {
 		throw new Error('Call Error: arguments must be arrays');
 	}
@@ -561,7 +570,7 @@ function arrayEqual(a, b) {
 	return arrayCompare(a, b) === 0;
 }
 
-function moveArrayElement(a, fromIdx, toIdx) {
+export function moveArrayElement(a, fromIdx, toIdx) {
 	var elt = a[fromIdx];
 	a.splice(fromIdx, 1);
 	a.splice(toIdx, 0, elt);
@@ -580,7 +589,7 @@ function moveArrayElement(a, fromIdx, toIdx) {
  * @returns {void} Nothing.
  */
 
-function eachUntil(l, f, r) {
+export function eachUntil(l, f, r) {
 	var i;
 	for (i = 0; i < l.length; i += 1) {
 		if (f(l[i], i) === r) {
@@ -620,8 +629,8 @@ function eachUntil(l, f, r) {
  * False if `f` returned `r` for some key/value pair in the object, and true otherwise.
  */
 
-function eachUntilObj(o, f, r, extra) {
-	for (k in o) {
+export function eachUntilObj(o, f, r, extra) {
+	for (var k in o) {
 		if (o.hasOwnProperty(k) && f(o[k], k, extra) === r) {
 			return false;
 		}
@@ -629,7 +638,7 @@ function eachUntilObj(o, f, r, extra) {
 	return true;
 }
 
-function asyncEach(args, fun, done) {
+export function asyncEach(args, fun, done) {
 	if (!_.isArray(args)) {
 		throw new Error('Call Error: `args` must be an array');
 	}
@@ -646,7 +655,7 @@ function asyncEach(args, fun, done) {
 			return done();
 		}
 		fun(args.shift(), g);
-	};
+	}
 	g();
 }
 
@@ -669,7 +678,7 @@ function asyncEach(args, fun, done) {
  * An array of size `min(a.length, l)` containing the mapped results.
  */
 
-function mapLimit(a, f, l) {
+export function mapLimit(a, f, l) {
 	var result = [];
 	for (var i = 0; i < Math.min(a.length, l); i += 1) {
 		result.push(f(a[i], i));
@@ -690,7 +699,7 @@ function mapLimit(a, f, l) {
  * A shallow copy of the argument.
  */
 
-var shallowCopy = function (x) {
+export var shallowCopy = function (x) {
 	if (x == null) {
 		return {};
 	}
@@ -735,7 +744,7 @@ var shallowCopy = function (x) {
  * A clean copy of the argument.
  */
 
-var deepCopy = function (x0) {
+export var deepCopy = function (x0) {
 	var depth = 0;
 	var depthLimit = 99;
 	var path = [];
@@ -784,7 +793,7 @@ var deepCopy = function (x0) {
 	return recursive(x0, 0);
 };
 
-var arrayCopy = deepCopy;
+export var arrayCopy = deepCopy;
 
 /**
  * Returns true if the argument is null or undefined.
@@ -794,7 +803,7 @@ var arrayCopy = deepCopy;
  * @deprecated
  */
 
-function isNothing(x) {
+export function isNothing(x) {
 	return x === undefined || x === null;
 }
 
@@ -806,7 +815,7 @@ function isNothing(x) {
  * @deprecated
  */
 
-function isEmpty(o) {
+export function isEmpty(o) {
 	var numProps = 0;
 
 	_.each(o, function () {
@@ -821,7 +830,7 @@ function isEmpty(o) {
  * @inner
  */
 
-function deepDefaults() {
+export function deepDefaults() {
 	var args = Array.prototype.slice.call(arguments)
 		, base;
 
@@ -874,7 +883,7 @@ function deepDefaults() {
  * getProp(obj, 'x');		  // undefined
  */
 
-function getProp() {
+export function getProp() {
 	var args = Array.prototype.slice.call(arguments)
 		, o = args.shift()
 		, i;
@@ -909,7 +918,7 @@ function getProp() {
  * getPropDef(1, obj, 'x');			// 1
  */
 
-function getPropDef() {
+export function getPropDef() {
 	var args = Array.prototype.slice.call(arguments);
 	var d = args.shift();
 	var p = getProp.apply(undefined, args);
@@ -932,7 +941,7 @@ function getPropDef() {
  * obj.a.b.c === 42;
  */
 
-function setProp() {
+export function setProp() {
 	var args = Array.prototype.slice.call(arguments);
 	var x = args.shift();
 	var o = args.shift();
@@ -955,7 +964,7 @@ function setProp() {
  * @inner
  */
 
-function setPropDef() {
+export function setPropDef() {
 	var args = Array.prototype.slice.call(arguments);
 	var x = args.shift();
 	var o = args.shift();
@@ -983,7 +992,7 @@ function setPropDef() {
  * @param {...(string|number)} prop Property path.
  */
 
-function needProp() {
+export function needProp() {
 	var args = Array.prototype.slice.call(arguments)
 		, exn = args.shift()
 		, prop = getProp.apply(this, args);
@@ -998,19 +1007,18 @@ function needProp() {
 /**
  * Throw an exception if a property is missing or not a member of a set.
  *
- * @param {function} exn Constructor used to instantiate an exception if an error arises.
  * @param {object} obj Target object to search within.
  * @param {...(string|number)} prop Property path.
  * @param {array} arr Set of values which the property must be in.
  */
 
-function needPropIn() {
+export function needPropIn() {
 	var args = Array.prototype.slice.call(arguments)
 		, set = args.pop()
 		, prop = needProp.apply(this, args);
 
 	if (set.indexOf(prop) === -1) {
-		throw new exn('Property [' + args.slice(1).join('.') + '] must be one of: {"' + set.join('", "') + '"}');
+		throw new Error('Property [' + args.slice(1).join('.') + '] must be one of: {"' + set.join('", "') + '"}');
 	}
 
 	return prop;
@@ -1024,7 +1032,7 @@ function needPropIn() {
  * @param {...(string|number)} prop Property path.
  */
 
-function needPropArr() {
+export function needPropArr() {
 	var args = Array.prototype.slice.call(arguments)
 		, exn = args[0]
 		, prop = needProp.apply(this, args);
@@ -1044,7 +1052,7 @@ function needPropArr() {
  * @param {...(string|number)} prop Property path.
  */
 
-function needPropObj() {
+export function needPropObj() {
 	var args = Array.prototype.slice.call(arguments)
 		, exn = args[0]
 		, prop = needProp.apply(this, args);
@@ -1065,7 +1073,7 @@ function needPropObj() {
  * @param {function} cls Class which the property must be an instance of.
  */
 
-function needPropInst() {
+export function needPropInst() {
 	var args = Array.prototype.slice.call(arguments)
 		, exn = args[0]
 		, cls = args.pop()
@@ -1078,7 +1086,7 @@ function needPropInst() {
 	return prop;
 }
 
-function needArgInst(val, varName, cls) {
+export function needArgInst(val, varName, cls) {
 	needArg(val, varName);
 	var msg = arguments.callee.name + '(): Argument "' + varName + '" must be an instance of ' + cls.name;
 
@@ -1090,7 +1098,7 @@ function needArgInst(val, varName, cls) {
 	return val;
 }
 
-function needArg(val, varName) {
+export function needArg(val, varName) {
 	var msg = arguments.callee.name + '(): Missing required argument "' + varName + '"';
 
 	if (isNothing(val)) {
@@ -1100,8 +1108,10 @@ function needArg(val, varName) {
 	return val;
 }
 
-function iota(a, b, step) {
-	var r = [];
+export function iota(a, b, step) {
+	var r = []
+		, start
+		, end;
 
 	if (b == null) {
 		start = 0;
@@ -1130,7 +1140,7 @@ function iota(a, b, step) {
  * @example pruneTree(OBJECT, PATH...)
  */
 
-function pruneTree() {
+export function pruneTree() {
 	var args = Array.prototype.slice.call(arguments);
 	var o = args.shift();
 	var deleteFrom = [];
@@ -1156,7 +1166,7 @@ function pruneTree() {
 	}
 }
 
-function interleaveWith(a, x) {
+export function interleaveWith(a, x) {
 	var result = [];
 
 	if (a.length > 0) {
@@ -1175,7 +1185,7 @@ function interleaveWith(a, x) {
  * Stable sort algorithm that allows for responsive browser UI.
  */
 
-function mergeSort(data, cmp, cont) {
+export function mergeSort(data, cmp, cont) {
 	cmp = cmp || universalCmp;
 	return Y(function (recur) {
 		return function (data, cont) {
@@ -1215,7 +1225,7 @@ function mergeSort(data, cmp, cont) {
 	})(data, cont);
 }
 
-function mergeSort2(data, cmp) {
+export function mergeSort2(data, cmp) {
 	cmp = cmp || function (a, b) { return a < b };
 
 	var merge = function (left, right) {
@@ -1242,7 +1252,7 @@ function mergeSort2(data, cmp) {
 	}
 }
 
-function mergeSort3(data, cmp, cont, update) {
+export function mergeSort3(data, cmp, cont, update) {
 	cmp = cmp || function (a, b) { return a < b };
 	var size = data.length;
 	var step = 0;
@@ -1295,7 +1305,7 @@ function mergeSort3(data, cmp, cont, update) {
  * Breaks for update every "merge" which happens log_2(n) times.
  */
 
-var mergeSort4 = function (data, cmp, cont, update) {
+export var mergeSort4 = function (data, cmp, cont, update) {
 	cmp = cmp || function (x, y) { return x < y };
 	var a = data;
 	var num = data.length;
@@ -1347,7 +1357,7 @@ var mergeSort4 = function (data, cmp, cont, update) {
 	sortWindow(1);
 };
 
-function pigeonHoleSort(data, values, cont) {
+export function pigeonHoleSort(data, values, cont) {
 	var o = {}
 		, r = []
 		, i
@@ -1371,9 +1381,9 @@ function pigeonHoleSort(data, values, cont) {
 	}
 
 	return cont(r);
-};
+}
 
-function objGetPath(obj, fieldPath) {
+export function objGetPath(obj, fieldPath) {
 	var i, len = fieldPath.length;
 	for (i = 0; i < len && obj !== undefined; i += 1) {
 		obj = obj[fieldPath[i]];
@@ -1381,7 +1391,7 @@ function objGetPath(obj, fieldPath) {
 	return obj;
 }
 
-function cmpObjField(fieldPath, cmp) {
+export function cmpObjField(fieldPath, cmp) {
 	cmp = cmp || universalCmp;
 	return function (a, b) {
 		a = objGetPath(a, fieldPath);
@@ -1412,7 +1422,7 @@ function cmpObjField(fieldPath, cmp) {
  * Items that will become the values in the object.
  */
 
-function objFromArray(a, v) {
+export function objFromArray(a, v) {
 	return _.reduce(a, function (o, x, i) {
 		o[x] = v ? v[i % v.length] : x;
 		return o;
@@ -1431,7 +1441,7 @@ function objFromArray(a, v) {
  * @param array acc Accumulator of the key path.
  */
 
-function walkObj(o, f, opts) {
+export function walkObj(o, f, opts) {
 	opts = deepDefaults(opts, {
 		replace: false,
 		callOnNodes: false
@@ -1514,7 +1524,7 @@ function walkObj(o, f, opts) {
  * property which can be used to invoke the superclass' methods on itself.
  */
 
-var makeSubclass = function (name, parent, ctor, ptype) {
+export var makeSubclass = function (name, parent, ctor, ptype) {
 	// Default constructor just calls the super constructor.
 
 	if (typeof name !== 'string') {
@@ -1573,7 +1583,7 @@ var makeSubclass = function (name, parent, ctor, ptype) {
  * An object containing proxies to superclass methods (bound to `me`).
  */
 
-var makeSuper = function (me, parent) {
+export var makeSuper = function (me, parent) {
 	var sup = _.mapObject(parent.prototype, function (v, k) {
 		if (typeof v === 'function') {
 			return _.bind(v, me);
@@ -1587,7 +1597,7 @@ var makeSuper = function (me, parent) {
 
 // mixinEventHandling {{{2
 
-var mixinEventHandling = (function () {
+export var mixinEventHandling = (function () {
 	var HANDLER_ID = 0;
 
 	return function (obj, name, events) {
@@ -1784,7 +1794,7 @@ var mixinEventHandling = (function () {
 
 // mixinDebugging {{{2
 
-function mixinDebugging(obj, tagStart) {
+export function mixinDebugging(obj, tagStart) {
 	if (tagStart != null && typeof tagStart !== 'string' && typeof tagStart !== 'function') {
 		throw new Error('Call Error: `tagStart` must be null, a string, or a function');
 	}
@@ -1814,7 +1824,7 @@ function mixinDebugging(obj, tagStart) {
 
 // mixinLogging {{{2
 
-function mixinLogging(obj, tagPrefix) {
+export function mixinLogging(obj, tagPrefix) {
 	if (tagPrefix != null && typeof tagPrefix !== 'string' && typeof tagPrefix !== 'function') {
 		throw new Error('Call Error: `tagPrefix` must be null, a string, or a function');
 	}
@@ -1831,7 +1841,7 @@ function mixinLogging(obj, tagPrefix) {
 		}
 	};
 
-	makeLogger = function (loggerType) {
+	var makeLogger = function (loggerType) {
 		return function () {
 			var args = Array.prototype.slice.call(arguments);
 			var tag = args.shift();
@@ -1868,7 +1878,7 @@ function mixinLogging(obj, tagPrefix) {
  * Engage the lock with the given name.
  */
 
-function lock(defn, name) {
+export function lock(defn, name) {
 	if (defn.locks === undefined) {
 		defn.locks = {};
 	}
@@ -1885,7 +1895,7 @@ function lock(defn, name) {
  * Disengage the lock with the given name.
  */
 
-function unlock(defn, name) {
+export function unlock(defn, name) {
 	if (defn.locks === undefined) {
 		defn.locks = {};
 	}
@@ -1902,7 +1912,7 @@ function unlock(defn, name) {
  * Check to see if the lock with the given name is engaged or not.
  */
 
-function isLocked(defn, name) {
+export function isLocked(defn, name) {
 	return defn.locks && !!defn.locks[name];
 }
 
@@ -1914,7 +1924,7 @@ function isLocked(defn, name) {
  * @class
  */
 
-var Lock = function (name, opts) {
+export var Lock = function (name, opts) {
 	var self = this;
 
 	self._opts = opts || {};
@@ -2047,7 +2057,7 @@ Lock.prototype.onUnlock = function (f, info) {
  * Returns the HTML used to construct the argument.
  */
 
-function outerHtml(elt) {
+export function outerHtml(elt) {
 	return jQuery('<div>').append(elt).html();
 }
 
@@ -2061,13 +2071,13 @@ function outerHtml(elt) {
  * by the specified selector.
  */
 
-function getText(selector) {
+export function getText(selector) {
 	return jQuery(selector).map(function (i, x) {
 		return jQuery(x).text();
 	});
 }
 
-function isVisible(elt) {
+export function isVisible(elt) {
 	return elt.css('display') !== 'none' && elt.css('visibility') === 'visible';
 }
 
@@ -2076,7 +2086,7 @@ function isVisible(elt) {
  *   https://stackoverflow.com/a/7557433/5628
  */
 
-function isElementInViewport (parent, elt) {
+export function isElementInViewport (parent, elt) {
 	if (elt instanceof jQuery) {
 		elt = elt.get(0);
 	}
@@ -2108,7 +2118,7 @@ function isElementInViewport (parent, elt) {
 	}
 }
 
-function onVisibilityChange(parent, elt, callback) {
+export function onVisibilityChange(parent, elt, callback) {
 	var old_visible;
 	return function () {
 		var visible = isElementInViewport(parent, elt);
@@ -2121,7 +2131,7 @@ function onVisibilityChange(parent, elt, callback) {
 	}
 }
 
-function fontAwesome(icon, cls, title) {
+export function fontAwesome(icon, cls, title) {
 	var span = jQuery('<span>')
 		.addClass('fa');
 
@@ -2141,7 +2151,7 @@ function fontAwesome(icon, cls, title) {
 	}
 
 	return span;
-};
+}
 
 /**
  * @function loadScript
@@ -2187,7 +2197,7 @@ function fontAwesome(icon, cls, title) {
  * requires additional (asynchronous) setup.
  */
 
-var loadScript = (function () {
+export var loadScript = (function () {
 	var alreadyLoaded = {};
 	var lock = new Lock('LOAD SCRIPT');
 	return function (url, callback, opts) {
@@ -2256,13 +2266,13 @@ var loadScript = (function () {
 				lock.lock();
 				load(url, makeCb(false));
 			}
-		}, sprintf('Waiting to load [url = %s]', url));
+		}, sprintf.sprintf('Waiting to load [url = %s]', url));
 	};
 })();
 
 // makeCheckbox {{{2
 
-function makeCheckbox(startChecked, onChange, text, parent) {
+export function makeCheckbox(startChecked, onChange, text, parent) {
 	var label = jQuery('<label>');
 	var input = jQuery('<input>', { 'type': 'checkbox', 'checked': startChecked }).on('change', onChange);
 
@@ -2273,7 +2283,7 @@ function makeCheckbox(startChecked, onChange, text, parent) {
 
 // makeToggleCheckbox {{{2
 
-function makeToggleCheckbox(rootObj, path, startChecked, text, parent, after) {
+export function makeToggleCheckbox(rootObj, path, startChecked, text, parent, after) {
 	if (rootObj != null) {
 		setPropDef(startChecked, rootObj, path);
 	}
@@ -2329,7 +2339,7 @@ function makeToggleCheckbox(rootObj, path, startChecked, text, parent, after) {
  * Element to place the radio buttons within.
  */
 
-function makeRadioButtons(rootObj, path, def, label, name, values, conv, onChange, parent) {
+export function makeRadioButtons(rootObj, path, def, label, name, values, conv, onChange, parent) {
 	setPropDef(def, rootObj, path);
 	var initial = getProp(rootObj, path);
 
@@ -2368,7 +2378,7 @@ function makeRadioButtons(rootObj, path, def, label, name, values, conv, onChang
  * @namespace util.io
  */
 
-function valueInfo(value) {
+export function valueInfo(value) {
 	if (_.isNumber(value)) {
 		return [value, ': Number'];
 	}
@@ -2386,7 +2396,7 @@ function valueInfo(value) {
 	}
 }
 
-function addSrcInfo(srcIndex, field) {
+export function addSrcInfo(srcIndex, field) {
 	return ':' + srcIndex + ':' + field;
 }
 
@@ -2394,7 +2404,7 @@ function addSrcInfo(srcIndex, field) {
  * Logging wrappers.
  */
 
-var log = {
+export var log = {
 	info: Function.prototype.bind.call(window.console.log, window.console),
 	warn: Function.prototype.bind.call(window.console.warn, window.console),
 	error: Function.prototype.bind.call(window.console.error, window.console)
@@ -2404,7 +2414,7 @@ var log = {
  * More logging wrappers.
  */
 
-var concatLog = {
+export var concatLog = {
 	info: function () {
 		log.info.apply(window.console, _.flatten(arguments, true));
 	},
@@ -2420,7 +2430,7 @@ var concatLog = {
  * Debug logging.
  */
 
-var debug = {
+export var debug = {
 	info: function (tag) {
 		if (!MIE.DEBUGGING) {
 			return;
@@ -2453,7 +2463,7 @@ var debug = {
 	},
 };
 
-logAsync = (function () {
+export var logAsync = (function () {
 	var ids = {};
 	return function (id) {
 		ids[id] = ids[id] == null ? 0 : ids[id] + 1;
@@ -2479,12 +2489,12 @@ logAsync = (function () {
  * deprecated(defn, 'Usage of [showColumns] and [hideColumns] is deprecated.', 'Showing_.26_Hiding_Columns');
  */
 
-function deprecated(defn, msg, ref) {
+export function deprecated(defn, msg, ref) {
 	var output = msg + ' See https://miewiki.med-web.com/wiki/index.php/Advanced_Reports:_Filtering,_Graphing,_Comparing#' + ref + ' for more information.';
 	emailWarning(defn, output);
 }
 
-function convert(cell, fti) {
+export function convert(cell, fti) {
 	var error = function (msg) {
 		log.error('Unable to convert cell value, %s: field = "%s", fti.type = %s, fti.internalType = %s, value = %O (%s)', msg, fti.field || '[unknown]', fti.type, fti.internalType, cell.value, typeof cell.value);
 	};
@@ -2507,16 +2517,10 @@ function convert(cell, fti) {
 				break;
 			case 'numeral':
 				// number -> numeral
-				if (window.numeral == null) {
-					return error('numeral library not available');
-				}
 				cell.value = numeral(cell.value);
 				break;
 			case 'bignumber':
 				// number -> bignumber
-				if (window.BigNumber == null) {
-					return error('bignumber library not available');
-				}
 				cell.value = new BigNumber(cell.value);
 				break;
 			default:
@@ -2541,15 +2545,9 @@ function convert(cell, fti) {
 					break;
 				case 'numeral':
 					// string -> numeral
-					if (window.numeral == null) {
-						return error('numeral library not available');
-					}
 					cell.value = numeral(cell.value);
 					break;
 				case 'bignumber':
-					if (window.BigNumber == null) {
-						return error('bignumber library not available');
-					}
 					cell.value = new BigNumber(parseNumber(cell.value, 'string'));
 					if (cell.value.isNaN()) {
 						cell.value = null;
@@ -2561,7 +2559,7 @@ function convert(cell, fti) {
 				}
 			}
 		}
-		else if ((window.numeral && numeral.isNumeral(cell.value)) || (window.BigNumber && BigNumber.isBigNumber(cell.value))) {
+		else if (numeral.isNumeral(cell.value) || BigNumber.isBigNumber(cell.value)) {
 			// Already converted.
 		}
 		else {
@@ -2579,9 +2577,6 @@ function convert(cell, fti) {
 				switch (fti.internalType) {
 				case 'moment':
 					// string -> moment
-					if (window.moment == null) {
-						return error('moment library not available');
-					}
 					cell.value = moment(cell.value, fti.format);
 					break;
 				case 'string':
@@ -2596,18 +2591,13 @@ function convert(cell, fti) {
 			switch (fti.internalType) {
 			case 'moment':
 				// date -> moment
-				if (window.moment == null) {
-					return error('moment library is not available');
-				}
-				else {
-					cell.value = moment(cell.value, fti.format);
-				}
+				cell.value = moment(cell.value, fti.format);
 				break;
 			default:
 				return error('unsupported internal representation');
 			}
 		}
-		else if (window.moment && moment.isMoment(cell.value)) {
+		else if (moment.isMoment(cell.value)) {
 			// Already converted.
 		}
 		else {
@@ -2658,7 +2648,7 @@ function convert(cell, fti) {
  * it's applied over a field that contains dates or currency).
  */
 
-function format(fcc, fti, cell, opts) {
+export function format(fcc, fti, cell, opts) {
 	fcc = fcc || {};
 	fti = fti || {};
 	opts = opts || {};
@@ -2677,9 +2667,9 @@ function format(fcc, fti, cell, opts) {
 	// be simplified.  These cells are just "pretend" and anything stored in them is going to be
 	// discarded when this function is done.
 
-	if ((window.moment && window.moment.isMoment(cell))
-			|| (window.numeral && window.numeral.isNumeral(cell))
-			|| (window.BigNumber && window.BigNumber.isBigNumber(cell))
+	if ((moment.isMoment(cell))
+			|| numeral.isNumeral(cell)
+			|| BigNumber.isBigNumber(cell)
 			|| cell == null
 			|| typeof cell !== 'object') {
 		cell = {
@@ -2742,9 +2732,34 @@ function format(fcc, fti, cell, opts) {
 		switch (t) {
 		case 'number':
 		case 'currency':
-			format = deepDefaults(format, {
-				format: BigNumber.config().FORMAT
-			});
+			switch (fti.internalType) {
+			case 'bignumber':
+				// Check for migration from using numeral for numbers, where the format was just a string
+				// instead of the object we have now.  Rather than try to parse the thing, just handle a few
+				// basic cases because probably nobody was doing anything more complex anyway.
+
+				if (typeof format === 'string') {
+					switch (format) {
+					case '$0,0.00':
+						format = {
+							decimalPlaces: 2,
+							format: {
+								prefix: '$'
+							}
+						};
+						break;
+					}
+				}
+
+				// BigNumber#toFormat() does not inherit from the default configuration FORMAT if you pass a
+				// FORMAT object into the function.  So we must do the inheritance ourselves so that what
+				// the developer provides to us overrides the default FORMAT (not replacing it completely).
+
+				format = deepDefaults(format, {
+					format: BigNumber.config().FORMAT
+				});
+				break;
+			}
 		}
 	}
 
@@ -2756,7 +2771,7 @@ function format(fcc, fti, cell, opts) {
 		result = '';
 	}
 	else if (['date', 'datetime'].indexOf(t) >= 0
-		&& ((window.moment && window.moment.isMoment(cell.value) && !cell.value.isValid())
+		&& ((moment.isMoment(cell.value) && !cell.value.isValid())
 			|| ['', '0000-00-00', '0000-00-00 00:00:00'].indexOf(cell.value) >= 0)) {
 
 		// Handle zero dates like Webchart uses all the time.  Turn them into the empty string,
@@ -2772,7 +2787,7 @@ function format(fcc, fti, cell, opts) {
 				convert(cell, fti);
 			}
 
-			if (window.moment && window.moment.isMoment(cell.value)) {
+			if (moment.isMoment(cell.value)) {
 				if (t === 'datetime' && fcc.hideMidnight && cell.value.hour() === 0 && cell.value.minute() === 0 && cell.value.second() === 0) {
 					result = cell.value.format(format_dateOnly);
 				}
@@ -2798,7 +2813,7 @@ function format(fcc, fti, cell, opts) {
 				convert(cell, fti);
 			}
 
-			if (window.BigNumber && BigNumber.isBigNumber(cell.value)) {
+			if (BigNumber.isBigNumber(cell.value)) {
 				if (format != null) {
 					result = cell.value.toFormat(format.decimalPlaces, format.roundingMode, format.format);
 				}
@@ -2806,7 +2821,7 @@ function format(fcc, fti, cell, opts) {
 					result = cell.value.toFormat();
 				}
 			}
-			else if (window.numeral && window.numeral.isNumeral(cell.value)) {
+			else if (numeral.isNumeral(cell.value)) {
 				if (format != null) {
 					result = cell.value.format(format);
 				}
@@ -2842,7 +2857,7 @@ function format(fcc, fti, cell, opts) {
 	cell.cachedRender = result;
 
 	return cell.cachedRender;
-};
+}
 
 // Date and Time Formatting {{{1
 
@@ -2862,7 +2877,7 @@ var timeFormatString = 'HH:mm:ss';
  * preferences).  This function is asynchronous and requires that you pass it a continuation.
  */
 
-function init(cont) {
+export function init(cont) {
 	switch (miecgictrl.dateformat) {
 	case 1:
 		dateFormatString = 'MM-dd-yyyy';
@@ -2888,7 +2903,7 @@ function init(cont) {
  * @returns {string} The date formatted according to the user's preference.
  */
 
-function formatDate(d) {
+export function formatDate(d) {
 	var convert = {
 		'MM': function (x) {
 			var m = x.getMonth() + 1;
@@ -2920,7 +2935,7 @@ function formatDate(d) {
  * @returns {string} The time formatted according to the user's preference.
  */
 
-function formatTime(t) {
+export function formatTime(t) {
 	var convert = {
 		'HH': function (x) {
 			var h = x.getHours();
@@ -2959,14 +2974,14 @@ function formatTime(t) {
 /**
 */
 
-function formatDateTime(d) {
+export function formatDateTime(d) {
 	return formatDate(d) + ' ' + formatTime(d);
 }
 
 /**
 */
 
-function formatDateString(s) {
+export function formatDateString(s) {
 	if (s === '' || s === '0000-00-00' || s === '0000-00-00 00:00:00') {
 		return '[UNKNOWN]';
 	}
@@ -2976,7 +2991,7 @@ function formatDateString(s) {
 /**
 */
 
-function formatTimeString(s) {
+export function formatTimeString(s) {
 	if (s === '' || s === '0000-00-00' || s === '0000-00-00 00:00:00') {
 		return '[UNKNOWN]';
 	}
@@ -2986,7 +3001,7 @@ function formatTimeString(s) {
 /**
 */
 
-function formatDateTimeString(s) {
+export function formatDateTimeString(s) {
 	if (s === '' || s === '0000-00-00' || s === '0000-00-00 00:00:00') {
 		return '[UNKNOWN]';
 	}
@@ -2996,14 +3011,14 @@ function formatDateTimeString(s) {
 /**
 */
 
-function removeZeroDates(x) {
+export function removeZeroDates(x) {
 	return x === '0000-00-00' ? '' : x;
 }
 
 /**
 */
 
-function removeZeroDateTimes(x) {
+export function removeZeroDateTimes(x) {
 	return x === '0000-00-00 00:00:00' ? '' : x;
 }
 
@@ -3012,106 +3027,9 @@ var DATE_ONLY_REGEXP = /^\d\d\d\d-\d\d-\d\d$/;
 /**
 */
 
-function addTimeComponent(x) {
+export function addTimeComponent(x) {
 	return (typeof x === 'string' && DATE_ONLY_REGEXP.test(x)) ? x + ' 00:00:00' : x;
 }
-
-
-// Exceptions {{{1
-
-/**
- * @namespace util.exceptions
- */
-
-/**
- * Exception used when a parameter required by a report has not been provided through the user
- * interface.
- */
-
-function MissingRequiredParameterError(name) {
-	this.name = 'MissingRequiredParameterError';
-	this.stack = (new Error()).stack;
-	this.message = 'Missing required parameter: ' + name;
-}
-
-MissingRequiredParameterError.prototype = Object.create(Error.prototype);
-MissingRequiredParameterError.prototype.constructor = MissingRequiredParameterError;
-
-/**
- * Internal exception used when the developer requests a feature that has not been implemented.
- */
-
-function NotImplementedError(msg) {
-	this.name = 'NotImplementedError';
-	this.stack = (new Error()).stack;
-	this.message = msg || 'Not Implemented';
-}
-
-NotImplementedError.prototype = Object.create(Error.prototype);
-NotImplementedError.prototype.constructor = NotImplementedError;
-
-/**
- * Exception used when an error has occurred while attempting to run a system report.
- */
-
-function ReportRunError(msg) {
-	this.name = 'ReportRunError';
-	this.stack = (new Error()).stack;
-	this.message = msg;
-}
-
-ReportRunError.prototype = Object.create(Error.prototype);
-ReportRunError.prototype.constructor = ReportRunError;
-
-/**
- * Internal exception used when the developer has used a grid definition which is invalid in some
- * way (e.g. missing or incorrect property value).
- */
-
-function InvalidReportDefinitionError(field, value, msg) {
-	this.name = 'InvalidReportDefinitionError';
-	this.stack = (new Error()).stack;
-
-	window.console.log(msg);
-	window.console.log(field);
-	window.console.log(value);
-
-	if (isNothing(field) && isNothing(value)) {
-		this.message = msg;
-	}
-	else {
-		this.message = 'Invalid report definition: [' + field + '] = "' + value + '", ' + msg;
-	}
-}
-
-InvalidReportDefinitionError.prototype = Object.create(Error.prototype);
-InvalidReportDefinitionError.prototype.constructor = InvalidReportDefinitionError;
-
-/**
- * Internal exception used when the developer has created or specified an invalid source.
- */
-
-function InvalidSourceError(msg) {
-	this.name = 'InvalidSourceError';
-	this.stack = (new Error()).stack;
-	this.message = msg;
-}
-
-InvalidSourceError.prototype = Object.create(Error.prototype);
-InvalidSourceError.prototype.constructor = InvalidSourceError;
-
-/**
- * Internal exception used when the developer has called a function with an invalid argument.
- */
-
-function InvalidCallError(msg) {
-	this.name = 'InvalidCallError';
-	this.stack = (new Error()).stack;
-	this.message = msg;
-}
-
-InvalidCallError.prototype = Object.create(Error.prototype);
-InvalidCallError.prototype.constructor = InvalidCallError;
 
 
 // Blocking {{{1
@@ -3136,7 +3054,7 @@ var BLOCK_CONFIG = {
  * @param {string} info Message that can be logged when blocking.
  */
 
-function blockGrid(defn, fn, info) {
+export function blockGrid(defn, fn, info) {
 	var grid;
 	var blockConfig;
 	var output;
@@ -3195,7 +3113,7 @@ function blockGrid(defn, fn, info) {
  * @param {string} info Message that can be logged when unblocking.
  */
 
-function unblockGrid(defn, info) {
+export function unblockGrid(defn, info) {
 	var grid;
 	var output;
 
@@ -3235,7 +3153,7 @@ function unblockGrid(defn, info) {
  * @return {boolean} True if the grid is blocked, false if it is not.
  */
 
-function gridIsBlocked(defn) {
+export function gridIsBlocked(defn) {
 	return defn.table.blockCount > 0;
 }
 
@@ -3252,9 +3170,9 @@ function gridIsBlocked(defn) {
  * @param {string} info Message that can be logged when blocking/unblocking.
  */
 
-function withGridBlock(defn, fn, info) {
+export function withGridBlock(defn, fn, info) {
 	if (typeof fn !== 'function') {
-		throw InvalidCallError('Argument <fn> must be a function.');
+		throw Error('Call Error: `fn` must be a function');
 	}
 
 	blockGrid(defn, function () {
@@ -3265,22 +3183,13 @@ function withGridBlock(defn, fn, info) {
 		window.setTimeout(function () {
 			fn();
 			unblockGrid(defn, info);
-		}, $.blockUI.defaults.fadeIn);
+		}, jQuery.blockUI.defaults.fadeIn);
 	}, info);
 }
 
 // Timing {{{1
 
-function TimingError(msg) {
-	this.name = 'TimingError';
-	this.stack = (new Error()).stack;
-	this.message = msg;
-}
-
-TimingError.prototype = Object.create(Error.prototype);
-TimingError.prototype.constructor = TimingError;
-
-function Timing() {
+export function Timing() {
 	var self = this;
 
 	self.data = {};
@@ -3348,7 +3257,7 @@ Timing.prototype.dump = function (subject) {
 
 	var f = function (sub) {
 		if (isNothing(self.events[sub])) {
-			throw new TimingError('Unknown subject: ' + sub);
+			throw new Error('Unknown subject: ' + sub);
 		}
 
 		_.each(self.events[sub], function (evt) {
@@ -3359,7 +3268,7 @@ Timing.prototype.dump = function (subject) {
 		});
 	};
 
-	if (!isNothing(subject)) {
+	if (subject != null) {
 		f(subject);
 	}
 	else {
@@ -3367,9 +3276,9 @@ Timing.prototype.dump = function (subject) {
 	}
 };
 
-// Delegate {{{1
+// }}}1
 
-function delegate(from, to, methods) {
+export function delegate(from, to, methods) {
 	_.each(methods, function (m) {
 		from.prototype[m] = function () {
 			var args = Array.prototype.slice.call(arguments);
@@ -3378,11 +3287,9 @@ function delegate(from, to, methods) {
 	});
 }
 
-// CGI {{{1
-
 // https://stackoverflow.com/questions/901115/
 
-function getParamsFromUrl() {
+export function getParamsFromUrl() {
 	var match, key, val,
 		pl     = /\+/g,  // Regex for replacing addition symbol with a space
 		search = /([^&=]+)=?([^&]*)/g,
@@ -3407,9 +3314,7 @@ function getParamsFromUrl() {
 	return params;
 }
 
-// #validateColConfig {{{2
-
-function validateColConfig(colConfig, data) {
+export function validateColConfig(colConfig, data) {
 	if (!(colConfig instanceof OrdMap)) {
 		throw new Error('Call Error: `colConfig` must be an OrdMap instance');
 	}
@@ -3436,8 +3341,6 @@ function validateColConfig(colConfig, data) {
 	return true;
 }
 
-// #determineColumns {{{2
-
 /**
  * Determine which columns should be shown in plain or grouped output, based on information from
  * several sources.
@@ -3458,7 +3361,7 @@ function validateColConfig(colConfig, data) {
  * in the output.  This is not necessarily the same as the headers to be shown in the output.
  */
 
-function determineColumns(colConfig, data, typeInfo) {
+export function determineColumns(colConfig, data, typeInfo) {
 	var columns = [];
 
 	if (!(colConfig instanceof OrdMap)) {
@@ -3510,7 +3413,7 @@ function determineColumns(colConfig, data, typeInfo) {
  * Default name to use for the file.
  */
 
-function presentDownload(blob, fileName) {
+export function presentDownload(blob, fileName) {
 	if (!(blob instanceof Blob)) {
 		throw new Error('Call Error: `blob` must be a Blob');
 	}
@@ -3543,7 +3446,7 @@ function presentDownload(blob, fileName) {
  * A blob that can be downloaded.
  */
 
-function dataURItoBlob(dataURI) {
+export function dataURItoBlob(dataURI) {
   // convert base64 to raw binary data held in a string
   // doesn't handle URLEncoded DataURIs - see SO answer #6850276 for code that does this
   var byteString = atob(dataURI.split(',')[1]);
@@ -3572,7 +3475,7 @@ function dataURItoBlob(dataURI) {
 
 // https://stackoverflow.com/a/2117523
 
-function uuid() {
+export function uuid() {
 	return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
 		var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
 		return v.toString(16);
@@ -3581,7 +3484,7 @@ function uuid() {
 
 // EagerPipeline {{{1
 
-var EagerPipeline = makeSubclass('EagerPipeline', Object, function (x) {
+export var EagerPipeline = makeSubclass('EagerPipeline', Object, function (x) {
 	this.x = x;
 });
 
@@ -3595,8 +3498,8 @@ EagerPipeline.prototype.andThen = function (f) {
 // #andThenCurry {{{2
 
 EagerPipeline.prototype.andThenCurry = function () {
-	var f = MIE.WC_DataVis.Util.curry.apply(null, arguments);
-	return this.andThen.call(this, f);
+	var f = curry.apply(null, arguments);
+	return this.andThen(f);
 };
 
 // #done {{{2

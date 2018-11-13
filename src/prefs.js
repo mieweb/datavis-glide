@@ -1,3 +1,30 @@
+import _ from 'underscore';
+import sprintf from 'sprintf-js';
+import numeral from 'numeral';
+
+import {
+	asyncEach,
+	deepCopy,
+	deepDefaults,
+	getProp,
+	getPropDef,
+	I,
+	Lock,
+	log,
+	makeSubclass,
+	mixinDebugging,
+	mixinEventHandling,
+	mixinLogging,
+	setProp,
+	uuid,
+	walkObj,
+} from './util.js';
+
+import {OrdMap} from './ordmap.js';
+import {View} from './view.js';
+import {Grid} from './grid.js';
+import {Graph} from './graph.js';
+
 /**
  * @file
  * This file contains the implementation of the prefs system.
@@ -239,7 +266,7 @@ Prefs.DEFAULT_BACKEND_TYPE = 'localStorage';
 mixinEventHandling(Prefs, function (self) {
 	return 'PREFS (' + self.id + ')';
 }, [
-	  'perspectiveAdded'   // Fired when a perspective is added.
+		'perspectiveAdded'   // Fired when a perspective is added.
 	, 'perspectiveDeleted' // Fired when a perspective is deleted.
 	, 'perspectiveRenamed' // Fired when a perspective is renamed.
 	, 'perspectiveChanged' // Fired when the current perspective has changed.
@@ -757,7 +784,7 @@ Prefs.prototype.deletePerspective = function (id, cont, opts) {
 
 			while (self.historyIndex < self.history.length && self.history[self.historyIndex].id === id) {
 				self.historyIndex += 1;
-			};
+			}
 
 			// Reset history until that point, erasing everything after it.
 
@@ -884,14 +911,14 @@ Prefs.prototype.renamePerspective = function (id, newName, cont, opts) {
 	// Make sure a perspective with the old name exists.
 
 	if (self.perspectives[id] == null) {
-		throw new Error(sprintf('Perspective does not exist: id = "%s"', id));
+		throw new Error(sprintf.sprintf('Perspective does not exist: id = "%s"', id));
 	}
 
 	// Check to see if there are any other perspectives with the same name.
 
 	_.each(self.perspectives, function (p) {
 		if (p.name === newName) {
-			log.warn(sprintf('Renaming perspective (id = "%s") now shares the name "%s" with a different perspective (id = "%s")',
+			log.warn(sprintf.sprintf('Renaming perspective (id = "%s") now shares the name "%s" with a different perspective (id = "%s")',
 				id, newName, p.id));
 		}
 	});
@@ -1739,7 +1766,7 @@ PrefsBackendTemporary.prototype.loadAll = function (cont) {
 		throw new Error('Call Error: `cont` must be a function');
 	}
 
-	perspectives = self.storage.perspectives;
+	var perspectives = self.storage.perspectives;
 	self.debug('Loaded all perspectives: %O', perspectives);
 	return cont(perspectives);
 };
@@ -2322,7 +2349,7 @@ var Perspective = makeSubclass('Perspective', Object, function (id, name, config
 });
 
 mixinDebugging(Perspective, function () {
-	return sprintf('PREFS // PERSPECTIVE (%s)', this.id);
+	return sprintf.sprintf('PREFS // PERSPECTIVE (%s)', this.id);
 });
 
 // #load {{{2
@@ -2406,3 +2433,16 @@ PREFS_MODULE_REGISTRY.set('view', PrefsModuleView);
 PREFS_MODULE_REGISTRY.set('grid', PrefsModuleGrid);
 PREFS_MODULE_REGISTRY.set('graph', PrefsModuleGraph);
 PREFS_MODULE_REGISTRY.set('meta', PrefsModuleMeta);
+
+// Exports {{{1
+
+export {
+	Prefs,
+	PrefsBackend,
+	PrefsBackendTemporary,
+	PREFS_BACKEND_REGISTRY,
+	PrefsModule,
+	PrefsModuleGrid,
+	PREFS_MODULE_REGISTRY,
+	Perspective
+};

@@ -1,3 +1,13 @@
+import _ from 'underscore';
+import jQuery from 'jquery';
+
+import {
+	fontAwesome,
+	getPropDef,
+	makeSubclass,
+	moveArrayElement,
+} from './util.js';
+
 // ColConfigWin {{{1
 
 var ColConfigWin = makeSubclass('ColConfigWin', Object, function (grid, colConfig) {
@@ -151,4 +161,8 @@ ColConfigWin.prototype.show = function (posElt, onSave) {
 	});
 
 	orderWin.dialog('open');
+};
+
+export {
+	ColConfigWin
 };

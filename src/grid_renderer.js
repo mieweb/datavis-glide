@@ -1,3 +1,12 @@
+import _ from 'underscore';
+import Handlebars from 'handlebars';
+import jQuery from 'jquery';
+
+import {debug, deepCopy, I, Lock, makeSubclass, mixinEventHandling} from './util.js';
+
+import {OrdMap} from './ordmap.js';
+import {View} from './view.js';
+
 // GridRenderer {{{1
 
 // Constructor {{{2
@@ -21,8 +30,8 @@
  */
 
 var GridRenderer = (function () {
-	UNIQUE_ID = 0;
-	
+	var UNIQUE_ID = 0;
+
 	return makeSubclass('GridRenderer', Object, function (grid, defn, view, features, opts, timing, id, colConfig) {
 		var self = this;
 
@@ -322,4 +331,16 @@ GridRendererHandlebars.prototype.addWorkHandler = function () {
 	self.view.on(View.events.workEnd, function (info, ops) {
 		self.draw(self.root, self.drawOpts);
 	}, { who: self, limit: 1 });
+};
+
+// Registry {{{1
+
+GridRenderer.registry = new OrdMap();
+GridRenderer.registry.set('handlebars', GridRendererHandlebars);
+
+// Exports {{{1
+
+export {
+	GridRenderer,
+	GridRendererHandlebars
 };

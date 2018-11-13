@@ -8,7 +8,9 @@ doc/_build
 doc/.python-version
 doc/html
 dist/wcdatavis.js
+dist/wcdatavis.min.js
 examples/wcdatavis.js
+examples/wcdatavis.min.js
 examples/wcdatavis.css
 examples/wcdatavis-extra.css
 examples/test/random*.json

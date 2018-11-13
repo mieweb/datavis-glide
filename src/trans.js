@@ -5,7 +5,7 @@ var transTbl = {
 	}
 };
 
-var trans = function (k) {
+export var trans = function (k) {
 	var lang = navigator.language
 		, tbl = transTbl[lang] || transTbl['en-US'];
 

@@ -1,3 +1,31 @@
+import _ from 'underscore';
+import sprintf from 'sprintf-js';
+import jQuery from 'jquery';
+
+import {
+	debug,
+	deepCopy,
+	determineColumns,
+	fontAwesome,
+	format,
+	gensym,
+	getProp,
+	getPropDef,
+	log,
+	makeSubclass,
+	mergeSort2,
+	mixinEventHandling,
+	objFromArray,
+	onVisibilityChange,
+	setPropDef,
+} from './util.js';
+
+import {OrdMap} from './ordmap.js';
+import {AggregateInfo} from './aggregates.js';
+import {GridRenderer} from './grid_renderer.js';
+import {View} from './view.js';
+import {Grid} from './grid.js';
+
 // Csv {{{1
 
 /**
@@ -117,6 +145,7 @@ Csv.prototype.clear = function () {
 
 Csv.prototype.toString = function () {
 	var self = this;
+	var i, row;
 
 	var s = '';
 	var sep = '"' + self.opts.separator + '"';
@@ -1088,12 +1117,6 @@ GridTable.prototype.draw = function (root, opts, cont) {
 			}
 
 			self.timing.stop(['Grid Table', 'Draw']);
-
-			if (typeof tableDone === 'function') {
-				window.setTimeout(function () {
-					tableDone();
-				});
-			}
 		}, opts);
 
 		// Activate TableTool using this attribute, if the user asked for it.
@@ -1196,6 +1219,7 @@ GridTable.prototype.drawHeader_aggregates = function (data, tr, displayOrderInde
 
 GridTable.prototype.drawHeader_addCols = function (tr, typeInfo, opts) {
 	var self = this;
+	var span, th;
 
 	if (self.opts.addCols) {
 		_.each(self.opts.addCols, function (addCol) {
@@ -1368,7 +1392,7 @@ GridTable.prototype.makeProgress = function (thing) {
 				}
 			},
 			update: function (amount, estTotal) {
-				debug.info('GRID TABLE - PLAIN // PROGRESS (' + thing + ')', sprintf('Update: %d / %d = %.0f%%', amount, estTotal, (amount / estTotal) * 100));
+				debug.info('GRID TABLE - PLAIN // PROGRESS (' + thing + ')', sprintf.sprintf('Update: %d / %d = %.0f%%', amount, estTotal, (amount / estTotal) * 100));
 				if (window.NProgress !== undefined) {
 					window.NProgress.set(amount / estTotal);
 				}
@@ -1394,7 +1418,7 @@ GridTable.prototype.makeProgress = function (thing) {
 				});
 			},
 			update: function (amount, estTotal) {
-				debug.info('GRID TABLE - PLAIN // PROGRESS (' + thing + ')', sprintf('Update: %d / %d = %.0f%%', amount, estTotal, (amount / estTotal) * 100));
+				debug.info('GRID TABLE - PLAIN // PROGRESS (' + thing + ')', sprintf.sprintf('Update: %d / %d = %.0f%%', amount, estTotal, (amount / estTotal) * 100));
 				self.ui.progress.progressbar('value', (amount / estTotal) * 100);
 			},
 			end: function () {
@@ -1711,7 +1735,7 @@ GridTablePlain.prototype.canRender = function (what) {
 GridTablePlain.prototype.drawHeader = function (columns, data, typeInfo, opts) {
 	var self = this;
 
-	var headingTr, headingSpan, headingTh;
+	var headingTr, headingSpan, headingTh, filterTr;
 
 	var headingThCss = {
 		'white-space': 'nowrap'
@@ -1939,24 +1963,24 @@ GridTablePlain.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 	var render = function (startIndex, howMany, nextChunk) {
 		var atLimit = false;
 
-		if (isNothing(startIndex)) {
+		if (startIndex == null) {
 			startIndex = 0;
 		}
 
-		if (isNothing(howMany)) {
+		if (howMany == null) {
 			howMany = data.data.length;
 		}
 
 		debug.info('GRID TABLE - PLAIN // DRAW', 'Rendering rows '
-							 + startIndex
-							 + ' - '
-							 + Math.min(useLimit && startIndex === 0 ? limitConfig.threshold - 1 : Number.POSITIVE_INFINITY
-													, startIndex + howMany - 1
-													, data.data.length - 1)
-							 + ' '
-							 + (data.data.length - 1 <= startIndex + howMany - 1
-									? '[END]'
-									: ('/ ' + data.data.length - 1)));
+			+ startIndex
+			+ ' - '
+			+ Math.min(useLimit && startIndex === 0 ? limitConfig.threshold - 1 : Number.POSITIVE_INFINITY
+				, startIndex + howMany - 1
+				, data.data.length - 1)
+				+ ' '
+				+ (data.data.length - 1 <= startIndex + howMany - 1
+					? '[END]'
+					: ('/ ' + data.data.length - 1)));
 
 		for (var rowNum = startIndex; rowNum < data.data.length && rowNum < startIndex + howMany && !atLimit; rowNum += 1) {
 			var row = data.data[rowNum];
@@ -1992,12 +2016,12 @@ GridTablePlain.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 					.on('click', showMore)
 					.append(fontAwesome('F13A'))
 					.append(jQuery('<span>Showing rows '
-												 + '1–'
-												 + rowNum
-												 + ' of '
-												 + (data.data.length + 1)
-												 + '.</span>')
-									.css({
+													+ '1–'
+													+ rowNum
+													+ ' of '
+													+ (data.data.length + 1)
+													+ '.</span>')
+										.css({
 										'padding-left': '0.5em',
 									}))
 					.append(jQuery('<span>Click to load ' + limitConfig.chunkSize + ' more rows.</span>')
@@ -2117,10 +2141,12 @@ GridTablePlain.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 		return;
 	};
 
+	var nextChunk;
+
 	if (self.features.incremental) {
 		var incrementalConfig = self.defn.table.incremental;
 		if (incrementalConfig.method === 'setTimeout') {
-			var nextChunk = function (startIndex, howMany) {
+			nextChunk = function (startIndex, howMany) {
 				window.setTimeout(function () {
 					render(startIndex + howMany, howMany, nextChunk);
 				}, incrementalConfig.delay);
@@ -2133,7 +2159,7 @@ GridTablePlain.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 			}, incrementalConfig.delay);
 		}
 		else if (incrementalConfig.method === 'requestAnimationFrame') {
-			var nextChunk = function (startIndex, howMany) {
+			nextChunk = function (startIndex, howMany) {
 				window.requestAnimationFrame(function () {
 					render(startIndex + howMany, howMany, nextChunk);
 				});
@@ -2224,7 +2250,7 @@ GridTablePlain.prototype.drawFooter = function (columns, data, typeInfo) {
 					fti.deferDecoding = false;
 					fti.needsDecoding = false;
 				});
-				var aggResult = aggInfo.instance.calculate(data.data);
+				aggResult = aggInfo.instance.calculate(data.data);
 				var aggResult_formatted;
 
 				if (aggInfo.instance.inheritFormatting) {
@@ -2249,7 +2275,7 @@ GridTablePlain.prototype.drawFooter = function (columns, data, typeInfo) {
 					footerVal = footerConfig.format(aggResult_formatted);
 					break;
 				case 'string':
-					footerVal = sprintf(footerConfig.format, aggResult_formatted);
+					footerVal = sprintf.sprintf(footerConfig.format, aggResult_formatted);
 					break;
 				default:
 					throw new Error('Footer config for field "' + field + '": `format` must be a function or a string');
@@ -2402,7 +2428,7 @@ GridTablePlain.prototype.addDataToCsv = function (data) {
 		self.csv.addCol(fcc.displayText || field);
 	});
 
-	howMany = data.data.length / 10;
+	var howMany = data.data.length / 10;
 
 	var f = function (startIndex) {
 		var endIndex = Math.min(data.data.length, startIndex + howMany);
@@ -2530,7 +2556,7 @@ GridTablePlain.prototype.checkAll = function (evt) {
 GridTablePlain.prototype._addRowReorderHandler = function () {
 	var self = this;
 
-	configureRowReordering(self.ui.tbody, _.bind(self.view.source.swapRows, self.view.source));
+	// configureRowReordering(self.ui.tbody, _.bind(self.view.source.swapRows, self.view.source));
 };
 
 // #_addRowSelectHandler {{{2
@@ -2899,7 +2925,7 @@ GridTableGroupDetail.prototype.drawBody = function (data, typeInfo, columns, con
 		var mapping = {};
 
 		function recur(node) {
-			mapping[node.id] = info = {
+			mapping[node.id] = {
 				metadata: node,
 				numSelected: 0
 			};
@@ -3007,12 +3033,15 @@ GridTableGroupDetail.prototype.drawBody = function (data, typeInfo, columns, con
 	 */
 
 	function render(metadataId, startIndex, afterElement, showAll) {
-		if (metadataId != null && typeof metadataId !== 'number')
+		if (metadataId != null && typeof metadataId !== 'number') {
 			throw new Error('Call Error: `metadataId` must be null or a number');
-		if (startIndex != null && typeof startIndex !== 'number')
+		}
+		if (startIndex != null && typeof startIndex !== 'number') {
 			throw new Error('Call Error: `startIndex` must be null or a number');
-		if (afterElement != null && !(afterElement instanceof jQuery))
+		}
+		if (afterElement != null && !(afterElement instanceof jQuery)) {
 			throw new Error('Call Error: `afterElement` must be null or an instance of jQuery');
+		}
 
 		if (metadataId == null) metadataId = 0;
 		if (startIndex == null) startIndex = 0;
@@ -3133,7 +3162,7 @@ GridTableGroupDetail.prototype.drawBody = function (data, typeInfo, columns, con
 
 				infoTextSpan = jQuery('<span>').css({'margin-left': '0.5em'}).text(infoText);
 
-				spinnerDiv = jQuery('<div>', {'class': 'spinner'})
+				var spinnerDiv = jQuery('<div>', {'class': 'spinner'})
 					.append(jQuery('<div>', {'class': 'bounce1'}))
 					.append(jQuery('<div>', {'class': 'bounce2'}))
 					.append(jQuery('<div>', {'class': 'bounce3'}))
@@ -3208,7 +3237,7 @@ GridTableGroupDetail.prototype.drawBody = function (data, typeInfo, columns, con
 					'colspan': colSpan
 				})
 					.append(fontAwesome('F13A'))
-					.append(jQuery('<span>Showing rows ' + '1–' + i + ' of ' + childRowValEltsLen + '.</span>')
+					.append(jQuery('<span>Showing rows 1–' + i + ' of ' + childRowValEltsLen + '.</span>')
 						.css({'padding-left': '0.5em'}))
 					.append(jQuery('<button type="button">Load ' + limitConfig.chunkSize + ' more rows.</button>')
 						.css({'margin-left': '0.5em'}))
@@ -3354,7 +3383,7 @@ GridTableGroupDetail.prototype.drawBody = function (data, typeInfo, columns, con
 					'colspan': colSpan
 				})
 					.append(fontAwesome('F13A'))
-					.append(jQuery('<span>Showing rows ' + '1–' + i + ' of ' + metadataNode.rows.length + '.</span>')
+					.append(jQuery('<span>Showing rows 1–' + i + ' of ' + metadataNode.rows.length + '.</span>')
 						.css({'padding-left': '0.5em'}))
 					.append(jQuery('<button type="button">Load ' + limitConfig.chunkSize + ' more rows.</button>')
 						.css({'margin-left': '0.5em'}))
@@ -3480,7 +3509,7 @@ GridTableGroupDetail.prototype._addRowSelectHandler = function () {
 			else {
 				_.each(node.children, recur);
 			}
-		};
+		}
 
 		recur(self.data.groupMetadata.lookup.byId[groupMetadataId]);
 
@@ -3501,12 +3530,6 @@ GridTableGroupDetail.prototype._addRowSelectHandler = function () {
 
 GridTableGroupDetail.prototype._updateSelectionGui = function () {
 	var self = this;
-
-	var updateCheckboxState = function (elt) {
-		elt.prop('disabled', isDisabled);
-		elt.prop('checked', isAllChecked);
-		elt.prop('indeterminate', isIndeterminate);
-	};
 
 	// First, deselect all rows (remove "selected" class and uncheck the box).
 
@@ -3831,6 +3854,7 @@ GridTableGroupSummary.prototype.drawHeader = function (columns, data, typeInfo, 
 GridTableGroupSummary.prototype.drawBody = function (data, typeInfo, columns, cont, opts) {
 	var self = this;
 	var ai = self._getAggInfo(data);
+	var aggType, aggInfo, rowAgg;
 
 	_.each(data.data, function (rowGroup, groupNum) {
 		var tr = jQuery('<tr>');
@@ -3878,7 +3902,7 @@ GridTableGroupSummary.prototype.drawBody = function (data, typeInfo, columns, co
 									convert: false
 								});
 							}
-							var td = jQuery('<td>').text(addColText);
+							td = jQuery('<td>').text(addColText);
 						}
 
 						if (getProp(opts, 'pivotConfig', 'aggField')) {
@@ -4208,7 +4232,7 @@ GridTablePivot.prototype.drawHeader = function (columns, data, typeInfo, opts) {
 			tr.append(th);
 		}
 
-		for (var i = 0; i < colSpan - 1; i += 1) {
+		for (i = 0; i < colSpan - 1; i += 1) {
 			self.csv.addCol('');
 		}
 	};
@@ -4291,6 +4315,9 @@ GridTablePivot.prototype.drawHeader = function (columns, data, typeInfo, opts) {
 
 GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opts) {
 	var self = this;
+
+	var aggType
+		, aggInfo;
 
 	opts = opts || {};
 	opts.pivotConfig = opts.pivotConfig || {};
@@ -4426,7 +4453,7 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 									convert: false
 								});
 							}
-							var td = jQuery('<td>').text(addColText);
+							td = jQuery('<td>').text(addColText);
 						}
 
 						if (getProp(opts, 'pivotConfig', 'aggField')) {
@@ -4452,9 +4479,13 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 		var span,
 			text,
 			aggNum = aggInfo.aggNum,
+			aggResult,
 			headingThControls,
 			headingThContainer,
-			th;
+			th,
+			tr,
+			i,
+			td;
 
 		tr = jQuery('<tr>');
 		self.csv.addRow();
@@ -4474,7 +4505,7 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 					// as there are group fields.
 
 					if (data.groupFields.length > 1) {
-						for (var i = 0; i < data.groupFields.length - 1; i += 1) {
+						for (i = 0; i < data.groupFields.length - 1; i += 1) {
 							self.csv.addCol('');
 						}
 					}
@@ -4540,7 +4571,7 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 						// Add padding cells in the CSV output so that the pivot aggregates appear staggered.  Since
 						// we can't do rowspan in CSV like we can in HTML.
 
-						for (var i = aiPivotIndex + 1; i < ai.pivot.length; i += 1) {
+						for (i = aiPivotIndex + 1; i < ai.pivot.length; i += 1) {
 							self.csv.addCol('');
 						}
 					});
@@ -4552,7 +4583,7 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 					// =========================================================================
 
 					if (getProp(data, 'agg', 'info', 'all', aggNum)) {
-						for (var i = 0; i < aiPivotIndex; i += 1) {
+						for (i = 0; i < aiPivotIndex; i += 1) {
 							td = jQuery('<td><div>&nbsp;</div></td>');
 							if (self.opts.drawInternalBorders || ai.cell.length > 1) {
 								td.addClass(i === 0 ? 'wcdv_pivot_aggregate_boundary' : 'wcdv_pivot_colval_boundary');
@@ -4633,19 +4664,16 @@ GridTablePivot.prototype.addWorkHandler = function () {
 
 // Registry {{{1
 
-GridRenderer.registry = OrdMap.fromArray([{
-	name: 'table_plain',
-	cls: GridTablePlain
-}, {
-	name: 'table_group_detail',
-	cls: GridTableGroupDetail
-}, {
-	name: 'table_group_summary',
-	cls: GridTableGroupSummary
-}, {
-	name: 'table_pivot',
-	cls: GridTablePivot
-}, {
-	name: 'handlebars',
-	cls: GridRendererHandlebars
-}], 'name');
+GridRenderer.registry.set('table_plain', GridTablePlain);
+GridRenderer.registry.set('table_group_detail', GridTableGroupDetail);
+GridRenderer.registry.set('table_group_summary', GridTableGroupSummary);
+GridRenderer.registry.set('table_pivot', GridTablePivot);
+
+// Exports {{{1
+
+export {
+	GridTablePlain,
+	GridTableGroupSummary,
+	GridTableGroupDetail,
+	GridTablePivot,
+};

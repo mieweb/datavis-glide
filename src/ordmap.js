@@ -1,3 +1,5 @@
+import { deepCopy } from './util.js';
+
 // OrdMap {{{1
 
 /**
@@ -75,7 +77,7 @@ OrdMap.fromMerge = function (maps) {
 OrdMap.deserialize = function (x) {
 	var result = new OrdMap();
 
-	if (_.isString(x)) {
+	if (typeof x === 'string') {
 		x = JSON.parse(x);
 	}
 
@@ -381,4 +383,10 @@ OrdMap.prototype._changeKeyIndex = function (oldIndex, newIndex) {
 	var key = self._keys[oldIndex];
 	self._keys.splice(oldIndex, 1);
 	self._keys.splice(newIndex, 0, key);
+};
+
+// Exports {{{1
+
+export {
+	OrdMap
 };

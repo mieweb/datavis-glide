@@ -1,3 +1,7 @@
+import jQuery from 'jquery';
+
+import {deepDefaults, fontAwesome, getProp} from './util.js';
+
 /**
  * The jQuery plugin namespace.
  * @external "jQuery.fn"
@@ -194,7 +198,7 @@ jQuery.fn.extend({
 			break;
 		default:
 			throw new Error('Call Error: Event type must be one of: ["drag", "drop", "sort"]');
-		};
+		}
 		return this;
 	},
 
@@ -224,7 +228,7 @@ jQuery.fn.extend({
 			.append('You can drag & drop this field into the grid controls above to filter, group or pivot.');
 		this.tooltip({
 			classes: {
-				'ui-tooltip': 'ui-corner-all ui-widget-shadow ' + 'wcdv_info_tooltip wcdv_border-primary'
+				'ui-tooltip': 'ui-corner-all ui-widget-shadow wcdv_info_tooltip wcdv_border-primary'
 			},
 			show: { delay: 2000 },
 			content: tooltipContent
@@ -237,8 +241,8 @@ jQuery.fn.extend({
 		var self = this;
 
 		var helperClone = function (e, tr) {
-			var originals = tr.children();
-			clonedRow = tr.clone(),
+			var originals = tr.children(),
+				clonedRow = tr.clone(),
 				start_idx = tr.index(),
 				all_rows = tr.parent().children(),
 				all_select = tr.find('select');
@@ -315,7 +319,7 @@ jQuery.fn.extend({
 			jQuery(event.currentTarget).focus();
 		});
 
-		opts = {
+		var opts = {
 			forcePlaceholderSize: true,
 			axis: 'y',
 			cancel: 'input,textarea,select,option',

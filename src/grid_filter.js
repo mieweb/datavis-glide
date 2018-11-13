@@ -1,22 +1,23 @@
-// GridFilterError {{{1
+import _ from 'underscore';
+import moment from 'moment';
+import numeral from 'numeral';
+import jQuery from 'jquery';
 
-/**
- * Represents an error that occurs when creating or using a grid filter.
- *
- * @memberof wcgraph_int
- * @class
- *
- * @param {string} msg The error message.
- */
-
-function GridFilterError(msg) {
-	this.name = 'GridFilterError';
-	this.stack = (new Error()).stack;
-	this.message = msg;
-}
-
-GridFilterError.prototype = Object.create(Error.prototype);
-GridFilterError.prototype.constructor = GridError;
+import {
+	debug,
+	deepDefaults,
+	fontAwesome,
+	gensym,
+	getPropDef,
+	isFloat,
+	isInt,
+	log,
+	makeSubclass,
+	makeSuper,
+	mixinEventHandling,
+	toFloat,
+	toInt,
+} from './util.js';
 
 // GridFilter {{{1
 
@@ -85,7 +86,7 @@ var GridFilter = (function () {
 		}
 		else if (self.opts.removeButton) {
 			localRemoveButton = self.opts.removeButton;
-		};
+		}
 
 		if (localRemoveButton) {
 			localRemoveButton.on('click', function () {
@@ -136,7 +137,7 @@ GridFilter.prototype.constructor = GridFilter;
 
 GridFilter.prototype.getValue = function () {
 	var self = this
-		fti = self.gridFilterSet.view.typeInfo.get(self.field);
+		, fti = self.gridFilterSet.view.typeInfo.get(self.field);
 
 	switch (fti.type) {
 	case 'date':
@@ -527,7 +528,7 @@ StringDropdownGridFilterSumo.prototype.setValue = function (val) {
 	if (!_.isArray(val)) {
 		val = [val];
 	}
-	
+
 	_.each(val, function (v) {
 		self.pleaseDontFireChangeEvent = true;
 		self.input.get(0).sumo.selectItem(v);
@@ -1094,14 +1095,14 @@ GridFilterSet.prototype.build = function (field, target, opts) {//filterType, fi
 
 	// Make sure that we are able to get the column type.
 
-	if (isNothing(colType)) {
-		throw new GridFilterError('Unable to determine type of column "' + field + '"');
+	if (colType == null) {
+		throw new Error('Unable to determine type of column "' + field + '"');
 	}
 
 	// Make sure that we know what kinds of filters are allowed for the column type.
 
 	if (GridFilter.widgets[colType] === undefined) {
-		throw new GridFilterError('Unknown type "' + colType + '" for column "' + field + '"');
+		throw new Error('Unknown type "' + colType + '" for column "' + field + '"');
 	}
 
 	// When the user didn't request a filter type, just use the first one in the allowed list.
@@ -1111,7 +1112,7 @@ GridFilterSet.prototype.build = function (field, target, opts) {//filterType, fi
 	var ctor = GridFilter.widgets[colType][filterType];
 
 	if (ctor === undefined) {
-		throw new GridFilterError('Invalid filter type "' + filterType + '" for type "' + colType + '" of column "' + field + '"');
+		throw new Error('Invalid filter type "' + filterType + '" for type "' + colType + '" of column "' + field + '"');
 	}
 
 	debug.info('GRID FILTER', 'Creating new widget: column type = "' + colType + '" ; filter type = "' + filterType + '"');
@@ -1287,8 +1288,8 @@ GridFilterSet.prototype.set = function (field, fieldSpec) {
 
 	_.each(fieldSpec, function (val, op) {
 		debug.info('GRID FILTER SET',
-							 'Setting filter: { field = %s ; operator = %s ; value = %s }',
-							 field, op, typeof val === 'object' ? JSON.stringify(val) : val);
+			'Setting filter: { field = %s ; operator = %s ; value = %s }',
+			field, op, typeof val === 'object' ? JSON.stringify(val) : val);
 		var filters = self.filters.byCol[field];
 
 		if (filters == null) {
@@ -1298,4 +1299,10 @@ GridFilterSet.prototype.set = function (field, fieldSpec) {
 		filters[0].setOperator(op);
 		filters[0].setValue(val);
 	});
+};
+
+// Exports {{{1
+
+export {
+	GridFilterSet,
 };

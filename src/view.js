@@ -1,24 +1,36 @@
-// ViewError {{{1
+import _ from 'underscore';
 
-/**
- * Exception thrown when there's a problem in the View.
- *
- * @class
- * @extends DataVisError
- */
-
-var ViewError = makeSubclass('ViewError', DataVisError);
-
-// InvalidAggregateError {{{1
-
-/**
- * Exception thrown when there's a problem with the specification of an aggregate function.
- *
- * @class
- * @extends ViewError
- */
-
-var InvalidAggregateError = makeSubclass('InvalidAggregateError', ViewError);
+import {
+	arrayCompare,
+	arrayEqual,
+	car,
+	cdr,
+	debug,
+	deepCopy,
+	deepDefaults,
+	delegate,
+	eachUntilObj,
+	gensym,
+	getComparisonFn,
+	getNatRep,
+	getProp,
+	getPropDef,
+	I,
+	interleaveWith,
+	Lock,
+	log,
+	logAsync,
+	mergeSort4,
+	mixinEventHandling,
+	objFromArray,
+	pigeonHoleSort,
+	setProp,
+	Timing,
+} from './util.js';
+import {OrdMap} from './ordmap.js';
+import {Source} from './source.js';
+import {Prefs} from './prefs.js';
+import {AGGREGATE_REGISTRY, AggregateInfo} from './aggregates.js';
 
 // View {{{1
 // JSDoc Types {{{2
@@ -721,8 +733,8 @@ View.prototype.sort = function (cont) {
 	var unpackBundle = function (orientation) {
 		return function (sorted) {
 			debug.info('VIEW (' + self.name + ') // SORT // UNPACK',
-								 'Unpacking bundle of %d sorted chunks in %s orientation',
-								 sorted.length, orientation);
+				'Unpacking bundle of %d sorted chunks in %s orientation',
+				sorted.length, orientation);
 
 			var origData = self.data.data;
 			var origRowVals = getProp(self.data, 'rowVals');
@@ -761,7 +773,7 @@ View.prototype.sort = function (cont) {
 						self.fire('sort', {
 							silent: true
 						}, origData[s.oldIndex].rowNum, newIndex);
-					};
+					}
 
 					self.data.data[newIndex] = origData[s.oldIndex];
 					if (origRowVals != null) {
@@ -838,7 +850,7 @@ View.prototype.sort = function (cont) {
 				// Reorder pivot aggregates.
 
 				if (origPivotAgg != null) {
-					for (var ai = 0; ai < origPivotAgg.length; ai += 1) {
+					for (ai = 0; ai < origPivotAgg.length; ai += 1) {
 						self.data.agg.results.pivot[ai] = new Array(self.data.colVals.length);
 						_.each(sorted, function (s, newIndex) {
 							self.data.agg.results.pivot[ai][newIndex] = origPivotAgg[ai][s.oldIndex];
@@ -884,7 +896,7 @@ View.prototype.sort = function (cont) {
 			, spec = getProp(self, 'sortSpec', orientation)
 			, sortAlgorithm = 'mergeSort';
 
-		var rvi, cvi;
+		var rvi, cvi, gfi;
 
 		if (spec == null) {
 			return next(false);
@@ -919,7 +931,7 @@ View.prototype.sort = function (cont) {
 				return next(false);
 			}
 			if (spec.field != null) {
-				var gfi = self.data.groupFields.indexOf(spec.field);
+				gfi = self.data.groupFields.indexOf(spec.field);
 
 				if (gfi < 0) {
 					log.error('Unable to sort: `field` property does not refer to a grouped field ' +
@@ -995,7 +1007,7 @@ View.prototype.sort = function (cont) {
 			if (spec.field != null) {
 				switch (orientation) {
 				case 'vertical':
-					var gfi = self.data.groupFields.indexOf(spec.field);
+					gfi = self.data.groupFields.indexOf(spec.field);
 
 					if (gfi < 0) {
 						log.error('Unable to sort: `field` property does not refer to a grouped field ' +
@@ -1194,7 +1206,7 @@ View.prototype.sort = function (cont) {
 		//console.log(self.data.agg);
 
 		var cmp, comparison;
-		
+
 		if (sortAlgorithm === 'mergeSort') {
 			cmp = determineCmp(spec, fti);
 			if (cmp == null) {
@@ -1294,8 +1306,9 @@ View.prototype.sort = function (cont) {
 
 View.prototype.setFilter = function (spec, progress, opts) {
 	var self = this
-		, args = Array.prototype.slice.call(arguments)
-		, opts = deepCopy(opts) || {};
+		, args = Array.prototype.slice.call(arguments);
+
+	opts = deepCopy(opts) || {};
 
 	if (self.lock.isLocked()) {
 		return self.lock.onUnlock(function () {
@@ -1311,7 +1324,7 @@ View.prototype.setFilter = function (spec, progress, opts) {
 
 	debug.info('VIEW (' + self.name + ') // SET FILTER', 'spec = %O ; options = %O', spec, opts);
 
-	if (!isNothing(self.filterSpec) && isNothing(spec)) {
+	if (self.filterSpec != null && spec == null) {
 		self.wasPreviouslyFiltered = true;
 	}
 
@@ -1388,7 +1401,7 @@ View.prototype.clearFilter = function (opts) {
  */
 
 View.prototype.isFiltered = function () {
-	return !isNothing(this.filterSpec);
+	return this.filterSpec != null;
 };
 
 // #filter {{{2
@@ -1403,7 +1416,7 @@ View.prototype.filter = function (cont) {
 	var self = this
 		, timingEvt = ['Data Source "' + self.source.name + '" : ' + self.name, 'Filtering'];
 
-	if (isNothing(self.filterSpec)) {
+	if (self.filterSpec == null) {
 		if (!self.wasPreviouslyFiltered) {
 			return cont(false, self.data.data);
 		}
@@ -1428,7 +1441,7 @@ View.prototype.filter = function (cont) {
 		}
 
 		if (fti.type === undefined) {
-			throw new ViewError('Unable to filter field "' + filterField + '" - type is not provided');
+			throw new Error('Unable to filter field "' + filterField + '" - type is not provided');
 		}
 
 		self._maybeDecode('FILTER', fti);
@@ -1444,7 +1457,7 @@ View.prototype.filter = function (cont) {
 
 		if (datum === undefined) {
 			debug.warn('VIEW (' + self.name + ') // FILTER',
-								 'Attempted to filter by non-existent column: ' + field);
+				'Attempted to filter by non-existent column: ' + field);
 			return false;
 		}
 
@@ -1523,7 +1536,7 @@ View.prototype.filter = function (cont) {
 				switch (operator) {
 				case '$in':
 					if (!_.isArray(operand)) {
-						throw new ViewError('Invalid filter spec, operator "$in" for column "' + field + '" requires array value');
+						throw new Error('Invalid filter spec, operator "$in" for column "' + field + '" requires array value');
 					}
 
 					if (_.map(operand, function (elt) { return elt.toString().toLowerCase(); }).indexOf(datum.toString().toLowerCase()) < 0) {
@@ -1533,7 +1546,7 @@ View.prototype.filter = function (cont) {
 
 				case '$nin':
 					if (!_.isArray(operand)) {
-						throw new ViewError('Invalid filter spec, operator "$nin" for column "' + field + '" requires array value');
+						throw new Error('Invalid filter spec, operator "$nin" for column "' + field + '" requires array value');
 					}
 
 					if (_.map(operand, function (elt) { return elt.toString().toLowerCase(); }).indexOf(datum.toString().toLowerCase()) >= 0) {
@@ -1542,7 +1555,7 @@ View.prototype.filter = function (cont) {
 					break;
 
 				default:
-					throw new ViewError('Invalid operator "' + operator + '" for column "' + field + '"');
+					throw new Error('Invalid operator "' + operator + '" for column "' + field + '"');
 				}
 			}
 		}
@@ -1589,6 +1602,8 @@ View.prototype.filter = function (cont) {
 	var newData = [];
 
 	var doFilter = function () {
+		var i;
+
 		//debug.info('VIEW (' + self.name + ') // FILTER',
 		//					 'Filtering rows ' + i0.val + ' through ' + (i0.val + i_step));
 
@@ -1829,7 +1844,8 @@ View.prototype.clearGroup = function (opts) {
 View.prototype.group = function () {
 	var self = this
 		, groupFields = []
-		, newData = [];
+		, newData
+		, rowVals;
 
 	// Make sure that grouping has been asked for.
 
@@ -1896,15 +1912,22 @@ View.prototype.group = function () {
 	//   natrep transform.  This will be used later.
 
 	var buildRowVals = function (groupFields, addRowVals) {
-		var rowVals = [];
+		var rowVals = []
+			, rowVal
+			, row
+			, rowIndex
+			, groupField
+			, groupFieldIndex
+			, value
+			, natRep;
 
-		for (var rowIndex = 0; rowIndex < self.data.data.length; rowIndex += 1) {
-			var row = self.data.data[rowIndex];
-			var rowVal = [];
-			for (var groupFieldIndex = 0; groupFieldIndex < groupFields.length; groupFieldIndex += 1) {
-				var groupField = groupFields[groupFieldIndex];
-				var value = row.rowData[groupField].value;
-				var natRep = getNatRep(value);
+		for (rowIndex = 0; rowIndex < self.data.data.length; rowIndex += 1) {
+			row = self.data.data[rowIndex];
+			rowVal = [];
+			for (groupFieldIndex = 0; groupFieldIndex < groupFields.length; groupFieldIndex += 1) {
+				groupField = groupFields[groupFieldIndex];
+				value = row.rowData[groupField].value;
+				natRep = getNatRep(value);
 				origKeys[groupFieldIndex][natRep] = value;
 				rowVal[groupFieldIndex] = natRep;
 			}
@@ -1917,7 +1940,7 @@ View.prototype.group = function () {
 
 		if (addRowVals != null) {
 			for (var arvIndex = 0; arvIndex < addRowVals.length; arvIndex += 1) {
-				var rowVal = addRowVals[arvIndex];
+				rowVal = addRowVals[arvIndex];
 
 				if (rowVal.length != groupFields.length) {
 					log.error('Unable to add rowVal %s when grouping by %s: the lengths must be the same',
@@ -1925,9 +1948,9 @@ View.prototype.group = function () {
 					continue;
 				}
 
-				for (var groupFieldIndex = 0; groupFieldIndex < rowVal.length; groupFieldIndex += 1) {
-					var value = rowVal[groupFieldIndex];
-					var natRep = getNatRep(value);
+				for (groupFieldIndex = 0; groupFieldIndex < rowVal.length; groupFieldIndex += 1) {
+					value = rowVal[groupFieldIndex];
+					natRep = getNatRep(value);
 					origKeys[groupFieldIndex][natRep] = value;
 					rowVal[groupFieldIndex] = natRep;
 				}
@@ -1948,6 +1971,13 @@ View.prototype.group = function () {
 	};
 
 	var buildData = function (data, rowVals) {
+		var rowVal
+			, rowValIndex
+			, metadataLeaf
+			, row
+			, rowIndex
+			, groupFieldIndex;
+
 		var result = new Array(rowVals.length);
 		var metadataTree = {
 			lookup: {
@@ -1960,9 +1990,9 @@ View.prototype.group = function () {
 		// Build the metadata tree leaves.  Each path through the metadata tree from root to leaf
 		// represents a group, with each step along the way being an element of the rowval.
 
-		for (var rowValIndex = 0; rowValIndex < rowVals.length; rowValIndex += 1) {
-			var rowVal = rowVals[rowValIndex];
-			var metadataLeaf = {
+		for (rowValIndex = 0; rowValIndex < rowVals.length; rowValIndex += 1) {
+			rowVal = rowVals[rowValIndex];
+			metadataLeaf = {
 				rowValIndex: rowValIndex,
 				rowValElt: rowVal[rowVal.length - 1],
 				parent: null,
@@ -1983,15 +2013,15 @@ View.prototype.group = function () {
 		//   2. Use the rowval as a path to walk the tree to the leaf.
 		//   3. Append the row to the leaf's collection.
 
-		for (var rowIndex = 0; rowIndex < data.length; rowIndex += 1) {
-			var row = data[rowIndex];
-			var rowVal = new Array(groupFields.length);
+		for (rowIndex = 0; rowIndex < data.length; rowIndex += 1) {
+			row = data[rowIndex];
+			rowVal = new Array(groupFields.length);
 
-			for (var groupFieldIndex = 0; groupFieldIndex < groupFields.length; groupFieldIndex += 1) {
+			for (groupFieldIndex = 0; groupFieldIndex < groupFields.length; groupFieldIndex += 1) {
 				rowVal[groupFieldIndex] = getNatRep(row.rowData[groupFields[groupFieldIndex]].value);
 			}
 
-			var metadataLeaf = getProp(metadataTree, 'children', interleaveWith(rowVal, 'children'));
+			metadataLeaf = getProp(metadataTree, 'children', interleaveWith(rowVal, 'children'));
 			metadataTree.lookup.byRowNum[row.rowNum] = metadataLeaf;
 
 			metadataLeaf.rows.push(row);
@@ -2408,17 +2438,27 @@ View.prototype.pivot = function () {
 	var origKeys = [];
 
 	var buildColVals = function (pivotFields, addColVals) {
-		var colVals = [];
+		var colVal
+			, pivotFieldIndex
+			, pivotField
+			, value
+			, natRep
+			, groupIndex
+			, group
+			, row
+			, rowIndex
+			, acvIndex
+			, colVals = [];
 
-		for (var groupIndex = 0; groupIndex < self.data.data.length; groupIndex += 1) {
-			var group = self.data.data[groupIndex];
-			for (var rowIndex = 0; rowIndex < group.length; rowIndex += 1) {
-				var row = group[rowIndex];
-				var colVal = [];
-				for (var pivotFieldIndex = 0; pivotFieldIndex < pivotFields.length; pivotFieldIndex += 1) {
-					var pivotField = pivotFields[pivotFieldIndex];
-					var value = row.rowData[pivotField].value;
-					var natRep = getNatRep(value);
+		for (groupIndex = 0; groupIndex < self.data.data.length; groupIndex += 1) {
+			group = self.data.data[groupIndex];
+			for (rowIndex = 0; rowIndex < group.length; rowIndex += 1) {
+				row = group[rowIndex];
+				colVal = [];
+				for (pivotFieldIndex = 0; pivotFieldIndex < pivotFields.length; pivotFieldIndex += 1) {
+					pivotField = pivotFields[pivotFieldIndex];
+					value = row.rowData[pivotField].value;
+					natRep = getNatRep(value);
 					origKeys[pivotFieldIndex][natRep] = value;
 					colVal[pivotFieldIndex] = natRep;
 				}
@@ -2431,8 +2471,8 @@ View.prototype.pivot = function () {
 		}
 
 		if (addColVals != null) {
-			for (var acvIndex = 0; acvIndex < addColVals.length; acvIndex += 1) {
-				var colVal = addColVals[acvIndex];
+			for (acvIndex = 0; acvIndex < addColVals.length; acvIndex += 1) {
+				colVal = addColVals[acvIndex];
 
 				if (colVal.length != pivotFields.length) {
 					log.error('Unable to add colVal %s when pivotting by %s: the lengths must be the same',
@@ -2440,9 +2480,9 @@ View.prototype.pivot = function () {
 					continue;
 				}
 
-				for (var pivotFieldIndex = 0; pivotFieldIndex < colVal.length; pivotFieldIndex += 1) {
-					var value = colVal[pivotFieldIndex];
-					var natRep = getNatRep(value);
+				for (pivotFieldIndex = 0; pivotFieldIndex < colVal.length; pivotFieldIndex += 1) {
+					value = colVal[pivotFieldIndex];
+					natRep = getNatRep(value);
 					origKeys[pivotFieldIndex][natRep] = value;
 					colVal[pivotFieldIndex] = natRep;
 				}
@@ -2700,19 +2740,14 @@ View.prototype.aggregate = function (cont) {
 				info[what][aggNum] = new AggregateInfo(what, spec, aggNum, self.colConfig, self.typeInfo, _.bind(self._maybeDecode, self));
 			}
 			catch (e) {
-				if (e instanceof InvalidAggregateError) {
-					log.error('Invalid Aggregate: ' + what + '[' + aggNum + '] - ' + e.message);
+				log.error('Invalid Aggregate: ' + what + '[' + aggNum + '] - ' + e.message);
 
-					// Set the aggregate to null so it can be removed later.
-					info[what][aggNum] = null;
+				// Set the aggregate to null so it can be removed later.
+				info[what][aggNum] = null;
 
-					// Let the UI know there was a problem with this aggregate, so the user can fix it or
-					// remove the aggregate from the output entirely.
-					self.fire('invalidAggregate', null, aggNum, e.message);
-				}
-				else {
-					throw e;
-				}
+				// Let the UI know there was a problem with this aggregate, so the user can fix it or
+				// remove the aggregate from the output entirely.
+				self.fire('invalidAggregate', null, aggNum, e.message);
 			}
 		});
 
@@ -3098,4 +3133,10 @@ View.prototype.prime = function (cont) {
 			cont(true);
 		});
 	});
+};
+
+// Exports {{{1
+
+export {
+	View
 };

@@ -1,3 +1,26 @@
+import _ from 'underscore';
+import jQuery from 'jquery';
+
+import {
+	debug,
+	deepDefaults,
+	determineColumns,
+	fontAwesome,
+	gensym,
+	getProp,
+	log,
+	makeSubclass,
+	mapLimit,
+	mixinEventHandling,
+	objFromArray,
+} from './util.js';
+
+import './jquery.js';
+import {AGGREGATE_REGISTRY} from './aggregates.js';
+import {View} from './view.js';
+import {Grid} from './grid.js';
+import {GridFilterSet} from './grid_filter.js';
+
 /*
  * Grid controls are the rounded boxes that appear between the toolbar and the grid.  They allow
  * dynamic configuration of the view to which the grid is bound.
@@ -586,7 +609,7 @@ GridControl.prototype.addField = function (field, displayText, opts, controlFiel
 		openControls: false
 	});
 
-	if (isNothing(field) || field === '' || (self.disableUsedItems && self.fields.indexOf(field) >= 0)) {
+	if (field == null || field === '' || (self.disableUsedItems && self.fields.indexOf(field) >= 0)) {
 		return;
 	}
 
@@ -605,7 +628,7 @@ GridControl.prototype.addField = function (field, displayText, opts, controlFiel
 	var cf = new self.controlFieldCtor(self, field, displayText, self.useColConfig ? self.colConfig.get(field) : null, controlFieldOpts);
 
 	self.controlFields.push(cf);
-	
+
 	if (self.controlFieldsByField[field] == null) {
 		self.controlFieldsByField[field] = [];
 	}
@@ -1103,7 +1126,7 @@ PivotControl.prototype.draw = function (parent) {
 	});
 
 	self.addViewConfigChangeHandler('pivotSet', function (spec) {
-		var spec = self.view.getPivot();
+		spec = self.view.getPivot();
 		var fields = (spec && spec.fieldNames) || [];
 		self.clear({ updateView: false });
 		debug.info('GRID // PIVOT CONTROL',
@@ -1352,6 +1375,7 @@ AggregateControl.prototype.triggerAggChange = function () {
 
 AggregateControl.prototype.showHideFields = function (agg) {
 	var self = this;
+	var i;
 
 	for (i = 0; i < self.ui.fields.length; i += 1) {
 		if (i < agg.prototype.fieldCount) {
@@ -1541,7 +1565,7 @@ FilterControl.prototype.draw = function (parent) {
 FilterControl.prototype.addField = function (field, displayText, opts) {
 	var self = this;
 
-	self.super.addField(field, displayText || getProp(self.colConfig.get(field), 'displayText'), opts);	
+	self.super.addField(field, displayText || getProp(self.colConfig.get(field), 'displayText'), opts);
 };
 
 // #removeField {{{2
@@ -1575,4 +1599,13 @@ FilterControl.prototype.toString = function () {
 	var self = this;
 
 	return self.grid.id + ', Filter';
+};
+
+// Exports {{{1
+
+export {
+	FilterControl,
+	GroupControl,
+	PivotControl,
+	AggregateControl,
 };

@@ -1,3 +1,8 @@
+import _ from 'underscore';
+import jQuery from 'jquery';
+
+import {arrayCopy, debug, getProp, isEmpty, setProp} from './util.js';
+
 // FilterError {{{1
 
 /**
@@ -129,7 +134,7 @@ Filter.prototype.store = function (id) {
 			self.value = findInput('select[name="' + self.inputName + '"]').val();
 			break;
 		case 'autocomplete':
-			throw new NotImplementedError();
+			throw new Error();
 		case 'multi-autocomplete':
 			self.value = [];
 			self.internalValue = [];
@@ -299,7 +304,7 @@ Filter.prototype.load = function (id, opts) {
 		})();
 		break;
 	case 'autocomplete':
-		return new NotImplementedError();
+		return new Error();
 	case 'multi-autocomplete':
 		(function () {
 			if (!_.isObject(window[self.inputName + '_ac'])) {
@@ -349,19 +354,19 @@ Filter.prototype.addJsonParam = function (obj) {
 	var self = this
 		, operand;
 
-	if (isNothing(self.json)) {
+	if (self.json == null) {
 		throw new FilterError('Missing configuration object for JSON grid parameter.');
 	}
 
-	if (isNothing(self.json.name) || self.json.name === '') {
+	if (self.json.name == null || self.json.name === '') {
 		throw new FilterError('Missing constraint set name for JSON grid parameter.');
 	}
 
-	if (isNothing(self.json.column) || self.json.column === '') {
+	if (self.json.column == null || self.json.column === '') {
 		throw new FilterError('Missing column name for JSON grid parameter.');
 	}
 
-	if (isNothing(self.json.operator) || self.json.operator === '') {
+	if (self.json.operator == null || self.json.operator === '') {
 		self.json.operator = '$eq';
 	}
 
@@ -398,7 +403,7 @@ Filter.prototype.addJsonParam = function (obj) {
 		});
 	}
 	else {
-		operand = isNothing(self.json.operand) ? self.value : self.json.operand;
+		operand = self.json.operand == null ? self.value : self.json.operand;
 	}
 
 	setProp(operand, obj, name, column, operator);
@@ -843,3 +848,8 @@ ParamInput.prototype.toParams = function (obj) {
 	return self.filter.toParams(obj);
 };
 
+// Exports {{{1
+
+export {
+	ParamInput
+};

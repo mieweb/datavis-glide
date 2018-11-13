@@ -1,3 +1,22 @@
+import _ from 'underscore';
+import Papa from 'papaparse';
+import jQuery from 'jquery';
+
+import {
+	convert,
+	debug,
+	deepCopy,
+	getParamsFromUrl,
+	getProp,
+	Lock,
+	log,
+	logAsync,
+	mixinEventHandling,
+	stringValueType,
+} from './util.js';
+
+import {OrdMap} from './ordmap.js';
+
 // SourceError {{{1
 
 var SourceError = function (msg) {
@@ -17,7 +36,7 @@ var LocalSource = function (spec) {
 	self.varName = spec.varName;
 
 	/*
-	if (isNothing(self.cache)) {
+	if (self.cache == null) {
 		throw new InvalidSourceError('Local variable "' + self.varName + '" does not exist.');
 	}
 
@@ -25,7 +44,7 @@ var LocalSource = function (spec) {
 		throw new InvalidSourceError(self.varName + '.data is not an array.');
 	}
 
-	if (isNothing(self.cache.typeInfo)) {
+	if (self.cache.typeInfo == null) {
 		self.warning('No type information found in local data (' + self.varName + '.typeInfo is missing).');
 	}
 	*/
@@ -111,7 +130,7 @@ HttpSource.prototype.parseData = function (data) {
 			throw new SourceError('HTTP Data Source / XML Parser / Missing (root) element');
 		}
 
-		var data = root.children('data');
+		data = root.children('data');
 		if (data.length === 0) {
 			throw new SourceError('HTTP Data Source / XML Parser / Missing (root > data) element');
 		}
@@ -647,7 +666,7 @@ Source.prototype.getData = function (cont) {
 Source.prototype.getUniqueVals = function (cont) {
 	var self = this;
 
-	if (!isNothing(self.cache.uniqElts)) {
+	if (self.cache.uniqElts != null) {
 		return cont(self.cache.uniqElts);
 	}
 
@@ -748,11 +767,11 @@ Source.prototype.getTypeInfo = function (cont) {
 Source.prototype.getDisplayName = function (cont) {
 	var self = this;
 
-	if (!isNothing(self.cache.displayName)) {
+	if (self.cache.displayName != null) {
 		return cont(self.cache.displayName);
 	}
 
-	if (!isNothing(self.origin.getDisplayName)) {
+	if (self.origin.getDisplayName != null) {
 		return self.origin.getDisplayName(function (displayName) {
 			self.cache.displayName = displayName;
 			return cont(self.cache.displayName);
@@ -769,7 +788,7 @@ Source.prototype.getDisplayName = function (cont) {
 Source.prototype.postProcess = function (data, cont) {
 	var self = this;
 
-	if (isNothing(data)) {
+	if (data == null) {
 		throw new SourceError('Data Source / Post Process / Received nothing');
 	}
 	else if (!_.isArray(data)) {
@@ -944,7 +963,12 @@ Source.prototype.setConversionTypeInfo = function (data, typeInfo) {
 			if (fti.type === 'number' || fti.type === 'currency') {
 				fti.needsDecoding = true;
 				if (fti.internalType == null) {
-					fti.internalType = 'primitive';
+					if (fti.type === 'currency') {
+						fti.internalType = 'bignumber';
+					}
+					else {
+						fti.internalType = 'primitive';
+					}
 				}
 				else if (['primitive', 'numeral', 'bignumber'].indexOf(fti.internalType) < 0) {
 					log.error('Invalid internalType "' + fti.internalType + '" requested for field "' + fti.field + '" - falling back to "primitive" instead');
@@ -966,7 +990,7 @@ Source.prototype.setConversionTypeInfo = function (data, typeInfo) {
 
 			if (fti.deferDecoding) {
 				debug.info('SOURCE // CONVERSION', 'Deferring conversion until <%s> { field = "%s", type = "%s", format = "%s" }',
-									 fti.needsDecoding ? 'SORT' : 'DISPLAY', f, fti.type, fti.format);
+					fti.needsDecoding ? 'SORT' : 'DISPLAY', f, fti.type, fti.format);
 			}
 		}
 	});
@@ -1046,11 +1070,11 @@ Source.prototype.createParams = function () {
 	// The JSON clause parameters will be objects that need to be serialized first, so they can be
 	// sent to the server and unpacked there.
 
-	if (!isNothing(obj.report_json_where)) {
+	if (obj.report_json_where != null) {
 		obj.report_json_where = JSON.stringify(obj.report_json_where);
 	}
 
-	if (!isNothing(obj.report_json_having)) {
+	if (obj.report_json_having != null) {
 		obj.report_json_having = JSON.stringify(obj.report_json_having);
 	}
 
@@ -1103,3 +1127,9 @@ Source.prototype.setToolbar = function (toolbar) {
 // that we would put there.  So the data source is kind of acting as the model now.  This may change
 // when we add editing.
 
+// Exports {{{1
+
+export {
+	Source,
+	FileSource,
+};

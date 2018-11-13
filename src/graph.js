@@ -1,3 +1,30 @@
+import _ from 'underscore';
+import moment from 'moment';
+import numeral from 'numeral';
+import jQuery from 'jquery';
+
+import {OrdMap} from './ordmap.js';
+import {
+	dataURItoBlob,
+	debug,
+	deepCopy,
+	deepDefaults,
+	determineColumns,
+	fontAwesome,
+	gensym,
+	getProp,
+	getPropDef,
+	loadScript,
+	makeSubclass,
+	makeToggleCheckbox,
+	presentDownload,
+	setProp,
+	toInt,
+} from './util.js';
+import {View} from './view.js';
+import {Prefs} from './prefs.js';
+import {AggregateInfo} from './aggregates';
+
 // Graph {{{1
 
 // JSDoc Types {{{2
@@ -296,13 +323,13 @@ Graph.prototype._addTitleWidgets = function (titlebar) {
 		.appendTo(titlebar);
 
 	// Create container to hold all the controls in the titlebar
-	
+
 	self.ui.titlebar_controls = jQuery('<div>')
 		.addClass('wcdv_titlebar_controls pull-right')
 		.appendTo(titlebar);
-		
+
 	// Create the Export button
-		
+
 	self.ui.exportBtn = jQuery('<button>', {
 		'type': 'button',
 		'style': 'font-size: 18px',
@@ -315,9 +342,9 @@ Graph.prototype._addTitleWidgets = function (titlebar) {
 		.append(fontAwesome('f019'))
 		.appendTo(self.ui.titlebar_controls)
 	;
-	
+
 	// Create the Refresh button
-	
+
 	self.ui.refreshBtn = jQuery('<button>', {
 		'type': 'button',
 		'style': 'font-size: 18px',
@@ -349,7 +376,7 @@ Graph.prototype._addTitleWidgets = function (titlebar) {
 		.append(jQuery(fontAwesome('fa-cog')))
 		.appendTo(self.ui.titlebar_controls)
 	;
-		
+
 	// Create the down-chevron button that shows/hides everything under the titlebar.
 
 	self.ui.showHideButton = jQuery('<button>', {
@@ -570,7 +597,7 @@ Graph.prototype.checkGraphConfig = function () {
 
 		// Check the "graphType" property.
 
-		if (!isNothing(config.graphType)) {
+		if (config.graphType != null) {
 			if (!_.isString(config.graphType)) {
 				throw new Error('Graph config error: data format "' + dataFormat + '": `graphType` must be a string');
 			}
@@ -585,13 +612,13 @@ Graph.prototype.checkGraphConfig = function () {
 		case 'bar':
 		case 'column':
 		case 'pie':
-			if (!isNothing(config.valueField) && !isNothing(config.valueFields)) {
+			if (config.valueField != null && config.valueFields != null) {
 				throw new Error('Graph config error: data format "' + dataFormat + '": can\'t define both `valueField` and `valueFields`');
 			}
 
 			// Turn the singular "valueField" into the plural "valueFields."
 
-			if (!isNothing(config.valueField)) {
+			if (config.valueField != null) {
 				if (!_.isString(config.valueField)) {
 					throw new Error('Graph config error: data format "' + dataFormat + '": `valueField` must be a string');
 				}
@@ -601,7 +628,7 @@ Graph.prototype.checkGraphConfig = function () {
 
 			// Check the "valueFields" property, if it exists.
 
-			if (!isNothing(config.valueFields)) {
+			if (config.valueFields != null) {
 				if (!_.isArray(config.valueFields)) {
 					throw new Error('Graph config error: data format "' + dataFormat + '": `valueFields` must be an array');
 				}
@@ -801,7 +828,7 @@ var GraphRenderer = makeSubclass('GraphRenderer', Object, function (graph, elt, 
 GraphRenderer.prototype.toString = function () {
 	var self = this;
 
-	return '#<GraphRenderer \"' + self.graph.id + '\">';
+	return '#<GraphRenderer "' + self.graph.id + '">';
 };
 
 // #_validateConfig {{{2
@@ -1007,7 +1034,7 @@ GraphRendererGoogle.prototype.draw_group = function (data, typeInfo, dt, config)
 		setProp(name, config, 'options', valueAxis, 'title');
 
 		_.each(data.rowVals, function (rowVal, rowValIdx) {
-			newRow = [rowVal.join(', ')];
+			var newRow = [rowVal.join(', ')];
 
 			var aggResult = data.agg.results.group[config.aggNum][rowValIdx];
 			newRow.push(aggResult);
@@ -1030,7 +1057,7 @@ GraphRendererGoogle.prototype.draw_group = function (data, typeInfo, dt, config)
 		// own column, which is the result of the corresponding aggregate function specified above.
 
 		_.each(data.rowVals, function (rowVal, rowValIdx) {
-			newRow = [rowVal.join(', ')];
+			var newRow = [rowVal.join(', ')];
 
 			_.each(ai, function (aggInfo) {
 				var aggResult = aggInfo.instance.calculate(_.flatten(data.data[rowValIdx]));
@@ -1091,7 +1118,7 @@ GraphRendererGoogle.prototype.draw_pivot = function (data, typeInfo, dt, config)
 		setProp(name, config, 'options', valueAxis, 'title');
 
 		_.each(data.rowVals, function (rowVal, rowValIdx) {
-			newRow = [rowVal.join(', ')];
+			var newRow = [rowVal.join(', ')];
 
 			_.each(data.colVals, function (colVal, colValIdx) {
 				var aggResult = data.agg.results.cell[config.aggNum][rowValIdx][colValIdx];
@@ -1151,7 +1178,7 @@ GraphRendererGoogle.prototype._ensureGoogleChartsLoaded = function (cont) {
 		};
 		if (!wasAlreadyLoaded) {
 			debug.info('GRAPH // GOOGLE // DRAW', 'Loading support for Google Charts');
-			google.charts.load('current', {'packages':['corechart','gantt']});
+			google.charts.load('current', {'packages': ['corechart', 'gantt']});
 			google.charts.setOnLoadCallback(cb);
 		}
 		else {
@@ -1354,7 +1381,7 @@ GraphControl.prototype.draw = function () {
 
 		self.ui.root.append(
 			jQuery('<span>', { 'class': 'wcdv_title' })
-			.append(plainCheckbox)
+			.append(self.ui.plainCheckbox)
 			.append('Plain Data')
 		);
 
@@ -1436,3 +1463,9 @@ var GRAPH_TYPES = OrdMap.fromArray([{
 	modes: ['plain'],
 	renderers: [GraphRendererGoogle],
 }], 'value');
+
+// Exports {{{1
+
+export {
+	Graph
+};

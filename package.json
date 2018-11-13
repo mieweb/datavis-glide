@@ -4,12 +4,35 @@
   "description": "Data visualization library",
   "license": "TBD",
   "devDependencies": {
-    "eslint": "latest",
-    "jsdoc": "latest",
+    "es6-symbol": "^3.1.1",
+    "eslint": "^5.9.0",
+    "jsdoc": "^3.5.5",
     "jshint": "latest",
-    "json5": "latest"
+    "json5": "^2.1.0",
+    "rollup": "^0.67.1",
+    "rollup-plugin-commonjs": "^9.2.0",
+    "rollup-plugin-node-builtins": "^2.1.2",
+    "rollup-plugin-node-globals": "^1.4.0",
+    "rollup-plugin-node-resolve": "^3.4.0",
+    "uglify-js": "^3.4.9"
   },
   "scripts": {
-    "lint": "eslint ."
+    "lint": "eslint src",
+    "rollup": "rollup -c rollup.config.js",
+    "uglify": "uglifyjs -c -o dist/wcdatavis.min.js dist/wcdatavis.js"
+  },
+  "dependencies": {
+    "bignumber.js": "^8.0.1",
+    "flatpickr": "^4.5.2",
+    "handlebars": "^4.0.12",
+    "jquery": "^3.3.1",
+    "jquery-contextmenu": "^2.7.1",
+    "jquery-ui": "^1.12.1",
+    "moment": "^2.22.2",
+    "numeral": "^2.0.6",
+    "papaparse": "^4.6.2",
+    "sprintf-js": "^1.1.1",
+    "sumoselect": "^3.0.5",
+    "underscore": "^1.9.1"
   }
 }
