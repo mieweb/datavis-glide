@@ -838,26 +838,6 @@ Source.prototype.postProcess = function (data, cont) {
 
 		self.guessTypes(data, typeInfo);
 
-		// Set default internal representations for all supported types.
-
-		typeInfo.each(function (fti) {
-			if (fti.internalType == null) {
-				switch (fti.type) {
-				case 'string':
-					fti.internalType = 'string';
-					break;
-				case 'number':
-				case 'currency':
-					fti.internalType = 'primitive';
-					break;
-				case 'date':
-				case 'datetime':
-					fti.internalType = 'moment';
-					break;
-				}
-			}
-		});
-
 		// Step #2 - Update the type information with whether the internal representation (i.e. numeral
 		// or moment) conversion of a field should be deferred or not.
 
@@ -951,7 +931,10 @@ Source.prototype.setConversionTypeInfo = function (data, typeInfo) {
 	var self = this;
 
 	typeInfo.each(function (fti, f) {
-		if (['number', 'currency', 'date', 'datetime'].indexOf(fti.type) >= 0) {
+		if (fti.type === 'string') {
+			fti.internalType = 'string';
+		}
+		else if (['number', 'currency', 'date', 'datetime'].indexOf(fti.type) >= 0) {
 			fti.deferDecoding = self.opts.deferDecoding;
 
 			if (fti.type === 'number' || fti.type === 'currency') {
@@ -959,7 +942,7 @@ Source.prototype.setConversionTypeInfo = function (data, typeInfo) {
 				if (fti.internalType == null) {
 					fti.internalType = 'primitive';
 				}
-				else if (['primitive', 'numeral'].indexOf(fti.internalType) < 0) {
+				else if (['primitive', 'numeral', 'bignumber'].indexOf(fti.internalType) < 0) {
 					log.error('Invalid internalType "' + fti.internalType + '" requested for field "' + fti.field + '" - falling back to "primitive" instead');
 					fti.internalType = 'primitive';
 				}

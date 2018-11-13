@@ -111,6 +111,10 @@ var getComparisonFn = (function () {
 	// Dates and times are stored as Moment instances, so we need to compare them accordingly.
 
 	cmpFn.date = function (a, b) {
+		if (a == null || b == null) {
+			return a == b ? 0 : a == null ? -1 : 1;
+		}
+
 		if (window.moment === undefined || (!moment.isMoment(a) && !moment.isMoment(b))) {
 			return a < b ? -1 : a > b ? 1 : 0;
 		}
@@ -129,51 +133,89 @@ var getComparisonFn = (function () {
 	// operators to compare them is OK.
 
 	cmpFn.string = function (a, b) {
+		if (a == null || b == null) {
+			return a == b ? 0 : a == null ? -1 : 1;
+		}
+
 		return a < b ? -1 : a > b ? 1 : 0;
 	};
 
-	if (EXPERIMENTAL_FEATURES['Safe Float Equality']) {
-		cmpFn.number = function (a, b) {
-			if (window.numeral === undefined || (!numeral.isNumeral(a) && !numeral.isNumeral(b))) {
+	cmpFn.number = function (a, b) {
+		// We *should* only be comparing numbers with the same representation, but just to be safe we
+		// allow comparisons among different representations.
+
+		// First, make sure that we are handling comparisons with undefined/null consistently.  You'd
+		// think this would work just fine based on the fallback to universalCmp below... or at least,
+		// that's what I thought.  But that's wrong, and I'm not sure why.  Doing it here makes it very
+		// obvious what we're trying to accomplish, and more importantly, actually makes it work right.
+
+		if (a == null || b == null) {
+			return a == b ? 0 : a == null ? -1 : 1;
+		}
+
+		// Second, handle the common case of comparisons between the same representation.
+
+		if (typeof a === 'number' && typeof b === 'number') {
+			if (EXPERIMENTAL_FEATURES['Safe Float Equality']) {
 				return floatSafe_equalp(a, b) ? 0 : a < b ? -1 : 1;
 			}
-
-			if (numeral.isNumeral(a)) {
-				if (numeral.isNumeral(b)) {
-					return floatSafe_equalp(a._value, b._value) ? 0 : a._value < b._value ? -1 : 1;
-				}
-				else {
-					return floatSafe_equalp(a._value, b) ? 0 : a._value < b ? -1 : 1;
-				}
-			}
-			else if (numeral.isNumeral(b)) {
-				return floatSafe_equalp(a, b._value) ? 0 : a < b._value ? -1 : 1;
-			}
-
-			throw new Error('IMPOSSIBLE');
-		};
-	}
-	else {
-		cmpFn.number = function (a, b) {
-			if (window.numeral === undefined || (!numeral.isNumeral(a) && !numeral.isNumeral(b))) {
+			else {
 				return a < b ? -1 : a > b ? 1 : 0;
 			}
-
-			if (numeral.isNumeral(a)) {
-				if (numeral.isNumeral(b)) {
-					return a._value < b._value ? -1 : a._value > b._value ? 1 : 0;
-				}
-				else {
-					return a._value < b ? -1 : a._value > b ? 1 : 0;
-				}
+		}
+		else if (window.numeral && numeral.isNumeral(a) && numeral.isNumeral(b)) {
+			if (EXPERIMENTAL_FEATURES['Safe Float Equality']) {
+				return floatSafe_equalp(a.value(), b.value()) ? 0 : a.value() < b.value() ? -1 : 1;
 			}
-			else if (numeral.isNumeral(b)) {
-				return a < b._value ? -1 : a > b._value ? 1 : 0;
+			else {
+				return a.value() < b.value() ? -1 : a.value() > b.value() ? 1 : 0;
 			}
+		}
+		else if (window.BigNumber && BigNumber.isBigNumber(a) && BigNumber.isBigNumber(b)) {
+			// No need to perform a separate check for safer float comparison because BigNumber values
+			// are inherently as precise as they need to be.
+			return a.lt(b) ? -1 : a.gt(b) ? 1 : 0;
+		}
 
-			throw new Error('IMPOSSIBLE');
-		};
-	}
+		// Third, handle comparisons between different representations.
+
+		if (window.numeral && numeral.isNumeral(a)) {
+			if (window.BigNumber && BigNumber.isBigNumber(b)) {
+				return b.gt(a.value()) ? -1 : b.lt(a.value()) ? 1 : 0;
+			}
+			else if (typeof b === 'number') {
+				return a.value() < b ? -1 : a.value() > b ? 1 : 0;
+			}
+			else {
+				return universalCmp(a, b);
+			}
+		}
+		else if (window.BigNumber && BigNumber.isBigNumber(a)) {
+			if (window.numeral && numeral.isNumeral(b)) {
+				return a.lt(b.value()) ? -1 : a.gt(b.value()) ? 1 : 0;
+			}
+			else if (typeof b === 'number') {
+				return a.lt(b) ? -1 : a.gt(b) ? 1 : 0;
+			}
+			else {
+				return universalCmp(a, b);
+			}
+		}
+		else if (typeof a === 'number') {
+			if (window.BigNumber && BigNumber.isBigNumber(b)) {
+				return b.gt(a) ? -1 : b.lt(a) ? 1 : 0;
+			}
+			else if (window.numeral && numeral.isNumeral(b)) {
+				return a < b.value() ? -1 : a > b.value() ? 1 : 0;
+			}
+			else {
+				return universalCmp(a, b);
+			}
+		}
+		else {
+			return universalCmp(a, b);
+		}
+	};
 
 	cmpFn.currency = cmpFn.number;
 
@@ -186,7 +228,9 @@ var getComparisonFn = (function () {
 			return cmpFn[type];
 		}),
 		byValue: (function (val) {
-			if (typeof val === 'number' || (window.numeral && window.numeral.isNumeral(val))) {
+			if (typeof val === 'number'
+					|| (window.numeral && window.numeral.isNumeral(val))
+					|| (window.BigNumber && window.BigNumber.isBigNumber(val))) {
 				return cmpFn.number;
 			}
 			else if (window.moment && window.moment.isMoment(val)) {
@@ -414,7 +458,20 @@ var stringValueType = (function () {
 var parseNumber = (function () {
   var re_number = new RegExp(/(^-?[1-9]{1}[0-9]{0,2}(,?\d{3})*(\.\d+)?(e[+-]?\d+)?$)|(^0(e[+-]?\d+)?$)|(^-?0?\.\d+(e[+-]?\d+)?$)/);
 	var re_comma = new RegExp(/,/g);
-  return function p(s) {
+  return function p(s, resultType) {
+		if (typeof s !== 'string') {
+			throw new Error('Call Error: `s` must be a string');
+		}
+		if (resultType != null && typeof resultType !== 'string') {
+			throw new Error('Call Error: `resultType` must be null or a string');
+		}
+
+		resultType = resultType || 'number';
+
+		if (['number', 'string'].indexOf(resultType) < 0) {
+			throw new Error('Call Error: `resultType` must be one of: ["number", "string"]');
+		}
+
     if (s.charAt(0) === '$') {
       return p(s.substring(1));
     }
@@ -423,8 +480,8 @@ var parseNumber = (function () {
     }
     else {
       return !re_number.test(s) ? null
-        : s.indexOf('.') >= 0 || s.indexOf('e') >= 0 ? parseFloat(s.replace(re_comma, ''))
-        : parseInt(s.replace(re_comma, ''));
+        : s.indexOf('.') >= 0 || s.indexOf('e') >= 0 ? (resultType === 'number' ? parseFloat : I)(s.replace(re_comma, ''))
+        : (resultType === 'number' ? parseInt : I)(s.replace(re_comma, ''));
     }
   };
 })();
@@ -2429,7 +2486,7 @@ function deprecated(defn, msg, ref) {
 
 function convert(cell, fti) {
 	var error = function (msg) {
-		log.error('Unable to convert cell value, %s: field = "%s", fti.type = %s, fti.internalType = %s, value = %O : %s', msg, fti.field || '[unknown]', fti.type, fti.internalType, cell.value, typeof cell.value);
+		log.error('Unable to convert cell value, %s: field = "%s", fti.type = %s, fti.internalType = %s, value = %O (%s)', msg, fti.field || '[unknown]', fti.type, fti.internalType, cell.value, typeof cell.value);
 	};
 
 	if (cell.decoded) {
@@ -2454,6 +2511,13 @@ function convert(cell, fti) {
 					return error('numeral library not available');
 				}
 				cell.value = numeral(cell.value);
+				break;
+			case 'bignumber':
+				// number -> bignumber
+				if (window.BigNumber == null) {
+					return error('bignumber library not available');
+				}
+				cell.value = new BigNumber(cell.value);
 				break;
 			default:
 				return error('unsupported internal representation');
@@ -2482,10 +2546,23 @@ function convert(cell, fti) {
 					}
 					cell.value = numeral(cell.value);
 					break;
+				case 'bignumber':
+					if (window.BigNumber == null) {
+						return error('bignumber library not available');
+					}
+					cell.value = new BigNumber(parseNumber(cell.value, 'string'));
+					if (cell.value.isNaN()) {
+						cell.value = null;
+						return error('invalid value');
+					}
+					break;
 				default:
 					return error('unsupported internal representation');
 				}
 			}
+		}
+		else if ((window.numeral && numeral.isNumeral(cell.value)) || (window.BigNumber && BigNumber.isBigNumber(cell.value))) {
+			// Already converted.
 		}
 		else {
 			return error('unsupported value type');
@@ -2529,6 +2606,9 @@ function convert(cell, fti) {
 			default:
 				return error('unsupported internal representation');
 			}
+		}
+		else if (window.moment && moment.isMoment(cell.value)) {
+			// Already converted.
 		}
 		else {
 			return error('unsupported value type');
@@ -2585,7 +2665,8 @@ function format(fcc, fti, cell, opts) {
 
 	_.defaults(opts, {
 		debug: false,
-		overrideType: null
+		overrideType: null,
+		convert: true
 	});
 
 	if (opts.debug) {
@@ -2598,6 +2679,7 @@ function format(fcc, fti, cell, opts) {
 
 	if ((window.moment && window.moment.isMoment(cell))
 			|| (window.numeral && window.numeral.isNumeral(cell))
+			|| (window.BigNumber && window.BigNumber.isBigNumber(cell))
 			|| cell == null
 			|| typeof cell !== 'object') {
 		cell = {
@@ -2628,9 +2710,41 @@ function format(fcc, fti, cell, opts) {
 		case 'datetime':
 			format = 'LLL';
 			break;
-		case 'currency':
-			format = '$0,0.00';
+		case 'number':
+			switch (fti.internalType) {
+			case 'bignumber':
+				format = {
+					format: deepDefaults({
+						groupSeparator: ''
+					}, BigNumber.config().FORMAT)
+				};
+				break;
+			}
 			break;
+		case 'currency':
+			switch (fti.internalType) {
+			case 'bignumber':
+				format = {
+					decimalPlaces: 2,
+					format: deepDefaults({
+						prefix: '$'
+					}, BigNumber.config().FORMAT)
+				};
+				break;
+			default:
+				// This forces all primitive and numeral values to use numeral for formatting.
+				format = '$0,0.00';
+			}
+			break;
+		}
+	}
+	else {
+		switch (t) {
+		case 'number':
+		case 'currency':
+			format = deepDefaults(format, {
+				format: BigNumber.config().FORMAT
+			});
 		}
 	}
 
@@ -2654,7 +2768,9 @@ function format(fcc, fti, cell, opts) {
 		switch (t) {
 		case 'date':
 		case 'datetime':
-			convert(cell, fti);
+			if (opts.convert) {
+				convert(cell, fti);
+			}
 
 			if (window.moment && window.moment.isMoment(cell.value)) {
 				if (t === 'datetime' && fcc.hideMidnight && cell.value.hour() === 0 && cell.value.minute() === 0 && cell.value.second() === 0) {
@@ -2678,9 +2794,19 @@ function format(fcc, fti, cell, opts) {
 			break;
 		case 'number':
 		case 'currency':
-			convert(cell, fti);
+			if (opts.convert) {
+				convert(cell, fti);
+			}
 
-			if (window.numeral && window.numeral.isNumeral(cell.value)) {
+			if (window.BigNumber && BigNumber.isBigNumber(cell.value)) {
+				if (format != null) {
+					result = cell.value.toFormat(format.decimalPlaces, format.roundingMode, format.format);
+				}
+				else {
+					result = cell.value.toFormat();
+				}
+			}
+			else if (window.numeral && window.numeral.isNumeral(cell.value)) {
 				if (format != null) {
 					result = cell.value.format(format);
 				}

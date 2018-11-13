@@ -339,6 +339,19 @@ Aggregate.prototype.checkOpts = function () {
 			log.error('Aggregate ' + self.name + ': `opts.fields` must include ' + self.fieldCount + ' elements');
 			return false;
 		}
+
+		if (self.opts.typeInfo == null) {
+			log.error('Aggregate ' + self.name + ': Missing `opts.typeInfo`');
+			return false;
+		}
+		else if (!_.isArray(self.opts.typeInfo)) {
+			log.error('Aggregate ' + self.name + ': `opts.typeInfo` must be an array');
+			return false;
+		}
+		else if (self.opts.typeInfo.length !== self.fieldCount) {
+			log.error('Aggregate ' + self.name + ': `opts.typeInfo` must include ' + self.fieldCount + ' elements');
+			return false;
+		}
 	}
 
 	return true;
@@ -699,7 +712,17 @@ var SumAggregate = makeSubclass('SumAggregate', Aggregate, null, {
 	type: 'number',
 	allowedTypes: ['number', 'currency'],
 	inheritFormatting: true,
-	bottomValue: 0
+	bottomValue: 0,
+	init: function () {
+		switch (this.opts.typeInfo[0].internalType) {
+		case 'primitive':
+			return 0;
+		case 'numeral':
+			return numeral(0);
+		case 'bignumber':
+			return BigNumber(0);
+		}
+	}
 });
 
 // #calculateStep {{{2
@@ -708,33 +731,19 @@ SumAggregate.prototype.calculateStep = function (acc, next) {
 	var self = this;
 	var val = self.getRealValue(next[self.opts.fields[0]]);
 
-	if (window.numeral && window.numeral.isNumeral(val)) {
-		// Check to see if this is a plain number, or a number wrapped by the Numeral library.  It
-		// should always be the latter, but we check anyway, because there's no reason not to.
-
-		val = val.value();
-	}
-	else if (_.isString(val)) {
-		// We can also handle when it's a number represented as a string.  We'll try to convert it
-		// either to an integer or a float.
-
-		if (isInt(val)) {
-			val = toInt(val);
-		}
-		else if (isFloat(val)) {
-			val = toFloat(val);
-		}
-		else {
-			//log.error('Unable to interpret value as a number: { field = "%s", value = "%s" }', opts.field, JSON.stringify(val));
-			val = 0;
-		}
+	if (val == null) {
+		// TODO Warn about invalid value.
+		val = self.opts.typeInfo[0].internalType === 'numeral' ? numeral(0) : 0;
 	}
 
-	if (!_.isNumber(val)) {
-		log.error('Unable to interpret value as a number: { field = "%s", value = "%s" }', self.opts.fields[0], JSON.stringify(val));
+	switch (self.opts.typeInfo[0].internalType) {
+	case 'primitive':
+		return acc + val;
+	case 'numeral':
+		return acc.add(val.value());
+	case 'bignumber':
+		return acc.plus(val);
 	}
-
-	return acc + val;
 };
 
 // Average {{{1

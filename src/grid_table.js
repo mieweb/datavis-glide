@@ -1299,7 +1299,8 @@ GridTable.prototype.drawBody_groupAggregates = function (data, tr, groupNum, dis
 		}
 		else {
 			text = format(null, null, aggResult, {
-				overrideType: aggType
+				overrideType: aggType,
+				convert: false
 			});
 		}
 
@@ -2228,14 +2229,13 @@ GridTablePlain.prototype.drawFooter = function (columns, data, typeInfo) {
 
 				if (aggInfo.instance.inheritFormatting) {
 					aggResult_formatted = format(aggInfo.colConfig[0], aggInfo.typeInfo[0], aggResult, {
-						overrideType: aggInfo.instance.getType(),
-						debug: true
+						overrideType: aggInfo.instance.getType()
 					});
 				}
 				else {
 					aggResult_formatted = format(null, null, aggResult, {
 						overrideType: aggInfo.instance.getType(),
-						debug: true
+						convert: false
 					});
 				}
 
@@ -3874,7 +3874,8 @@ GridTableGroupSummary.prototype.drawBody = function (data, typeInfo, columns, co
 							}
 							else {
 								addColText = format(null, null, addColResult, {
-									alwaysFormat: true
+									alwaysFormat: true,
+									convert: false
 								});
 							}
 							var td = jQuery('<td>').text(addColText);
@@ -3932,7 +3933,8 @@ GridTableGroupSummary.prototype.drawBody = function (data, typeInfo, columns, co
 					}
 					else {
 						text = format(null, null, aggResult, {
-							overrideType: aggInfo.instance.getType()
+							overrideType: aggInfo.instance.getType(),
+							convert: false
 						});
 					}
 
@@ -4356,7 +4358,8 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 								}
 								else {
 									text = format(null, null, aggResult, {
-										overrideType: aggType
+										overrideType: aggType,
+										convert: false
 									});
 								}
 
@@ -4419,7 +4422,8 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 							}
 							else {
 								addColText = format(null, null, addColResult, {
-									alwaysFormat: true
+									alwaysFormat: true,
+									convert: false
 								});
 							}
 							var td = jQuery('<td>').text(addColText);
@@ -4511,7 +4515,8 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 						}
 						else {
 							text = format(null, null, aggResult, {
-								overrideType: aggInfo.instance.getType()
+								overrideType: aggInfo.instance.getType(),
+								convert: false
 							});
 						}
 
@@ -4567,7 +4572,8 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 						}
 						else {
 							text = format(null, null, aggResult, {
-								overrideType: aggInfo.instance.getType()
+								overrideType: aggInfo.instance.getType(),
+								convert: false
 							});
 						}
 
