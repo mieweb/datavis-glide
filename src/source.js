@@ -651,9 +651,13 @@ Source.prototype.getUniqueVals = function (cont) {
 		return cont(self.cache.uniqElts);
 	}
 
-	self.getData(function (data) {
+	self.getData(function (ok, data) {
 		var uniqElts = {};
 		var tmp = {};
+
+		if (!ok) {
+			return cont({});
+		}
 
 		_.each(data, function (row) {
 			_.each(row, function (cell, field) {
