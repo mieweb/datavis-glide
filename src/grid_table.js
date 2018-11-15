@@ -778,7 +778,7 @@ GridTable.prototype._addDrillDownHandler = function (tbl, data) {
 			'Creating new perspective: filter = %O', filter);
 
 		window.setTimeout(function () {
-			self.view.prefs.addPerspective('Drill Down', { view: { filter: filter } }, { isTemporary: true }, null, { onDuplicate: 'replace' });
+			self.view.prefs.addPerspective(null, 'Drill Down', { view: { filter: filter } }, { isTemporary: true }, null, { onDuplicate: 'replace' });
 		});
 	});
 };
