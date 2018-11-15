@@ -57,12 +57,12 @@ window.test_filter = function (view) {
 	};
 
 	var filterInfo = [
-		{ field: 'int1', type: 'int', args: [ 'number', 'numeral' ] },
-		{ field: 'int2', type: 'int', args: [ 'number', 'numeral' ] },
-		{ field: 'int3', type: 'int', args: [ 'number', 'numeral' ] },
-		{ field: 'float1', type: 'float1', args: [ 'number', 'numeral' ] },
-		{ field: 'float2', type: 'float1', args: [ 'number', 'numeral' ] },
-		{ field: 'float3', type: 'float2', args: [ 'number', 'numeral' ] },
+		{ field: 'int1', type: 'int', args: [ 'number', /*'numeral'*/ ] },
+		{ field: 'int2', type: 'int', args: [ 'number', /*'numeral'*/ ] },
+		{ field: 'int3', type: 'int', args: [ 'number', /*'numeral'*/ ] },
+		{ field: 'float1', type: 'float1', args: [ 'number', /*'numeral'*/ ] },
+		{ field: 'float2', type: 'float1', args: [ 'number', /*'numeral'*/ ] },
+		{ field: 'float3', type: 'float2', args: [ 'number', /*'numeral'*/ ] },
 	];
 
 	QUnit.test('Filter Test', function (assert) {

@@ -4,13 +4,13 @@ window.test_aggregates = function (view) {
 
 	var compare = {
 		numeral: function (actual, expected) {
-			return expected == null ? actual == null : numeral.isNumeral(actual) && actual.value() === expected;
+			return expected == null ? actual == null : actual.value() === expected;
 		},
 		bignumber: function (actual, expected) {
-			return expected == null ? actual == null : BigNumber.isBigNumber(actual) && actual.valueOf() === expected + '';
+			return expected == null ? actual == null : actual.valueOf() === expected + '';
 		},
 		moment: function (actual, expected) {
-			return expected == null ? actual == null : moment.isMoment(actual) && actual.format('YYYY-MM-DD') == expected;
+			return expected == null ? actual == null : actual.format('YYYY-MM-DD') == expected;
 		}
 	};
 

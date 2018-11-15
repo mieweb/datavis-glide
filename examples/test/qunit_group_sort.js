@@ -1,17 +1,9 @@
 window.test_group_sort = function (view) {
 	var extract = {
 		numeral: function (x) {
-			if (!numeral.isNumeral(x)) {
-				console.error('Argument is not a Numeral object: %O', x);
-				return null;
-			}
 			return x._input;
 		},
 		moment: function (x) {
-			if (!moment.isMoment(x)) {
-				console.error('Argument is not a Moment object: %O', x);
-				return null;
-			}
 			return x.creationData().input;
 		}
 	};
