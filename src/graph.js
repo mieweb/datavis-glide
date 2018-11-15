@@ -438,7 +438,7 @@ Graph.prototype._updateAggDropdown = function () {
 		self.ui.aggDropdown.append(option);
 	};
 
-	self.view.getData(function (data) {
+	self.view.getData(function (ok, data) {
 		self.ui.aggDropdown.children().remove();
 
 		if (data.isGroup) {
@@ -1171,8 +1171,8 @@ GraphRendererGoogle.prototype._draw = function (devConfig, userConfig) {
 	userConfig = userConfig || {};
 
 	self._ensureGoogleChartsLoaded(function () {
-		self.view.getData(function (data) {
-			self.view.getTypeInfo(function (typeInfo) {
+		self.view.getData(function (ok, data) {
+			self.view.getTypeInfo(function (ok, typeInfo) {
 				self.elt.children().remove();
 
 				var makeMessage = function (msg) {
@@ -1269,8 +1269,8 @@ GraphRendererJit.prototype.draw = function () {
 
 	elt.children().remove();
 
-	self.view.getData(function (data) {
-		self.view.getTypeInfo(function (typeInfo) {
+	self.view.getData(function (ok, data) {
+		self.view.getTypeInfo(function (ok, typeInfo) {
 			var ctor = {
 				area: 'AreaChart',
 				bar: 'BarChart'
