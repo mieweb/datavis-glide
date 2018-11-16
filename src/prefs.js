@@ -1147,7 +1147,7 @@ Prefs.prototype.reset = function (cont) {
 			}
 		});
 
-		self.debug('Restoring temporary essential perspectives: %s', _.keys(self.bardo).join(', '));
+		self.debug('Restoring temporary essential perspectives: %s', JSON.stringify(_.keys(self.bardo)));
 
 		_.each(self.bardo, function (p) {
 			self.addPerspective(p.id, p.name, p.config, p.opts, null, { switch: false });

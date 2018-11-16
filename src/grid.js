@@ -1978,7 +1978,10 @@ Grid.prototype._normalizeColumns = function (defn) {
 		}
 	});
 
-	self.setColConfig(colConfig, { savePrefs: false });
+	self.setColConfig(colConfig, {
+		from: 'defn',
+		savePrefs: false
+	});
 };
 
 // #export {{{2
@@ -2033,6 +2036,18 @@ Grid.prototype._setExportStatus = function (status) {
 };
 
 // #setColConfig {{{2
+
+/**
+ * Set the column configuration.
+ *
+ * @param {OrdMap} colConfig
+ * @param {Object} [opts]
+ * @param {string} [opts.from]
+ * @param {boolean} [opts.sendEvent=true]
+ * @param {Array.<Object>} [opts.dontSendEventTo]
+ * @param {boolean} [opts.redraw=true]
+ * @param {boolean} [opts.savePrefs=true]
+ */
 
 Grid.prototype.setColConfig = function (colConfig, opts) {
 	var self = this;
@@ -2104,7 +2119,7 @@ Grid.prototype.resetColConfig = function (opts) {
 		savePrefs: false
 	});
 
-	self.setColConfig(self.initColConfig, opts);
+	self.setColConfig(deepCopy(self.initColConfig), opts);
 };
 
 // #isIdle {{{2
