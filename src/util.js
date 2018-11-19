@@ -2649,6 +2649,9 @@ export function convert(cell, fti) {
  */
 
 export function format(fcc, fti, cell, opts) {
+	var newVal
+		, isNegative = false;
+
 	fcc = fcc || {};
 	fti = fti || {};
 	opts = opts || {};
@@ -2662,6 +2665,59 @@ export function format(fcc, fti, cell, opts) {
 	if (opts.debug) {
 		debug.info('FORMAT', 'typeInfo = %O ; colConfig = %O ; cell = %O ; opts = %O', fti, fcc, cell, opts);
 	}
+
+	var bigNumberFormat = function (fmt) {
+		var result = {
+			prefix: '',
+			decimalSeparator: fmt.radixPoint,
+			secondaryGroupSize: 0,
+			suffix: ''
+		};
+
+		if (fmt.integerPart.grouping) {
+			result.groupSeparator = fmt.integerPart.groupSeparator;
+			result.groupSize = fmt.integerPart.groupSize;
+		}
+		if (fmt.fractionalPart.grouping) {
+			result.fractionGroupSeparator = fmt.fractionalPart.groupSeparator;
+			result.fractionGroupSize = fmt.fractionalPart.groupSize;
+		}
+
+		return result;
+	};
+
+	var bigNumberRoundingMode = function (fmt) {
+		switch (fmt.roundingMethod) {
+		case 'up': // away from zero
+			return BigNumber.ROUND_UP;
+		case 'down': // towards zero
+			return BigNumber.ROUND_DOWN;
+		case 'ceil': // towards infinity
+			return BigNumber.ROUND_CEIL;
+		case 'floor': // towards negative infinity
+			return BigNumber.ROUND_FLOOR;
+		case 'half_up':
+			// towards nearest neighbor; halfway point goes away from zero
+			//   -2.5 => -3    -1.5 => -2    1.5 => 2    2.5 => 3
+			return BigNumber.ROUND_HALF_UP;
+		case 'half_down':
+			// towards nearest neighbor: halfway point goes towards zero
+			//   -2.5 => -2    -1.5 => -1    1.5 => 1    2.5 => 2
+			return BigNumber.ROUND_HALF_DOWN;
+		case 'half_even':
+			// towards nearest neighbor: halfway point goes to even neighbor
+			//   -2.5 => -2    -1.5 => -2    1.5 => 2    2.5 => 2
+			return BigNumber.ROUND_HALF_EVEN;
+		case 'half_ceil':
+			// towards nearest neighbor: halfway point goes towards infinity
+			//   -2.5 => -2    -1.5 => -1    1.5 => 2    2.5 => 3
+			return BigNumber.ROUND_HALF_CEIL;
+		case 'half_floor':
+			// towards nearest neighbor: halfway point goes towards negative infinity
+			//   -2.5 => -3    -1.5 => -2    1.5 => 1    2.5 => 2
+			return BigNumber.ROUND_HALF_FLOOR;
+		}
+	};
 
 	// When we just receive a value instead of a proper data cell, convert it so that code below can
 	// be simplified.  These cells are just "pretend" and anything stored in them is going to be
@@ -2689,6 +2745,32 @@ export function format(fcc, fti, cell, opts) {
 	var format = fcc.format;
 	var format_dateOnly = fcc.format_dateOnly;
 
+	var defaultNumberFormat = {
+		integerPart: {
+			grouping: false,
+			groupSize: 3,
+			groupSeparator: ','
+		},
+		fractionalPart: {
+			grouping: false,
+			groupSize: 3,
+			groupSeparator: ' '
+		},
+		radixPoint: '.',
+		decimalPlaces: null,
+		negativeFormat: 'minus',
+		roundingMethod: 'half_up',
+	};
+
+	var defaultCurrencyFormat = deepDefaults({
+		integerPart: {
+			grouping: true
+		},
+		decimalPlaces: 2,
+		negativeFormat: 'parens',
+		currencySymbol: '$'
+	}, defaultNumberFormat);
+
 	// Set default formatting strings for some types.  Note that we're NOT setting one for generic
 	// numbers, because they are often used in different ways (e.g. an ID should have no commas).
 
@@ -2703,23 +2785,14 @@ export function format(fcc, fti, cell, opts) {
 		case 'number':
 			switch (fti.internalType) {
 			case 'bignumber':
-				format = {
-					format: deepDefaults({
-						groupSeparator: ''
-					}, BigNumber.config().FORMAT)
-				};
+				format = deepCopy(defaultNumberFormat);
 				break;
 			}
 			break;
 		case 'currency':
 			switch (fti.internalType) {
 			case 'bignumber':
-				format = {
-					decimalPlaces: 2,
-					format: deepDefaults({
-						prefix: '$'
-					}, BigNumber.config().FORMAT)
-				};
+				format = deepCopy(defaultCurrencyFormat);
 				break;
 			default:
 				// This forces all primitive and numeral values to use numeral for formatting.
@@ -2730,7 +2803,6 @@ export function format(fcc, fti, cell, opts) {
 	}
 	else {
 		switch (t) {
-		case 'number':
 		case 'currency':
 			switch (fti.internalType) {
 			case 'bignumber':
@@ -2741,25 +2813,20 @@ export function format(fcc, fti, cell, opts) {
 				if (typeof format === 'string') {
 					switch (format) {
 					case '$0,0.00':
-						format = {
-							decimalPlaces: 2,
-							format: {
-								prefix: '$'
-							}
-						};
+						format = deepCopy(defaultCurrencyFormat);
 						break;
+					default:
+						format = {};
 					}
 				}
 
-				// BigNumber#toFormat() does not inherit from the default configuration FORMAT if you pass a
-				// FORMAT object into the function.  So we must do the inheritance ourselves so that what
-				// the developer provides to us overrides the default FORMAT (not replacing it completely).
-
-				format = deepDefaults(format, {
-					format: BigNumber.config().FORMAT
-				});
+				format = deepDefaults(format, defaultCurrencyFormat);
 				break;
 			}
+			break;
+		case 'number':
+			format = deepDefaults(format, defaultNumberFormat);
+			break;
 		}
 	}
 
@@ -2814,11 +2881,18 @@ export function format(fcc, fti, cell, opts) {
 			}
 
 			if (BigNumber.isBigNumber(cell.value)) {
-				if (format != null) {
-					result = cell.value.toFormat(format.decimalPlaces, format.roundingMode, format.format);
+				if (cell.value.isNegative()) {
+					isNegative = true;
+					newVal = cell.value.abs();
 				}
 				else {
-					result = cell.value.toFormat();
+					newVal = cell.value;
+				}
+				if (format != null) {
+					result = newVal.toFormat(format.decimalPlaces, bigNumberRoundingMode(format), bigNumberFormat(format));
+				}
+				else {
+					result = newVal.toFormat();
 				}
 			}
 			else if (numeral.isNumeral(cell.value)) {
@@ -2837,6 +2911,21 @@ export function format(fcc, fti, cell, opts) {
 					result = cell.value + '';
 				}
 			}
+
+			if (isNegative) {
+				switch (format.negativeFormat) {
+				case 'minus':
+					result = (t === 'currency' ? format.currencySymbol : '') + '-' + result;
+					break;
+				case 'parens':
+					result = '(' + (t === 'currency' ? format.currencySymbol : '') + result + ')';
+					break;
+				}
+			}
+			else {
+				result = (t === 'currency' ? format.currencySymbol : '') + result;
+			}
+
 			break;
 		case 'string':
 			result = cell.value;
