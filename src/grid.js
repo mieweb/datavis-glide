@@ -613,10 +613,12 @@ var Grid = makeSubclass('Grid', Object, function (id, view, defn, tagOpts, cb) {
 	});
 
 	self.view.on(View.events.workBegin, function () {
+		self._isIdle = false;
 		self._setSpinner('working');
 		self._showSpinner();
 	});
 	self.view.on(View.events.workEnd, function (info, ops) {
+		self._isIdle = true;
 		self._hideSpinner();
 		self._updateRowCount(info, ops);
 	});
