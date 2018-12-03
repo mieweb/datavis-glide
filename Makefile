@@ -1,3 +1,4 @@
+JSDOC=./node_modules/.bin/jsdoc
 SOURCE=$(wildcard src/*.js)
 DIST_FILES=$(addprefix dist/,wcdatavis.js wcdatavis.min.js wcdatavis.css)
 EXAMPLE_FILES=$(patsubst dist/%,examples/%,$(DIST_FILES))
@@ -6,7 +7,7 @@ PANDOC_FILES=index getting_started examples overview source view grid grid_filte
 	     debugging known_issues glossary code_standards about links
 PANDOC_INPUT=$(addprefix doc/,$(addsuffix .pandoc,$(PANDOC_FILES)))
 
-.PHONY:	doc jsdoc pandoc examples clean tags
+.PHONY:	doc jsdoc pandoc clean tags examples tests
 
 all:	dist/wcdatavis.min.js examples
 
@@ -20,7 +21,7 @@ doc:	jsdoc pandoc
 
 jsdoc:
 	# rm -rf jsdoc
-	./node_modules/.bin/jsdoc -p -c jsdoc_conf.json src
+	$(JSDOC) -p -c jsdoc_conf.json src
 
 pandoc:	doc/html/index.html doc/html/style.css
 
@@ -31,16 +32,20 @@ doc/html/index.html:	$(PANDOC_INPUT)
 doc/html/style.css:	doc/style.css
 	cp $^ $@
 
-examples:	$(EXAMPLE_FILES)
-	$(MAKE) -C examples/test
+tests:
+	$(MAKE) -C tests
+
+examples:	tests $(EXAMPLE_FILES)
+	cp tests/data/*.json examples/test
 
 $(EXAMPLE_FILES):examples/%:	dist/%
 	cp $^ $@
 
 clean:
-	$(MAKE) -C examples/test clean
-	rm -f dist/wcdatavis.js dist/wcdatavis.min.js 
-	rm -f examples/wcdatavis.js examples/wcdatavis.min.js examples/wcdatavis.css
+	$(MAKE) -C tests clean
+	rm -f dist/wcdatavis.js dist/wcdatavis.min.js
+	rm -f $(EXAMPLE_FILES)
+	rm -f examples/test/*.json
 	rm -rf jsdoc
 	rm -rf doc/html
 

@@ -14,3 +14,7 @@ examples/wcdatavis.min.js
 examples/wcdatavis.css
 examples/wcdatavis-extra.css
 examples/test/random*.json
+tests/data/*.json
+tests/pages/*.js
+tests/pages/*.css
+tests/pages/*.json
