@@ -350,6 +350,8 @@ var Grid = makeSubclass('Grid', Object, function (id, view, defn, tagOpts, cb) {
 	var doingServerFilter = getProp(defn, 'server', 'filter') && getProp(defn, 'server', 'limit') !== -1;
 	var viewDropdown = null;
 
+	self._isIdle = false;
+
 	self.view = view;
 
 	self.generateCsv = false;
