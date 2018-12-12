@@ -2666,6 +2666,34 @@ export function format(fcc, fti, cell, opts) {
 		debug.info('FORMAT', 'typeInfo = %O ; colConfig = %O ; cell = %O ; opts = %O', fti, fcc, cell, opts);
 	}
 
+	// Convert from a number format string to a number format object.  Originally, there was only one
+	// internal representation for a number, using the Numeral library.  The formatting string we
+	// accepted was just passed to numeral#format().  Now we support other internal representations
+	// and have a generalized object to specify how numbers should be formatted.  But we allow the
+	// user to specify the same format strings they always have, convert them to the new object-driven
+	// way of doing things, and apply them to all numbers regardless of representation.
+
+	var formatStrToObj = function (formatStr, base) {
+		var formatObj = deepCopy(base);
+
+		if (formatStr[0] === '$') {
+			formatObj.currencySymbol = '$';
+			formatStr = formatStr.slice(1);
+		}
+
+		//TODO Better way to handle detection of currency symbols.
+		//m = formatStr.match(/[\$\x7F-\uD7FF\uDC00-\uFFFF]|[\uD800-\uDBFF][\uDC00-\uDFFF]|[\uD800-\uDBFF]/);
+		//setProp(m != null ? m[0] : '', formatObj, 'currencySymbol');
+
+		m = formatStr.match(/^0,0/);
+		setProp(!!m, formatObj, 'integerPart', 'grouping');
+
+		m = formatStr.match(/\.(0+)$/);
+		setProp(m != null ? m[1].length : 0, formatObj, 'decimalPlaces');
+
+		return formatObj;
+	};
+
 	var bigNumberFormat = function (fmt) {
 		var result = {
 			prefix: '',
@@ -2719,6 +2747,22 @@ export function format(fcc, fti, cell, opts) {
 		}
 	};
 
+	var numeralFormat = function (fmt) {
+		var result = '';
+
+		result += fmt.integerPart.grouping ? '0,0' : '0';
+
+		if (fmt.decimalPlaces == null) {
+			result += '[.][00000000]';
+		}
+		else if (fmt.decimalPlaces > 0) {
+			result += '.';
+			result += '0'.repeat(fmt.decimalPlaces);
+		}
+
+		return result;
+	};
+
 	// When we just receive a value instead of a proper data cell, convert it so that code below can
 	// be simplified.  These cells are just "pretend" and anything stored in them is going to be
 	// discarded when this function is done.
@@ -2743,6 +2787,7 @@ export function format(fcc, fti, cell, opts) {
 
 	var t = opts.overrideType || fti.type;
 	var format = fcc.format;
+	var formatObj;
 	var format_dateOnly = fcc.format_dateOnly;
 
 	var defaultNumberFormat = {
@@ -2776,56 +2821,31 @@ export function format(fcc, fti, cell, opts) {
 
 	if (format == null) {
 		switch (t) {
+		case 'number':
+			format = deepCopy(defaultNumberFormat);
+			break;
+		case 'currency':
+			format = deepCopy(defaultCurrencyFormat);
+			break;
 		case 'date':
 			format = 'LL';
 			break;
 		case 'datetime':
 			format = 'LLL';
 			break;
-		case 'number':
-			switch (fti.internalType) {
-			case 'bignumber':
-				format = deepCopy(defaultNumberFormat);
-				break;
-			}
-			break;
-		case 'currency':
-			switch (fti.internalType) {
-			case 'bignumber':
-				format = deepCopy(defaultCurrencyFormat);
-				break;
-			default:
-				// This forces all primitive and numeral values to use numeral for formatting.
-				format = '$0,0.00';
-			}
-			break;
 		}
 	}
 	else {
 		switch (t) {
-		case 'currency':
-			switch (fti.internalType) {
-			case 'bignumber':
-				// Check for migration from using numeral for numbers, where the format was just a string
-				// instead of the object we have now.  Rather than try to parse the thing, just handle a few
-				// basic cases because probably nobody was doing anything more complex anyway.
-
-				if (typeof format === 'string') {
-					switch (format) {
-					case '$0,0.00':
-						format = deepCopy(defaultCurrencyFormat);
-						break;
-					default:
-						format = {};
-					}
-				}
-
-				format = deepDefaults(format, defaultCurrencyFormat);
-				break;
-			}
-			break;
 		case 'number':
-			format = deepDefaults(format, defaultNumberFormat);
+			format = typeof format === 'string'
+				? formatStrToObj(format, defaultNumberFormat)
+				: deepDefaults(format, defaultNumberFormat);
+			break;
+		case 'currency':
+			format = typeof format === 'string'
+				? formatStrToObj(format, defaultCurrencyFormat)
+				: deepDefaults(format, defaultCurrencyFormat);
 			break;
 		}
 	}
@@ -2888,6 +2908,7 @@ export function format(fcc, fti, cell, opts) {
 				else {
 					newVal = cell.value;
 				}
+
 				if (format != null) {
 					result = newVal.toFormat(format.decimalPlaces, bigNumberRoundingMode(format), bigNumberFormat(format));
 				}
@@ -2896,16 +2917,32 @@ export function format(fcc, fti, cell, opts) {
 				}
 			}
 			else if (numeral.isNumeral(cell.value)) {
+				if (cell.value.value() < 0) {
+					isNegative = true;
+					newVal = cell.value.multiply(-1);
+				}
+				else {
+					newVal = cell.value;
+				}
+
 				if (format != null) {
-					result = cell.value.format(format);
+					result = cell.value.format(numeralFormat(format));
 				}
 				else {
 					result = cell.value.value() + '';
 				}
 			}
 			else {
+				if (cell.value < 0) {
+					isNegative = true;
+					newVal = cell.value * -1;
+				}
+				else {
+					newVal = cell.value;
+				}
+
 				if (format != null) {
-					result = numeral(cell.value).format(format);
+					result = numeral(newVal).format(numeralFormat(format));
 				}
 				else {
 					result = cell.value + '';
