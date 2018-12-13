@@ -4,20 +4,27 @@
   "description": "Data visualization library",
   "license": "TBD",
   "devDependencies": {
+    "bluebird": "^3.5.3",
+    "chromedriver": "^2.44.0",
     "es6-symbol": "^3.1.1",
     "eslint": "^5.9.0",
     "jsdoc": "^3.5.5",
     "jshint": "latest",
     "json5": "^2.1.0",
+    "lodash": "^4.17.11",
+    "mocha": "^5.2.0",
+    "nightwatch": "^0.9.21",
     "rollup": "^0.67.1",
     "rollup-plugin-commonjs": "^9.2.0",
     "rollup-plugin-node-builtins": "^2.1.2",
     "rollup-plugin-node-globals": "^1.4.0",
     "rollup-plugin-node-resolve": "^3.4.0",
+    "selenium-webdriver": "^4.0.0-alpha.1",
     "uglify-js": "^3.4.9"
   },
   "scripts": {
     "lint": "eslint src",
+    "test": "mocha -t 0 tests/selenium/first.js",
     "rollup": "rollup -c rollup.config.js",
     "uglify": "uglifyjs -c -o dist/wcdatavis.min.js dist/wcdatavis.js"
   },
