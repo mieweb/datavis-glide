@@ -1,0 +1,96 @@
+{
+  "$< random_seed(0) >$": null,
+  data: [
+    "$< repeat(50, VALUE) >$",
+    {
+        'dummy': 'dummy'
+      , 'number-primitive-0': "$< random_float('number-primitive-0', 0, 9999, output_type='number') >$"
+      , 'number-primitive-1': "$< random_float('number-primitive-1', 0, 9999, output_type='number') >$"
+      , 'number-primitive-2': "$< random_float('number-primitive-2', 0, 9999, output_type='number') >$"
+      , 'number-primitive-3': "$< random_float('number-primitive-3', 0, 9999, output_type='number') >$"
+      , 'number-primitive-4': "$< random_float('number-primitive-4', 0, 9999, output_type='number') >$"
+      , 'number-primitive-5': "$< random_float('number-primitive-5', 0, 9999, output_type='number') >$"
+      , 'number-primitive-6': "$< random_float('number-primitive-6', 0, 9999, output_type='number') >$"
+      , 'number-numeral-0': "$< random_float('number-numeral-0', 0, 9999, output_type='number') >$"
+      , 'number-numeral-1': "$< random_float('number-numeral-1', 0, 9999, output_type='number') >$"
+      , 'number-numeral-2': "$< random_float('number-numeral-2', 0, 9999, output_type='number') >$"
+      , 'number-numeral-3': "$< random_float('number-numeral-3', 0, 9999, output_type='number') >$"
+      , 'number-numeral-4': "$< random_float('number-numeral-4', 0, 9999, output_type='number') >$"
+      , 'number-numeral-5': "$< random_float('number-numeral-5', 0, 9999, output_type='number') >$"
+      , 'number-numeral-6': "$< random_float('number-numeral-6', 0, 9999, output_type='number') >$"
+      , 'number-bignumber-0': "$< random_float('number-bignumber-0', 0, 9999, output_type='number') >$"
+      , 'number-bignumber-1': "$< random_float('number-bignumber-1', 0, 9999, output_type='number') >$"
+      , 'number-bignumber-2': "$< random_float('number-bignumber-2', 0, 9999, output_type='number') >$"
+      , 'number-bignumber-3': "$< random_float('number-bignumber-3', 0, 9999, output_type='number') >$"
+      , 'number-bignumber-4': "$< random_float('number-bignumber-4', 0, 9999, output_type='number') >$"
+      , 'number-bignumber-5': "$< random_float('number-bignumber-5', 0, 9999, output_type='number') >$"
+      , 'number-bignumber-6': "$< random_float('number-bignumber-6', 0, 9999, output_type='number') >$"
+      , 'currency-primitive-0': "$< random_float('currency-primitive-0', 0, 9999, output_type='number') >$"
+      , 'currency-primitive-1': "$< random_float('currency-primitive-1', 0, 9999, output_type='number') >$"
+      , 'currency-primitive-2': "$< random_float('currency-primitive-2', 0, 9999, output_type='number') >$"
+      , 'currency-primitive-3': "$< random_float('currency-primitive-3', 0, 9999, output_type='number') >$"
+      , 'currency-primitive-4': "$< random_float('currency-primitive-4', 0, 9999, output_type='number') >$"
+      , 'currency-primitive-5': "$< random_float('currency-primitive-5', 0, 9999, output_type='number') >$"
+      , 'currency-primitive-6': "$< random_float('currency-primitive-6', 0, 9999, output_type='number') >$"
+      , 'currency-numeral-0': "$< random_float('currency-numeral-0', 0, 9999, output_type='number') >$"
+      , 'currency-numeral-1': "$< random_float('currency-numeral-1', 0, 9999, output_type='number') >$"
+      , 'currency-numeral-2': "$< random_float('currency-numeral-2', 0, 9999, output_type='number') >$"
+      , 'currency-numeral-3': "$< random_float('currency-numeral-3', 0, 9999, output_type='number') >$"
+      , 'currency-numeral-4': "$< random_float('currency-numeral-4', 0, 9999, output_type='number') >$"
+      , 'currency-numeral-5': "$< random_float('currency-numeral-5', 0, 9999, output_type='number') >$"
+      , 'currency-numeral-6': "$< random_float('currency-numeral-6', 0, 9999, output_type='number') >$"
+      , 'currency-bignumber-0': "$< random_float('currency-bignumber-0', 0, 9999, output_type='number') >$"
+      , 'currency-bignumber-1': "$< random_float('currency-bignumber-1', 0, 9999, output_type='number') >$"
+      , 'currency-bignumber-2': "$< random_float('currency-bignumber-2', 0, 9999, output_type='number') >$"
+      , 'currency-bignumber-3': "$< random_float('currency-bignumber-3', 0, 9999, output_type='number') >$"
+      , 'currency-bignumber-4': "$< random_float('currency-bignumber-4', 0, 9999, output_type='number') >$"
+      , 'currency-bignumber-5': "$< random_float('currency-bignumber-5', 0, 9999, output_type='number') >$"
+      , 'currency-bignumber-6': "$< random_float('currency-bignumber-6', 0, 9999, output_type='number') >$"
+    }
+  ],
+  typeInfo: [
+      { field: 'dummy', type: 'string' }
+    , { field: 'number-primitive-0', type: 'number', internalType: 'primitive' }
+    , { field: 'number-primitive-1', type: 'number', internalType: 'primitive' }
+    , { field: 'number-primitive-2', type: 'number', internalType: 'primitive' }
+    , { field: 'number-primitive-3', type: 'number', internalType: 'primitive' }
+    , { field: 'number-primitive-4', type: 'number', internalType: 'primitive' }
+    , { field: 'number-primitive-5', type: 'number', internalType: 'primitive' }
+    , { field: 'number-primitive-6', type: 'number', internalType: 'primitive' }
+    , { field: 'number-numeral-0', type: 'number', internalType: 'numeral' }
+    , { field: 'number-numeral-1', type: 'number', internalType: 'numeral' }
+    , { field: 'number-numeral-2', type: 'number', internalType: 'numeral' }
+    , { field: 'number-numeral-3', type: 'number', internalType: 'numeral' }
+    , { field: 'number-numeral-4', type: 'number', internalType: 'numeral' }
+    , { field: 'number-numeral-5', type: 'number', internalType: 'numeral' }
+    , { field: 'number-numeral-6', type: 'number', internalType: 'numeral' }
+    , { field: 'number-bignumber-0', type: 'number', internalType: 'bignumber' }
+    , { field: 'number-bignumber-1', type: 'number', internalType: 'bignumber' }
+    , { field: 'number-bignumber-2', type: 'number', internalType: 'bignumber' }
+    , { field: 'number-bignumber-3', type: 'number', internalType: 'bignumber' }
+    , { field: 'number-bignumber-4', type: 'number', internalType: 'bignumber' }
+    , { field: 'number-bignumber-5', type: 'number', internalType: 'bignumber' }
+    , { field: 'number-bignumber-6', type: 'number', internalType: 'bignumber' }
+    , { field: 'currency-primitive-0', type: 'currency', internalType: 'primitive' }
+    , { field: 'currency-primitive-1', type: 'currency', internalType: 'primitive' }
+    , { field: 'currency-primitive-2', type: 'currency', internalType: 'primitive' }
+    , { field: 'currency-primitive-3', type: 'currency', internalType: 'primitive' }
+    , { field: 'currency-primitive-4', type: 'currency', internalType: 'primitive' }
+    , { field: 'currency-primitive-5', type: 'currency', internalType: 'primitive' }
+    , { field: 'currency-primitive-6', type: 'currency', internalType: 'primitive' }
+    , { field: 'currency-numeral-0', type: 'currency', internalType: 'numeral' }
+    , { field: 'currency-numeral-1', type: 'currency', internalType: 'numeral' }
+    , { field: 'currency-numeral-2', type: 'currency', internalType: 'numeral' }
+    , { field: 'currency-numeral-3', type: 'currency', internalType: 'numeral' }
+    , { field: 'currency-numeral-4', type: 'currency', internalType: 'numeral' }
+    , { field: 'currency-numeral-5', type: 'currency', internalType: 'numeral' }
+    , { field: 'currency-numeral-6', type: 'currency', internalType: 'numeral' }
+    , { field: 'currency-bignumber-0', type: 'currency', internalType: 'bignumber' }
+    , { field: 'currency-bignumber-1', type: 'currency', internalType: 'bignumber' }
+    , { field: 'currency-bignumber-2', type: 'currency', internalType: 'bignumber' }
+    , { field: 'currency-bignumber-3', type: 'currency', internalType: 'bignumber' }
+    , { field: 'currency-bignumber-4', type: 'currency', internalType: 'bignumber' }
+    , { field: 'currency-bignumber-5', type: 'currency', internalType: 'bignumber' }
+    , { field: 'currency-bignumber-6', type: 'currency', internalType: 'bignumber' }
+  ]
+}

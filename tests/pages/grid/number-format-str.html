@@ -1,0 +1,90 @@
+<html>
+	<head>
+		<meta charset="utf-8"/>
+		<script src="../jquery-latest.js"></script>
+		<script src="../jquery-ui.js"></script>
+		<script src="../blockUI.js"></script>
+		<script src="../contextMenu.js"></script>
+		<script src="../sumoselect.js"></script>
+		<script src="../flatpickr.js"></script>
+		<script src="../wcdatavis.js"></script>
+		<link rel="stylesheet" href="../font-awesome.css"/>
+		<link rel="stylesheet" href="../jquery-ui.css"/>
+		<link rel="stylesheet" href="../contextMenu.css"/>
+		<link rel="stylesheet" href="../sumoselect.css"/>
+		<link rel="stylesheet" href="../flatpickr.css"/>
+		<link rel="stylesheet" href="../base.css"/>
+		<link rel="stylesheet" href="../wcdatavis.css"/>
+		<script>
+$(document).ready(function () {
+	MIE.DEBUGGING = true;
+
+	var prefs = new MIE.WC_DataVis.Prefs('prefs', null, {backend: {type: 'temporary'}});
+	var source = new MIE.WC_DataVis.Source({
+		type: 'http',
+		url: '../number-format-str.json'
+	});
+	var view = new MIE.WC_DataVis.View(source, 'TEST:GRID:NUMBER-FORMAT-STR', {prefs: prefs});
+	new MIE.WC_DataVis.Grid('grid', view, {
+		id: 'grid',
+		table: {
+			features: {
+				limit: false,
+				floatingHeader: false
+			},
+			columns: [
+				{ field: 'number-primitive-0' },
+				{ field: 'number-primitive-1', format: '0' },
+				{ field: 'number-primitive-2', format: '0.0' },
+				{ field: 'number-primitive-3', format: '0.00' },
+				{ field: 'number-primitive-4', format: '0,0' },
+				{ field: 'number-primitive-5', format: '0,0.0' },
+				{ field: 'number-primitive-6', format: '0,0.00' },
+				{ field: 'number-numeral-0' },
+				{ field: 'number-numeral-1', format: '0' },
+				{ field: 'number-numeral-2', format: '0.0' },
+				{ field: 'number-numeral-3', format: '0.00' },
+				{ field: 'number-numeral-4', format: '0,0' },
+				{ field: 'number-numeral-5', format: '0,0.0' },
+				{ field: 'number-numeral-6', format: '0,0.00' },
+				{ field: 'number-bignumber-0' },
+				{ field: 'number-bignumber-1', format: '0' },
+				{ field: 'number-bignumber-2', format: '0.0' },
+				{ field: 'number-bignumber-3', format: '0.00' },
+				{ field: 'number-bignumber-4', format: '0,0' },
+				{ field: 'number-bignumber-5', format: '0,0.0' },
+				{ field: 'number-bignumber-6', format: '0,0.00' },
+				{ field: 'currency-primitive-0' },
+				{ field: 'currency-primitive-1', format: '$0' },
+				{ field: 'currency-primitive-2', format: '$0.0' },
+				{ field: 'currency-primitive-3', format: '$0.00' },
+				{ field: 'currency-primitive-4', format: '$0,0' },
+				{ field: 'currency-primitive-5', format: '$0,0.0' },
+				{ field: 'currency-primitive-6', format: '$0,0.00' },
+				{ field: 'currency-numeral-0' },
+				{ field: 'currency-numeral-1', format: '$0' },
+				{ field: 'currency-numeral-2', format: '$0.0' },
+				{ field: 'currency-numeral-3', format: '$0.00' },
+				{ field: 'currency-numeral-4', format: '$0,0' },
+				{ field: 'currency-numeral-5', format: '$0,0.0' },
+				{ field: 'currency-numeral-6', format: '$0,0.00' },
+				{ field: 'currency-bignumber-0' },
+				{ field: 'currency-bignumber-1', format: '$0' },
+				{ field: 'currency-bignumber-2', format: '$0.0' },
+				{ field: 'currency-bignumber-3', format: '$0.00' },
+				{ field: 'currency-bignumber-4', format: '$0,0' },
+				{ field: 'currency-bignumber-5', format: '$0,0.0' },
+				{ field: 'currency-bignumber-6', format: '$0,0.00' },
+			]
+		},
+		source: source,
+	}, {
+		title: 'Test - Grid - Number Format Str'
+	});
+});
+		</script>
+	</head>
+	<body>
+		<div id="grid"></div>
+	</body>
+</html>

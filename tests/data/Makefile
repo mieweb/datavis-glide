@@ -4,7 +4,7 @@ JSON_FILES=$(patsubst %.json5,%.json,$(JSON5_FILES))
 JSON_GEN=../../bin/json-gen.py
 JSON_GEN_INPUT=./json-gen-input.json
 
-all:	$(JSON_FILES) random100.json random500.json random1000.json random10000.json
+all:	$(JSON_FILES) random100.json random500.json random1000.json random10000.json number-format-str.json
 
 clean:
 	rm -f $(JSON_FILES)
@@ -21,6 +21,9 @@ random1000.json:	$(JSON_GEN_INPUT)
 
 random10000.json:	$(JSON_GEN_INPUT)
 	$(JSON_GEN) -D COUNT=10000 < $^ > $@
+
+number-format-str.json:	number-format-str.in.json
+	$(JSON_GEN) < $^ > $@
 
 $(JSON_FILES):%.json:	%.json5
 	$(JSON5) < $^ > $@
