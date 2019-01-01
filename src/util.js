@@ -450,11 +450,11 @@ export var stringValueType = (function () {
 		else if (re_datetime.test(s)) {
 			return 'datetime';
 		}
-		else if (s.charAt(0) === '$') {
+		else if (typeof s === 'string' && s.charAt(0) === '$') {
 			guess = p(s.substring(1));
       return guess === 'number' ? 'currency' : 'string';
     }
-    else if (s.charAt(0) === '(' && s.charAt(s.length - 1) === ')') {
+    else if (typeof s === 'string' && s.charAt(0) === '(' && s.charAt(s.length - 1) === ')') {
 			guess = p(s.substring(1, s.length - 1));
 			return ['number', 'currency'].indexOf(guess) >= 0 ? guess : 'string';
     }
@@ -481,10 +481,10 @@ export var parseNumber = (function () {
 			throw new Error('Call Error: `resultType` must be one of: ["number", "string"]');
 		}
 
-    if (s.charAt(0) === '$') {
+    if (typeof s === 'string' && s.charAt(0) === '$') {
       return p(s.substring(1));
     }
-    else if (s.charAt(0) === '(' && s.charAt(-1) === ')') {
+    else if (typeof s === 'string' && s.charAt(0) === '(' && s.charAt(-1) === ')') {
       return p(s.substring(1, s.length - 1)) * -1;
     }
     else {
