@@ -36,3 +36,22 @@ The number one convention is to avoid making unnecessary diffs.  Follow the styl
 * Never use `this` unless within an event handler or something like that.  Always use `self` to refer to the instance that the method is being invoked on.
 * Use `makeSubclass` to create class hierarchies.  Toplevel classes should have `Object` as their superclass.
 * Use `self.super` to access methods in superclasses.
+
+# Tree Structure
+
+* `bin` — Contains programs used to build other stuff, e.g. a JSON generator.
+* `dist` — After compiling with `make`, contains the JS and CSS files for DataVis.
+* `doc` — Pandoc documentation source.
+* `examples`
+  * `graph` — Examples using graph output.
+  * `grid` — Examples using grid output.
+  * `test` — QUnit tests (these may move eventually).
+* `jaguarjs-jsdoc` — Submodule for the JSDoc template used to build documentation.
+* `src` — Contains all the source JS files.
+* `tests`
+  * `data` — Data files for testing and examples.
+    * `*.json5` — Input for generating JSON files.
+    * `*.in.json` — Input for generating JSON files.
+  * `lib` — Auxiliary JS files to help make writing test cases easier.
+  * `pages` — HTML pages used for running Selenium tests.
+  * `selenium` — Selenium test case files.
