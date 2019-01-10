@@ -1,4 +1,7 @@
 import _ from 'underscore';
+import BigNumber from 'bignumber.js/bignumber.js';
+import numeral from 'numeral';
+import moment from 'moment';
 
 import {
 	arrayCompare,
@@ -1427,21 +1430,35 @@ View.prototype.filter = function (cont) {
 
 	// Make sure that each column that we're filtering has been type decoded, if necessary.
 
-	_.each(_.keys(self.filterSpec), function (filterField) {
-		var fti = self.typeInfo.get(filterField);
+	_.each(self.filterSpec, function (fieldSpec, field) {
+		var fti = self.typeInfo.get(field);
 
 		// Check to make sure we have enough information about the type of the field that the user wants
 		// us to filter.
 
 		if (fti === undefined) {
-			log.error('Filter field does not exist in the source: ' + filterField);
-			self.fire('invalidFilterField', null, filterField);
-			delete self.filterSpec[filterField];
+			log.error('Filter field "' + field + '" does not exist in the source');
+			self.fire('invalidFilterField', null, field);
+			delete self.filterSpec[field];
 			return;
 		}
 
 		if (fti.type === undefined) {
-			throw new Error('Unable to filter field "' + filterField + '" - type is not provided');
+			log.error('Unable to filter field "' + field + '", type is unknown');
+			self.fire('invalidFilterField', null, field);
+			delete self.filterSpec[field];
+			return;
+		}
+
+		// For dates and datetimes, if the data is stored in moment objects, convert filters serialized
+		// as strings into moment objects before continuing.
+
+		if (['date', 'datetime'].indexOf(fti.type) >= 0 && fti.internalType === 'moment') {
+			_.each(fieldSpec, function (val, op) {
+				if (typeof val === 'string') {
+					fieldSpec[op] = moment(val);
+				}
+			});
 		}
 
 		self._maybeDecode('FILTER', fti);
