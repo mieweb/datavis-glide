@@ -2775,6 +2775,44 @@ export function format(fcc, fti, cell, opts) {
 		return result;
 	};
 
+	var formatPrimitiveNumber = function (x, fmt, method) {
+		var language;
+
+		switch (method) {
+		case 'intl':
+			if (window.Intl != null && window.Intl.NumberFormat != null) {
+				if (window.navigator.languages) {
+					language = window.navigator.languages[0];
+				}
+				else {
+					language = window.navigator.userLanguage || window.navigator.language;
+				}
+
+				var config = {
+					useGrouping: fmt.integerPart.grouping
+				};
+
+				if (fmt.decimalPlaces != null) {
+					config.minimumFractionDigits = fmt.decimalPlaces;
+					config.maximumFractionDigits = fmt.decimalPlaces;
+				}
+
+				var intlNumFmt = new Intl.NumberFormat(language, config);
+				console.log(intlNumFmt.resolvedOptions());
+				return intlNumFmt.format(x);
+			}
+			else {
+				return '' + x;
+			}
+		case 'bignumber':
+			return new BigNumber(x).toFormat(fmt.decimalPlaces, bigNumberRoundingMode(fmt), bigNumberFormat(fmt));
+		case 'numeral':
+			return numeral(x).format(numeralFormat(fmt));
+		default:
+			return '' + x;
+		}
+	};
+
 	// When we just receive a value instead of a proper data cell, convert it so that code below can
 	// be simplified.  These cells are just "pretend" and anything stored in them is going to be
 	// discarded when this function is done.
@@ -2943,7 +2981,7 @@ export function format(fcc, fti, cell, opts) {
 					newVal = cell.value;
 				}
 
-				result = numeral(newVal).format(numeralFormat(format));
+				result = formatPrimitiveNumber(newVal, format, 'bignumber');
 			}
 
 			if (isNegative) {
