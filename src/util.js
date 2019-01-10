@@ -1853,7 +1853,8 @@ export function mixinLogging(obj, tagPrefix) {
 			var tag = args.shift();
 			var msg = args.shift();
 			var prefix = ['[' + getTag(this) + ' // ' + tag + '] ' + msg];
-			console[loggerType].apply(null, prefix.concat(args));
+			var call = Function.prototype.call;
+			call.apply(call, [console[loggerType], console].concat(prefix, args));
 		};
 	};
 
