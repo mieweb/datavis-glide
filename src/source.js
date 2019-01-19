@@ -737,20 +737,33 @@ Source.prototype.getTypeInfo = function (cont) {
 			v.overridden = false;
 		});
 
-		if (self.userTypeInfo !== undefined) {
-			_.each(self.userTypeInfo, function (fieldTypeInfo, field) {
+		// Merge user-specified type information with whatever we got from the source.
+
+		if (self.userTypeInfo != null) {
+			_.each(self.userTypeInfo, function (userFti, field) {
 				if (!typeInfo.isSet(field)) {
 					log.warn('Overriding type information on field "' + field + '" which is not present in the source.');
 					typeInfo.set(field, {});
 				}
-				if (typeof fieldTypeInfo === 'string') {
-					fieldTypeInfo = {
-						type: fieldTypeInfo
-					};
+
+				// Just a string for the value is a shortcut for specifying the type.
+				// EXAMPLE: {field1: 'number'} => {field1: {type: 'number'}}
+
+				if (typeof userFti === 'string') {
+					userFti = { type: userFti };
 				}
-				_.extend(typeInfo.get(field), fieldTypeInfo);
-				typeInfo.get(field).overridden = true;
-				debug.info('SOURCE // GET TYPE INFO', 'Overriding origin type information { field = "' + field + '", typeInfo = %O }', fieldTypeInfo);
+
+				var fti = typeInfo.get(field);
+
+				// Mark when the type is overridden by the user, so we don't try to guess it later.
+
+				if (userFti.type != null) {
+					fti.overridden = true;
+				}
+
+				_.extend(fti, userFti);
+
+				debug.info('SOURCE // GET TYPE INFO', 'Overriding origin type information { field = "' + field + '", typeInfo = %O }', userFti);
 			});
 		}
 
