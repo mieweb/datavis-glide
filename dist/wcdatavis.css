@@ -439,7 +439,8 @@ div.SumoSelect > div.optWrapper {
 .wcdv_grid_table .wcdv_group_col_spacer {
 	width: 18px;
 	min-width: 18px;
-	padding-right: 0px;
+	text-align: center;
+	/*padding-right: 0px;*/
 }
 
 .wcdv_filter_icon {

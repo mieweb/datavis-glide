@@ -2335,13 +2335,15 @@ GridTablePlain.prototype.drawFooter = function (columns, data, typeInfo) {
 		}
 
 		var tr = jQuery('<tr>');
+
+		if (!isVisible(self.opts.footer)) {
+			tr.hide();
+		}
+
 		if (self.features.rowSelect) {
 			if (getProp(self.defn, 'table', 'footer')) {
 				// There is an aggregate row, so it contains the "select all" checkbox.
 				jQuery('<td>', {'class': 'wcdv_group_col_spacer'}).appendTo(tr);
-				if (!isVisible(self.opts.footer)) {
-					tr.hide();
-				}
 			}
 			else {
 				// There is no aggregate row, so make the "select all" checkbox here.
@@ -3659,13 +3661,15 @@ GridTableGroupDetail.prototype.drawFooter = function (columns, data, typeInfo) {
 		}
 
 		var tr = jQuery('<tr>');
+
+		if (!isVisible(self.opts.footer)) {
+			tr.hide();
+		}
+
 		if (self.features.rowSelect) {
 			if (getProp(self.defn, 'table', 'footer')) {
 				// There is an aggregate row, so it contains the "select all" checkbox.
 				jQuery('<td>', {'class': 'wcdv_group_col_spacer'}).appendTo(tr);
-				if (!isVisible(self.opts.footer)) {
-					tr.hide();
-				}
 			}
 			else {
 				// There is no aggregate row, so make the "select all" checkbox here.
