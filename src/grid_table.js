@@ -11,6 +11,7 @@ import {
 	gensym,
 	getProp,
 	getPropDef,
+	isVisible,
 	log,
 	makeSubclass,
 	mergeSort2,
@@ -2338,6 +2339,9 @@ GridTablePlain.prototype.drawFooter = function (columns, data, typeInfo) {
 			if (getProp(self.defn, 'table', 'footer')) {
 				// There is an aggregate row, so it contains the "select all" checkbox.
 				jQuery('<td>', {'class': 'wcdv_group_col_spacer'}).appendTo(tr);
+				if (!isVisible(self.opts.footer)) {
+					tr.hide();
+				}
 			}
 			else {
 				// There is no aggregate row, so make the "select all" checkbox here.
@@ -3659,6 +3663,9 @@ GridTableGroupDetail.prototype.drawFooter = function (columns, data, typeInfo) {
 			if (getProp(self.defn, 'table', 'footer')) {
 				// There is an aggregate row, so it contains the "select all" checkbox.
 				jQuery('<td>', {'class': 'wcdv_group_col_spacer'}).appendTo(tr);
+				if (!isVisible(self.opts.footer)) {
+					tr.hide();
+				}
 			}
 			else {
 				// There is no aggregate row, so make the "select all" checkbox here.
@@ -3980,6 +3987,7 @@ var GridTableGroupSummary = makeSubclass('GridTableGroupSummary', GridTable, fun
 
 	self.features.limit = false;
 	self.features.rowSelect = false;
+	self.features.footer = false;
 
 	debug.info('GRID TABLE - GROUP - SUMMARY', 'Constructing grid table; features = %O', features);
 

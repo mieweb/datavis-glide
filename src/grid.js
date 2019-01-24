@@ -568,8 +568,7 @@ var Grid = makeSubclass('Grid', Object, function (id, view, defn, tagOpts, cb) {
 		// There was a footer which was printed out by dashboard.c which we are now going to move
 		// inside the structure that we've been creating.
 
-		self.ui.footer = jQuery(document.getElementById(id + '_footer'))
-			.css('display', 'block');
+		self.ui.footer = jQuery(document.getElementById(id + '_footer'));
 	}
 
 	self.ui.root
