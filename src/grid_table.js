@@ -3935,7 +3935,6 @@ var GridTableGroupSummary = makeSubclass('GridTableGroupSummary', GridTable, fun
 	self.super.ctor.apply(self, arguments);
 
 	self.features.limit = false;
-	self.features.footer = false;
 
 	debug.info('GRID TABLE - GROUP - SUMMARY', 'Constructing grid table; features = %O', features);
 
@@ -4174,6 +4173,39 @@ GridTableGroupSummary.prototype.drawBody = function (data, typeInfo, columns, co
 
 	if (typeof cont === 'function') {
 		return cont();
+	}
+};
+
+// #drawFooter {{{2
+
+GridTableGroupSummary.prototype.drawFooter = function (columns, data, typeInfo) {
+	var self = this;
+	var tr, td;
+	var colspan;
+
+	// Create the footer row to show aggregate functions.
+
+	tr = jQuery('<tr>');
+
+	// Add the "select all" checkbox when row selection is enabled.
+
+	if (self.features.rowSelect) {
+		self.ui.checkAll_tfoot = jQuery('<input>', { 'name': 'checkAll', 'type': 'checkbox' })
+			.on('change', function (evt) {
+				self.checkAll(evt);
+			});
+		jQuery('<td>', {'class': 'wcdv_group_col_spacer'}).append(self.ui.checkAll_tfoot).appendTo(tr);
+	}
+
+	// Create a new footer row for an external footer that we've absorbed into the grid.
+
+	if (self.opts.footer != null && self.opts.stealGridFooter) {
+		tr = jQuery('<tr>');
+		tr.append(jQuery('<td>', {'colspan': data.groupFields.length + self._getAggInfo(data).group.length}).append(self.opts.footer));
+	}
+
+	if (tr.children().length > 0) {
+		self.ui.tfoot.append(tr);
 	}
 };
 
