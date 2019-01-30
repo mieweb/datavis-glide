@@ -12,7 +12,7 @@ button.wcdv_icon_button {
 button.wcdv_icon_button,
 .wcdv_spinner {
 	border: none;
-	background-color: inherit;
+	background-color: transparent;
 	padding: 0;
 	vertical-align: middle;
 }
