@@ -3143,7 +3143,9 @@ View.prototype.prime = function (cont) {
 	self.lock.lock('Priming!');
 
 	self.prefs.prime(function () {
+		self.fire('fetchDataBegin');
 		self.source.getData(function () {
+			self.fire('fetchDataEnd');
 			self.prefs.bind('view', self);
 			self.isPrimed = true;
 			self.lock.unlock();
