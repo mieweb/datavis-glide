@@ -2207,7 +2207,10 @@ GridTablePlain.prototype.drawFooter = function (columns, data, typeInfo) {
 	};
 
 	var makeAggregateRow = function () {
-		if (getProp(self.defn, 'table', 'footer') == null) {
+		// Circumventing the correct logic here because TableTool requires an empty footer in order to
+		// implement horizontal scrolling; if you omit the footer (with a TR and all appropriate TD's in
+		// it) then you can't scroll horizontally.
+		if (false && getProp(self.defn, 'table', 'footer') == null) {
 			return;
 		}
 
@@ -2341,7 +2344,10 @@ GridTablePlain.prototype.drawFooter = function (columns, data, typeInfo) {
 		}
 
 		if (self.features.rowSelect) {
-			if (getProp(self.defn, 'table', 'footer')) {
+			// Circumventing the correct logic here because TableTool requires an empty footer in order to
+			// implement horizontal scrolling; if you omit the footer (with a TR and all appropriate TD's
+			// in it) then you can't scroll horizontally.
+			if (true || getProp(self.defn, 'table', 'footer')) {
 				// There is an aggregate row, so it contains the "select all" checkbox.
 				jQuery('<td>', {'class': 'wcdv_group_col_spacer'}).appendTo(tr);
 			}
@@ -3538,7 +3544,10 @@ GridTableGroupDetail.prototype.drawFooter = function (columns, data, typeInfo) {
 	};
 
 	var makeAggregateRow = function () {
-		if (getProp(self.defn, 'table', 'footer') == null) {
+		// Circumventing the correct logic here because TableTool requires an empty footer in order to
+		// implement horizontal scrolling; if you omit the footer (with a TR and all appropriate TD's in
+		// it) then you can't scroll horizontally.
+		if (false && getProp(self.defn, 'table', 'footer') == null) {
 			return;
 		}
 
@@ -3672,7 +3681,10 @@ GridTableGroupDetail.prototype.drawFooter = function (columns, data, typeInfo) {
 		}
 
 		if (self.features.rowSelect) {
-			if (getProp(self.defn, 'table', 'footer')) {
+			// Circumventing the correct logic here because TableTool requires an empty footer in order to
+			// implement horizontal scrolling; if you omit the footer (with a TR and all appropriate TD's
+			// in it) then you can't scroll horizontally.
+			if (true || getProp(self.defn, 'table', 'footer')) {
 				// There is an aggregate row, so it contains the "select all" checkbox.
 				jQuery('<td>', {'class': 'wcdv_group_col_spacer'}).appendTo(tr);
 			}
