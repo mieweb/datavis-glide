@@ -1134,22 +1134,30 @@ GridTable.prototype.draw = function (root, opts, cont) {
 				var floatTheadConfig = {
 					zIndex: 1
 				};
+
 				if (self.opts.fixedHeight) {
 					floatTheadConfig.position = 'fixed';
 					floatTheadConfig.scrollContainer = true;
-					self.grid.on(Grid.events.showControls, function () {
-						self.ui.tbl.floatThead('reflow');
-					}, { who: self });
-					self.grid.on(Grid.events.hideControls, function () {
-						self.ui.tbl.floatThead('reflow');
-					}, { who: self });
-					self.grid.filterControl.on(['fieldAdded', 'fieldRemoved'], function () {
-						self.ui.tbl.floatThead('reflow');
-					}, { who: self });
-					self.grid.aggregateControl.on(['fieldAdded', 'fieldRemoved'], function () {
-						self.ui.tbl.floatThead('reflow');
-					}, { who: self });
 				}
+				else {
+					floatTheadConfig.responsiveContainer = function () {
+						return self.root;
+					};
+				}
+
+				self.grid.on(Grid.events.showControls, function () {
+					self.ui.tbl.floatThead('reflow');
+				}, { who: self });
+				self.grid.on(Grid.events.hideControls, function () {
+					self.ui.tbl.floatThead('reflow');
+				}, { who: self });
+				self.grid.filterControl.on(['fieldAdded', 'fieldRemoved'], function () {
+					self.ui.tbl.floatThead('reflow');
+				}, { who: self });
+				self.grid.aggregateControl.on(['fieldAdded', 'fieldRemoved'], function () {
+					self.ui.tbl.floatThead('reflow');
+				}, { who: self });
+
 				self.ui.tbl.floatThead(floatTheadConfig);
 				break;
 			case 'tabletool':
