@@ -2069,56 +2069,66 @@ PrefsModuleView.prototype.load = function (config) {
 
 	if (config.filter == null) {
 		self.target.clearFilter({
-			updateData: false
+			updateData: false,
+			savePrefs: false
 		});
 	}
 	else {
 		self.target.setFilter(config.filter, null, {
-			updateData: false
+			updateData: false,
+			savePrefs: false
 		});
 	}
 
 	if (config.sort == null) {
 		self.target.clearSort({
-			updateData: false
+			updateData: false,
+			savePrefs: false
 		});
 	}
 	else {
 		self.target.setSort(config.sort, {
-			updateData: false
+			updateData: false,
+			savePrefs: false
 		});
 	}
 
 	if (config.group == null) {
 		self.target.clearGroup({
-			updateData: false
+			updateData: false,
+			savePrefs: false
 		});
 	}
 	else {
 		self.target.setGroup(config.group, {
-			updateData: false
+			updateData: false,
+			savePrefs: false
 		});
 	}
 
 	if (config.pivot == null) {
 		self.target.clearPivot({
-			updateData: false
+			updateData: false,
+			savePrefs: false
 		});
 	}
 	else {
 		self.target.setPivot(config.pivot, {
-			updateData: false
+			updateData: false,
+			savePrefs: false
 		});
 	}
 
 	if (config.aggregate == null) {
 		self.target.clearAggregate({
-			updateData: false
+			updateData: false,
+			savePrefs: false
 		});
 	}
 	else {
 		self.target.setAggregate(config.aggregate, {
-			updateData: false
+			updateData: false,
+			savePrefs: false
 		});
 	}
 };

@@ -577,7 +577,8 @@ View.prototype.setSort = function (spec, opts) {
 	opts = deepDefaults(opts, {
 		sendEvent: true,
 		dontSendEventTo: [],
-		updateData: true
+		updateData: true,
+		savePrefs: true
 	});
 
 	debug.info('VIEW (' + self.name + ') // SET SORT', 'spec = %O', spec);
@@ -592,7 +593,7 @@ View.prototype.setSort = function (spec, opts) {
 		}, spec);
 	}
 
-	if (isDifferent && self.prefs != null) {
+	if (isDifferent && self.prefs != null && opts.savePrefs) {
 		self.prefs.save();
 	}
 
@@ -1338,7 +1339,8 @@ View.prototype.setFilter = function (spec, progress, opts) {
 	opts = deepDefaults(opts, {
 		sendEvent: true,
 		dontSendEventTo: [],
-		updateData: true
+		updateData: true,
+		savePrefs: true
 	});
 
 	debug.info('VIEW (' + self.name + ') // SET FILTER', 'spec = %O ; options = %O', spec, opts);
@@ -1375,7 +1377,7 @@ View.prototype.setFilter = function (spec, progress, opts) {
 		}, spec);
 	}
 
-	if (isDifferent && self.prefs != null) {
+	if (isDifferent && self.prefs != null && opts.savePrefs) {
 		self.prefs.save();
 	}
 
@@ -1730,7 +1732,8 @@ View.prototype.setGroup = function (spec, opts, cont) {
 	opts = deepDefaults(opts, {
 		sendEvent: true,
 		dontSendEventTo: [],
-		updateData: true
+		updateData: true,
+		savePrefs: true
 	});
 
 	debug.info('VIEW (' + self.name + ') // SET GROUP', 'spec = %O', spec);
@@ -1778,7 +1781,7 @@ View.prototype.setGroup = function (spec, opts, cont) {
 		}, spec);
 	}
 
-	if (isDifferent && self.prefs != null) {
+	if (isDifferent && self.prefs != null && opts.savePrefs) {
 		self.prefs.save();
 	}
 
@@ -2192,7 +2195,8 @@ View.prototype.setPivot = function (spec, opts) {
 	opts = deepDefaults(opts, {
 		sendEvent: true,
 		dontSendEventTo: [],
-		updateData: true
+		updateData: true,
+		savePrefs: true
 	});
 
 	debug.info('VIEW (' + self.name + ') // SET PIVOT', 'spec = %O', spec);
@@ -2241,7 +2245,7 @@ View.prototype.setPivot = function (spec, opts) {
 		}, spec);
 	}
 
-	if (isDifferent && self.prefs != null) {
+	if (isDifferent && self.prefs != null && opts.savePrefs) {
 		self.prefs.save();
 	}
 
@@ -2656,7 +2660,8 @@ View.prototype.setAggregate = function (spec, opts) {
 	opts = deepDefaults(opts, {
 		sendEvent: true,
 		dontSendEventTo: [],
-		updateData: true
+		updateData: true,
+		savePrefs: true
 	});
 
 	debug.info('VIEW (' + self.name + ') // SET AGGREGATE', 'spec = %O ; options = %O', spec, opts);
@@ -2729,7 +2734,7 @@ View.prototype.setAggregate = function (spec, opts) {
 		}, spec, shouldGraph);
 	}
 
-	if (isDifferent && self.prefs != null) {
+	if (isDifferent && self.prefs != null && opts.savePrefs) {
 		self.prefs.save();
 	}
 
