@@ -437,7 +437,7 @@ export var stringValueType = (function () {
 	var re_date = new RegExp(/^\d{4}-\d{2}-\d{2}$/);
 	var re_time = new RegExp(/^\d{2}:\d{2}:\d{2}$/);
 	var re_datetime = new RegExp(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/);
-  var re_number = new RegExp(/(^-?[1-9]{1}[0-9]{0,2}(,?\d{3})*(\.\d+)?(e[+-]?\d+)?$)|(^-?0?\.\d+(e[+-]?\d+)?$)/);
+  var re_number = new RegExp(/(^-?[1-9]{1}[0-9]{0,2}(,?\d{3})*(\.\d+)?(e[+-]?\d+)?$)|(^0(e[+-]?\d+)?$)|(^-?0?\.\d+(e[+-]?\d+)?$)/);
 	var re_comma = new RegExp(/,/g);
   return function p(s) {
 		var guess;
@@ -475,16 +475,18 @@ export var parseNumber = (function () {
 			throw new Error('Call Error: `resultType` must be null or a string');
 		}
 
-		resultType = resultType || 'number';
+		if (resultType == null) {
+			resultType = 'number';
+		}
 
 		if (['number', 'string'].indexOf(resultType) < 0) {
 			throw new Error('Call Error: `resultType` must be one of: ["number", "string"]');
 		}
 
-    if (typeof s === 'string' && s.charAt(0) === '$') {
+    if (s.charAt(0) === '$') {
       return p(s.substring(1));
     }
-    else if (typeof s === 'string' && s.charAt(0) === '(' && s.charAt(-1) === ')') {
+    else if (s.charAt(0) === '(' && s.charAt(-1) === ')') {
       return p(s.substring(1, s.length - 1)) * -1;
     }
     else {
@@ -2502,8 +2504,9 @@ export function deprecated(defn, msg, ref) {
 }
 
 export function convert(cell, fti) {
+	var value = cell.value;
 	var error = function (msg) {
-		log.error('Unable to convert cell value, %s: field = "%s", fti.type = %s, fti.internalType = %s, value = %O (%s)', msg, fti.field || '[unknown]', fti.type, fti.internalType, cell.value, typeof cell.value);
+		log.error('Unable to convert cell value, %s: field = "%s", fti.type = %s, fti.internalType = %s, value = %O (%s)', msg, fti.field || '[unknown]', fti.type, fti.internalType, value, typeof value);
 	};
 
 	if (cell.decoded) {
@@ -2542,24 +2545,27 @@ export function convert(cell, fti) {
 				switch (fti.internalType) {
 				case 'primitive':
 					// string -> primitive
-					var newVal = parseNumber(cell.value);
-					if (newVal != null) {
-						cell.value = newVal;
-					}
-					else {
+					cell.value = parseNumber(cell.value);
+					if (cell.value == null) {
 						return error('cannot decode primitive number');
 					}
 					break;
 				case 'numeral':
 					// string -> numeral
-					cell.value = numeral(cell.value);
+					var newVal = parseNumber(cell.value);
+					if (newVal == null) {
+						cell.value = null;
+						return error('cannot decode primitive number');
+					}
+					cell.value = numeral(newVal);
 					break;
 				case 'bignumber':
-					cell.value = new BigNumber(parseNumber(cell.value, 'string'));
-					if (cell.value.isNaN()) {
+					var newVal = parseNumber(cell.value, 'string');
+					if (newVal == null) {
 						cell.value = null;
 						return error('invalid value');
 					}
+					cell.value = new BigNumber(newVal);
 					break;
 				default:
 					return error('unsupported internal representation');
@@ -2926,6 +2932,10 @@ export function format(fcc, fti, cell, opts) {
 			}
 
 			if (moment.isMoment(cell.value)) {
+				if (!cell.value.isValid()) {
+					break;
+				}
+
 				if (t === 'datetime' && fcc.hideMidnight && cell.value.hour() === 0 && cell.value.minute() === 0 && cell.value.second() === 0) {
 					result = cell.value.format(format_dateOnly);
 				}
@@ -2937,6 +2947,11 @@ export function format(fcc, fti, cell, opts) {
 				// FIXME: Make this work without Moment.
 
 				var m = moment(cell.value);
+
+				if (!m.isValid()) {
+					break;
+				}
+
 				if (t === 'datetime' && fcc.hideMidnight && m.hour() === 0 && m.minute() === 0 && m.second() === 0) {
 					result = m.format(format_dateOnly);
 				}
@@ -2951,7 +2966,18 @@ export function format(fcc, fti, cell, opts) {
 				convert(cell, fti);
 			}
 
+			if (cell.value == null
+					|| (fti.internalType === 'primitive' && Number.isNaN(cell.value))
+					|| (fti.internalType === 'numeral' && (Number.isNaN(cell.value) || cell.value.value() === null))
+					|| (fti.internalType === 'bignumber' && cell.value.isNaN())) {
+				break;
+			}
+
 			if (BigNumber.isBigNumber(cell.value)) {
+				if (cell.value.isNaN()) {
+					break;
+				}
+
 				if (cell.value.isNegative()) {
 					isNegative = true;
 					newVal = cell.value.abs();
@@ -2963,6 +2989,10 @@ export function format(fcc, fti, cell, opts) {
 				result = newVal.toFormat(format.decimalPlaces, bigNumberRoundingMode(format), bigNumberFormat(format));
 			}
 			else if (numeral.isNumeral(cell.value)) {
+				if (cell.value.value() === null) {
+					break;
+				}
+
 				if (cell.value.value() < 0) {
 					isNegative = true;
 					newVal = cell.value.multiply(-1);
@@ -2974,6 +3004,10 @@ export function format(fcc, fti, cell, opts) {
 				result = cell.value.format(numeralFormat(format));
 			}
 			else {
+				if (Number.isNaN(cell.value)) {
+					break;
+				}
+
 				if (cell.value < 0) {
 					isNegative = true;
 					newVal = cell.value * -1;
@@ -3705,4 +3739,10 @@ if (!String.prototype.repeat) {
     str += str.substring(0, str.length * count - str.length);
     return str;
   }
+}
+
+// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/isNaN
+
+Number.isNaN = Number.isNaN || function(value) {
+	return value !== value;
 }

@@ -228,7 +228,8 @@ var Aggregate = makeSubclass('Aggregate', Object, function (opts) {
 }, {
 	enabled: true,
 	fieldCount: 0,
-	inheritFormatting: false
+	inheritFormatting: false,
+	numItems: 0
 });
 
 // JSDoc {{{2
@@ -323,6 +324,7 @@ Aggregate.prototype.calculate = function (data) {
 	for (i = i0; i < len; i += 1) {
 		try {
 			acc = self.calculateStep(acc, data[i].rowData, data, i);
+			console.log('Aggregate#calculate: acc = %O , numItems = %O', acc, self.numItems);
 		}
 		catch (e) {
 			log.error('Aggregate ' + self.name + ': Error occurred at data index [' + i + ']: ' + e.toString());
@@ -750,19 +752,37 @@ var SumAggregate = makeSubclass('SumAggregate', Aggregate, null, {
 SumAggregate.prototype.calculateStep = function (acc, next) {
 	var self = this;
 	var val = self.getRealValue(next[self.opts.fields[0]]);
+	console.log('SumAggregate#calculateStep: acc = %O , val = %O', acc, val);
 
 	if (val == null) {
-		// TODO Warn about invalid value.
-		val = self.opts.typeInfo[0].internalType === 'numeral' ? numeral(0) : 0;
+		return acc;
 	}
 
 	switch (self.opts.typeInfo[0].internalType) {
 	case 'primitive':
-		return acc + val;
+		if (Number.isNaN(val)) {
+			return acc;
+		}
+		else {
+			self.numItems += 1;
+			return acc + val;
+		}
 	case 'numeral':
-		return acc.add(val.value());
+		if (Number.isNaN(val) || val.value() === null) {
+			return acc;
+		}
+		else {
+			self.numItems += 1;
+			return acc.add(val.value());
+		}
 	case 'bignumber':
-		return acc.plus(val);
+		if (val.isNaN()) {
+			return acc;
+		}
+		else {
+			self.numItems += 1;
+			return acc.plus(val);
+		}
 	}
 };
 
@@ -791,8 +811,43 @@ AverageAggregate.prototype.calculate = function (data) {
 		return self.bottomValue;
 	}
 
+	// First, compute the SUM using a sum aggregate.  It will keep track of the number of contributing
+	// items internally which we can use for division later.
 
-	return self.sumAgg.calculate(data) / data.length;
+	var num = self.sumAgg.calculate(data);
+	var denom = self.sumAgg.numItems;
+
+	// If the SUM ends up being null, NaN, or invalid in any other way, just return the bottom value.
+	// Otherwise, perform the average using whatever division method is appropriate for the internal
+	// type of the field.
+
+	if (num == null || denom === 0) {
+		return self.bottomVal;
+	}
+
+	switch (self.opts.typeInfo[0].internalType) {
+	case 'primitive':
+		if (Number.isNaN(num)) {
+			return self.bottomVal;
+		}
+		else {
+			return num / denom;
+		}
+	case 'numeral':
+		if (Number.isNaN(num) || num.value() === null) {
+			return self.bottomVal;
+		}
+		else {
+			return num.divide(denom);
+		}
+	case 'bignumber':
+		if (num.isNaN()) {
+			return self.bottomVal;
+		}
+		else {
+			return num.div(denom);
+		}
+	}
 };
 
 // Min {{{1
