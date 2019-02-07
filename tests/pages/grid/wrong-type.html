@@ -1,0 +1,181 @@
+<html>
+	<head>
+		<meta charset="utf-8"/>
+		<script src="../jquery-latest.js"></script>
+		<script src="../jquery-ui.js"></script>
+		<script src="../blockUI.js"></script>
+		<script src="../contextMenu.js"></script>
+		<script src="../sumoselect.js"></script>
+		<script src="../flatpickr.js"></script>
+		<script src="../wcdatavis.js"></script>
+		<link rel="stylesheet" href="../font-awesome.css"/>
+		<link rel="stylesheet" href="../jquery-ui.css"/>
+		<link rel="stylesheet" href="../contextMenu.css"/>
+		<link rel="stylesheet" href="../sumoselect.css"/>
+		<link rel="stylesheet" href="../flatpickr.css"/>
+		<link rel="stylesheet" href="../base.css"/>
+		<link rel="stylesheet" href="../wcdatavis.css"/>
+		<script>
+$(document).ready(function () {
+	MIE.DEBUGGING = true;
+
+	var data = [{
+		'dummy': 'dummy',
+		'np': '10',
+		'nn': '10',
+		'nb': '10',
+		'cp': '$1,000.00',
+		'cn': '$1,000.00',
+		'cb': '$1,000.00',
+		'date': '2010-01-01',
+	}, {
+		'dummy': 'dummy',
+		'np': '20',
+		'nn': '20',
+		'nb': '20',
+		'cp': '$2,000.00',
+		'cn': '$2,000.00',
+		'cb': '$2,000.00',
+		'date': '2018-05-26',
+	}, {
+		'dummy': 'dummy',
+		'np': 'foo',
+		'nn': 'foo',
+		'nb': 'foo',
+		'cp': 'bar',
+		'cn': 'bar',
+		'cb': 'bar',
+		'date': 'quux',
+	}];
+
+	window.localData = {
+		data: data,
+		typeInfo: [{
+			field: 'dummy',
+			type: 'string',
+		}, {
+			field: 'np',
+			type: 'string',
+		}, {
+			field: 'nn',
+			type: 'string',
+		}, {
+			field: 'nb',
+			type: 'string',
+		}, {
+			field: 'cp',
+			type: 'string',
+		}, {
+			field: 'cn',
+			type: 'string',
+		}, {
+			field: 'cb',
+			type: 'string',
+		}, {
+			field: 'date',
+			type: 'string',
+		}]
+	};
+
+	var prefs = new MIE.WC_DataVis.Prefs('TEST:GRID:WRONG-TYPE');
+
+	var agg = [{
+			"fun": "count",
+			"fields": [],
+		}, {
+			"fun": "sum",
+			"fields": ["np"],
+			"name": "sum(np)",
+		}, {
+			"fun": "sum",
+			"fields": ["nn"],
+			"name": "sum(nn)",
+		}, {
+			"fun": "sum",
+			"fields": ["nb"],
+			"name": "sum(nb)",
+		}, {
+			"fun": "average",
+			"fields": ["np"],
+			"name": "avg(np)",
+		}, {
+			"fun": "average",
+			"fields": ["nn"],
+			"name": "avg(nn)",
+			"debug": true,
+		}, {
+			"fun": "average",
+			"fields": ["nb"],
+			"name": "avg(nb)",
+		}];
+
+	prefs.addPerspective(null, 'Test', {
+		view: {
+			group: {
+				fieldNames: ["dummy"]
+			},
+			aggregate: {
+				group: agg,
+				pivot: agg,
+				cell: agg,
+				all: agg,
+			},
+		},
+	});
+
+	var source = new MIE.WC_DataVis.Source({
+		type: 'local',
+		varName: 'localData'
+	}, null, {
+		'np': {
+			type: 'number',
+			internalType: 'primitive',
+		},
+		'nn': {
+			type: 'number',
+			internalType: 'numeral',
+		},
+		'nb': {
+			type: 'number',
+			internalType: 'bignumber',
+		},
+		'cp': {
+			type: 'currency',
+			internalType: 'primitive',
+		},
+		'cn': {
+			type: 'currency',
+			internalType: 'numeral',
+		},
+		'cb': {
+			type: 'currency',
+			internalType: 'bignumber',
+		},
+		'date': 'date',
+	});
+
+	var view = new MIE.WC_DataVis.View(source, 'TEST:GRID:WRONG-TYPE', {
+		prefs: prefs
+	});
+
+	var grid = new MIE.WC_DataVis.Grid('grid', view, {
+		id: 'grid',
+		table: {
+			features: {
+				limit: false
+			},
+			groupMode: 'summary',
+		},
+		source: source,
+		prefs: prefs,
+	}, {
+		title: 'Test - Grid - Wrong Type',
+		showControls: true
+	});
+});
+		</script>
+	</head>
+	<body>
+		<div id="grid"></div>
+	</body>
+</html>
