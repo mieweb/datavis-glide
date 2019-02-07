@@ -63,6 +63,10 @@ import {Graph} from './graph.js';
  *
  * @param {object} [opts]
  *
+ * @param {boolean} [opts.autoSave=true]
+ *
+ * If true, save preferences automatically any time they change.
+ *
  * @param {object} [opts.backend]
  *
  * @param {string} [opts.backend.type="localStorage"]
@@ -130,7 +134,8 @@ var Prefs = makeSubclass('Prefs', Object, function (id, moduleBindings, opts) {
 	self.bardo = {};
 	self.primeLock = new Lock('Prefs Prime');
 
-	opts = deepDefaults(opts, {
+	self.opts = deepDefaults(opts, {
+		autoSave: true,
 		saveCurrent: true,
 		savePerspectives: true,
 		backend: {
@@ -142,15 +147,15 @@ var Prefs = makeSubclass('Prefs', Object, function (id, moduleBindings, opts) {
 
 	// Create the backend for saving preferences.
 
-	if (!PREFS_BACKEND_REGISTRY.isSet(opts.backend.type)) {
+	if (!PREFS_BACKEND_REGISTRY.isSet(self.opts.backend.type)) {
 		throw new Error('PREFS BACKEND IS NOT REGISTERED'); // XXX
 	}
 
-	var backendCtor = PREFS_BACKEND_REGISTRY.get(opts.backend.type);
-	var backendCtorOpts = opts.backend[opts.backend.type];
+	var backendCtor = PREFS_BACKEND_REGISTRY.get(self.opts.backend.type);
+	var backendCtorOpts = self.opts.backend[self.opts.backend.type];
 
 	self.debug('Creating new preferences backend: id = "%s" ; type = %s ; opts = %O',
-		self.id, opts.backend.type, backendCtorOpts);
+		self.id, self.opts.backend.type, backendCtorOpts);
 
 	// If creating the backend fails for any reason (e.g. unable to access localStorage) then fall
 	// back to a "temporary" prefs backend that doesn't actually save or load anything.
@@ -272,6 +277,8 @@ mixinEventHandling(Prefs, function (self) {
 	, 'perspectiveChanged' // Fired when the current perspective has changed.
 	, 'prefsHistoryStatus'
 	, 'prefsReset'
+	, 'prefsChanged'
+	, 'prefsSaved'
 	, 'moduleBound'
 	, 'primed'
 ]);
@@ -352,6 +359,7 @@ Prefs.prototype.prime = function (cont) {
 
 	var makeFinishCont = function (status) {
 		return function () {
+			self.debug_tag('PRIMING', 'End');
 			self.isPrimed = true;
 			self.primeLock.unlock();
 			return cont(status);
@@ -360,7 +368,7 @@ Prefs.prototype.prime = function (cont) {
 
 	self.init();
 
-	self.debug('Priming');
+	self.debug_tag('PRIMING', 'Begin');
 
 	return self.backend.getPerspectives(function (ids) {
 		self.availablePerspectives = _.union(self.availablePerspectives, ids);
@@ -373,7 +381,7 @@ Prefs.prototype.prime = function (cont) {
 				// When there's already a current perspective (as would be the case when prefs have been
 				// pre-configured), we don't have to do anything else.
 
-				self.debug('Priming: Finished adding all perspectives');
+				self.debug_tag('PRIMING', 'Finished adding all perspectives');
 
 				// Fire the 'primed' event, which potentially gives a receiver the chance to set the current
 				// perspective before we try to do it ourselves.
@@ -386,7 +394,7 @@ Prefs.prototype.prime = function (cont) {
 				else if (self.availablePerspectives.length === 0) {
 					// There are no perspectives available, so we need to make a basic one.
 
-					self.debug('Priming: No perspectives exist, creating one');
+					self.debug_tag('PRIMING', 'No perspectives exist, creating one');
 
 					return self.addMainPerspective(makeFinishCont(true));
 				}
@@ -397,7 +405,7 @@ Prefs.prototype.prime = function (cont) {
 						if (currentId == null) {
 							// There's no current perspective, somehow, so again just create one.
 
-							self.debug('Priming: No current perspective set, creating one');
+							self.debug_tag('PRIMING', 'No current perspective set, creating one');
 
 							return self.addMainPerspective(makeFinishCont(true));
 						}
@@ -684,13 +692,12 @@ Prefs.prototype.addPerspective = function (id, name, config, perspectiveOpts, co
 	};
 
 	if (self.currentPerspective) {
-		return self.save(function () {
-			if (config == null) {
-				config = deepCopy(self.currentPerspective.config);
-				needToLoad = false; // Don't need to load, because this is the current config.
-			}
-			return addPerspective();
-		});
+		self.save();
+		if (config == null) {
+			config = deepCopy(self.currentPerspective.config);
+			needToLoad = false; // Don't need to load, because this is the current config.
+		}
+		return addPerspective();
 	}
 	else if (config == null) {
 		config = {};
@@ -1084,6 +1091,9 @@ Prefs.prototype.setCurrentPerspectiveByName = function (name, cont, opts) {
 
 /**
  * Saves the current perspective using the backend.
+ *
+ * @param {PrefsBackend~save_cont} [cont]
+ * Called when the backend has finished saving preferences.
  */
 
 Prefs.prototype.save = function (cont) {
@@ -1099,8 +1109,43 @@ Prefs.prototype.save = function (cont) {
 		return cont(false);
 	}
 
+	if (self.opts.autoSave) {
+		self.reallySave(cont);
+	}
+	else {
+		self.fire('prefsChanged');
+	}
+};
+
+// #reallySave {{{2
+
+/**
+ * Saves the current perspective using the backend.
+ *
+ * @param {PrefsBackend~save_cont} [cont]
+ * Called when the backend has finished saving preferences.
+ */
+
+Prefs.prototype.reallySave = function (cont) {
+	var self = this;
+
+	if (cont != null && typeof cont !== 'function') {
+		throw new Error('Call Error: `cont` must be null or a function');
+	}
+
+	cont = cont || I;
+
+	if (self.currentPerspective.opts.isTemporary) {
+		return cont(false);
+	}
+
 	self.currentPerspective.save(function () {
-		self.backend.save(self.currentPerspective, cont);
+		self.backend.save(self.currentPerspective, function (ok) {
+			if (ok) {
+				self.fire('prefsSaved');
+			}
+			return cont(ok);
+		});
 	});
 };
 
@@ -1240,6 +1285,18 @@ PrefsBackend.prototype.loadAll = function (cont) {
 // #save {{{2
 
 /**
+ * Callback for when the prefs are done being saved.
+ *
+ * @callback PrefsBackend~save_cont
+ *
+ * @param {boolean} ok
+ * If true, then the operation was successful; if false, then an error occurred.
+ *
+ * @param {string} [errmsg]
+ * If `ok` is false, this is the error that occurred.
+ */
+
+/**
  * Saves the configuration for the specified perspective.  A subclass implementation need not
  * support saving perspectives individually, but that's how this function is called.  (For example,
  * an implementation could update the `id` perspective in a big object containing all available
@@ -1248,7 +1305,7 @@ PrefsBackend.prototype.loadAll = function (cont) {
  * @abstract
  *
  * @param {Perspective} perspective
- * @param {function} [cont]
+ * @param {PrefsBackend~save_cont} [cont]
  */
 
 PrefsBackend.prototype.save = function (perspective, cont) {
