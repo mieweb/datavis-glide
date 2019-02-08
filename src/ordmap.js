@@ -363,6 +363,7 @@ OrdMap.prototype.replaceWith = function (o) {
 
 OrdMap.prototype.mergeWith = function (o) {
 	var self = this;
+	var numSet = 0;
 
 	if (!(o instanceof OrdMap)) {
 		throw new Error('Call Error: `o` must be an instance of OrdMap');
@@ -371,8 +372,11 @@ OrdMap.prototype.mergeWith = function (o) {
 	o.each(function (v, k) {
 		if (!self.isSet(k)) {
 			self.set(k, v);
+			numSet += 1;
 		}
 	});
+
+	return numSet;
 };
 
 // #_changeKeyIndex {{{2

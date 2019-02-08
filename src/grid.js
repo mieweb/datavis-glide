@@ -205,7 +205,7 @@ function makeJsonOrderBy(o) {
  */
 
 /**
- * @typedef {object} Grid~ColConfig
+ * @typedef {object} Grid~ColConfigItem
  *
  * @property {string} field
  * We're configuring the output of this field.
@@ -246,6 +246,12 @@ function makeJsonOrderBy(o) {
  * If true and the type of the field is a string, the value is interpreted as HTML and the resulting
  * nodes are inserted into the table result.  When exporting to CSV, the value emitted will be the
  * text nodes only.
+ */
+
+/**
+ * @typedef {OrdMap.<string, Grid~ColConfigItem>} Grid~ColConfig
+ * A collection of configurations across all the available fields in the grid.  If a field isn't in
+ * this object, then it might as well not exist.
  */
 
 /**
@@ -334,6 +340,11 @@ function makeJsonOrderBy(o) {
  *
  * @property {boolean} _isIdle
  * If true, then the grid currently has no pending operations that would require the UI to change.
+ *
+ * @property {Grid~ColConfig} colConfig
+ *
+ * @property {string} colConfigSource
+ * Where the column configuration came from, recognized values are: `defn`, `typeinfo`.
  *
  * @borrows GridTable#getSelection
  * @borrows GridTable#setSelection
@@ -2121,7 +2132,21 @@ Grid.prototype.setColConfig = function (colConfig, opts) {
 		if (self.colConfig == null) {
 			debug.info('GRID // COLCONFIG', 'Setting from typeInfo: %O', colConfig);
 			self.colConfig = colConfig;
+			self.colConfigSource = 'typeinfo';
 			updated = true;
+		}
+		else {
+			// Delete fields from existing colConfig which aren't in the source.
+			colConfig.each(function (fieldName) {
+				self.colConfig.unset(fieldName);
+				updated = true;
+			});
+
+			// Add fields from source that are missing from existing colConfig.  Columns set explicitly in
+			// the grid's definition are there to limit what we see, so don't try to add to them.
+			if (self.colConfigSource !== 'defn' && self.colConfig.mergeWith(colConfig) > 0) {
+				updated = true;
+			}
 		}
 		if (self.initColConfig == null) {
 			debug.info('GRID // COLCONFIG', 'Setting initial from typeInfo: %O', colConfig);
@@ -2131,6 +2156,7 @@ Grid.prototype.setColConfig = function (colConfig, opts) {
 	default:
 		debug.info('GRID // COLCONFIG', 'Setting from %s: %O', opts.from || '[unknown]', colConfig);
 		self.colConfig = colConfig;
+		self.colConfigSource = opts.from;
 		updated = true;
 		break;
 	}
@@ -2147,7 +2173,7 @@ Grid.prototype.setColConfig = function (colConfig, opts) {
 	if (opts.sendEvent) {
 		self.fire('colConfigUpdate', {
 			notTo: opts.dontSendEventTo
-		}, colConfig);
+		}, self.colConfig);
 	}
 
 	if (opts.redraw) {
