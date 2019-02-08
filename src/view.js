@@ -2,6 +2,7 @@ import _ from 'underscore';
 import BigNumber from 'bignumber.js/bignumber.js';
 import numeral from 'numeral';
 import moment from 'moment';
+import jQuery from 'jquery';
 
 import {
 	arrayCompare,
