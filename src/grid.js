@@ -1439,6 +1439,12 @@ Grid.prototype._addPrefsButtons = function (toolbar) {
 				if (options[id] == null) {
 					throw new Error(sprintf.sprintf('Received `perspectiveChanged` event that references unknown perspective: id = "%s"', id));
 				}
+				if (self.prefs.currentPerspective.isUnsaved) {
+					saveBtn.show();
+				}
+				else {
+					saveBtn.hide();
+				}
 				dropdown.val(id);
 				showHideBtns();
 				self.redraw();
@@ -1456,10 +1462,16 @@ Grid.prototype._addPrefsButtons = function (toolbar) {
 			});
 
 			self.prefs.on('prefsChanged', function () {
+				var cp = self.prefs.currentPerspective;
+				var o = options[cp.id];
+				o.text('[*] ' + cp.name);
 				saveBtn.show();
 			});
 
 			self.prefs.on('prefsSaved', function () {
+				var cp = self.prefs.currentPerspective;
+				var o = options[cp.id];
+				o.text(cp.name);
 				saveBtn.hide();
 			});
 

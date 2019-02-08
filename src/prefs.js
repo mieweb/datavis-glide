@@ -1113,6 +1113,7 @@ Prefs.prototype.save = function (cont) {
 		self.reallySave(cont);
 	}
 	else {
+		self.currentPerspective.isUnsaved = true;
 		self.fire('prefsChanged');
 	}
 };
@@ -1142,6 +1143,7 @@ Prefs.prototype.reallySave = function (cont) {
 	self.currentPerspective.save(function () {
 		self.backend.save(self.currentPerspective, function (ok) {
 			if (ok) {
+				self.currentPerspective.isUnsaved = false;
 				self.fire('prefsSaved');
 			}
 			return cont(ok);
@@ -2398,6 +2400,9 @@ PrefsModuleMeta.prototype.reset = function () {
  * @property {object} config See above.
  * @property {Object.<string,PrefsModule>} modules See above.
  * @property {object} opts See above.
+ *
+ * @property {boolean} isUnsaved
+ * If true, then the perspective has been changed and needs to be saved.
  */
 
 var Perspective = makeSubclass('Perspective', Object, function (id, name, config, modules, opts) {
@@ -2422,6 +2427,7 @@ var Perspective = makeSubclass('Perspective', Object, function (id, name, config
 	self.name = name;
 	self.config = config;
 	self.modules = modules;
+	self.isUnsaved = false;
 	self.opts = deepDefaults(opts, {
 		isEssential: false,
 		isTemporary: false,
