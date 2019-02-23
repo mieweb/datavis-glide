@@ -8,8 +8,9 @@ const {Type: LoggingType} = require('selenium-webdriver/lib/logging');
 // Grid UI {{{1
 
 class GridUi {
-	constructor(driver) {
+	constructor(driver, id = 'grid') {
 		this.driver = driver;
+		this.id = id;
 	}
 
 	get prefsDeleteBtn() {
@@ -36,9 +37,10 @@ class GridUi {
 // Grid {{{1
 
 class Grid {
-	constructor(driver) {
+	constructor(driver, id = 'grid') {
 		this.driver = driver;
-		this.ui = new GridUi(this.driver);
+		this.id = id;
+		this.ui = new GridUi(this.driver, this.id);
 	}
 
 	async dumpLogs() {
@@ -61,7 +63,7 @@ class Grid {
 			if (opts.debug) {
 				process.stdout.write('.');
 			}
-			const x = await this.driver.executeScript(`console.log('### IDLE [${attempt}]'); return MIE.WC_DataVis.grids.grid.isIdle()`);
+			const x = await this.driver.executeScript(`console.log('### IDLE [${attempt}]'); return MIE.WC_DataVis.grids['${this.id}'].isIdle()`);
 			attempt += 1;
 			if (opts.showLogs) {
 				await this.dumpLogs();
@@ -222,6 +224,38 @@ class Grid {
 
 	async savePrefs() {
 		return this.ui.prefsSaveBtn.click();
+	}
+
+	// Selection {{{2
+
+	async selectAll() {
+		return this.driver.findElement(By.css('div.wcdv_grid div.wcdv_grid_table > table > thead > tr > th > input[name=checkAll][type=checkbox]')).click();
+	}
+
+	async selectRow(rowNum) {
+		const table = await this.driver.findElement(By.css('div.wcdv_grid div.wcdv_grid_table > table'));
+		const trs = await table.findElements(By.css('tbody > tr[data-row-num]'));
+		const tr = trs[rowNum];
+		if (tr == null) {
+			throw new Error(`No such row: ${rowNum}`);
+		}
+		const input = await tr.findElement(By.css('td:nth-child(1) > input[type=checkbox]'));
+		return input.click();
+	}
+
+	async selectGroup(path) {
+	}
+
+	async getSelection() {
+		return this.driver.executeScript(`return MIE.WC_DataVis.grids['${this.id}'].getSelection().rows.map((row) => {
+			var result = {};
+			for (field in row) {
+				if (row.hasOwnProperty(field)) {
+					result[field] = row[field].orig;
+				}
+			}
+			return result;
+		});`);
 	}
 
 	// }}}2
