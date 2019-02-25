@@ -1526,9 +1526,7 @@ GridTable.prototype.setSelection = function (what) {
 		self._updateSelectionGui();
 	}
 
-	self.fire('selectionChange', null, _.map(self.selection, function (i) {
-		return data[i];
-	}));
+	self.fire('selectionChange', null, self.getSelection().rows);
 };
 
 // #select {{{2
@@ -1588,9 +1586,7 @@ GridTable.prototype.select = function (what) {
 		self._updateSelectionGui();
 	}
 
-	self.fire('selectionChange', null, _.map(self.selection, function (i) {
-		return data[i];
-	}));
+	self.fire('selectionChange', null, self.getSelection().rows);
 };
 
 // #unselect {{{2
@@ -1649,9 +1645,7 @@ GridTable.prototype.unselect = function (what) {
 		self._updateSelectionGui();
 	}
 
-	self.fire('selectionChange', null, _.map(self.selection, function (i) {
-		return data[i];
-	}));
+	self.fire('selectionChange', null, self.getSelection().rows);
 };
 
 // #isSelected {{{2
