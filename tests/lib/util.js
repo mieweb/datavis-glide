@@ -85,12 +85,23 @@ async function asyncFilter(data, predicate, opts = {}) {
 	});
 }
 
-async function select(dropdown, text) {
+async function selectByText(dropdown, text) {
 	let allOptions = await dropdown.findElements(By.css("option"));
 	let matchingOption = await asyncFilter(allOptions, async (o) => await o.getText() === text);
 
 	if (matchingOption.length !== 1) {
-		throw new Error('No such option: "' + text + '"');
+		throw new Error('No such option: text = "' + text + '"');
+	}
+
+	return matchingOption[0].click();
+}
+
+async function selectByValue(dropdown, value) {
+	let allOptions = await dropdown.findElements(By.css("option"));
+	let matchingOption = await asyncFilter(allOptions, async (o) => await o.getAttribute('value') === value);
+
+	if (matchingOption.length !== 1) {
+		throw new Error('No such option: value = "' + value + '"');
 	}
 
 	return matchingOption[0].click();
@@ -103,5 +114,6 @@ function sleep(time) {
 exports.asyncMap = asyncMap;
 exports.asyncEach = asyncEach;
 exports.asyncFilter = asyncFilter;
-exports.select = select;
+exports.selectByText = selectByText;
+exports.selectByValue = selectByValue;
 exports.sleep = sleep;

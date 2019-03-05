@@ -1,7 +1,7 @@
 const _ = require('lodash');
-const {By} = require('selenium-webdriver');
+const {By, Key} = require('selenium-webdriver');
 const until = require('selenium-webdriver/lib/until');
-const {asyncMap, asyncFilter, select, sleep} = require('./util.js');
+const {asyncMap, asyncFilter, selectByText, selectByValue, sleep} = require('./util.js');
 
 const {Type: LoggingType} = require('selenium-webdriver/lib/logging');
 
@@ -94,6 +94,12 @@ class Grid {
 		return await td.getText();
 	}
 
+	async getNumRows() {
+		const trs = await this.driver.findElements(By.css('div.wcdv_grid div.wcdv_grid_table > table > tbody > tr'));
+		//const visible = await asyncFilter(trs, async (elt) => await elt.isDisplayed());
+		return trs.length;
+	}
+
 	// Sorting {{{2
 
 	async sortBy(column, ordering) {
@@ -127,7 +133,7 @@ class Grid {
 
 	async addGroup(field) {
 		const dropdown = this.driver.findElement(By.css('div.wcdv_group_control select'));
-		return select(dropdown, field);
+		return selectByText(dropdown, field);
 	}
 
 	async removeGroup(field) {
@@ -155,8 +161,9 @@ class Grid {
 	}
 
 	async addPivot(field) {
-		const dropdown = this.driver.findElement(By.css('div.wcdv_pivot_control select'));
-		return select(dropdown, field);
+		const control = this.driver.findElement(By.css('div.wcdv_pivot_control'));
+		const dropdown = control.findElement(By.css('div > div > select'));
+		return selectByText(dropdown, field);
 	}
 
 	async removePivot(field) {
@@ -171,6 +178,50 @@ class Grid {
 
 	async clearPivot() {
 		return this.driver.findElement(By.css('div.wcdv_pivot_control .wcdv_control_clear_button')).click();
+	}
+
+	// Filter {{{2
+
+	async addFilter(field) {
+		const control = await this.driver.findElement(By.css('div.wcdv_filter_control'));
+		const dropdown = await control.findElement(By.css('div > div > select'));
+		return selectByText(dropdown, field);
+	}
+
+	async setFilter(field, type, op, value) {
+		const control = await this.driver.findElement(By.css('div.wcdv_filter_control'));
+		// Find the item in the filter control for this field.
+		const controlField = await asyncFilter(await this.driver.findElements(By.css('div.wcdv_filter_control > div > ul > li[data-wcdv-field]')), async (li) => await li.getAttribute('data-wcdv-field') === field);
+
+		if (controlField.length !== 1) {
+			throw new Error('grr');
+		}
+
+		if (op != null) {
+			const opDropdown = await controlField[0].findElement(By.css('div.wcdv_filter_control_filter > select'));
+			await selectByValue(opDropdown, op);
+		}
+
+		switch (type) {
+		case 'sumoselect':
+			const sumoselect = await controlField[0].findElement(By.css('div.wcdv_filter_control_filter > div.SumoSelect'));
+			// Open the SumoSelect dropdown.
+			await sumoselect.findElement(By.css('p.SelectBox')).click();
+			// Find the items in the dropdown that match what was requested...
+			const labels = await sumoselect.findElements(By.css('div.optWrapper > ul.options > li > label'));
+			const matchingLabels = await asyncFilter(labels, async (label) => value.indexOf(await label.getText()) >= 0);
+			// ...and click on them!
+			await Promise.all(_.map(matchingLabels, (elt) => elt.click()));
+			// Click the "OK" button.
+			await sumoselect.findElement(By.css('div.optWrapper > div.MultiControls > p.btnOk')).click();
+			break;
+		case 'input':
+			const input = await controlField[0].findElement(By.css('div.wcdv_filter_control_filter > input'));
+			await input.sendKeys(value, Key.ENTER);
+			break;
+		default:
+			throw new Error('unsupported filter type: ' + type);
+		}
 	}
 
 	// Perspective {{{2
@@ -193,7 +244,7 @@ class Grid {
 
 	async setPerspective(toWhat) {
 		const dropdown = await this.driver.findElement(By.css('div.wcdv_toolbar_view select'));
-		return await select(dropdown, toWhat);
+		return await selectByText(dropdown, toWhat);
 	}
 
 	async newPerspective(name) {
