@@ -94,10 +94,20 @@ class Grid {
 		return await td.getText();
 	}
 
+	async getGroupCell(groupNum, colNum) {
+		const trs = await this.driver.findElements(By.css('div.wcdv_grid div.wcdv_grid_table > table > tbody > tr'));
+		const tds = await trs[groupNum].findElements(By.css('td'));
+		return tds[colNum].getText();
+	}
+
 	async getNumRows() {
 		const trs = await this.driver.findElements(By.css('div.wcdv_grid div.wcdv_grid_table > table > tbody > tr'));
 		//const visible = await asyncFilter(trs, async (elt) => await elt.isDisplayed());
 		return trs.length;
+	}
+
+	async setGroupMode(kind) {
+		return this.driver.findElement(By.css(`input[type=radio][name=groupOutput][value=${kind}]`)).click();
 	}
 
 	// Sorting {{{2
@@ -178,6 +188,24 @@ class Grid {
 
 	async clearPivot() {
 		return this.driver.findElement(By.css('div.wcdv_pivot_control .wcdv_control_clear_button')).click();
+	}
+
+	// Aggregates {{{2
+
+	async addAggregate(funName, field) {
+		const control = await this.driver.findElement(By.css('div.wcdv_aggregate_control'));
+		const dropdown = await control.findElement(By.css('div > div > select'));
+		await selectByValue(dropdown, funName);
+	}
+
+	async setAggregate(funName, field) {
+		const control = await this.driver.findElement(By.css('div.wcdv_aggregate_control'));
+		const fieldDropdown = await control.findElement(By.css('div.wcdv_field li.wcdv_aggregate_field > select'));
+		await selectByValue(fieldDropdown, field);
+	}
+
+	async clearAggregates() {
+		return this.driver.findElement(By.css('div.wcdv_aggregate_control .wcdv_control_clear_button')).click();
 	}
 
 	// Filter {{{2
