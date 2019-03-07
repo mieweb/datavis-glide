@@ -82,7 +82,9 @@ OrdMap.deserialize = function (x) {
 	}
 
 	for (var i = 0; i < x._keys.length; i += 1) {
-		result.set(x._keys[i], x._map[x._keys[i]]);
+		if (x._map[x._keys[i]] !== undefined) {
+			result.set(x._keys[i], x._map[x._keys[i]]);
+		}
 	}
 
 	return result;
