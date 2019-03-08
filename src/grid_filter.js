@@ -144,9 +144,15 @@ GridFilter.prototype.getValue = function () {
 	case 'date':
 	case 'time':
 	case 'datetime':
+		if (self.input.val() === '') {
+			return undefined;
+		}
 		return fti.internalType === 'moment' ? moment(self.input.val()) : self.input.val();
 	case 'number':
 	case 'currency':
+		if (self.input.val() === '') {
+			return undefined;
+		}
 		switch (fti.internalType) {
 		case 'bignumber':
 			return new BigNumber(self.input.val());
@@ -794,6 +800,10 @@ var DateRangeGridFilter = makeSubclass('DateRangeGridFilter', GridFilter, functi
 DateRangeGridFilter.prototype.getValue = function () {
 	var self = this
 		, result;
+
+	if (self.selectedDates == null) {
+		return undefined;
+	}
 
 	if (self.isRange()) {
 		result = {
