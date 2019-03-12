@@ -38,9 +38,9 @@ ColConfigWin.prototype.show = function (posElt, onSave) {
 		modal: true,
 		width: 600,
 		position: {
-			my: 'top',
-			at: 'bottom',
-			of: posElt
+			my: 'center',
+			at: 'center',
+			of: window
 		},
 		buttons: [{
 			text: 'OK',
