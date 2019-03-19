@@ -850,6 +850,10 @@ tr.wcdvgrid_more td {
  * GRID COLUMN CONFIGURATION WINDOW
  */
 
+.wcdv_dialog {
+	z-index: 1100; !important
+}
+
 .wcdv_colconfigwin_table {
 	width: 100%;
 }

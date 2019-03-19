@@ -42,6 +42,10 @@ ColConfigWin.prototype.show = function (posElt, onSave) {
 			at: 'center',
 			of: window
 		},
+		classes: {
+			"ui-dialog": "ui-corner-all wcdv_dialog",
+			"ui-dialog-titlebar": "ui-corner-all",
+		},
 		buttons: [{
 			text: 'OK',
 			icon: 'ui-icon-check',
