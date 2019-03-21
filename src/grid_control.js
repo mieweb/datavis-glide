@@ -204,7 +204,7 @@ GridControlField.prototype.getSpec = function () {
 	};
 };
 
-// GroupControlField {{{1
+// FunGridControlField {{{1
 
 // Constructor {{{2
 
@@ -213,11 +213,11 @@ GridControlField.prototype.getSpec = function () {
  * @extends GridControlField
  */
 
-var GroupControlField = makeSubclass('GroupControlField', GridControlField);
+var FunGridControlField = makeSubclass('FunGridControlField', GridControlField);
 
 // #draw {{{2
 
-GroupControlField.prototype.draw = function () {
+FunGridControlField.prototype.draw = function () {
 	var self = this;
 
 	self.super.draw();
@@ -276,7 +276,7 @@ GroupControlField.prototype.draw = function () {
 
 // #getSpec {{{2
 
-GroupControlField.prototype.getSpec = function () {
+FunGridControlField.prototype.getSpec = function () {
 	var self = this;
 
 	return {
@@ -285,16 +285,27 @@ GroupControlField.prototype.getSpec = function () {
 	}
 };
 
+// GroupControlField {{{1
+
+// Constructor {{{2
+
+/**
+ * @class
+ * @extends FunGridControlField
+ */
+
+var GroupControlField = makeSubclass('GroupControlField', FunGridControlField);
+
 // PivotControlField {{{1
 
 // Constructor {{{2
 
 /**
  * @class
- * @extends GridControlField
+ * @extends FunGridControlField
  */
 
-var PivotControlField = makeSubclass('PivotControlField', GridControlField);
+var PivotControlField = makeSubclass('PivotControlField', FunGridControlField);
 
 // FilterControlField {{{1
 // Constructor {{{2
@@ -1262,15 +1273,12 @@ PivotControl.prototype.draw = function (parent) {
 
 PivotControl.prototype.updateView = function () {
 	var self = this;
+	var fieldNames = _.map(self.controlFields, function (cf) {
+		return cf.getSpec();
+	});
 
-	var fields = self.ui.fields.children('li').map(function (index, elt) {
-		return jQuery(elt).attr('data-wcdv-field');
-	}).get();
-
-	debug.info('GRID // PIVOT CONTROL', 'Setting pivot fields to: %O', fields);
-
-	if (fields.length > 0) {
-		self.view.setPivot({fieldNames: fields}, {
+	if (fieldNames.length > 0) {
+		self.view.setPivot({fieldNames: fieldNames}, {
 			dontSendEventTo: self
 		});
 	}

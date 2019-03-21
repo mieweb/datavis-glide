@@ -2030,7 +2030,7 @@ View.prototype.group = function () {
 
 	var origKeys = []; // groupFieldIndex[] → natRep → value
 
-	// buildRowVals(addRowVals) => rowVals {{{3
+	// buildRowVals {{{3
 	//
 	//   Create the list of the native representations of all combinations of the values of the group
 	//   fields.  Here's a simple example with strings, where the natrep transform is identity.
@@ -2051,7 +2051,7 @@ View.prototype.group = function () {
 			, rowVal
 			, row
 			, rowIndex
-			, groupField
+			, groupSpecElt
 			, groupFieldIndex
 			, value
 			, natRep
@@ -2061,14 +2061,14 @@ View.prototype.group = function () {
 			row = self.data.data[rowIndex];
 			rowVal = [];
 			for (groupFieldIndex = 0; groupFieldIndex < finalGroupSpec.length; groupFieldIndex += 1) {
-				groupField = finalGroupSpec[groupFieldIndex];
-				value = row.rowData[groupField.field].value;
-				if (groupField.fun == null) {
+				groupSpecElt = finalGroupSpec[groupFieldIndex];
+				value = row.rowData[groupSpecElt.field].value;
+				if (groupSpecElt.fun == null) {
 					natRep = getNatRep(value);
 					origKeys[groupFieldIndex][natRep] = value;
 				}
 				else {
-					groupFun = GROUP_FUNCTION_REGISTRY.get(groupField.fun);
+					groupFun = GROUP_FUNCTION_REGISTRY.get(groupSpecElt.fun);
 					natRep = groupFun.applyValueFun(value);
 					origKeys[groupFieldIndex][natRep] = natRep;
 				}
@@ -2113,7 +2113,7 @@ View.prototype.group = function () {
 		return rowVals;
 	};
 
-	// buildData(data, rowVals) => ... {{{3
+	// buildData {{{3
 
 	var buildData = function (data, rowVals) {
 		var rowVal
@@ -2121,7 +2121,7 @@ View.prototype.group = function () {
 			, metadataLeaf
 			, row
 			, rowIndex
-			, groupField
+			, groupSpecElt
 			, groupFieldIndex
 			, value
 			, groupFun;
@@ -2166,13 +2166,13 @@ View.prototype.group = function () {
 			rowVal = new Array(finalGroupSpec.length);
 
 			for (groupFieldIndex = 0; groupFieldIndex < finalGroupSpec.length; groupFieldIndex += 1) {
-				groupField = finalGroupSpec[groupFieldIndex];
-				value = row.rowData[groupField.field].value;
-				if (groupField.fun == null) {
+				groupSpecElt = finalGroupSpec[groupFieldIndex];
+				value = row.rowData[groupSpecElt.field].value;
+				if (groupSpecElt.fun == null) {
 					rowVal[groupFieldIndex] = getNatRep(value);
 				}
 				else {
-					groupFun = GROUP_FUNCTION_REGISTRY.get(groupField.fun);
+					groupFun = GROUP_FUNCTION_REGISTRY.get(groupSpecElt.fun);
 					rowVal[groupFieldIndex] = groupFun.applyValueFun(value);
 				}
 			}
@@ -2233,7 +2233,7 @@ View.prototype.group = function () {
 		};
 	};
 
-	// convertRowVals(rowVals) => rowVals (no longer natRep) {{{3
+	// convertRowVals {{{3
 
 	var convertRowVals = function (rowVals) {
 		var result = [];
@@ -2318,6 +2318,21 @@ View.prototype.setPivot = function (spec, opts) {
 		log.warn('VIEW (' + self.name + ') // SET PIVOT', 'Having a pivot without a group is not allowed');
 		self.clearPivot(opts);
 		return false;
+	}
+
+	if (spec != null) {
+		if (!_.isArray(spec.fieldNames)) {
+			log.warn('VIEW (' + self.name + ') // SET PIVOT', '`spec.fieldNames` is not an array');
+			spec.fieldNames = [];
+		}
+
+		// Convert the `fieldNames` property elements from strings to objects.
+
+		for (var i = 0; i < spec.fieldNames.length; i += 1) {
+			if (typeof spec.fieldNames[i] === 'string') {
+				spec.fieldNames[i] = { field: spec.fieldNames[i] };
+			}
+		}
 	}
 
 	/*
@@ -2556,7 +2571,7 @@ View.prototype.pivot_orig = function () {
 
 View.prototype.pivot = function () {
 	var self = this
-		, pivotFields = [] // Array of field names to pivot by.
+		, finalPivotSpec = [] // Array of field names to pivot by.
 		, colValsTree // Tree of all possible column value combinations.
 		, colVals     // Array of all possible column value combinations.
 	;
@@ -2581,38 +2596,42 @@ View.prototype.pivot = function () {
 		return false;
 	}
 
-	// Go through every pivot field and make sure it exists in the source.
+	// Go through every group field and make sure it exists in the source.  If it doesn't, we use an
+	// event to notify the user interface about it so a warning can be shown.
 
-	_.each(self.pivotSpec.fieldNames, function (field, fieldIdx) {
-		var fti = self.typeInfo.get(field);
+	_.each(self.pivotSpec.fieldNames, function (fieldObj) {
+		var fti = self.typeInfo.get(fieldObj.field);
 		if (fti == null) {
-			log.error('Pivot field does not exist in the source: ' + field);
-			self.fire('invalidPivotField', null, field);
+			log.error('Pivot field does not exist in the source: ' + fieldObj.field);
+			self.fire('invalidPivotField', null, fieldObj.field);
 		}
 		else if (fti.type == null) {
 			log.error('Unable to pivot by field "%s": type is undefined');
 		}
 		else {
 			self._maybeDecode('PIVOT', fti);
-			pivotFields.push(field);
+			finalPivotSpec.push(fieldObj);
 		}
 	});
 
 	// It's possible now that we've eliminated *all* the pivot fields because they're invalid; if
 	// that's the case, we just abort as if no pivotting was requested at all.
 
-	if (pivotFields.length === 0) {
+	if (finalPivotSpec.length === 0) {
 		return false;
 	}
 
 	var origKeys = [];
 
-	var buildColVals = function (pivotFields, addColVals) {
+	// buildColVals {{{3
+
+	var buildColVals = function (addColVals) {
 		var colVal
 			, pivotFieldIndex
-			, pivotField
+			, pivotSpecElt
 			, value
 			, natRep
+			, groupFun
 			, groupIndex
 			, group
 			, row
@@ -2625,11 +2644,18 @@ View.prototype.pivot = function () {
 			for (rowIndex = 0; rowIndex < group.length; rowIndex += 1) {
 				row = group[rowIndex];
 				colVal = [];
-				for (pivotFieldIndex = 0; pivotFieldIndex < pivotFields.length; pivotFieldIndex += 1) {
-					pivotField = pivotFields[pivotFieldIndex];
-					value = row.rowData[pivotField].value;
-					natRep = getNatRep(value);
-					origKeys[pivotFieldIndex][natRep] = value;
+				for (pivotFieldIndex = 0; pivotFieldIndex < finalPivotSpec.length; pivotFieldIndex += 1) {
+					pivotSpecElt = finalPivotSpec[pivotFieldIndex];
+					value = row.rowData[pivotSpecElt.field].value;
+					if (pivotSpecElt.fun == null) {
+						natRep = getNatRep(value);
+						origKeys[pivotFieldIndex][natRep] = value;
+					}
+					else {
+						groupFun = GROUP_FUNCTION_REGISTRY.get(pivotSpecElt.fun);
+						natRep = groupFun.applyValueFun(value);
+						origKeys[pivotFieldIndex][natRep] = natRep;
+					}
 					colVal[pivotFieldIndex] = natRep;
 				}
 				if (_.findIndex(colVals, function (x) {
@@ -2644,9 +2670,9 @@ View.prototype.pivot = function () {
 			for (acvIndex = 0; acvIndex < addColVals.length; acvIndex += 1) {
 				colVal = addColVals[acvIndex];
 
-				if (colVal.length != pivotFields.length) {
+				if (colVal.length != finalPivotSpec.length) {
 					log.error('Unable to add colVal %s when pivotting by %s: the lengths must be the same',
-						JSON.stringify(colVal), JSON.stringify(pivotFields));
+						JSON.stringify(colVal), JSON.stringify(finalPivotSpec));
 					continue;
 				}
 
@@ -2673,6 +2699,8 @@ View.prototype.pivot = function () {
 
 	};
 
+	// buildData {{{3
+
 	var buildData = function (data) {
 		var result = [];
 
@@ -2681,10 +2709,18 @@ View.prototype.pivot = function () {
 			_.each(colVals, function (colVal) {
 				var tmp = [];
 				_.each(groupedRows, function (row) {
-					if (_.every(colVal, function (colValElt, colValNum) {
-						var pivotField = pivotFields[colValNum];
-						var value = row.rowData[pivotField].value;
-						var natRep = getNatRep(value);
+					if (_.every(colVal, function (colValElt, colValIndex) {
+						var pivotSpecElt = finalPivotSpec[colValIndex];
+						var value = row.rowData[pivotSpecElt.field].value;
+						var natRep;
+						var groupFun;
+						if (pivotSpecElt.fun == null) {
+							natRep = getNatRep(value);
+						}
+						else {
+							groupFun = GROUP_FUNCTION_REGISTRY.get(pivotSpecElt.fun);
+							natRep = groupFun.applyValueFun(value);
+						}
 						return colValElt === natRep;
 					})) {
 						tmp.push(row);
@@ -2698,13 +2734,15 @@ View.prototype.pivot = function () {
 		return result;
 	};
 
+	// convertColVals {{{3
+
 	var convertColVals = function (colVals) {
 		var result = [];
 
 		for (var colValIndex = 0; colValIndex < colVals.length; colValIndex += 1) {
 			var colVal = colVals[colValIndex];
 			result[colValIndex] = [];
-			for (var pivotFieldIndex = 0; pivotFieldIndex < pivotFields.length; pivotFieldIndex += 1) {
+			for (var pivotFieldIndex = 0; pivotFieldIndex < finalPivotSpec.length; pivotFieldIndex += 1) {
 				result[colValIndex][pivotFieldIndex] = origKeys[pivotFieldIndex][colVal[pivotFieldIndex]];
 			}
 		}
@@ -2712,15 +2750,17 @@ View.prototype.pivot = function () {
 		return result;
 	};
 
-	for (var pivotFieldIndex = 0; pivotFieldIndex < pivotFields.length; pivotFieldIndex += 1) {
+	// }}}3
+
+	for (var pivotFieldIndex = 0; pivotFieldIndex < finalPivotSpec.length; pivotFieldIndex += 1) {
 		origKeys[pivotFieldIndex] = {};
 	}
 
-	colVals = buildColVals(pivotFields, self.pivotSpec.addColVals);
+	colVals = buildColVals(self.pivotSpec.addColVals);
 	self.data.data = buildData(self.data.data, colVals);
 	colVals = convertColVals(colVals);
 
-	debug.info('VIEW (' + self.name + ') // PIVOT', 'Pivot Fields: %O', pivotFields);
+	debug.info('VIEW (' + self.name + ') // PIVOT', 'Pivot Spec: %O', finalPivotSpec);
 	debug.info('VIEW (' + self.name + ') // PIVOT', 'Orig Keys: %O', origKeys);
 	debug.info('VIEW (' + self.name + ') // PIVOT', 'Col Vals: %O', colVals);
 	debug.info('VIEW (' + self.name + ') // PIVOT', 'New Data: %O', self.data);
@@ -2728,7 +2768,8 @@ View.prototype.pivot = function () {
 	self.data.isPlain = false;
 	self.data.isGroup = false;
 	self.data.isPivot = true;
-	self.data.pivotFields = pivotFields;
+	self.data.pivotFields = _.pluck(finalPivotSpec, 'field');
+	self.data.pivotSpec = finalPivotSpec;
 	self.data.colVals = colVals;
 
 	return true;
