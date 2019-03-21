@@ -620,17 +620,20 @@ GridTable.prototype._addSortingToHeader = function (data, orientation, spec, con
 
 	var sortIcon_menu_items = {};
 
-	if (spec.field != null || spec.groupFieldIndex != null) {
+	if (spec.field != null || spec.groupFieldIndex != null || spec.pivotFieldIndex != null) {
 
 		// We're sorting by a field.  This can occur in these situations:
 		//
 		//   1. Sorting plain output by any column.
-		//   2. Sorting group output by a field that we've grouped by.
+		//   2. Sorting group/pivot output by a field that we've grouped by.
+		//   3. Sorting pivot output by a field that we've pivotted by.
 
 		var name = spec.field != null
 			? spec.field
 			: spec.groupFieldIndex != null
 			? data.groupFields[spec.groupFieldIndex]
+			: spec.pivotFieldIndex != null
+			? data.pivotFields[spec.pivotFieldIndex]
 			: 'Unknown'
 		;
 
@@ -4376,7 +4379,16 @@ GridTablePivot.prototype.drawHeader = function (columns, data, typeInfo, opts) {
 		headingThContainer,
 		th;
 
-	var addGroupFields = function (tr) {
+	// +---------------------------+--------------------------------------+-----------+
+	// |                           | COLVAL 1.1              | COLVAL 1.2 |           |
+	// +---------------------------+------------+------------+------------+-----------+
+	// |                           | COLVAL 2.1 | COLVAL 2.2 | COLVAL 2.1 |           |
+	// +-------------+-------------+------------+------------+------------+-----------+
+	// | GROUP FIELD | GROUP FIELD |                                      | GROUP AGG |
+	// +-------------+-------------+--------------------------------------+-----------+
+	//  ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
+
+	var displayRowVals = function (tr, pivotFieldNum, displayOrderIndex) {
 		_.each(data.groupFields, function (field, fieldIdx) {
 			var fcc = self.colConfig.get(field) || {};
 			span = jQuery('<span>').addClass('wcdv_heading_title').text(fcc.displayText || field);
@@ -4405,38 +4417,64 @@ GridTablePivot.prototype.drawHeader = function (columns, data, typeInfo, opts) {
 		});
 	};
 
+	//  ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
 	// +---------------------------+--------------------------------------+-----------+
 	// |                           | COLVAL 1.1              | COLVAL 1.2 |           |
+	// +---------------------------+------------+------------+------------+-----------+
+	// |                           | COLVAL 2.1 | COLVAL 2.2 | COLVAL 2.1 |           |
 	// +-------------+-------------+------------+------------+------------+-----------+
-	// | GROUP FIELD | GROUP FIELD | COLVAL 2.1 | COLVAL 2.2 | COLVAL 2.1 | GROUP AGG |
-	// +-------------+-------------+------------+------------+------------+-----------+
-	//  ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+	// | GROUP FIELD | GROUP FIELD |                                      | GROUP AGG |
+	// +-------------+-------------+--------------------------------------+-----------+
 
-	var displayRowVals = function (tr, pivotFieldNum, displayOrderIndex) {
-		if (pivotFieldNum === data.pivotFields.length - 1) {
-			addGroupFields(tr);
-		}
-		else {
-			tr.append(jQuery('<th>', { colspan: data.groupFields.length }));
-			for (var i = 0; i < data.groupFields.length; i += 1) {
+	var displayRowVals_padding = function (tr) {
+		if (data.groupFields.length > 1) {
+			tr.append(jQuery('<th>', { colspan: data.groupFields.length - 1 }));
+			for (var i = 0; i < data.groupFields.length - 1; i += 1) {
 				self.csv.addCol('');
 			}
 		}
 	};
 
+	//                              ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
 	// +---------------------------+--------------------------------------+-----------+
 	// |                           | COLVAL 1.1              | COLVAL 1.2 |           |
+	// +---------------------------+------------+------------+------------+-----------+
+	// |                           | COLVAL 2.1 | COLVAL 2.2 | COLVAL 2.1 |           |
 	// +-------------+-------------+------------+------------+------------+-----------+
-	// | GROUP FIELD | GROUP FIELD | COLVAL 2.1 | COLVAL 2.2 | COLVAL 2.1 | GROUP AGG |
-	// +-------------+-------------+------------+------------+------------+-----------+
-	//                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+	// | GROUP FIELD | GROUP FIELD |                                      | GROUP AGG |
+	// +-------------+-------------+--------------------------------------+-----------+
 
-	var displayCells = function (tr, pivotFieldNum, displayOrderIndex) {
+	var displayCells = function (tr, pivotFieldIdx, displayOrderIndex) {
 		var colVal, colValIndex;
 		var ai = self._getAggInfo(data);
 		// Indicates that we're on the last pivot field, i.e. the last row of the table header.
-		var isLastPivotField = pivotFieldNum === data.pivotFields.length - 1;
-		var pivotField = data.pivotFields[pivotFieldNum];
+		var isLastPivotField = pivotFieldIdx === data.pivotFields.length - 1;
+		var pivotField = data.pivotFields[pivotFieldIdx];
+
+		var fcc = self.colConfig.get(pivotField) || {};
+		var span = jQuery('<span>').addClass('wcdv_heading_title').text(fcc.displayText || pivotField);
+		self.csv.addCol(fcc.displayText || pivotField);
+
+		var headingThControls = jQuery('<div>');
+
+		var headingThContainer = jQuery('<div>')
+			.addClass('wcdv_heading_container')
+			.append(span, headingThControls);
+
+		var th = jQuery('<th>')
+			.attr({
+				'data-wcdv-field': pivotField,
+				'data-wcdv-draggable-origin': 'GRID_TABLE_HEADER'
+			})
+			.append(headingThContainer)
+			._makeDraggableField();
+
+		self._addSortingToHeader(data, 'horizontal', {pivotFieldIndex: pivotFieldIdx}, headingThControls, getPropDef([], data, 'agg', 'info', 'cell'));
+
+		self.setCss(th, pivotField);
+
+		self.ui.thMap[pivotField] = th;
+		tr.append(th);
 
 		// Create headers for the fields that we've pivotted by.  The headers are the column values for
 		// those fields.
@@ -4458,7 +4496,7 @@ GridTablePivot.prototype.drawHeader = function (columns, data, typeInfo, opts) {
 		var lastColValCount = 0;
 
 		for (colValIndex = 0; colValIndex < data.colVals.length; colValIndex += 1) {
-			colVal = data.colVals[colValIndex][pivotFieldNum];
+			colVal = data.colVals[colValIndex][pivotFieldIdx];
 			colVal = format(self.colConfig.get(pivotField), typeInfo.get(pivotField), colVal);
 
 			if (colVal !== lastColVal || isLastPivotField) {
@@ -4543,35 +4581,67 @@ GridTablePivot.prototype.drawHeader = function (columns, data, typeInfo, opts) {
 
 	// +---------------------------+--------------------------------------+-----------+
 	// |                           | COLVAL 1.1              | COLVAL 1.2 |           |
+	// +---------------------------+------------+------------+------------+-----------+
+	// |                           | COLVAL 2.1 | COLVAL 2.2 | COLVAL 2.1 |           |
 	// +-------------+-------------+------------+------------+------------+-----------+
-	// | GROUP FIELD | GROUP FIELD | COLVAL 2.1 | COLVAL 2.2 | COLVAL 2.1 | GROUP AGG |
-	// +-------------+-------------+------------+------------+------------+-----------+
-	//                                                                     ^^^^^^^^^^^
+	// | GROUP FIELD | GROUP FIELD |                                      | GROUP AGG |
+	// +-------------+-------------+--------------------------------------+-----------+
+	//                              ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
 
-	var displayGroupAggregates = function (tr, pivotFieldNum, displayOrderIndex, displayOrderMax) {
-		var isLastPivotField = pivotFieldNum === data.pivotFields.length - 1;
-
-		if (!isLastPivotField) {
-			var numExtraCols = getPropDef(0, data, 'agg', 'info', 'group', 'length')
-				+ getPropDef(0, opts, 'addCols', 'length');
-			if (numExtraCols > 0) {
-				var th = jQuery('<th>', { colspan: numExtraCols });
-				if (displayOrderIndex > 0) {
-					th.addClass('wcdv_bld'); // border-left: double
-				}
-				if (displayOrderIndex < displayOrderMax - 1) {
-					th.addClass('wcdv_brd'); // border-right: double
-				}
-				tr.append(th);
-			}
+	var displayCells_padding = function (tr) {
+		var ai = self._getAggInfo(data);
+		var hr = jQuery('<hr>', {
+			class: 'wcdv_hr_gradient'
+		});
+		var div = jQuery('<div>&nbsp;</div>');
+		var th = jQuery('<th>', {
+			class: 'wcdv_pivot_colval_boundary wcdv_cell_empty',
+			colspan: data.colVals.length * Math.max(ai.cell.length, 1)
+		});
+		//hr.appendTo(th);
+		div.appendTo(th);
+		th.appendTo(tr);
+		for (var i = 0; i < data.colVals.length * Math.max(ai.cell.length, 1); i += 1) {
+			self.csv.addCol('');
 		}
-		else {
-			// Render the user's custom-defined additional columns at the end of the last row of pivot field
-			// column values.
+	};
 
+	//                                                                     ↓↓↓↓↓↓↓↓↓↓↓
+	// +---------------------------+--------------------------------------+-----------+
+	// |                           | COLVAL 1.1              | COLVAL 1.2 |           |
+	// +---------------------------+------------+------------+------------+-----------+
+	// |                           | COLVAL 2.1 | COLVAL 2.2 | COLVAL 2.1 |           |
+	// +-------------+-------------+------------+------------+------------+-----------+
+	// | GROUP FIELD | GROUP FIELD |                                      | GROUP AGG |
+	// +-------------+-------------+--------------------------------------+-----------+
+
+	var displayGroupAggregates_padding = function (tr, displayOrderIndex, displayOrderMax) {
+		var numExtraCols = getPropDef(0, data, 'agg', 'info', 'group', 'length')
+			+ getPropDef(0, opts, 'addCols', 'length');
+		if (numExtraCols > 0) {
+			var th = jQuery('<th>', { colspan: numExtraCols });
+			if (displayOrderIndex > 0) {
+				th.addClass('wcdv_bld'); // border-left: double
+			}
+			if (displayOrderIndex < displayOrderMax - 1) {
+				th.addClass('wcdv_brd'); // border-right: double
+			}
+			tr.append(th);
+		}
+	};
+
+	// +---------------------------+--------------------------------------+-----------+
+	// |                           | COLVAL 1.1              | COLVAL 1.2 |           |
+	// +---------------------------+------------+------------+------------+-----------+
+	// |                           | COLVAL 2.1 | COLVAL 2.2 | COLVAL 2.1 |           |
+	// +-------------+-------------+------------+------------+------------+-----------+
+	// | GROUP FIELD | GROUP FIELD |                                      | GROUP AGG |
+	// +-------------+-------------+--------------------------------------+-----------+
+	//                                                                     ↑↑↑↑↑↑↑↑↑↑↑
+
+	var displayGroupAggregates = function (tr, displayOrderIndex, displayOrderMax) {
 			self.drawHeader_aggregates(data, tr, displayOrderIndex, displayOrderMax);
 			self.drawHeader_addCols(tr, typeInfo, opts);
-		}
 	};
 
 	// This produces separate rows in the header for each pivot field.  That's what allows you to
@@ -4590,29 +4660,45 @@ GridTablePivot.prototype.drawHeader = function (columns, data, typeInfo, opts) {
 	// | John | Robert | Ted | Franklin | Teddy |
 	// +------+--------+-----+----------+-------+
 
-	for (var pivotFieldNum = 0; pivotFieldNum < data.pivotFields.length; pivotFieldNum += 1) {
+	for (var pivotFieldIdx = 0; pivotFieldIdx < data.pivotFields.length; pivotFieldIdx += 1) {
 		self.csv.addRow();
-
 		tr = jQuery('<tr>');
-
 		_.each(self.opts.displayOrder, function (what, displayOrderIndex) {
 			if (typeof what === 'string') {
 				switch (what) {
 				case 'rowVals':
-					displayRowVals(tr, pivotFieldNum);
+					displayRowVals_padding(tr);
 					break;
 				case 'cells':
-					displayCells(tr, pivotFieldNum);
+					displayCells(tr, pivotFieldIdx);
 					break;
 				case 'groupAggregates':
-					displayGroupAggregates(tr, pivotFieldNum, displayOrderIndex, self.opts.displayOrder.length);
+					displayGroupAggregates_padding(tr, displayOrderIndex, self.opts.displayOrder.length);
 					break;
 				}
 			}
 		});
-
 		tr.appendTo(self.ui.thead);
 	}
+
+	self.csv.addRow();
+	tr = jQuery('<tr>');
+	_.each(self.opts.displayOrder, function (what, displayOrderIndex) {
+		if (typeof what === 'string') {
+			switch (what) {
+			case 'rowVals':
+				displayRowVals(tr);
+				break;
+			case 'cells':
+				displayCells_padding(tr);
+				break;
+			case 'groupAggregates':
+				displayGroupAggregates(tr, displayOrderIndex, self.opts.displayOrder.length);
+				break;
+			}
+		}
+	});
+	tr.appendTo(self.ui.thead);
 };
 
 // #drawBody {{{2

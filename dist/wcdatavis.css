@@ -80,6 +80,12 @@ button.wcdv_expand_button > span.fa {
     background-color: #fadfdb;
 }
 
+hr.wcdv_hr_gradient {
+	border: 0;
+	height: 2px;
+	background-image: linear-gradient(to right, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0));
+}
+
 /******************************************************************************/
 
 .wcdv_grid_titlebar {
@@ -764,7 +770,8 @@ tr.wcdvgrid_more td {
  * EMPTY CELL
  */
 
-.wcdv_grid_table table td.wcdv_cell_empty div {
+.wcdv_grid_table table td.wcdv_cell_empty div,
+.wcdv_grid_table table th.wcdv_cell_empty div {
 	background: repeating-linear-gradient(-45deg, rgba(127, 127, 127, 0.5), rgba(127, 127, 127, 0.5) 8px, rgba(0, 0, 0, 0) 8px, rgba(0, 0, 0, 0) 16px);
 }
 

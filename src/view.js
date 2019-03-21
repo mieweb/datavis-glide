@@ -1177,6 +1177,15 @@ View.prototype.sort = function (cont) {
 				if (spec.values) {
 					sortAlgorithm = 'pigeonHole';
 				}
+				else if (self.data.pivotSpec[spec.pivotFieldIndex].fun != null) {
+					// The values that we're sorting came from a function applied to the value of the pivot
+					// field in the row, e.g. "Day of Week."  Therefore, we can't sort them based on the type
+					// of the pivot field, e.g. date.
+
+					fti = {
+						type: GROUP_FUNCTION_REGISTRY.get(self.data.pivotSpec[spec.pivotFieldIndex].fun).sortType
+					};
+				}
 				else {
 					fti = self.typeInfo.get(self.data.pivotFields[spec.pivotFieldIndex]);
 				}
