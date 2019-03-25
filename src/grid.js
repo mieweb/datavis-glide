@@ -1015,7 +1015,7 @@ Grid.prototype._addPlainButtons = function (toolbar) {
 		.on('click', function (evt) {
 			self.colConfigWin.show(self.ui.controls, function (colConfig) {
 				self.setColConfig(colConfig, {
-					from: 'colConfigWin'
+					from: 'ui'
 				});
 			});
 		})
@@ -1104,7 +1104,9 @@ Grid.prototype._addGroupButtons = function (toolbar) {
 		.append('Columns')
 		.on('click', function (evt) {
 			self.colConfigWin.show(self.ui.controls, function (colConfig) {
-				self.setColConfig(colConfig);
+				self.setColConfig(colConfig, {
+					from: 'ui'
+				});
 			});
 		})
 		.appendTo(toolbar)
@@ -2108,8 +2110,8 @@ Grid.prototype._setExportStatus = function (status) {
  * Set the column configuration.
  *
  * @param {OrdMap} colConfig
- * @param {Object} [opts]
- * @param {string} [opts.from]
+ * @param {Object} opts
+ * @param {string} opts.from
  * @param {boolean} [opts.sendEvent=true]
  * @param {Array.<Object>} [opts.dontSendEventTo]
  * @param {boolean} [opts.redraw=true]
@@ -2120,6 +2122,10 @@ Grid.prototype.setColConfig = function (colConfig, opts) {
 	var self = this;
 	var updated = false;
 
+	if (['defn', 'prefs', 'typeInfo', 'ui', 'reset'].indexOf(opts.from) < 0) {
+		throw new Error('Call Error: `opts.from` must be one of: [defn, prefs, typeInfo, ui, reset]');
+	}
+
 	opts = deepDefaults(opts, {
 		sendEvent: true,
 		dontSendEventTo: [],
@@ -2128,9 +2134,42 @@ Grid.prototype.setColConfig = function (colConfig, opts) {
 	});
 
 	switch (opts.from) {
+	case 'defn':
+		// Overrides everything.  Replaces both the current and initial config.
+
+		debug.info('GRID // COLCONFIG', 'Setting from %s: %O', opts.from || '[unknown]', colConfig);
+		self.colConfig = colConfig;
+		self.colConfigSource = opts.from;
+
+		debug.info('GRID // COLCONFIG', 'Setting initial from %s: %O', opts.from || '[unknown]', colConfig);
+		self.initColConfig = colConfig.clone();
+
+		updated = true;
+		break;
+	case 'prefs':
+		// Prefs should override typeInfo, but it shouldn't set the initial config.
+
+		if (self.colConfig == null || self.colConfigSource === 'typeInfo') {
+			debug.info('GRID // COLCONFIG', 'Setting from %s: %O', opts.from || '[unknown]', colConfig);
+			self.colConfig = colConfig;
+			self.colConfigSource = opts.from;
+			updated = true;
+		}
+
+		break;
+	case 'reset':
+	case 'ui':
+		// Resetting and using the UI to change colConfig override everything, but they don't store an
+		// initial config.
+
+		debug.info('GRID // COLCONFIG', 'Setting from %s: %O', opts.from || '[unknown]', colConfig);
+		self.colConfig = colConfig;
+		self.colConfigSource = opts.from;
+		updated = true;
+		break;
 	case 'typeInfo':
 		if (self.colConfig == null) {
-			debug.info('GRID // COLCONFIG', 'Setting from typeInfo: %O', colConfig);
+			debug.info('GRID // COLCONFIG', 'Setting from %s: %O', opts.from || '[unknown]', colConfig);
 			self.colConfig = colConfig;
 			self.colConfigSource = 'typeinfo';
 			updated = true;
@@ -2157,7 +2196,8 @@ Grid.prototype.setColConfig = function (colConfig, opts) {
 			// Add fields from source that are missing from existing colConfig.  Columns set explicitly in
 			// the grid's definition are there to limit what we see, so don't try to add to them.
 
-			if (self.colConfigSource !== 'defn' && self.colConfig.mergeWith(colConfig) > 0) {
+			if (['defn', 'reset'].indexOf(self.colConfigSource) < 0 && self.colConfig.mergeWith(colConfig) > 0) {
+				debug.info('GRID // COLCONFIG', 'Merging from %s: %O', opts.from || '[unknown]', colConfig);
 				updated = true;
 			}
 		}
@@ -2165,12 +2205,6 @@ Grid.prototype.setColConfig = function (colConfig, opts) {
 			debug.info('GRID // COLCONFIG', 'Setting initial from typeInfo: %O', colConfig);
 			self.initColConfig = colConfig.clone();
 		}
-		break;
-	default:
-		debug.info('GRID // COLCONFIG', 'Setting from %s: %O', opts.from || '[unknown]', colConfig);
-		self.colConfig = colConfig;
-		self.colConfigSource = opts.from;
-		updated = true;
 		break;
 	}
 
