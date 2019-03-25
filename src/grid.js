@@ -551,13 +551,13 @@ var Grid = makeSubclass('Grid', Object, function (id, view, defn, tagOpts, cb) {
 		connectWith: '#' + self.pivotControl.getListElement().attr('id')
 	})
 		.on('sortupdate', function () {
-			self.groupControl.updateView();
+			self.groupControl.sortableSync();
 		});
 	self.pivotControl.getListElement().sortable({
 		connectWith: '#' + self.groupControl.getListElement().attr('id')
 	})
 		.on('sortupdate', function () {
-			self.pivotControl.updateView();
+			self.pivotControl.sortableSync();
 		});
 
 	// Aggregate Control

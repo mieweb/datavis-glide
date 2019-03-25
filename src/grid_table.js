@@ -1356,7 +1356,11 @@ GridTable.prototype.drawBody_groupAggregates = function (data, tr, groupNum, dis
 			'data-rowval-index': groupNum
 		});
 
-		self._addDrillDownClass(td);
+		if (_.every(data.groupSpec, function (gs) {
+			return gs.fun == null;
+		})) {
+			self._addDrillDownClass(td);
+		}
 
 		if (self.opts.drawInternalBorders || data.agg.info.group.length > 1) {
 			if (displayOrderIndex > 0 && aggGroupIndex === 0) {
@@ -4452,6 +4456,15 @@ GridTablePivot.prototype.drawHeader = function (columns, data, typeInfo, opts) {
 		var pivotField = data.pivotFields[pivotFieldIdx];
 
 		var fcc = self.colConfig.get(pivotField) || {};
+		var pivotSpec = data.pivotSpec[pivotFieldIdx];
+		var t = self.typeInfo.get(pivotField);
+
+		if (pivotSpec.fun != null) {
+			t = {
+				type: GROUP_FUNCTION_REGISTRY.get(pivotSpec.fun).resultType
+			};
+		}
+
 		var span = jQuery('<span>').addClass('wcdv_heading_title').text(fcc.displayText || pivotField);
 		self.csv.addCol(fcc.displayText || pivotField);
 
@@ -4497,7 +4510,7 @@ GridTablePivot.prototype.drawHeader = function (columns, data, typeInfo, opts) {
 
 		for (colValIndex = 0; colValIndex < data.colVals.length; colValIndex += 1) {
 			colVal = data.colVals[colValIndex][pivotFieldIdx];
-			colVal = format(self.colConfig.get(pivotField), typeInfo.get(pivotField), colVal);
+			colVal = format(self.colConfig.get(pivotField), t, colVal);
 
 			if (colVal !== lastColVal || isLastPivotField) {
 				if (lastColVal !== null) {
@@ -4789,7 +4802,10 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 									.text(text)
 								;
 
-								self._addDrillDownClass(td);
+								if (_.every(data.groupSpec, function (gs) { return gs.fun == null; })
+										&& _.every(data.pivotSpec, function (ps) { return ps.fun == null; })) {
+									self._addDrillDownClass(td);
+								}
 
 								if ((self.opts.drawInternalBorders || ai.cell.length > 1) && aiCellIndex === 0) {
 									td.addClass('wcdv_pivot_colval_boundary');
@@ -4944,7 +4960,10 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 						var td = jQuery('<td>').text(text).attr({
 							'data-colval-index': colValIdx
 						});
-						self._addDrillDownClass(td);
+
+						if (_.every(data.pivotSpec, function (ps) { return ps.fun == null; })) {
+							self._addDrillDownClass(td);
+						}
 
 						if (ai.cell.length > 1) {
 							td.attr('colspan', ai.cell.length);

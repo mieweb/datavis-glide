@@ -83,24 +83,28 @@ import {GroupFunWin} from './group_fun_win.js';
  * A button that is used to remove the control field.
  */
 
-var GridControlField = makeSubclass('GridControlField', Object, function (control, spec, displayText, colConfig, opts) {
-	var self = this;
+var GridControlField = (function () {
+	var CONTROL_FIELD_ID = 0;
+	return makeSubclass('GridControlField', Object, function (control, spec, displayText, colConfig, opts) {
+		var self = this;
 
-	self.control = control;
+		self.control = control;
 
-	if (typeof spec === 'string') {
-		self.field = {
-			field: spec
-		};
-	}
-	else {
-		self.field = deepCopy(spec);
-	}
-	self.displayText = displayText;
-	self.colConfig = colConfig;
-	self.opts = opts;
-	self.ui = {};
-});
+		if (typeof spec === 'string') {
+			self.field = {
+				field: spec
+			};
+		}
+		else {
+			self.field = deepCopy(spec);
+		}
+		self.displayText = displayText;
+		self.colConfig = colConfig;
+		self.opts = opts;
+		self.ui = {};
+		self.id = CONTROL_FIELD_ID++;
+	});
+})();
 
 // #draw {{{2
 
@@ -597,6 +601,9 @@ AggregateControlField.prototype.getInfo = function () {
  * @property {Object.<string, Array.<ControlField>>} controlFieldsByField
  * Object for looking up control fields by name.
  *
+ * @property {Object.<string, ControlField>} controlFieldsById
+ * Object for looking up control fields by ID.
+ *
  * @property {object} ui
  * Object containing different user interface components.
  *
@@ -619,6 +626,7 @@ var GridControl = makeSubclass('GridControl', Object, function (grid, colConfig,
 	self.fields = [];
 	self.controlFields = [];
 	self.controlFieldsByField = {};
+	self.controlFieldsById = {};
 
 	self.ui = {};
 
@@ -627,7 +635,8 @@ var GridControl = makeSubclass('GridControl', Object, function (grid, colConfig,
 	});
 }, {
 	isHorizontal: false,
-	disableUsedItems: true,
+	disableUsedItems: false,
+	showColumns: true,
 	useColConfig: true,
 	updateCanHide: true
 });
@@ -755,6 +764,7 @@ GridControl.prototype.addField = function (field, displayText, opts, controlFiel
 	var cf = new self.controlFieldCtor(self, field, displayText, self.useColConfig ? self.colConfig.get(fieldName) : null, controlFieldOpts);
 
 	self.controlFields.push(cf);
+	self.controlFieldsById[cf.id] = cf;
 
 	if (self.controlFieldsByField[fieldName] == null) {
 		self.controlFieldsByField[fieldName] = [];
@@ -766,6 +776,7 @@ GridControl.prototype.addField = function (field, displayText, opts, controlFiel
 	var li = jQuery('<li>')
 		.attr({
 			'data-wcdv-field': fieldName,
+			'data-wcdv-control-field-id': cf.id,
 			'data-wcdv-draggable-origin': 'GRID_CONTROL_FIELD'
 		});
 
@@ -783,10 +794,7 @@ GridControl.prototype.addField = function (field, displayText, opts, controlFiel
 	}
 
 	self.ui.dropdown.val('');
-
-	if (self.disableUsedItems) {
-		self.fields.push(fieldName); // Add it to the fields array.
-	}
+	self.fields.push(fieldName); // Add it to the fields array.
 
 	if (typeof self.updateView === 'function' && opts.updateView) {
 		self.updateView();
@@ -827,13 +835,14 @@ GridControl.prototype.removeField = function (cf) {
 	// Remove it from the internal data structures.
 
 	self.controlFields = _.without(self.controlFields, cf);
+	self.controlFieldsById[cf.id] = undefined;
 	self.controlFieldsByField[field] = _.without(self.controlFieldsByField[field], cf);
 
 	// Re-enable the option in the dropdown, if necessary.
 
-	if (self.disableUsedItems) {
-		self.fields.splice(self.fields.indexOf(cf.field), 1);
+	self.fields.splice(self.fields.indexOf(cf.field), 1);
 
+	if (self.disableUsedItems) {
 		self.ui.dropdown.find('option').filter(function () {
 			return jQuery(this).val() === cf.field;
 		}).prop('disabled', false);
@@ -874,6 +883,7 @@ GridControl.prototype.clear = function (opts) {
 
 	self.fields = [];
 	self.controlFields = [];
+	self.controlFieldsById = {};
 	self.controlFieldsByField = {};
 	self.ui.fields.children().remove();
 	self.ui.dropdown.find('option:disabled').filter(function () {
@@ -941,7 +951,7 @@ GridControl.prototype.addViewConfigChangeHandler = function (event, sync) {
 	var sync_colConfig = function (colConfig) {
 		debug.info('GRID (' + self.grid.id + ') // ' + self.controlType.toUpperCase() + ' CONTROL', 'Synchronizing column configuration with grid');
 		self.colConfig = colConfig;
-		if (self.disableUsedItems) {
+		if (self.showColumns) {
 			clearDropdown();
 			colConfig.each(function (fcc) {
 				jQuery('<option>', { 'value': fcc.field }).text(fcc.displayText || fcc.field).appendTo(self.ui.dropdown);
@@ -1161,6 +1171,23 @@ GroupControl.prototype.toString = function () {
 	return self.grid.id + ', Group';
 };
 
+// #sortableSync {{{2
+
+GroupControl.prototype.sortableSync = function () {
+	var self = this;
+
+	var controlFieldIds = self.ui.fields.children('li').map(function (index, elt) {
+		return jQuery(elt).attr('data-wcdv-control-field-id');
+	}).get();
+
+	self.controlFields = [];
+	_.each(controlFieldIds, function (id) {
+		self.controlFields.push(self.controlFieldsById[id]);
+	});
+
+	return self.updateView();
+};
+
 // PivotControl {{{1
 
 // Constructor {{{2
@@ -1295,6 +1322,23 @@ PivotControl.prototype.toString = function () {
 	return self.grid.id + ', Pivot';
 };
 
+// #sortableSync {{{2
+
+PivotControl.prototype.sortableSync = function () {
+	var self = this;
+
+	var controlFieldIds = self.ui.fields.children('li').map(function (index, elt) {
+		return jQuery(elt).attr('data-wcdv-control-field-id');
+	}).get();
+
+	self.controlFields = [];
+	_.each(controlFieldIds, function (id) {
+		self.controlFields.push(self.controlFieldsById[id]);
+	});
+
+	return self.updateView();
+};
+
 // AggregateControl {{{1
 
 // Constructor {{{2
@@ -1320,6 +1364,7 @@ var AggregateControl = makeSubclass('AggregateControl', GridControl, function ()
 	});
 }, {
 	disableUsedItems: false,
+	showColumns: false,
 	updateCanHide: false,
 	controlFieldCtor: AggregateControlField,
 	controlType: 'Aggregate'

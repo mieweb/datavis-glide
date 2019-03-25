@@ -20,7 +20,7 @@ var GroupFunWin = makeSubclass('GroupFunWin', Object, function (groupFuns, cb) {
 
 	var selected = null;
 
-	self.win = jQuery('<div>', { title: 'Group Function' }).dialog({
+	self.win = jQuery('<div>', { title: 'Apply Function' }).dialog({
 		autoOpen: false,
 		modal: true,
 		position: {
