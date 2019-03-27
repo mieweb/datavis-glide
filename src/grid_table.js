@@ -152,13 +152,15 @@ Csv.prototype.toString = function () {
 	var sep = '"' + self.opts.separator + '"';
 	var len = self.order != null ? self.order.length : self.data.length;
 
+	var quoteRegexp = /"/g;
+
 	for (i = 0; i < len; i += 1) {
 		row = self.order != null ? self.getRowById(self.order[i]) : self.data[i];
 		if (i > 0) {
 			s += '\r\n';
 		}
 		s += '"' + row.rowData.map(function (s) {
-			return s.replace('"', '""');
+			return s.replace(quoteRegexp, '""');
 		}).join(sep) + '"';
 	}
 
