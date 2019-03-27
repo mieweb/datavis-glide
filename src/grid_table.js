@@ -702,6 +702,7 @@ GridTable.prototype._addSortingToHeader = function (data, orientation, spec, con
 
 	var sortIcon_menu = jQuery.contextMenu({
 		selector: '.' + sortIcon_class,
+		appendTo: self.ui.contextMenus,
 		trigger: 'left',
 		callback: function (itemKey, opt) {
 			console.log(itemKey);
@@ -993,7 +994,8 @@ GridTable.prototype.draw = function (root, opts, cont) {
 			tfoot: jQuery('<tfoot>'),
 			thMap: {},
 			tr: {},
-			progress: jQuery('<div>')
+			progress: jQuery('<div>'),
+			contextMenus: jQuery('<div>')
 		};
 
 		self._addDrillDownHandler(self.ui.tbl, data);
@@ -1012,6 +1014,8 @@ GridTable.prototype.draw = function (root, opts, cont) {
 					.append(self.ui.progress);
 			}
 		}
+
+		self.ui.contextMenus.appendTo(document.body);
 
 		self.view.on(View.events.workBegin, function () {
 			if (self.features.block) {
@@ -1057,15 +1061,6 @@ GridTable.prototype.draw = function (root, opts, cont) {
 		 */
 
 		var columns = determineColumns(self.colConfig, data, typeInfo);
-		var numCols = columns.length;
-
-		if (self.features.rowSelect) {
-			numCols += 1; // Add a column for the row selection checkbox.
-		}
-
-		if (self.features.rowReorder) {
-			numCols += 1; // Add a column for the reordering button.
-		}
 
 		self.drawHeader(columns, data, typeInfo, opts);
 
@@ -1098,7 +1093,7 @@ GridTable.prototype.draw = function (root, opts, cont) {
 
 		self.ui.tbl.append(self.ui.thead);
 
-		if (!getProp(self.defn, 'table', 'incremental', 'appendBodyLast')) {
+		if (self.features.incremental && !getProp(self.defn, 'table', 'incremental', 'appendBodyLast')) {
 			self.ui.tbl.append(self.ui.tbody);
 
 			if (self.features.footer) {
@@ -1116,7 +1111,7 @@ GridTable.prototype.draw = function (root, opts, cont) {
 		 */
 
 		self.drawBody(data, typeInfo, columns, function () {
-			if (getProp(self.defn, 'table', 'incremental', 'appendBodyLast')) {
+			if (!self.features.incremental || getProp(self.defn, 'table', 'incremental', 'appendBodyLast')) {
 				self.ui.tbl.append(self.ui.tbody);
 
 				if (self.features.footer) {
@@ -1388,6 +1383,12 @@ GridTable.prototype.drawBody_groupAggregates = function (data, tr, groupNum, dis
 
 GridTable.prototype.clear = function () {
 	var self = this;
+
+	if (getProp(self, 'ui', 'contextMenus') != null) {
+		self.ui.contextMenus.remove();
+	}
+
+	debug.info('GRID TABLE // CLEAR', 'Removing %d context menus', self.contextMenuSelectors.length);
 
 	_.each(self.contextMenuSelectors, function (sel) {
 		jQuery.contextMenu('destroy', sel);
