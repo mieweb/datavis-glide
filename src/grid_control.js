@@ -767,7 +767,7 @@ GridControl.prototype.addField = function (field, displayText, opts, controlFiel
 				return typeof next === 'function' ? next(false) : undefined;
 			}
 			self.typeInfo = typeInfo;
-			return self.addField.apply(self, args);
+			return GridControl.prototype.addField.apply(self, args);
 		});
 	}
 
@@ -1215,7 +1215,9 @@ GroupControl.prototype.sortableSync = function () {
 GroupControl.prototype.addField = function (field, displayText, opts) {
 	var self = this;
 
-	opts = opts || {};
+	opts = deepDefaults(opts, {
+		updateView: true
+	});
 	var updateView = opts.updateView;
 	opts.updateView = false;
 
