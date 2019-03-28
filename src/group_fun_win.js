@@ -10,7 +10,7 @@ import {
 
 // GroupFunWin {{{1
 
-var GroupFunWin = makeSubclass('GroupFunWin', Object, function (groupFuns, cb) {
+var GroupFunWin = makeSubclass('GroupFunWin', Object, function (title, groupFuns) {
 	var self = this;
 
 	var winEffect = {
@@ -20,7 +20,7 @@ var GroupFunWin = makeSubclass('GroupFunWin', Object, function (groupFuns, cb) {
 
 	var selected = null;
 
-	self.win = jQuery('<div>', { title: 'Apply Function' }).dialog({
+	self.win = jQuery('<div>', { title: title }).dialog({
 		autoOpen: false,
 		modal: true,
 		position: {
@@ -38,7 +38,7 @@ var GroupFunWin = makeSubclass('GroupFunWin', Object, function (groupFuns, cb) {
 			selected = null;
 		},
 		close: function () {
-			cb(selected);
+			self.cb(selected);
 		}
 	});
 
@@ -77,8 +77,9 @@ var GroupFunWin = makeSubclass('GroupFunWin', Object, function (groupFuns, cb) {
 
 // #show {{{2
 
-GroupFunWin.prototype.show = function (gfName) {
+GroupFunWin.prototype.show = function (gfName, cb) {
 	var self = this;
+	self.cb = cb;
 
 	self.win.dialog('open');
 

@@ -101,6 +101,9 @@ var GridControlField = (function () {
 		self.displayText = displayText;
 		self.colConfig = colConfig;
 		self.opts = opts;
+
+		self.fti = self.control.typeInfo.get(self.field.field);
+
 		self.ui = {};
 		self.id = CONTROL_FIELD_ID++;
 	});
@@ -230,31 +233,17 @@ FunGridControlField.prototype.draw = function () {
 	// represent, e.g. if we are a date, find out what group functions work on dates.
 
 	var applicableGroupFuns = GROUP_FUNCTION_REGISTRY.filter(function (gf) {
-		var fti = self.control.typeInfo.get(self.field.field);
-		if (fti == null) {
+		if (self.fti == null) {
 			return false;
 		}
-		return gf.allowedTypes.indexOf(fti.type) >= 0;
+		return gf.allowedTypes.indexOf(self.fti.type) >= 0;
 	});
 
 	if (applicableGroupFuns.size() > 0) {
 		// When there are some group functions for the type of this field, we need to create a window to
 		// choose between them, plus a button to show the window.
 
-		self.ui.groupFunWin = new GroupFunWin(applicableGroupFuns, function (groupFunName) {
-			if (groupFunName != null) {
-				if (groupFunName === 'none') {
-					self.field.fun = null;
-					self.ui.fieldLabel.text(self.field.field);
-				}
-				else {
-					self.field.fun = groupFunName;
-					var gf = GROUP_FUNCTION_REGISTRY.get(self.field.fun);
-					self.ui.fieldLabel.text(self.field.field + ' (' + gf.displayName + ')');
-				}
-				self.control.updateView();
-			}
-		});
+		self.ui.groupFunWin = new GroupFunWin('Apply Function to ' + self.field.field, applicableGroupFuns);
 
 		self.ui.groupFunWinBtn = jQuery('<button>', {
 			'type': 'button',
@@ -262,7 +251,7 @@ FunGridControlField.prototype.draw = function () {
 		})
 			.addClass('wcdv_icon_button wcdv_button_left wcdv_text-primary')
 			.on('click', function () {
-				self.ui.groupFunWin.show(self.field.fun || 'none');
+				self.showFunWin();
 			})
 			.append(fontAwesome('fa-bolt'))
 			.appendTo(self.ui.root)
@@ -287,6 +276,31 @@ FunGridControlField.prototype.getSpec = function () {
 		field: self.field.field,
 		fun: self.field.fun
 	}
+};
+
+// #showFunWin {{{2
+
+FunGridControlField.prototype.showFunWin = function () {
+	var self = this;
+
+	self.ui.groupFunWin.show(self.field.fun || 'none', function (groupFunName) {
+		if (groupFunName != null) {
+			if (groupFunName === 'none') {
+				self.field.fun = null;
+				self.ui.fieldLabel.text(self.field.field);
+			}
+			else {
+				self.field.fun = groupFunName;
+				var gf = GROUP_FUNCTION_REGISTRY.get(self.field.fun);
+				self.ui.fieldLabel.text(self.field.field + ' (' + gf.displayName + ')');
+			}
+			self.control.updateView();
+		}
+		else if (self.field.fun === undefined) {
+			self.field.fun = null;
+			self.control.updateView();
+		}
+	});
 };
 
 // GroupControlField {{{1
@@ -711,9 +725,17 @@ GridControl.prototype.makeClearButton = function (target) {
  *
  * @param {string} field
  * Name of the field to add.
+ *
+ * @param {string} displayText
+ *
+ * @param {object} opts
+ *
+ * @param {object} controlFieldOpts
+ *
+ * @param {function} next
  */
 
-GridControl.prototype.addField = function (field, displayText, opts, controlFieldOpts) {
+GridControl.prototype.addField = function (field, displayText, opts, controlFieldOpts, next) {
 	var self = this
 		, args = Array.prototype.slice.call(arguments)
 		, fieldName;
@@ -725,13 +747,13 @@ GridControl.prototype.addField = function (field, displayText, opts, controlFiel
 	});
 
 	if (field == null || field === '') {
-		return;
+		return typeof next === 'function' ? next(false) : undefined;
 	}
 
 	fieldName = typeof field === 'string' ? field : field.field;
 
 	if (fieldName == null || fieldName === '' || (self.disableUsedItems && self.fields.indexOf(fieldName) >= 0)) {
-		return;
+		return typeof next === 'function' ? next(false) : undefined;
 	}
 
 	// Make sure we have access to typeinfo before continuing.  The typeinfo is used for:
@@ -742,7 +764,7 @@ GridControl.prototype.addField = function (field, displayText, opts, controlFiel
 	if (self.typeInfo == null) {
 		return self.view.getTypeInfo(function (ok, typeInfo) {
 			if (!ok) {
-				return;
+				return typeof next === 'function' ? next(false) : undefined;
 			}
 			self.typeInfo = typeInfo;
 			return self.addField.apply(self, args);
@@ -804,7 +826,7 @@ GridControl.prototype.addField = function (field, displayText, opts, controlFiel
 		self.fire('fieldAdded', null, fieldName, self.fields);
 	}
 
-	return cf;
+	return typeof next === 'function' ? next(true, cf) : undefined;
 };
 
 // #removeField {{{2
@@ -1188,6 +1210,28 @@ GroupControl.prototype.sortableSync = function () {
 	return self.updateView();
 };
 
+// #addField {{{2
+
+GroupControl.prototype.addField = function (field, displayText, opts) {
+	var self = this;
+
+	opts = opts || {};
+	var updateView = opts.updateView;
+	opts.updateView = false;
+
+	self.super.addField(field, displayText, opts, null, function (ok, cf) {
+		if (!ok) {
+			return;
+		}
+		if (cf.fti != null && cf.fti.type === 'date' && cf.field.fun === undefined) {
+			cf.showFunWin();
+		}
+		else if (updateView) {
+			self.updateView();
+		}
+	});
+};
+
 // PivotControl {{{1
 
 // Constructor {{{2
@@ -1337,6 +1381,28 @@ PivotControl.prototype.sortableSync = function () {
 	});
 
 	return self.updateView();
+};
+
+// #addField {{{2
+
+PivotControl.prototype.addField = function (field, displayText, opts) {
+	var self = this;
+
+	opts = opts || {};
+	var updateView = opts.updateView;
+	opts.updateView = false;
+
+	self.super.addField(field, displayText, opts, null, function (ok, cf) {
+		if (!ok) {
+			return;
+		}
+		if (cf.fti != null && cf.fti.type === 'date' && cf.field.fun === undefined) {
+			cf.showFunWin();
+		}
+		else if (updateView) {
+			self.updateView();
+		}
+	});
 };
 
 // AggregateControl {{{1
