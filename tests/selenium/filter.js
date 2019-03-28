@@ -162,4 +162,33 @@ describe('Filter', function() {
 			});
 		});
 	});
+
+	describe('blank filters', function () {
+		it('number filter is blank', async function () {
+			let grid = new Grid(driver);
+			await grid.waitForIdle();
+
+			await grid.addFilter('int1');
+			await grid.addFilter('country');
+			await grid.setFilter('country', 'sumoselect', '$in', ['Canada']);
+			await grid.waitForIdle();
+
+			assert.equal(await grid.getNumRows(), 10);
+			assert.equal(await grid.getCell('country', 0), 'Canada');
+			assert.equal(await grid.getCell('country', -1), 'Canada');
+		});
+		it('date filter is blank', async function () {
+			let grid = new Grid(driver);
+			await grid.waitForIdle();
+
+			await grid.addFilter('date1');
+			await grid.addFilter('country');
+			await grid.setFilter('country', 'sumoselect', '$in', ['Canada']);
+			await grid.waitForIdle();
+
+			assert.equal(await grid.getNumRows(), 10);
+			assert.equal(await grid.getCell('country', 0), 'Canada');
+			assert.equal(await grid.getCell('country', -1), 'Canada');
+		});
+	});
 });

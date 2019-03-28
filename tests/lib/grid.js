@@ -142,7 +142,8 @@ class Grid {
 	}
 
 	async addGroup(field) {
-		const dropdown = this.driver.findElement(By.css('div.wcdv_group_control select'));
+		const control = this.driver.findElement(By.css('div.wcdv_group_control'));
+		const dropdown = control.findElement(By.css('select.wcdv_control_addField'));
 		return selectByText(dropdown, field);
 	}
 
@@ -172,7 +173,7 @@ class Grid {
 
 	async addPivot(field) {
 		const control = this.driver.findElement(By.css('div.wcdv_pivot_control'));
-		const dropdown = control.findElement(By.css('div > div > select'));
+		const dropdown = control.findElement(By.css('select.wcdv_control_addField'));
 		return selectByText(dropdown, field);
 	}
 
@@ -212,7 +213,7 @@ class Grid {
 
 	async addFilter(field) {
 		const control = await this.driver.findElement(By.css('div.wcdv_filter_control'));
-		const dropdown = await control.findElement(By.css('div > div > select'));
+		const dropdown = await control.findElement(By.css('select.wcdv_control_addField'));
 		return selectByText(dropdown, field);
 	}
 
