@@ -1390,7 +1390,9 @@ PivotControl.prototype.sortableSync = function () {
 PivotControl.prototype.addField = function (field, displayText, opts) {
 	var self = this;
 
-	opts = opts || {};
+	opts = deepDefaults(opts, {
+		updateView: true
+	});
 	var updateView = opts.updateView;
 	opts.updateView = false;
 
