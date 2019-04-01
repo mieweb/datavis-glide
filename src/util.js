@@ -139,6 +139,7 @@ export var getComparisonFn = (function () {
 	cmpFn.time = cmpFn.date;
 	cmpFn.datetime = cmpFn.date;
 
+	// TODO: i18n
 	cmpFn.day_of_week = function (a, b) {
 		var trans = {'Mon': 0, 'Tue': 1, 'Wed': 2, 'Thu': 3, 'Fri': 4, 'Sat': 5, 'Sun': 6};
 
@@ -149,6 +150,39 @@ export var getComparisonFn = (function () {
 			: b_num == null ? 1
 			: a_num < b_num ? -1
 			: a_num > b_num ? 1
+			: 0;
+	};
+
+	// TODO: i18n
+	cmpFn.year_and_month = function (a, b) {
+		var trans = {'Jan': 1, 'Feb': 2, 'Mar': 3, 'Apr': 4, 'May': 5, 'Jun': 6,
+			'Jul': 7, 'Aug': 8, 'Sep': 9, 'Oct': 10, 'Nov': 11, 'Dec': 12};
+
+		var regexp = /^(\d{4}) (\w{3})$/;
+		var m;
+
+		var a_year, a_month, b_year, b_month;
+
+		if ((m = regexp.exec(a)) != null) {
+			a_year = toInt(m[1]);
+			a_month = trans[m[2]];
+		}
+		if (m == null || a_month == null) {
+			return -1;
+		}
+
+		if ((m = regexp.exec(b)) != null) {
+			b_year = toInt(m[1]);
+			b_month = trans[m[2]];
+		}
+		if (m == null || b_month == null) {
+			return 1;
+		}
+
+		return a_year < b_year ? -1
+			: a_year > b_year ? 1
+			: a_month < b_month ? -1
+			: a_month > b_month ? 1
 			: 0;
 	};
 

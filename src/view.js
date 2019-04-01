@@ -3472,7 +3472,8 @@ GROUP_FUNCTION_REGISTRY.set('year_and_month', new GroupFunction({
 			return 'Invalid Date';
 		}
 		return d.format('YYYY MMM');
-	}
+	},
+	sortType: 'year_and_month'
 }));
 
 // Exports {{{1
