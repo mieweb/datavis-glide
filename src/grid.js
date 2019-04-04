@@ -703,7 +703,7 @@ var Grid = makeSubclass('Grid', Object, function (id, view, defn, tagOpts, cb) {
  * Data from rows that are selected.
  */
 
-mixinEventHandling(Grid, 'Grid', [
+mixinEventHandling(Grid, [
 		'showControls'
 	, 'hideControls'
 	, 'renderBegin'
@@ -715,6 +715,14 @@ mixinEventHandling(Grid, 'Grid', [
 // Delegate {{{2
 
 delegate(Grid, 'renderer', ['setSelection', 'getSelection', 'select', 'unselect', 'isSelected']);
+
+// #toString {{{2
+
+Grid.prototype.toString = function () {
+	var self = this;
+
+	return 'Grid(id="' + self.id + '")';
+};
 
 // #_validateFeatures {{{2
 
@@ -2301,14 +2309,6 @@ Grid.prototype.colConfigFromTypeInfo = function (typeInfo, opts) {
 	//	? typeInfoColConfig
 	//	: OrdMap.fromMerge([self.colConfig, typeInfoColConfig]), opts);
 	self.setColConfig(typeInfoColConfig, opts);
-};
-
-// #toString {{{2
-
-Grid.prototype.toString = function () {
-	var self = this;
-
-	return '#<Grid ' + self.id + '>';
 };
 
 // Exports {{{1
