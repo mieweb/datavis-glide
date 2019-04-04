@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html>
 	<head>
 		<meta charset="utf-8"/>
@@ -36,6 +37,8 @@
 $(document).ready(function () {
 	MIE.DEBUGGING = true;
 
+	var prefs = new MIE.WC_DataVis.Prefs('EXAMPLE:Graph/Google');
+
 	var source = new MIE.WC_DataVis.Source({
 		type: 'http',
 		url: '../fruit.csv'
@@ -60,51 +63,21 @@ $(document).ready(function () {
 			type: 'string'
 		}
 	});
-	var view = new MIE.WC_DataVis.View(source);
-	new MIE.WC_DataVis.Graph('graph', view, /*{
-		whenPlain: {
-			graphType: 'area',
-			categoryField: 'Date',
-			valueField: 'Amount'
-		},
-		whenGroup: function (groupFields) {
-			var config = {
-				graphType: 'pie'
-			};
-
-			if (groupFields[0] === 'Country') {
-				config.valueFields = [{
-					fun: 'sum',
-					fields: ['Amount']
-				}];
-			}
-			
-			return config;
-		},
-		whenPivot: {
-			name: 'Total Amount ($)',
-			valueFields: [{
-				fun: 'sum',
-				fields: ['Amount']
-			}]
-		}
-	}*/ null, {
+	var view = new MIE.WC_DataVis.View(source, 'Graph/Google', {
+		prefs: prefs
+	});
+	new MIE.WC_DataVis.Graph('graph', view, {
+		prefs: prefs
+	}, {
 		title: 'Google Charts Example',
 		height: 400,
 	});
 	new MIE.WC_DataVis.Grid('grid', view, {
 		id: 'grid',
+		prefs: prefs,
 		table: {
 			features: {
-				sort: true,
-				filter: true,
-				group: true,
-				pivot: true,
-				limit: true
-			},
-			limit: {
-				threshold: 100,
-				chunkSize: 50
+				floatingHeader: false
 			}
 		},
 		source: source
