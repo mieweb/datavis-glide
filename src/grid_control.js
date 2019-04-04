@@ -400,6 +400,7 @@ AggregateControlField.prototype.draw = function () {
 		self.ui.graphBtn = jQuery('<button>', {
 			'type': 'button'
 		})
+			.addClass('wcdv_icon_button wcdv_text-primary')
 			.on('click', function () {
 				// TODO Think of a better way to do this.  I feel like the coupling here is too high.
 
@@ -687,7 +688,7 @@ var GridControl = makeSubclass('GridControl', Object, function (grid, colConfig,
  * @event GridControl#cleared
  */
 
-mixinEventHandling(GridControl, 'GridControl', [
+mixinEventHandling(GridControl, [
 		'fieldAdded'
 	, 'fieldRemoved'
 	, 'cleared'
@@ -1225,7 +1226,7 @@ GroupControl.prototype.addField = function (field, displayText, opts) {
 		if (!ok) {
 			return;
 		}
-		if (cf.fti != null && cf.fti.type === 'date' && cf.field.fun === undefined) {
+		if (cf.fti != null && ['date', 'datetime'].indexOf(cf.fti.type) >= 0 && cf.field.fun === undefined) {
 			cf.showFunWin();
 		}
 		else if (updateView) {
@@ -1400,7 +1401,7 @@ PivotControl.prototype.addField = function (field, displayText, opts) {
 		if (!ok) {
 			return;
 		}
-		if (cf.fti != null && cf.fti.type === 'date' && cf.field.fun === undefined) {
+		if (cf.fti != null && ['date', 'datetime'].indexOf(cf.fti.type) >= 0 && cf.field.fun === undefined) {
 			cf.showFunWin();
 		}
 		else if (updateView) {
