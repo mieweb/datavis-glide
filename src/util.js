@@ -1679,8 +1679,18 @@ export var makeSuper = function (me, parent) {
 export var mixinEventHandling = (function () {
 	var HANDLER_ID = 0;
 
-	return function (obj, name, events) {
+	return function (obj, events) {
 		obj.events = objFromArray(events);
+
+		var getName = function () {
+			return obj.toString === Object.toString
+				? obj.prototype.constructor.name
+				: obj.toString();
+		};
+
+		var getTag = function () {
+			return obj.prototype.constructor.name.toUpperCase();
+		};
 
 		// #_initEventHandlers {{{3
 
@@ -1703,8 +1713,7 @@ export var mixinEventHandling = (function () {
 		// #on {{{3
 
 		obj.prototype.on = function (evt, cb, opts) {
-			var self = this
-				, myName = typeof name === 'function' ? name(self) : name;
+			var self = this;
 
 			opts = opts || {};
 
@@ -1716,7 +1725,7 @@ export var mixinEventHandling = (function () {
 
 			_.each(evt, function (e) {
 				if (obj.events[e] === undefined) {
-					throw new Error('Unable to register handler on ' + myName + ' for "' + e + '" event: no such event available');
+					throw new Error('Unable to register handler on ' + getName() + ' for "' + e + '" event: no such event available');
 				}
 
 				var handler = {
@@ -1730,11 +1739,11 @@ export var mixinEventHandling = (function () {
 				self.eventHandlers[e].push(handler);
 				self.eventHandlersById[handler.id] = handler;
 
-				var msg = 'Adding "' + evt + '" event handler on ' + myName;
+				var msg = 'Adding "' + evt + '" event handler on ' + getName();
 				if (opts.who != null) {
 					msg += ' from ' + opts.who;
 				}
-				debug.info(myName + ' // ON', msg);
+				debug.info(getTag() + ' // ON', msg);
 			});
 
 			return self;
@@ -1743,8 +1752,7 @@ export var mixinEventHandling = (function () {
 		// #off {{{3
 
 		obj.prototype.off = function (evt, who, opts) {
-			var self = this
-				, myName = typeof name === 'function' ? name(self) : name;
+			var self = this;
 
 			opts = opts || {};
 
@@ -1758,7 +1766,7 @@ export var mixinEventHandling = (function () {
 			}
 
 			if (obj.events[evt] === undefined) {
-				throw new Error('Unable to register handler on ' + myName + ' for "' + evt + '" event: no such event available');
+				throw new Error('Unable to register handler on ' + getName() + ' for "' + evt + '" event: no such event available');
 			}
 
 			var newHandlers = [];
@@ -1776,7 +1784,7 @@ export var mixinEventHandling = (function () {
 			});
 
 			if (!opts.silent) {
-				debug.info(myName + ' // OFF', 'Removed ' + (self.eventHandlers[evt].length - newHandlers.length) + ' handlers from ' + who + ' on "' + evt + '" event');
+				debug.info(getTag() + ' // OFF', 'Removed ' + (self.eventHandlers[evt].length - newHandlers.length) + ' handlers from ' + who + ' on "' + evt + '" event');
 			}
 
 			self.eventHandlers[evt] = newHandlers;
@@ -1803,8 +1811,7 @@ export var mixinEventHandling = (function () {
 			var self = this
 				, args = Array.prototype.slice.call(arguments)
 				, evt = args.shift()
-				, opts = args.shift() || {}
-				, myName = typeof name === 'function' ? name(self) : name;
+				, opts = args.shift() || {};
 
 			self._initEventHandlers();
 
@@ -1840,7 +1847,7 @@ export var mixinEventHandling = (function () {
 			// spamming millions of messages, which slows down the console).
 
 			if (!opts.silent) {
-				debug.info(myName + ' // FIRE', 'Triggering "%s" event on %d handlers: %O', evt, handlers.length, args);
+				debug.info(getTag() + ' // FIRE', 'Triggering %d handlers for "%s" event on %s: %O', handlers.length, evt, getName(), args);
 			}
 
 			_.each(handlers, function (h, i) {
@@ -1851,10 +1858,10 @@ export var mixinEventHandling = (function () {
 				}
 
 				if (h.handler.info != null) {
-					debug.info(myName + ' // FIRE', 'Executing "%s" handler [%d/%d]: %s', evt, i, handlers.length - 1, h.handler.info);
+					debug.info(getTag() + ' // FIRE', 'Executing "%s" handler (%d of %d) on %s: %s', evt, i+1, handlers.length, getName(), h.handler.info);
 				}
 				else {
-					debug.info(myName + ' // FIRE', 'Executing "%s" handler [%d/%d]', evt, i, handlers.length - 1);
+					debug.info(getTag() + ' // FIRE', 'Executing "%s" handler (%d of %d) on %s', evt, i+1, handlers.length, getName());
 				}
 				h.handler.cb.apply(null, args);
 
@@ -1864,11 +1871,15 @@ export var mixinEventHandling = (function () {
 				if (h.handler.limit) {
 					h.handler.limit -= 1;
 					if (h.handler.limit <= 0) {
-						debug.info(myName + ' // FIRE', 'Removing "%s" handler [%d] after reaching invocation limit', evt, i);
+						debug.info(getTag() + ' // FIRE', 'Removing "%s" handler #%d from %s after reaching invocation limit', evt, i+1, getName());
 						self.eventHandlers[evt][h.index] = null;
 					}
 				}
 			});
+
+			if (!opts.silent) {
+				debug.info(getTag() + ' // FIRE', 'Done triggering handlers for "%s" event on %s', evt, getName());
+			}
 
 			// Clean up handlers we removed (because they reached the limit).
 
@@ -2031,7 +2042,7 @@ export var Lock = function (name, opts) {
 Lock._id = 1;
 
 mixinDebugging(Lock, function () {
-	return 'LOCK (' + this._name + ' {level ' + this._lockCount + '})';
+	return 'LOCK - ' + this._name + ' (level ' + this._lockCount + ')';
 });
 
 // #lock {{{2
