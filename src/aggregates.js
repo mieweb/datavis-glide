@@ -1202,6 +1202,7 @@ var AggregateInfo = makeSubclass('AggregateInfo', Object, function (aggType, spe
 	var self = this;
 
 	self.aggNum = aggNum;
+	self.aggType = aggType;
 	self.fun = spec.fun;
 	self.name = spec.name;
 	self.isHidden = spec.isHidden;
