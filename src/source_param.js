@@ -1,7 +1,7 @@
 import _ from 'underscore';
 import jQuery from 'jquery';
 
-import {arrayCopy, debug, getProp, isEmpty, setProp} from './util.js';
+import {arrayCopy, debug, getProp, isEmpty, makeSubclass, setProp} from './util.js';
 
 // FilterError {{{1
 
@@ -9,13 +9,9 @@ import {arrayCopy, debug, getProp, isEmpty, setProp} from './util.js';
  * @class
  */
 
-var FilterError = function (msg) {
+var FilterError = makeSubclass('FilterError', Error, function (msg) {
 	this.message = msg;
-};
-
-FilterError.prototype = Object.create(Error.prototype);
-FilterError.prototype.name = 'FilterError';
-FilterError.prototype.constructor = FilterError;
+});
 
 // Filter {{{1
 
@@ -709,13 +705,9 @@ FilterInput.prototype.get = function (name) {
 
 // ParamInputError {{{1
 
-function ParamInputError(msg) {
+var ParamInputError = makeSubclass('ParamInputError', Error, function (msg) {
 	this.message = msg;
-}
-
-ParamInputError.prototype = Object.create(Error.prototype);
-ParamInputError.prototype.name = 'ParamInputError';
-ParamInputError.prototype.constructor = ParamInputError;
+});
 
 // ParamInput {{{1
 

@@ -66,7 +66,7 @@ var GridFilter = (function () {
 		return 'GridFilter_' + id++;
 	};
 
-	return function (field, gridFilterSet, typeInfo, opts) {
+	return makeSubclass('GridFilter', Object, function (field, gridFilterSet, typeInfo, opts) {
 		var self = this;
 		var localRemoveButton;
 
@@ -103,11 +103,8 @@ var GridFilter = (function () {
 				self.adjustInputWidth({ useSizingElement: true, fromColumnResize: true });
 			});
 		}
-	};
+	});
 })();
-
-GridFilter.prototype = Object.create(Object.prototype);
-GridFilter.prototype.constructor = GridFilter;
 
 // #getValue {{{3
 
@@ -959,7 +956,7 @@ GridFilter.defaultWidgets = {
  * internally when loading preferences to avoid updating for every single filter.
  */
 
-var GridFilterSet = function (view, prefs, gridTable, progress, opts) {
+var GridFilterSet = makeSubclass('GridFilterSet', Object, function (view, prefs, gridTable, progress, opts) {
 	var self = this;
 
 	self.view = view;
@@ -979,10 +976,7 @@ var GridFilterSet = function (view, prefs, gridTable, progress, opts) {
 	};
 
 	self.delayUpdate = false;
-};
-
-GridFilterSet.prototype = Object.create(Object.prototype);
-GridFilterSet.prototype.constructor = GridFilterSet;
+});
 
 // Events {{{2
 

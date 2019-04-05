@@ -11,6 +11,7 @@ import {
 	Lock,
 	log,
 	logAsync,
+	makeSubclass,
 	mixinEventHandling,
 	stringValueType,
 } from './util.js';
@@ -19,18 +20,14 @@ import {OrdMap} from './ordmap.js';
 
 // SourceError {{{1
 
-var SourceError = function (msg) {
+var SourceError = makeSubclass('SourceError', Error, function (msg) {
 	this.message = msg;
-};
-
-SourceError.prototype = Object.create(Error.prototype);
-SourceError.prototype.name = 'SourceError';
-SourceError.prototype.constructor = SourceError;
+});
 
 // LocalSource {{{1
 // Constructor {{{2
 
-var LocalSource = function (spec) {
+var LocalSource = makeSubclass('LocalSource', Object, function (spec) {
 	var self = this;
 
 	self.varName = spec.varName;
@@ -65,7 +62,7 @@ var LocalSource = function (spec) {
 			self.cache.typeInfo.set(field, fti);
 		});
 	}
-};
+});
 
 // #getData {{{2
 
@@ -102,7 +99,7 @@ LocalSource.prototype.getName = function () {
 // HttpSource {{{1
 // Constructor {{{2
 
-var HttpSource = function (spec, params, userTypeInfo) {
+var HttpSource = makeSubclass('HttpSource', Object, function (spec, params, userTypeInfo) {
 	var self = this;
 
 	self.url = spec.url;
@@ -111,7 +108,7 @@ var HttpSource = function (spec, params, userTypeInfo) {
 
 	self.cache = null;
 	self.userTypeInfo = userTypeInfo;
-};
+});
 
 // #parseData {{{2
 
@@ -297,7 +294,7 @@ HttpSource.prototype.clearCachedData = function () {
 // FileSource {{{1
 // Constructor {{{2
 
-var FileSource = function (spec, params, userTypeInfo, source) {
+var FileSource = makeSubclass('FileSource', Object, function (spec, params, userTypeInfo, source) {
 	var self = this;
 
 	self.spec = spec;
@@ -309,7 +306,7 @@ var FileSource = function (spec, params, userTypeInfo, source) {
 		data: [],
 		typeInfo: new OrdMap()
 	};
-};
+});
 
 // #setToolbar {{{2
 
@@ -483,7 +480,7 @@ FileSource.prototype.getTypeInfo = function (cont) {
  * @property {boolean} guessColumnTypes
  */
 
-var Source = function (spec, params, userTypeInfo, opts) {
+var Source = makeSubclass('Source', Object, function (spec, params, userTypeInfo, opts) {
 	var self = this;
 
 	self.name = spec.name; // The name of the data source, by which it can be addressed later.
@@ -557,10 +554,7 @@ var Source = function (spec, params, userTypeInfo, opts) {
 	self.conversion = spec.conversion;
 
 	self.locks.getData = new Lock('SOURCE // ' + self.name);
-};
-
-Source.prototype = Object.create(Object.prototype);
-Source.prototype.constructor = Source;
+});
 
 // Events {{{2
 

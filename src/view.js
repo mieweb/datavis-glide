@@ -234,7 +234,7 @@ import {AGGREGATE_REGISTRY, AggregateInfo} from './aggregates.js';
  * @property {Timing} timing For keeping track of how long it takes to do things in the view.
  */
 
-var View = function (source, name, opts) {
+var View = makeSubclass('View', Object, function (source, name, opts) {
 	var self = this;
 
 	if (!(source instanceof Source) && !(source instanceof View)) {
@@ -285,10 +285,7 @@ var View = function (source, name, opts) {
 	}
 
 	self.isBoundToPrefs = false;
-};
-
-View.prototype = Object.create(Object.prototype);
-View.prototype.constructor = View;
+});
 
 // Events {{{2
 

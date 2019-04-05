@@ -78,7 +78,7 @@ import {
  * @property {GraphRenderer} renderer
  */
 
-var Graph = function (id, view, devConfig, opts) {
+var Graph = makeSubclass('Graph', Object, function (id, view, devConfig, opts) {
 	var self = this;
 
 	self.id = id;
@@ -132,10 +132,7 @@ var Graph = function (id, view, devConfig, opts) {
 		self.hide();
 	}
 
-};
-
-Graph.prototype = Object.create(Object.prototype);
-Graph.prototype.constructor = Graph;
+});
 
 // #toString {{{2
 
@@ -907,14 +904,11 @@ Graph.prototype.setUserConfig = function (config) {
 
 // GraphControl {{{1
 
-var GraphControl = function () {
+var GraphControl = makeSubclass('GraphControl', Object, function () {
 	var self = this;
 
 	self.ui = {};
-};
-
-GraphControl.prototype = Object.create(Object.prototype);
-GraphControl.prototype.constructor = GraphControl;
+});
 
 // #draw {{{2
 
@@ -998,14 +992,11 @@ GraphControl.prototype.draw = function () {
 
 // GraphControlField {{{1
 
-var GraphControlField = function () {
+var GraphControlField = makeSubclass('GraphControlField', Object, function () {
 	var self = this;
 
 	self.ui = {};
-};
-
-GraphControlField.prototype = Object.create(Object.prototype);
-GraphControlField.prototype.constructor = GraphControlField;
+});
 
 // GRAPH_TYPES {{{1
 

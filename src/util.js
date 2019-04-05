@@ -1639,6 +1639,9 @@ export var makeSubclass = function (name, parent, ctor, ptype) {
 	subclass.prototype = Object.create(parent.prototype);
 	subclass.prototype.constructor = subclass;
 
+	//subclass.prototype.__ctor = subclass;
+	//subclass.prototype.__ctorname = name;
+
 	_.each(ptype, function (v, k) {
 		subclass.prototype[k] = v;
 	});

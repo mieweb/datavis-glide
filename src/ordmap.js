@@ -22,6 +22,7 @@ function OrdMap() {
 	this._setHandlers = {};
 }
 
+Object.defineProperty(OrdMap, 'name', {value: 'OrdMap'});
 OrdMap.prototype = Object.create(Object.prototype);
 OrdMap.prototype.constructor = OrdMap;
 
