@@ -3433,6 +3433,49 @@ GroupFunction.prototype.applyValueFun = function (x) {
 
 var GROUP_FUNCTION_REGISTRY = new OrdMap();
 
+GROUP_FUNCTION_REGISTRY.set('year', new GroupFunction({
+	displayName: 'Year',
+	allowedTypes: ['date', 'datetime'],
+	valueFun: function (d) {
+		if (typeof d === 'string') {
+			d = moment(d);
+		}
+		if (!moment.isMoment(d) || !d.isValid()) {
+			return 'Invalid Date';
+		}
+		return d.format('YYYY');
+	}
+}));
+
+GROUP_FUNCTION_REGISTRY.set('quarter', new GroupFunction({
+	displayName: 'Quarter',
+	allowedTypes: ['date', 'datetime'],
+	valueFun: function (d) {
+		if (typeof d === 'string') {
+			d = moment(d);
+		}
+		if (!moment.isMoment(d) || !d.isValid()) {
+			return 'Invalid Date';
+		}
+		return d.format('[Q]Q');
+	}
+}));
+
+GROUP_FUNCTION_REGISTRY.set('month', new GroupFunction({
+	displayName: 'Month',
+	allowedTypes: ['date', 'datetime'],
+	valueFun: function (d) {
+		if (typeof d === 'string') {
+			d = moment(d);
+		}
+		if (!moment.isMoment(d) || !d.isValid()) {
+			return 'Invalid Date';
+		}
+		return d.format('MMM');
+	},
+	sortType: 'month'
+}));
+
 GROUP_FUNCTION_REGISTRY.set('day_of_week', new GroupFunction({
 	displayName: 'Day of Week',
 	allowedTypes: ['date', 'datetime'],
@@ -3446,20 +3489,6 @@ GROUP_FUNCTION_REGISTRY.set('day_of_week', new GroupFunction({
 		return d.format('ddd');
 	},
 	sortType: 'day_of_week'
-}));
-
-GROUP_FUNCTION_REGISTRY.set('year', new GroupFunction({
-	displayName: 'Year',
-	allowedTypes: ['date', 'datetime'],
-	valueFun: function (d) {
-		if (typeof d === 'string') {
-			d = moment(d);
-		}
-		if (!moment.isMoment(d) || !d.isValid()) {
-			return 'Invalid Date';
-		}
-		return d.format('YYYY');
-	}
 }));
 
 GROUP_FUNCTION_REGISTRY.set('year_and_quarter', new GroupFunction({
