@@ -125,10 +125,98 @@ var Graph = makeSubclass('Graph', Object, function (id, view, devConfig, opts) {
 
 	self.view.addClient(self, 'graph');
 
+	// Event handlers for keeping the spinner icon updated.
+
+	self.view.on('fetchDataBegin', function () {
+		self._setSpinner('loading');
+		self._showSpinner();
+	});
+	self.view.on('fetchDataEnd', function () {
+		self._hideSpinner();
+	});
+
+	self.view.on('workBegin', function () {
+		self._setSpinner('working');
+		self._showSpinner();
+	});
+	self.view.on('workEnd', function (info, ops) {
+		self._hideSpinner();
+	});
+
+	// Event handler for keeping the UI in sync with the data.
+
+	self.view.on('workEnd', function (info, ops) {
+		var config;
+
+		if (ops.pivot) {
+			config = getProp(self.userConfig, 'pivot', 'graphs', getProp(self.userConfig, 'pivot', 'current'))
+				|| self.devConfig.whenPivot;
+		}
+		else if (ops.group) {
+			config = getProp(self.userConfig, 'group', 'graphs', getProp(self.userConfig, 'group', 'current'))
+				|| self.devConfig.whenGroup;
+		}
+		else {
+			config = getProp(self.userConfig, 'plain', 'graphs', getProp(self.userConfig, 'plain', 'current'))
+				|| self.devConfig.whenPlain;
+		}
+
+		if (config != null) {
+			debug.info('GRAPH // HANDLER (View.workEnd)',
+				'Matching configuration: %O', config);
+
+			var graphType = config.graphType;
+			var axis = graphType === 'bar' ? 'hAxis' : 'vAxis';
+			self.ui.graphTypeDropdown.val(config.graphType);
+		}
+
+		if (ops.group) {
+			self.ui.toolbar_aggregates.show();
+			if (config != null) {
+				self.ui.aggDropdown.val(config.aggNum);
+				self.ui.zeroAxisCheckbox.prop('checked', getProp(config, 'options', axis, 'minValue') == 0);
+			}
+		}
+		else {
+			self.ui.toolbar_aggregates.hide();
+		}
+
+		if (ops.pivot) {
+			self.ui.toolbar_pivot.show();
+			if (config != null) {
+				self.ui.stackCheckbox.prop('checked', !!getProp(config, 'options', 'isStacked'));
+			}
+		}
+		else {
+			self.ui.toolbar_pivot.hide();
+		}
+	}, {
+		who: self
+	});
+
+	self.view.on('dataUpdated', function () {
+		if (self.opts.showOnDataChange && !self.isVisible()) {
+			self.show({ redraw: false });
+		}
+		self.redraw();
+		/*
+		switch (self.lastDrawnFrom) {
+		case 'config':
+			self.drawFromConfig();
+			break;
+		case 'interactive':
+		default:
+			self.drawInteractive();
+			break;
+		}
+		*/
+	});
+
 	if (self.opts.runImmediately) {
 		self.show();
 	}
 	else {
+		self.hasRun = false;
 		self.hide();
 	}
 
@@ -485,6 +573,7 @@ Graph.prototype._clearExportBlob = function () {
 Graph.prototype.drawFromConfig = function () {
 	var self = this;
 
+	self.lastDrawnFrom = 'config';
 	self.renderer.draw(self.devConfig, self.userConfig);
 }
 
@@ -554,6 +643,7 @@ Graph.prototype.drawInteractive = function () {
 
 	debug.info('GRAPH', 'Drawing graph based on interactive config [userConfig = %O]', self.userConfig);
 
+	self.lastDrawnFrom = 'interactive';
 	self.renderer.draw(self.devConfig, self.userConfig);
 };
 
@@ -634,100 +724,6 @@ Graph.prototype.refresh = function () {
 	self.view.clearSourceData();
 };
 
-// #monitorView {{{2
-
-Graph.prototype.monitorView = function () {
-	var self = this;
-
-	if (self.monitorDone) {
-		return;
-	}
-
-	self.monitorDone = true;
-
-	self.view.on('dataUpdated', function () {
-		if (self.opts.showOnDataChange && !self.isVisible()) {
-			self.view.off('dataUpdated', self.renderer);
-			self.show();
-		}
-	}, {
-		who: self
-	});
-
-	self.view.on('fetchDataBegin', function () {
-		self._setSpinner('loading');
-		self._showSpinner();
-	}, {
-		who: self
-	});
-	self.view.on('fetchDataEnd', function () {
-		self._hideSpinner();
-	}, {
-		who: self
-	});
-
-	self.view.on('workBegin', function () {
-		self._setSpinner('working');
-		self._showSpinner();
-	}, {
-		who: self
-	});
-	self.view.on('workEnd', function (info, ops) {
-		self._hideSpinner();
-	}, {
-		who: self
-	});
-
-	self.view.on('workEnd', function (info, ops) {
-		var config;
-
-		if (ops.pivot) {
-			config = getProp(self.userConfig, 'pivot', 'graphs', getProp(self.userConfig, 'pivot', 'current'))
-				|| self.devConfig.whenPivot;
-		}
-		else if (ops.group) {
-			config = getProp(self.userConfig, 'group', 'graphs', getProp(self.userConfig, 'group', 'current'))
-				|| self.devConfig.whenGroup;
-		}
-		else {
-			config = getProp(self.userConfig, 'plain', 'graphs', getProp(self.userConfig, 'plain', 'current'))
-				|| self.devConfig.whenPlain;
-		}
-
-		if (config != null) {
-			debug.info('GRAPH // HANDLER (View.workEnd)',
-				'Matching configuration: %O', config);
-
-			var graphType = config.graphType;
-			var axis = graphType === 'bar' ? 'hAxis' : 'vAxis';
-			self.ui.graphTypeDropdown.val(config.graphType);
-		}
-
-		if (ops.group) {
-			self.ui.toolbar_aggregates.show();
-			if (config != null) {
-				self.ui.aggDropdown.val(config.aggNum);
-				self.ui.zeroAxisCheckbox.prop('checked', getProp(config, 'options', axis, 'minValue') == 0);
-			}
-		}
-		else {
-			self.ui.toolbar_aggregates.hide();
-		}
-
-		if (ops.pivot) {
-			self.ui.toolbar_pivot.show();
-			if (config != null) {
-				self.ui.stackCheckbox.prop('checked', !!getProp(config, 'options', 'isStacked'));
-			}
-		}
-		else {
-			self.ui.toolbar_pivot.hide();
-		}
-	}, {
-		who: self
-	});
-};
-
 // #redraw {{{2
 
 Graph.prototype.redraw = function () {
@@ -735,7 +731,6 @@ Graph.prototype.redraw = function () {
 
 	self.prefs.prime(function () {
 		self.view.prime(function () {
-			self.monitorView();
 			self.checkGraphConfig();
 			self.renderer = new GraphRendererGoogle(self, self.ui.graph, self.view, self.opts);
 			self.drawFromConfig();
@@ -798,7 +793,8 @@ Graph.prototype.show = function (opts) {
 			if (self.opts.title) {
 				self.ui.showHideButton.addClass('open fa-rotate-180');
 			}
-			if (!self.hasRun) {
+			if (!self.hasRun && opts.redraw) {
+				self.hasRun = true;
 				self.redraw();
 			}
 		}

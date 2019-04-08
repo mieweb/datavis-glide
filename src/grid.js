@@ -616,26 +616,26 @@ var Grid = makeSubclass('Grid', Object, function (id, view, defn, tagOpts, cb) {
 		}
 	};
 
-	self.view.on(View.events.fetchDataBegin, function () {
+	self.view.on('fetchDataBegin', function () {
 		self._setSpinner('loading');
 		self._showSpinner();
 	});
-	self.view.on(View.events.fetchDataEnd, function () {
+	self.view.on('fetchDataEnd', function () {
 		self._hideSpinner();
 	});
 
-	self.view.on(View.events.workBegin, function () {
+	self.view.on('workBegin', function () {
 		self._isIdle = false;
 		self._setSpinner('working');
 		self._showSpinner();
 	});
-	self.view.on(View.events.workEnd, function (info, ops) {
+	self.view.on('workEnd', function (info, ops) {
 		self._isIdle = true;
 		self._hideSpinner();
 		self._updateRowCount(info, ops);
 	});
 
-	self.view.on(View.events.dataUpdated, function () {
+	self.view.on('dataUpdated', function () {
 		if (self.tagOpts.showOnDataChange && !self.isVisible()) {
 			self.show({ redraw: false });
 		}
