@@ -15,9 +15,8 @@ examples/wcdatavis.css
 examples/wcdatavis-extra.css
 examples/test/*.json
 tests/data/*.json
-tests/pages/*.js
-tests/pages/*.css
+tests/pages/wcdatavis.js
+tests/pages/wcdatavis.css
 tests/pages/*.json
-tests/pages/fontawesome-webfont.*
-tests/pages/jquery-ui
 npm-debug.log
+reports
