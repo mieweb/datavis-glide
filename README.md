@@ -41,7 +41,16 @@ The number one convention is to avoid making unnecessary diffs.  Follow the styl
 
 ## Testing
 
-DataVis uses Mocha + Selenium for browser testing.  Run `npm test` to run all available Selenium tests.  Since tests run in Node.js, please use any available JavaScript features you want (e.g. async/await, destructuring assignment, etc).
+DataVis uses Mocha + Selenium for browser testing.  Run `npm install` and then `make test` to run all available Selenium tests.  Since tests run in Node.js, please use any available JavaScript features you want (e.g. async/await, destructuring assignment, etc).
+
+### Dependencies
+
+A Python program called `json-gen` is used to generate test data files.  You'll need the following modules:
+
+* babel
+* jsoncomment
+
+You'll also need a word list, as some of the data files contain random dictionary words.  The tests expect the word list from the `words` package, specifically version `3.0-17.el6` from CentOS.  By default, `json-gen` expects to find this word list at `/usr/share/dict/words` — if you have this file elsewhere, you can specify that path as the `DICT_FILE` environment variable when running *make*.
 
 # Tree Structure
 
