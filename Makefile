@@ -7,7 +7,7 @@ PANDOC_FILES=index getting_started examples overview source view grid grid_filte
 	     debugging known_issues glossary code_standards about links
 PANDOC_INPUT=$(addprefix doc/,$(addsuffix .pandoc,$(PANDOC_FILES)))
 
-.PHONY:	doc jsdoc pandoc clean tags examples test tests
+.PHONY:	doc jsdoc pandoc clean tags examples serve test tests
 
 all:	dist/wcdatavis.min.js examples
 
@@ -34,6 +34,9 @@ doc/html/style.css:	doc/style.css
 
 test:	tests
 	npm run test
+
+serve:
+	./node_modules/.bin/serve
 
 tests:	$(DIST_FILES)
 	$(MAKE) -C tests

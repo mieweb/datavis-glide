@@ -21,6 +21,7 @@
     "rollup-plugin-node-globals": "^1.4.0",
     "rollup-plugin-node-resolve": "^3.4.0",
     "selenium-webdriver": "^4.0.0-alpha.1",
+    "serve": "^11.0.0",
     "uglify-js": "^3.4.9"
   },
   "scripts": {
