@@ -75,13 +75,6 @@ ColConfigWin.prototype.show = function (posElt, onSave) {
 		}
 	});
 
-	var pinnedMsg = jQuery('<div>')
-		.addClass('wcdv_info_banner')
-		.append(fontAwesome('fa-info-circle'))
-		.append(' Pinned columns always appear before any others in plain (non-grouped) output, in the relative order shown below.')
-		.hide()
-		.appendTo(orderWin);
-
 	var pinnedCount = 0;
 
 	var colTable = jQuery('<table>')
@@ -212,6 +205,13 @@ ColConfigWin.prototype.show = function (posElt, onSave) {
 
 		tr.appendTo(colTableBody);
 	});
+
+	var pinnedMsg = jQuery('<div>')
+		.addClass('wcdv_info_banner')
+		.append(fontAwesome('fa-info-circle'))
+		.append(' Pinned columns always appear before any others in plain (non-grouped) output, in the relative order shown below.')
+		.hide()
+		.appendTo(orderWin);
 
 	if (pinnedCount > 0) {
 		pinnedMsg.show();

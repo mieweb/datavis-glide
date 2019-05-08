@@ -96,6 +96,7 @@ button.wcdv_expand_button > span.fa {
 	background-color: #E3F2FD;
 	color: #0D47A1;
     padding: 1ex;
+	margin-top: 1ex;
 }
 
 .wcdv_bottom_border_teal {
@@ -893,15 +894,36 @@ tr.wcdvgrid_more td {
 
 .wcdv_colconfigwin_table {
 	width: 100%;
-}
-
-.wcdv_colconfigwin_table th {
-	text-align: left;
-	color: #808080;
+	border-collapse: collapse;
 }
 
 .wcdv_colconfigwin_table tr {
 	background-color: white;
+}
+
+.wcdv_colconfigwin_table thead tr th {
+	text-align: left;
+	color: #808080;
+}
+
+.wcdv_colconfigwin_table tbody tr td:first-child,
+.wcdv_colconfigwin_table thead tr th:first-child {
+    padding-left: 0.5em;
+}
+
+.wcdv_colconfigwin_table tbody tr td,
+.wcdv_colconfigwin_table thead tr th {
+    padding-top: 0.5ex;
+    padding-bottom: 0.5ex;
+}
+
+.wcdv_colconfigwin_table tbody tr td:last-child,
+.wcdv_colconfigwin_table thead tr th:last-child {
+    padding-right: 0.5em;
+}
+
+.wcdv_colconfigwin_table tbody tr:hover {
+    background-color: #E0F2F1;
 }
 
 .wcdv_minimal_width {
