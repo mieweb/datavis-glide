@@ -385,7 +385,9 @@ var Grid = makeSubclass('Grid', Object, function (id, view, defn, tagOpts, cb) {
 	}
 
 	deepDefaults(true, tagOpts, {
-		runImmediately: true
+		runImmediately: true,
+		showToolbar: true,
+		showControls: false,
 	});
 
 	self.defn = defn; // Definition used to retrieve data and output grid.
@@ -445,6 +447,17 @@ var Grid = makeSubclass('Grid', Object, function (id, view, defn, tagOpts, cb) {
 			evt.stopPropagation();
 			self.toggle();
 		})
+		.droppable({
+			accept: '.wcdv_drag_handle',
+			over: function (evt, ui) {
+				self.showControls();
+
+				// Need to recalculate the position of the droppable targets, because they are now
+				// guaranteed to be visible (they may have been hidden within the grid control before).
+
+				ui.draggable.draggable('option', 'refreshPositions', true);
+			}
+		})
 		.appendTo(self.ui.root);
 
 	self._addTitleWidgets(self.ui.titlebar, doingServerFilter, !!self.tagOpts.runImmediately, id);
@@ -458,7 +471,7 @@ var Grid = makeSubclass('Grid', Object, function (id, view, defn, tagOpts, cb) {
 		.droppable({
 			accept: '.wcdv_drag_handle',
 			over: function (evt, ui) {
-				self.ui.controls.show();
+				self.showControls();
 
 				// Need to recalculate the position of the droppable targets, because they are now
 				// guaranteed to be visible (they may have been hidden within the grid control before).
@@ -507,6 +520,10 @@ var Grid = makeSubclass('Grid', Object, function (id, view, defn, tagOpts, cb) {
 		// This is a trick to make 'flex: 1 1 auto' work right in Firefox, IE, Edge.
 		// Otherwise, the table takes up as much space as it needs and doesn't scroll.
 		self.ui.grid.css('height', '0px');
+	}
+
+	if (!self.tagOpts.showToolbar) {
+		self.ui.toolbar.hide();
 	}
 
 	if (!self.tagOpts.showControls) {
