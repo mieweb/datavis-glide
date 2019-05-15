@@ -7,8 +7,10 @@ import {
 	deepDefaults,
 	format,
 	getComparisonFn,
+	getNatRep,
 	getProp,
 	getPropDef,
+	isElement,
 	isFloat,
 	isInt,
 	log,
@@ -422,9 +424,9 @@ Aggregate.prototype.getRealValue = function (cell) {
 	}
 };
 
-// #getRealValueAsString {{{2
+// #getFormattedValue {{{2
 
-Aggregate.prototype.getRealValueAsString = function (cell) {
+Aggregate.prototype.getFormattedValue = function (cell) {
 	var self = this;
 	var val = self.getRealValue(cell);
 	var colConfig = self.opts.colConfig ? self.opts.colConfig[0] : null;
@@ -589,8 +591,9 @@ var CountDistinctAggregate = makeSubclass('CountDistinctAggregate', Aggregate, f
 
 CountDistinctAggregate.prototype.calculateStep = function (acc, next) {
 	var self = this;
+	var cell = next[self.opts.fields[0]];
+	var key = getNatRep(cell.value);
 
-	var key = self.getRealValueAsString(next[self.opts.fields[0]]);
 	if (acc.set[key] == null) {
 		acc.set[key] = true;
 		acc.count += 1;
@@ -600,8 +603,8 @@ CountDistinctAggregate.prototype.calculateStep = function (acc, next) {
 
 // #calculateDone {{{2
 
-CountDistinctAggregate.prototype.calculateDone = function (obj) {
-	return obj.count;
+CountDistinctAggregate.prototype.calculateDone = function (acc) {
+	return acc.count;
 };
 
 // Values {{{1
@@ -612,7 +615,10 @@ var ValuesAggregate = makeSubclass('ValuesAggregate', Aggregate, null, {
 	inheritFormatting: false,
 	type: 'string',
 	init: function () {
-		return [];
+		return {
+			resultIsElement: false,
+			values: []
+		};
 	},
 	options: {
 		'separator': {
@@ -625,8 +631,13 @@ var ValuesAggregate = makeSubclass('ValuesAggregate', Aggregate, null, {
 
 ValuesAggregate.prototype.calculateStep = function (acc, next) {
 	var self = this;
+	var formatted = self.getFormattedValue(next[self.opts.fields[0]]);
 
-	acc.push(self.getRealValueAsString(next[self.opts.fields[0]]));
+	if (isElement(formatted)) {
+		acc.resultIsElement = true;
+	}
+
+	acc.values.push(formatted);
 	return acc;
 };
 
@@ -635,7 +646,22 @@ ValuesAggregate.prototype.calculateStep = function (acc, next) {
 ValuesAggregate.prototype.calculateDone = function (acc) {
 	var self = this;
 
-	return acc.join(self.opts.separator || ', ');
+	if (!acc.resultIsElement) {
+		return acc.values.join(self.opts.separator || ', ');
+	}
+	else {
+		var wrapper = jQuery('<div>');
+		_.each(acc.values, function (elt, i) {
+			if (i > 0) {
+				wrapper.append(self.opts.separator || ', ');
+			}
+			// FIXME: Subsequent calls to #calculate() from a different instance of ValuesAggregate can
+			// change the elements of acc and therefore wrapper.  I cannot figure out why, so cloning the
+			// element will have to do for now.
+			wrapper.append(elt.clone());
+		});
+		return wrapper;
+	}
 };
 
 // Values w/ Counts {{{1
@@ -646,7 +672,10 @@ var ValuesWithCountsAggregate = makeSubclass('ValuesWithCountsAggregate', Aggreg
 	inheritFormatting: false,
 	type: 'string',
 	init: function () {
-		return new OrdMap();
+		return {
+			map: new OrdMap(),
+			resultIsElement: false
+		}
 	},
 	options: {
 		'separator': {
@@ -659,13 +688,22 @@ var ValuesWithCountsAggregate = makeSubclass('ValuesWithCountsAggregate', Aggreg
 
 ValuesWithCountsAggregate.prototype.calculateStep = function (acc, next) {
 	var self = this;
-	var key = self.getRealValueAsString(next[self.opts.fields[0]]);
+	var cell = next[self.opts.fields[0]];
+	var key = getNatRep(cell.value);
+	var formatted = self.getFormattedValue(cell);
 
-	if (acc.isSet(key)) {
-		acc.set(key, acc.get(key) + 1);
+	if (acc.map.isSet(key)) {
+		var info = acc.map.get(key);
+		info.count += 1;
 	}
 	else {
-		acc.set(key, 1);
+		acc.map.set(key, {
+			formatted: formatted,
+			count: 1
+		});
+		if (isElement(formatted)) {
+			acc.resultIsElement = true;
+		}
 	}
 
 	return acc;
@@ -675,56 +713,59 @@ ValuesWithCountsAggregate.prototype.calculateStep = function (acc, next) {
 
 ValuesWithCountsAggregate.prototype.calculateDone = function (acc) {
 	var self = this;
-	var a = [];
 
-	acc.each(function (v, k) {
-		a.push(k + ' (' + v + ')');
-	});
+	if (acc.resultIsElement) {
+		var div = jQuery('<div>');
+		acc.map.each(function (v, k, i) {
+			if (i > 0) {
+				div.append(self.opts.separator || ', ');
+			}
+			div.append(v.formatted.clone());
+			div.append(' (' + v.count + ')');
+		});
+		return div;
+	}
+	else {
+		var a = [];
 
-	return a.join(self.opts.separator || ', ');
+		acc.map.each(function (v, k) {
+			a.push(k + ' (' + v + ')');
+		});
+
+		return a.join(self.opts.separator || ', ');
+	}
 };
 
 // Distinct Values {{{1
 
-var DistinctValuesAggregate = makeSubclass('DistinctValuesAggregate', Aggregate, null, {
-	name: 'Distinct Values',
-	fieldCount: 1,
-	inheritFormatting: false,
-	type: 'string',
-	init: function () {
-		return {
-			a: [],
-			m: {}
-		}
-	},
-	options: {
-		'separator': {
-			'displayText': 'Separator'
-		}
-	}
+var DistinctValuesAggregate = makeSubclass('DistinctValuesAggregate', ValuesWithCountsAggregate, null, {
+	name: 'Distinct Values'
 });
-
-// #calculateStep {{{2
-
-DistinctValuesAggregate.prototype.calculateStep = function (acc, next) {
-	var self = this;
-
-	var key = self.getRealValueAsString(next[self.opts.fields[0]]);
-
-	if (!acc.m[key]) {
-		acc.m[key] = true;
-		acc.a.push(format(self.opts.colConfig[0], self.opts.typeInfo[0], self.getRealValue(next[self.opts.fields[0]])));
-	}
-
-	return acc;
-};
 
 // #calculateDone {{{2
 
 DistinctValuesAggregate.prototype.calculateDone = function (acc) {
 	var self = this;
 
-	return acc.a.join(self.opts.separator || ', ');
+	if (acc.resultIsElement) {
+		var div = jQuery('<div>');
+		acc.map.each(function (v, k, i) {
+			if (i > 0) {
+				div.append(self.opts.separator || ', ');
+			}
+			div.append(v.formatted.clone());
+		});
+		return div;
+	}
+	else {
+		var a = [];
+
+		acc.map.each(function (v, k) {
+			a.push(k);
+		});
+
+		return a.join(self.opts.separator || ', ');
+	}
 };
 
 // Sum {{{1

@@ -2196,6 +2196,16 @@ export function isVisible(elt) {
 	return elt.css('display') !== 'none' && elt.css('visibility') === 'visible';
 }
 
+export function isElement(x) {
+	return x instanceof Element || x instanceof jQuery;
+}
+
+export function getElement(x) {
+	return x instanceof Element ? x
+		: x instanceof jQuery ? x.get(0)
+		: null;
+}
+
 /*
  * Taken from --
  *   https://stackoverflow.com/a/7557433/5628
@@ -2943,6 +2953,7 @@ export function format(fcc, fti, cell, opts) {
 	// When we've already rendered this cell before, just reuse that.
 
 	if (cell.cachedRender != null) {
+		console.log(cell);
 		return cell.cachedRender;
 	}
 

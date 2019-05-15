@@ -17,11 +17,13 @@ import {
 	eachUntilObj,
 	gensym,
 	getComparisonFn,
+	getElement,
 	getNatRep,
 	getProp,
 	getPropDef,
 	I,
 	interleaveWith,
+	isElement,
 	Lock,
 	log,
 	logAsync,
@@ -2063,6 +2065,7 @@ View.prototype.group = function () {
 			, rowIndex
 			, groupSpecElt
 			, groupFieldIndex
+			, cell
 			, value
 			, natRep
 			, groupFun;
@@ -2072,7 +2075,8 @@ View.prototype.group = function () {
 			rowVal = [];
 			for (groupFieldIndex = 0; groupFieldIndex < finalGroupSpec.length; groupFieldIndex += 1) {
 				groupSpecElt = finalGroupSpec[groupFieldIndex];
-				value = row.rowData[groupSpecElt.field].value;
+				cell = row.rowData[groupSpecElt.field];
+				value = cell.value;
 				if (groupSpecElt.fun == null) {
 					natRep = getNatRep(value);
 					origKeys[groupFieldIndex][natRep] = value;
@@ -2083,7 +2087,7 @@ View.prototype.group = function () {
 					origKeys[groupFieldIndex][natRep] = natRep;
 				}
 				rowVal[groupFieldIndex] = natRep;
-				setProp(natRep, row.rowData[groupSpecElt.field], 'natRep', 'group', groupFieldIndex);
+				setProp(natRep, cell, 'natRep', 'group', groupFieldIndex);
 			}
 			if (_.findIndex(rowVals, function (x) {
 				return arrayEqual(rowVal, x);
@@ -2976,12 +2980,12 @@ View.prototype.aggregate = function (cont) {
 			}
 			var aggResult = aggInfo.instance.calculate(_.flatten(self.data.data[rowValIdx]));
 			groupResults[aggNum][rowValIdx] = aggResult;
-			if (aggInfo.debug) {
+			if (true || aggInfo.debug) {
 				debug.info('VIEW // AGGREGATE', 'Group aggregate [%d] (%s) : Group [%s] = %s',
 					aggNum,
 					info.group[aggNum].instance.name + (info.group[aggNum].name ? ' -> ' + info.group[aggNum].name : ''),
 					rowVal.join(', '),
-					JSON.stringify(aggResult));
+					isElement(aggResult) ? getElement(aggResult).innerText : JSON.stringify(aggResult));
 			}
 		});
 
@@ -3001,7 +3005,7 @@ View.prototype.aggregate = function (cont) {
 							info.cell[aggNum].instance.name + (info.cell[aggNum].name ? ' -> ' + info.cell[aggNum].name : ''),
 							rowVal.join(', '),
 							colVal.join(', '),
-							JSON.stringify(aggResult));
+							isElement(aggResult) ? getElement(aggResult).innerText : JSON.stringify(aggResult));
 					}
 				});
 			});
@@ -3020,7 +3024,7 @@ View.prototype.aggregate = function (cont) {
 						aggNum,
 						info.pivot[aggNum].instance.name + (info.pivot[aggNum].name ? ' -> ' + info.pivot[aggNum].name : ''),
 						colVal.join(', '),
-						JSON.stringify(aggResult));
+						isElement(aggResult) ? getElement(aggResult).innerText : JSON.stringify(aggResult));
 				}
 			});
 		});

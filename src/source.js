@@ -436,13 +436,35 @@ FileSource.prototype.getTypeInfo = function (cont) {
  * will decode the input.  Note that decoding comes *after* any conversion functions are executed.
  */
 
+/**
+ * Source specification.
+ *
+ * @typedef Source~Spec
+ *
+ * @property {string} name
+ * @property {string} error
+ * @property {string} type
+ *
+ * @property {Array.<string>|Object.<string,Array.<string>>} conversion
+ * As an array, apply the named conversions to all fields in the data.  As an object, each key is a
+ * field, and the corresponding value is the named conversions to apply to that field only.
+ *
+ * ```
+ * conversion: ['foo', {'name': ['bar']}]
+ * ```
+ *
+ * This example applies the conversion *foo* to all fields, and the conversion *bar* only to values
+ * in the `name` field.
+ */
+
 // Constructor {{{2
 
 /**
  * Abstract data source that wraps specific data source implementations (e.g. for system reports or
  * the JSON API).
  *
- * @param {object} spec
+ * @param {Source~Spec} spec
+ * Specification of the source.
  *
  * @param {object} params
  *

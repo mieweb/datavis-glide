@@ -9,8 +9,10 @@ import {
 	fontAwesome,
 	format,
 	gensym,
+	getElement,
 	getProp,
 	getPropDef,
+	isElement,
 	isVisible,
 	log,
 	makeSubclass,
@@ -1311,6 +1313,7 @@ GridTable.prototype.drawBody_rowVals = function (data, tr, groupNum) {
 		}
 
 		rowVal = format(fcc, t, rowVal);
+		console.log(rowVal);
 
 		var th = jQuery('<th>');
 		var span = jQuery('<span>').addClass('wcdv_heading_title');
@@ -1353,21 +1356,29 @@ GridTable.prototype.drawBody_groupAggregates = function (data, tr, groupNum, dis
 		var aggResult = data.agg.results.group[aggNum][groupNum];
 		var text;
 
-		if (aggInfo.instance.inheritFormatting) {
-			text = format(aggInfo.colConfig[0], aggInfo.typeInfo[0], aggResult, {
-				overrideType: aggType
-			});
-		}
-		else {
-			text = format(null, null, aggResult, {
-				overrideType: aggType,
-				convert: false
-			});
-		}
-
-		var td = jQuery('<td>').text(text).attr({
+		var td = jQuery('<td>').attr({
 			'data-rowval-index': groupNum
 		});
+
+		if (isElement(aggResult)) {
+			td.append(aggResult);
+			self.csv.addCol(getElement(aggResult).innerText);
+		}
+		else {
+			if (aggInfo.instance.inheritFormatting) {
+				text = format(aggInfo.colConfig[0], aggInfo.typeInfo[0], aggResult, {
+					overrideType: aggType
+				});
+			}
+			else {
+				text = format(null, null, aggResult, {
+					overrideType: aggType,
+					convert: false
+				});
+			}
+			td.text(text);
+			self.csv.addCol(text);
+		}
 
 		if (_.every(data.groupSpec, function (gs) {
 			return gs.fun == null;
@@ -1387,7 +1398,6 @@ GridTable.prototype.drawBody_groupAggregates = function (data, tr, groupNum, dis
 			}
 		}
 
-		self.csv.addCol(text);
 		self.setAlignment(td, aggInfo.colConfig[0], aggInfo.typeInfo[0], aggInfo.instance.getType());
 		td.appendTo(tr);
 	});
@@ -2320,35 +2330,40 @@ GridTablePlain.prototype.drawFooter = function (columns, data, typeInfo) {
 				aggResult = aggInfo.instance.calculate(data.data);
 				var aggResult_formatted;
 
-				if (aggInfo.instance.inheritFormatting) {
-					aggResult_formatted = format(aggInfo.colConfig[0], aggInfo.typeInfo[0], aggResult, {
-						overrideType: aggInfo.instance.getType()
-					});
+				if (isElement(aggResult)) {
+					footerVal = aggResult;
 				}
 				else {
-					aggResult_formatted = format(null, null, aggResult, {
-						overrideType: aggInfo.instance.getType(),
-						convert: false
-					});
+					if (aggInfo.instance.inheritFormatting) {
+						aggResult_formatted = format(aggInfo.colConfig[0], aggInfo.typeInfo[0], aggResult, {
+							overrideType: aggInfo.instance.getType()
+						});
+					}
+					else {
+						aggResult_formatted = format(null, null, aggResult, {
+							overrideType: aggInfo.instance.getType(),
+							convert: false
+						});
+					}
+
+					if (aggInfo.debug) {
+						debug.info('GRID TABLE - PLAIN // FOOTER - ' + field, 'Aggregate result: %s',
+							JSON.stringify(aggResult));
+					}
+
+					switch (typeof footerConfig.format) {
+					case 'function':
+						footerVal = footerConfig.format(aggResult_formatted);
+						break;
+					case 'string':
+						footerVal = sprintf.sprintf(footerConfig.format, aggResult_formatted);
+						break;
+					default:
+						throw new Error('Footer config for field "' + field + '": `format` must be a function or a string');
+					}
 				}
 
-				if (aggInfo.debug) {
-					debug.info('GRID TABLE - PLAIN // FOOTER - ' + field, 'Aggregate result: %s',
-						JSON.stringify(aggResult));
-				}
-
-				switch (typeof footerConfig.format) {
-				case 'function':
-					footerVal = footerConfig.format(aggResult_formatted);
-					break;
-				case 'string':
-					footerVal = sprintf.sprintf(footerConfig.format, aggResult_formatted);
-					break;
-				default:
-					throw new Error('Footer config for field "' + field + '": `format` must be a function or a string');
-				}
-
-				if (footerVal instanceof Element || footerVal instanceof jQuery) {
+				if (isElement(footerVal)) {
 					td.append(footerVal);
 				}
 				else {
@@ -3675,32 +3690,37 @@ GridTableGroupDetail.prototype.drawFooter = function (columns, data, typeInfo) {
 				aggResult = aggInfo.instance.calculate(data.groupMetadata.rows);
 				var aggResult_formatted;
 
-				if (aggInfo.instance.inheritFormatting) {
-					aggResult_formatted = format(aggInfo.colConfig[0], aggInfo.typeInfo[0], aggResult, {
-						overrideType: aggInfo.instance.getType()
-					});
+				if (isElement(aggResult)) {
+					footerVal = aggResult;
 				}
 				else {
-					aggResult_formatted = format(null, null, aggResult, {
-						overrideType: aggInfo.instance.getType(),
-						convert: false
-					});
-				}
+					if (aggInfo.instance.inheritFormatting) {
+						aggResult_formatted = format(aggInfo.colConfig[0], aggInfo.typeInfo[0], aggResult, {
+							overrideType: aggInfo.instance.getType()
+						});
+					}
+					else {
+						aggResult_formatted = format(null, null, aggResult, {
+							overrideType: aggInfo.instance.getType(),
+							convert: false
+						});
+					}
 
-				if (aggInfo.debug) {
-					debug.info('GRID TABLE - PLAIN // FOOTER - ' + field, 'Aggregate result: %s',
-						JSON.stringify(aggResult));
-				}
+					if (aggInfo.debug) {
+						debug.info('GRID TABLE - PLAIN // FOOTER - ' + field, 'Aggregate result: %s',
+							JSON.stringify(aggResult));
+					}
 
-				switch (typeof footerConfig.format) {
-				case 'function':
-					footerVal = footerConfig.format(aggResult_formatted);
-					break;
-				case 'string':
-					footerVal = sprintf.sprintf(footerConfig.format, aggResult_formatted);
-					break;
-				default:
-					throw new Error('Footer config for field "' + field + '": `format` must be a function or a string');
+					switch (typeof footerConfig.format) {
+					case 'function':
+						footerVal = footerConfig.format(aggResult_formatted);
+						break;
+					case 'string':
+						footerVal = sprintf.sprintf(footerConfig.format, aggResult_formatted);
+						break;
+					default:
+						throw new Error('Footer config for field "' + field + '": `format` must be a function or a string');
+					}
 				}
 
 				if (footerVal instanceof Element || footerVal instanceof jQuery) {
@@ -4252,27 +4272,33 @@ GridTableGroupSummary.prototype.drawBody = function (data, typeInfo, columns, co
 						, text
 						, td;
 
+					td = jQuery('<td>');
 					aggResult = data.agg.results.all[aggInfo.aggNum];
 
-					if (aggInfo.instance.inheritFormatting) {
-						text = format(aggInfo.colConfig[0], aggInfo.typeInfo[0], aggResult, {
-							overrideType: aggInfo.instance.getType()
-						});
+					if (isElement(aggResult)) {
+						td.append(aggResult);
+						self.csv.addCol(getElement(aggResult).innerText);
 					}
 					else {
-						text = format(null, null, aggResult, {
-							overrideType: aggInfo.instance.getType(),
-							convert: false
-						});
+						if (aggInfo.instance.inheritFormatting) {
+							text = format(aggInfo.colConfig[0], aggInfo.typeInfo[0], aggResult, {
+								overrideType: aggInfo.instance.getType()
+							});
+						}
+						else {
+							text = format(null, null, aggResult, {
+								overrideType: aggInfo.instance.getType(),
+								convert: false
+							});
+						}
+						td.text(text);
+						self.csv.addCol(text);
 					}
-
-					td = jQuery('<td>').text(text);
 
 					if (self.opts.drawInternalBorders || ai.cell.length > 1) {
 						td.addClass(aiAllIndex === 0 ? 'wcdv_pivot_aggregate_boundary' : 'wcdv_pivot_colval_boundary');
 					}
 
-					self.csv.addCol(text);
 					self.setAlignment(td, aggInfo.colConfig[0], aggInfo.typeInfo[0], aggInfo.instance.getType());
 					td.appendTo(tr);
 				});
@@ -4801,31 +4827,36 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 								var aggType = aggInfo.instance.getType();
 								var agg = data.agg.results.cell[aggNum];
 								var aggResult = agg[groupNum][pivotNum];
-
-								rowAgg.push(aggResult);
-
-								var text;
-
-								if (aggInfo.instance.inheritFormatting) {
-									text = format(aggInfo.colConfig[0], aggInfo.typeInfo[0], aggResult, {
-										overrideType: aggType
-									});
-								}
-								else {
-									text = format(null, null, aggResult, {
-										overrideType: aggType,
-										convert: false
-									});
-								}
-
 								var td = jQuery('<td>')
 									.addClass('wcdv_pivot_cell')
 									.attr({
 										'data-rowval-index': groupNum,
 										'data-colval-index': pivotNum
-									})
-									.text(text)
-								;
+									});
+
+								rowAgg.push(aggResult);
+
+								var text;
+
+								if (isElement(aggResult)) {
+									td.append(aggResult);
+									self.csv.addCol(getElement(aggResult).innerText);
+								}
+								else {
+									if (aggInfo.instance.inheritFormatting) {
+										text = format(aggInfo.colConfig[0], aggInfo.typeInfo[0], aggResult, {
+											overrideType: aggType
+										});
+									}
+									else {
+										text = format(null, null, aggResult, {
+											overrideType: aggType,
+											convert: false
+										});
+									}
+									td.text(text);
+									self.csv.addCol(text);
+								}
 
 								if (_.every(data.groupSpec, function (gs) { return gs.fun == null; })
 										&& _.every(data.pivotSpec, function (ps) { return ps.fun == null; })) {
@@ -4836,7 +4867,6 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 									td.addClass('wcdv_pivot_colval_boundary');
 								}
 
-								self.csv.addCol(text);
 								// REMOVED: How do we let the user set sizes &c. when doing a pivot table?
 								// self.setCss(td, col);
 
@@ -4969,22 +4999,30 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 							self.csv.addCol('');
 						}
 
-						var aggResult = data.agg.results.pivot[aggNum][colValIdx];
-						if (aggInfo.instance.inheritFormatting) {
-							text = format(aggInfo.colConfig[0], aggInfo.typeInfo[0], aggResult, {
-								overrideType: aggInfo.instance.getType()
-							});
-						}
-						else {
-							text = format(null, null, aggResult, {
-								overrideType: aggInfo.instance.getType(),
-								convert: false
-							});
-						}
-
-						var td = jQuery('<td>').text(text).attr({
+						var td = jQuery('<td>').attr({
 							'data-colval-index': colValIdx
 						});
+						var aggResult = data.agg.results.pivot[aggNum][colValIdx];
+
+						if (isElement(aggResult)) {
+							td.append(aggResult);
+							self.csv.addCol(getElement(aggResult).innerText);
+						}
+						else {
+							if (aggInfo.instance.inheritFormatting) {
+								text = format(aggInfo.colConfig[0], aggInfo.typeInfo[0], aggResult, {
+									overrideType: aggInfo.instance.getType()
+								});
+							}
+							else {
+								text = format(null, null, aggResult, {
+									overrideType: aggInfo.instance.getType(),
+									convert: false
+								});
+							}
+							td.text(text);
+							self.csv.addCol(text);
+						}
 
 						if (_.every(data.pivotSpec, function (ps) { return ps.fun == null; })) {
 							self._addDrillDownClass(td);
@@ -4998,7 +5036,6 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 							td.addClass('wcdv_pivot_colval_boundary');
 						}
 
-						self.csv.addCol(text);
 						self.setAlignment(td, aggInfo.colConfig[0], aggInfo.typeInfo[0], aggInfo.instance.getType());
 						td.appendTo(tr);
 
@@ -5029,26 +5066,32 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 
 						aggInfo = data.agg.info.all[aggNum];
 						aggResult = data.agg.results.all[aggNum];
+						td = jQuery('<td>');
 
-						if (aggInfo.instance.inheritFormatting) {
-							text = format(aggInfo.colConfig[0], aggInfo.typeInfo[0], aggResult, {
-								overrideType: aggInfo.instance.getType()
-							});
+						if (isElement(aggResult)) {
+							td.append(aggResult);
+							self.csv.addCol(getElement(aggResult).innerText);
 						}
 						else {
-							text = format(null, null, aggResult, {
-								overrideType: aggInfo.instance.getType(),
-								convert: false
-							});
+							if (aggInfo.instance.inheritFormatting) {
+								text = format(aggInfo.colConfig[0], aggInfo.typeInfo[0], aggResult, {
+									overrideType: aggInfo.instance.getType()
+								});
+							}
+							else {
+								text = format(null, null, aggResult, {
+									overrideType: aggInfo.instance.getType(),
+									convert: false
+								});
+							}
+							td.text(text);
+							self.csv.addCol(text);
 						}
-
-						td = jQuery('<td>').text(text);
 
 						if (self.opts.drawInternalBorders || ai.cell.length > 1) {
 							td.addClass(aiPivotIndex === 0 ? 'wcdv_pivot_aggregate_boundary' : 'wcdv_pivot_colval_boundary');
 						}
 
-						self.csv.addCol(text);
 						self.setAlignment(td, aggInfo.colConfig[0], aggInfo.typeInfo[0], aggInfo.instance.getType());
 						td.appendTo(tr);
 
