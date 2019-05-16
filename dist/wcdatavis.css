@@ -793,6 +793,21 @@ tr.wcdvgrid_more td {
  * EMPTY CELL
  */
 
+html:not(.ie11) .wcdv_grid_table table td.wcdv_cell_empty,
+html:not(.ie11) .wcdv_grid_table table th.wcdv_cell_empty {
+	position: relative;
+}
+
+html:not(.ie11) .wcdv_grid_table table td.wcdv_cell_empty div,
+html:not(.ie11) .wcdv_grid_table table th.wcdv_cell_empty div {
+	position: absolute;
+	top: 0px;
+	left: 0px;
+	right: 0px;
+	bottom: 0px;
+	margin: 4px;
+}
+
 .wcdv_grid_table table td.wcdv_cell_empty div,
 .wcdv_grid_table table th.wcdv_cell_empty div {
 	background: repeating-linear-gradient(-45deg, rgba(127, 127, 127, 0.5), rgba(127, 127, 127, 0.5) 8px, rgba(0, 0, 0, 0) 8px, rgba(0, 0, 0, 0) 16px);
