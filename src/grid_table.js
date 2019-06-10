@@ -1186,6 +1186,10 @@ GridTable.prototype.draw = function (root, opts, cont) {
 						self.ui.tbl.attr('data-ttsidecells', pinnedColumns);
 					}
 				}
+				else if ((data.isGroup || data.isPivot) && getProp(self.defn, 'table', 'whenGroup', 'pinRowvals')) {
+					self.ui.tbl.attr('data-tttype', 'sidescroll');
+					self.ui.tbl.attr('data-ttsidecells', data.groupFields.length);
+				}
 				break;
 			}
 		}

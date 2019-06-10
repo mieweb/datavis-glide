@@ -1076,15 +1076,18 @@ Grid.prototype._addGroupButtons = function (toolbar) {
 	var self = this;
 	var aggSpec;
 	var showTotalRow, colConfigWinBtn;
+	var pinRowvals;
 
 	var enableDisable = function (selected) {
 		switch (selected) {
 		case 'summary':
 			showTotalRow.prop('disabled', false);
+			pinRowvals.prop('disabled', false);
 			colConfigWinBtn.prop('disabled', true);
 			break;
 		case 'detail':
 			showTotalRow.prop('disabled', true);
+			pinRowvals.prop('disabled', true);
 			colConfigWinBtn.prop('disabled', false);
 			break;
 		}
@@ -1132,6 +1135,17 @@ Grid.prototype._addGroupButtons = function (toolbar) {
 			self.view.setAggregate(agg, {
 				sendEvent: false
 			});
+		}
+	);
+
+	pinRowvals = makeToggleCheckbox(
+		self.defn,
+		['table', 'whenGroup', 'pinRowvals'],
+		false,
+		'Pin Groups',
+		toolbar,
+		function (isChecked) {
+			self.redraw();
 		}
 	);
 
@@ -1196,6 +1210,17 @@ Grid.prototype._addPivotButtons = function (toolbar) {
 			self.view.setAggregate(agg, {
 				sendEvent: false
 			});
+		}
+	);
+
+	makeToggleCheckbox(
+		self.defn,
+		['table', 'whenGroup', 'pinRowvals'],
+		false,
+		'Pin Groups',
+		toolbar,
+		function (isChecked) {
+			self.redraw();
 		}
 	);
 };
