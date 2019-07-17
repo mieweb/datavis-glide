@@ -2068,7 +2068,8 @@ View.prototype.group = function () {
 			, cell
 			, value
 			, natRep
-			, groupFun;
+			, groupFun
+			, groupFunResult;
 
 		for (rowIndex = 0; rowIndex < self.data.data.length; rowIndex += 1) {
 			row = self.data.data[rowIndex];
@@ -2083,10 +2084,12 @@ View.prototype.group = function () {
 				}
 				else {
 					groupFun = GROUP_FUNCTION_REGISTRY.get(groupSpecElt.fun);
-					natRep = groupFun.applyValueFun(value);
-					origKeys[groupFieldIndex][natRep] = natRep;
+					groupFunResult = groupFun.applyValueFun(value);
+					natRep = getNatRep(groupFunResult);
+					origKeys[groupFieldIndex][natRep] = groupFunResult;
 				}
 				rowVal[groupFieldIndex] = natRep;
+				// Cache the natRep in the cell for improved performance in buildData().
 				setProp(natRep, cell, 'natRep', 'group', groupFieldIndex);
 			}
 			if (_.findIndex(rowVals, function (x) {
@@ -2182,6 +2185,7 @@ View.prototype.group = function () {
 
 			for (groupFieldIndex = 0; groupFieldIndex < finalGroupSpec.length; groupFieldIndex += 1) {
 				groupSpecElt = finalGroupSpec[groupFieldIndex];
+				// Use the cached natRep from the cell to quickly build the path to the metadata node.
 				rowVal[groupFieldIndex] = row.rowData[groupSpecElt.field].natRep.group[groupFieldIndex];
 			}
 
@@ -3477,6 +3481,21 @@ GROUP_FUNCTION_REGISTRY.set('week_iso', new GroupFunction({
 		}
 		return d.format('[W]WW');
 	}
+}));
+
+GROUP_FUNCTION_REGISTRY.set('day', new GroupFunction({
+	displayName: 'Day Only (No Time)',
+	allowedTypes: ['datetime'],
+	valueFun: function (d) {
+		if (typeof d === 'string') {
+			d = moment(d);
+		}
+		if (!moment.isMoment(d) || !d.isValid()) {
+			return 'Invalid Date';
+		}
+		return d.format('YYYY-MM-DD');
+	},
+	resultType: 'date'
 }));
 
 GROUP_FUNCTION_REGISTRY.set('day_of_week', new GroupFunction({
