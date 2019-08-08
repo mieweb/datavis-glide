@@ -429,7 +429,7 @@ FileSource.prototype.getTypeInfo = function (cont) {
  *
  * @typedef Source~TypeInfo
  *
- * @type {Object<string,string|Source~TypeInfo_Field>}
+ * @type {Object<string,string|Source~FieldTypeInfo>}
  */
 
 /**
@@ -440,7 +440,7 @@ FileSource.prototype.getTypeInfo = function (cont) {
  * updates this property, it's possible to perform your own conversion and still get the benefit of
  * type decoding on the result.
  *
- * @typedef Source~TypeInfo_Field
+ * @typedef Source~FieldTypeInfo
  *
  * @property {string} type What type of data are we receiving?  Must be one of the following:
  * string, number, date, datetime, currency.

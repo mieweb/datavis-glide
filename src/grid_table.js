@@ -1,3 +1,5 @@
+// Imports {{{1
+
 import _ from 'underscore';
 import sprintf from 'sprintf-js';
 import jQuery from 'jquery';
@@ -463,9 +465,38 @@ GridTable.prototype.setCss = function (elt, field) {
 
 // #setAlignment {{{2
 
+/**
+ * Set the alignment on a table cell.
+ *
+ * @param {HTMLElement} elt
+ * The element to set alignment on.
+ *
+ * @param {Grid~FieldColConfig} [fcc]
+ * Column configuration for the field that this cell is based on.
+ *
+ * @param {Grid~FieldTypeInfo} [fti]
+ * Type information for the field that this cell is based on.
+ *
+ * @param {string} [overrideType]
+ * Override the type of the field, used when an aggregate function produces a result with a
+ * different type than the source field (e.g. distinctValues of a date produces a string, not a
+ * date, so `overrideType` should be "string").
+ *
+ * @param {string} [fallback]
+ * Fallback default alignment when no alignment is determined by DataVis.
+ */
+
 GridTable.prototype.setAlignment = function (elt, fcc, fti, overrideType, fallback) {
 	fcc = fcc || {};
 	fti = fti || {};
+
+	if (elt instanceof jQuery) {
+		elt = elt.get(0);
+	}
+
+	if (!(elt instanceof Element)) {
+		throw new Error('Call Error: `elt` must be an instance of Element');
+	}
 
 	var type = overrideType || fti.type;
 	var alignment = fcc.cellAlignment || fallback;
@@ -476,26 +507,21 @@ GridTable.prototype.setAlignment = function (elt, fcc, fti, overrideType, fallba
 
 	switch (alignment) {
 	case 'left':
-		elt.addClass('wcdvgrid_textLeft');
+		elt.classList.add('wcdvgrid_textLeft');
 		break;
-
 	case 'right':
-		elt.addClass('wcdvgrid_textRight');
+		elt.classList.add('wcdvgrid_textRight');
 		break;
-
 	case 'center':
-		elt.addClass('wcdvgrid_textCenter');
+		elt.classList.add('wcdvgrid_textCenter');
 		break;
-
 	case 'justify':
-		elt.addClass('wcdvgrid_textJustify');
+		elt.classList.add('wcdvgrid_textJustify');
 		break;
-
 	default:
-		// We don't have a class for every possible value, so just set the style rule on the
-		// element in those cases.
-
-		elt.css('text-align', alignment);
+		// We don't have a class for every possible value, so just set the style rule on the element in
+		// those cases.  This should be extremely rare, given what we've covered above.
+		elt.style.setProperty('text-align', alignment);
 	}
 };
 
@@ -528,10 +554,17 @@ GridTable.prototype._addSortingToHeader = function (data, orientation, spec, con
 		return;
 	}
 
+	if (['horizontal', 'vertical'].indexOf(orientation) < 0) {
+		throw new Error('Call Error: `orientation` must be "horizontal" or "vertical"');
+	}
+	if (!(container instanceof Element)) {
+		throw new Error('Call Error: `container` must be an Element');
+	}
+
 	var sortIcon_orientationClass = 'wcdv_sort_icon_' + orientation;
 
 	/**
-	 * @param {Element|jQuery} span
+	 * @param {Element} span
 	 * The sort indicator span to replace.
 	 *
 	 * @param {string} [dir]
@@ -539,33 +572,43 @@ GridTable.prototype._addSortingToHeader = function (data, orientation, spec, con
 	 */
 
 	var replaceSortIndicator = function (span, dir) {
-		if (!(span instanceof jQuery || span instanceof Element)) {
-			throw new Error('Call Error: `span` must be either an Element or a jQuery');
+		if (!(span instanceof Element)) {
+			throw new Error('Call Error: `span` must be an Element');
+		}
+		if (dir != null) {
+			if (!_.isString(dir)) {
+				throw new Error('Call Error: `dir` must be null or a string');
+			}
+			else if (dir.toUpperCase() !== 'ASC' && dir.toUpperCase() !== 'DESC') {
+				throw new Error('Call Error: `dir` must be either "ASC" or "DESC"');
+			}
 		}
 
-		if (dir != null && !_.isString(dir)) {
-			throw new Error('Call Error: `dir` must be a string');
-		}
-		else if (dir != null && dir.toUpperCase() !== 'ASC' && dir.toUpperCase() !== 'DESC') {
-			throw new Error('Call Error: `dir` must be either "ASC" or "DESC"');
-		}
+		var th = container.closest('th');
 
-		if (span instanceof Element) {
-			span = jQuery(span);
+		for (var i = 0; i < span.children.length; i += 1) {
+			span.children[i].classList.remove('wcdv_sort_arrow_active');
 		}
-
-		span.children().removeClass('wcdv_sort_arrow_active');
-		container.closest('th').removeClass('wcdv_sort_column_active wcdv_bg-primary');
+		th.classList.remove('wcdv_sort_column_active');
+		th.classList.remove('wcdv_bg-primary');
 
 		if (dir != null) {
-			container.closest('th').addClass('wcdv_sort_column_active wcdv_bg-primary');
+			th.classList.add('wcdv_sort_column_active');
+			th.classList.add('wcdv_bg-primary');
 
 			// Yes, this is backwards.  The FontAwesome icon for "ascending" points upwards, but I want to
 			// color the one that points dowards, indicating that is the direction of increasing values.
 
-			span.children().removeClass('wcdv_sort_arrow_active');
-			span.children('.fa-sort-desc').addClass('wcdv_sort_arrow_' + (dir.toUpperCase() === 'ASC' ? 'active' : 'inactive'));
-			span.children('.fa-sort-asc').addClass('wcdv_sort_arrow_' + (dir.toUpperCase() === 'DESC' ? 'active' : 'inactive'));
+			for (var i = 0; i < span.children.length; i += 1) {
+				var child = span.children[i];
+				child.classList.remove('wcdv_sort_arrow_active');
+				if (child.classList.contains('fa-sort-desc')) {
+					child.classList.add('wcdv_sort_arrow_' + (dir.toUpperCase() === 'ASC' ? 'active' : 'inactive'));
+				}
+				if (child.classList.contains('fa-sort-asc')) {
+					child.classList.add('wcdv_sort_arrow_' + (dir.toUpperCase() === 'DESC' ? 'active' : 'inactive'));
+				}
+			}
 		}
 	};
 
@@ -608,17 +651,27 @@ GridTable.prototype._addSortingToHeader = function (data, orientation, spec, con
 		self.view.setSort(sortSpec, self.makeProgress('Sort'));
 	};
 
-	var sortIcon_class = gensym();
-	var sortIcon_span = fontAwesome('fa-stack', orientation === 'horizontal' ? 'fa-rotate-270' : null)
-		.addClass(sortIcon_class)
-		.addClass(sortIcon_orientationClass)
-		.addClass('wcdv_sort_icon');
-
 	// Set the sort direction in the arrow icon.  The way we do this is by building a single
 	// FontAwesome "stack" from the up and down carets.  Then we can style the one we want.
 
-	jQuery('<span>').addClass('fa fa-sort-asc fa-stack-1x').appendTo(sortIcon_span);
-	jQuery('<span>').addClass('fa fa-sort-desc fa-stack-1x').appendTo(sortIcon_span);
+	var ascArrow = document.createElement('span');
+	ascArrow.classList.add('fa');
+	ascArrow.classList.add('fa-sort-asc');
+	ascArrow.classList.add('fa-stack-1x');
+
+	var descArrow = document.createElement('span');
+	descArrow.classList.add('fa');
+	descArrow.classList.add('fa-sort-desc');
+	descArrow.classList.add('fa-stack-1x');
+
+	var sortIcon_class = gensym();
+
+	var sortIcon_span = fontAwesome('fa-stack', orientation === 'horizontal' ? 'fa-rotate-270' : null).get(0);
+	sortIcon_span.classList.add(sortIcon_class);
+	sortIcon_span.classList.add(sortIcon_orientationClass);
+	sortIcon_span.classList.add('wcdv_sort_icon');
+	sortIcon_span.appendChild(ascArrow);
+	sortIcon_span.appendChild(descArrow);
 
 	var sortIcon_menu_items = {};
 
@@ -714,7 +767,7 @@ GridTable.prototype._addSortingToHeader = function (data, orientation, spec, con
 
 	self.contextMenuSelectors.push('.' + sortIcon_class);
 
-	container.append(sortIcon_span);
+	container.appendChild(sortIcon_span);
 
 	// Now check the existing sort specification in the view to see if any of the sort icons that we
 	// just created should be lit up.
@@ -826,7 +879,7 @@ GridTable.prototype._addDrillDownHandler = function (tbl, data) {
 // #_addDrillDownClass {{{2
 
 GridTable.prototype._addDrillDownClass = function (elt) {
-	elt.addClass('wcdv_drill_down');
+	elt.classList.add('wcdv_drill_down');
 };
 
 // #addSortHandler {{{2
@@ -1145,10 +1198,10 @@ GridTable.prototype.draw = function (root, opts, cont) {
 					};
 				}
 
-				self.grid.on(Grid.events.showControls, function () {
+				self.grid.on('showControls', function () {
 					self.ui.tbl.floatThead('reflow');
 				}, { who: self });
-				self.grid.on(Grid.events.hideControls, function () {
+				self.grid.on('hideControls', function () {
 					self.ui.tbl.floatThead('reflow');
 				}, { who: self });
 				self.grid.filterControl.on(['fieldAdded', 'fieldRemoved'], function () {
@@ -1244,7 +1297,7 @@ GridTable.prototype.drawHeader_aggregates = function (data, tr, displayOrderInde
 			}
 		}
 		self.csv.addCol(text);
-		self._addSortingToHeader(data, 'vertical', {aggType: 'group', aggNum: aggNum}, headingThControls, ai.group);
+		self._addSortingToHeader(data, 'vertical', {aggType: 'group', aggNum: aggNum}, headingThControls.get(0), ai.group);
 		self.setAlignment(th, aggInfo.colConfig[0], aggInfo.typeInfo[0], aggInfo.instance.getType());
 	});
 };
@@ -1289,6 +1342,14 @@ GridTable.prototype.drawHeader_addCols = function (tr, typeInfo, opts) {
 GridTable.prototype.drawBody_rowVals = function (data, tr, groupNum) {
 	var self = this;
 
+	if (!(tr instanceof Element)) {
+		throw new Error('Call Error: `tr` must be an instance of Element');
+	}
+
+	if (typeof groupNum !== 'number') {
+		throw new Error('Call Error: `groupNum` must be a number');
+	}
+
 	// Create the cells that show the values of the grouped columns.
 	//
 	// EXAMPLE
@@ -1303,9 +1364,9 @@ GridTable.prototype.drawBody_rowVals = function (data, tr, groupNum) {
 	//   ... row[col] | col ∉ groupFields ...
 	// </tr>
 
-	_.each(data.rowVals[groupNum], function (rowVal, rowValIndex) {
-		var groupField = data.groupFields[rowValIndex];
-		var groupSpec = data.groupSpec[rowValIndex];
+	_.each(data.rowVals[groupNum], function (rowValElt, rowValEltIdx) {
+		var groupField = data.groupFields[rowValEltIdx];
+		var groupSpec = data.groupSpec[rowValEltIdx];
 		var fcc = self.colConfig.get(groupField) || {};
 		var t = self.typeInfo.get(groupField);
 
@@ -1315,32 +1376,45 @@ GridTable.prototype.drawBody_rowVals = function (data, tr, groupNum) {
 			};
 		}
 
-		rowVal = format(fcc, t, rowVal);
+		rowValElt = format(fcc, t, rowValElt);
 
-		var th = jQuery('<th>');
-		var span = jQuery('<span>').addClass('wcdv_heading_title');
+		// TH (th)
+		//   DIV (headingThContainer)
+		//     SPAN (headingThValue)
+		//     DIV (headingThControls)
 
-		var headingThControls = jQuery('<div>');
+		var headingThValue = document.createElement('span');
+		headingThValue.classList.add('wcdv_heading_title');
 
-		var headingThContainer = jQuery('<div>')
-			.addClass('wcdv_heading_container')
-			.append(span, headingThControls);
+		var headingThControls = document.createElement('div');
 
-		if (rowVal instanceof Element || rowVal instanceof jQuery) {
-			span.append(rowVal);
+		var headingThContainer = document.createElement('div');
+		headingThContainer.classList.add('wcdv_heading_container');
+		headingThContainer.appendChild(headingThValue);
+		headingThContainer.appendChild(headingThControls);
+
+		var th = document.createElement('th');
+		th.appendChild(headingThContainer);
+
+		if (rowValElt instanceof jQuery) {
+			rowValElt = rowValElt.get(0);
+		}
+
+		if (rowValElt instanceof Element) {
+			headingThValue.appendChild(rowValElt);
 		}
 		else if (fcc.allowHtml) {
-			span.html(rowVal);
+			headingThValue.innerHtml = rowValElt;
 		}
 		else {
-			span.text(rowVal);
+			headingThValue.innerText = rowValElt;
 		}
 
-		headingThContainer.appendTo(th);
-		th.appendTo(tr);
-		self.csv.addCol(span.text());
+		th.appendChild(headingThContainer);
+		tr.appendChild(th);
+		self.csv.addCol(headingThValue.innerText);
 
-		if (data.isPivot && rowValIndex === data.groupFields.length - 1) {
+		if (data.isPivot && rowValEltIdx === data.groupFields.length - 1) {
 			self._addSortingToHeader(data, 'horizontal', {rowVal: data.rowVals[groupNum], aggNum: 0}, headingThControls, getPropDef([], data, 'agg', 'info', 'cell'));
 		}
 	});
@@ -1348,9 +1422,31 @@ GridTable.prototype.drawBody_rowVals = function (data, tr, groupNum) {
 
 // #drawBody_groupAggregates {{{2
 
+/**
+ * Render the group aggregate results in a row.
+ *
+ * @param {any} data
+ *
+ * @param {Element} tr
+ * Row to which we add the group aggregate results.
+ *
+ * @param {number} groupNum
+ * Group number (a.k.a. the rowVal index) to render the aggregate results for.
+ *
+ * @param {number} displayOrderIndex
+ * What position we're rendering the group aggregate results in.  When greater than zero, draw a
+ * left border.
+ *
+ * @param {number} displayOrderMax
+ * The max number of positions for rendering data.  When this isn't the last thing rendered, draw a
+ * right border.
+ */
+
 GridTable.prototype.drawBody_groupAggregates = function (data, tr, groupNum, displayOrderIndex, displayOrderMax) {
 	var self = this;
 	var ai = self._getAggInfo(data);
+
+	// Go through all the group aggregates and create columns for each one in the specified row.
 
 	_.each(ai.group, function (aggInfo, aggGroupIndex) {
 		var aggNum = aggInfo.aggNum;
@@ -1358,12 +1454,15 @@ GridTable.prototype.drawBody_groupAggregates = function (data, tr, groupNum, dis
 		var aggResult = data.agg.results.group[aggNum][groupNum];
 		var text;
 
-		var td = jQuery('<td>').attr({
-			'data-rowval-index': groupNum
-		});
+		var td = document.createElement('td');
+		td.setAttribute('data-rowval-index', groupNum);
 
-		if (isElement(aggResult)) {
-			td.append(aggResult);
+		if (aggResult instanceof jQuery) {
+			aggResult = aggResult.get(0);
+		}
+
+		if (aggResult instanceof Element) {
+			td.appendChild(aggResult);
 			self.csv.addCol(getElement(aggResult).innerText);
 		}
 		else {
@@ -1378,9 +1477,13 @@ GridTable.prototype.drawBody_groupAggregates = function (data, tr, groupNum, dis
 					convert: false
 				});
 			}
-			td.text(text);
+			td.innerText = text;
 			self.csv.addCol(text);
 		}
+
+		// Allow drilldown, but only when there's no group function set.  This limitation is currently
+		// in place because we lack the ability to set filters that match all group functions' results.
+		// For example, day of week, because we can't filter to show "only Mondays."
 
 		if (_.every(data.groupSpec, function (gs) {
 			return gs.fun == null;
@@ -1388,20 +1491,22 @@ GridTable.prototype.drawBody_groupAggregates = function (data, tr, groupNum, dis
 			self._addDrillDownClass(td);
 		}
 
+		// Decide how we should draw borders based on the display order index & max.
+
 		if (self.opts.drawInternalBorders || data.agg.info.group.length > 1) {
 			if (displayOrderIndex > 0 && aggGroupIndex === 0) {
-				td.addClass('wcdv_bld'); // border-left: double
+				td.classList.add('wcdv_bld'); // border-left: double
 			}
 			if (displayOrderIndex < displayOrderMax - 1 && aggGroupIndex === ai.group.length - 1) {
-				td.addClass('wcdv_brd'); // border-right: double
+				td.classList.add('wcdv_brd'); // border-right: double
 			}
 			if (aggGroupIndex > 0) {
-				td.addClass('wcdv_pivot_colval_boundary');
+				td.classList.add('wcdv_pivot_colval_boundary');
 			}
 		}
 
 		self.setAlignment(td, aggInfo.colConfig[0], aggInfo.typeInfo[0], aggInfo.instance.getType());
-		td.appendTo(tr);
+		tr.appendChild(td);
 	});
 };
 
@@ -1888,7 +1993,7 @@ GridTablePlain.prototype.drawHeader = function (columns, data, typeInfo, opts) {
 
 		// In the plain grid table output, the only way to sort is vertically by field.
 
-		self._addSortingToHeader(data, 'vertical', {field: field}, headingThControls);
+		self._addSortingToHeader(data, 'vertical', {field: field}, headingThControls.get(0));
 
 		self._addFilterToHeader(headingThControls, field, headingText);
 
@@ -2144,7 +2249,7 @@ GridTablePlain.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 					}
 
 					self.setCss(jQuery(td), field);
-					self.setAlignment(jQuery(td), fcc, typeInfo.get(field));
+					self.setAlignment(td, fcc, typeInfo.get(field));
 
 					if (self.opts.drawInternalBorders) {
 						td.classList.add('wcdv_pivot_colval_boundary');
@@ -2833,7 +2938,7 @@ GridTableGroupDetail.prototype.drawHeader = function (columns, data, typeInfo, o
 			.append(headingThContainer)
 		;
 
-		self._addSortingToHeader(data, 'vertical', {groupFieldIndex: fieldIdx}, headingThControls);
+		self._addSortingToHeader(data, 'vertical', {groupFieldIndex: fieldIdx}, headingThControls.get(0));
 
 		self.setCss(headingTh, field);
 
@@ -2893,7 +2998,7 @@ GridTableGroupDetail.prototype.drawHeader = function (columns, data, typeInfo, o
 			headingTh.addClass('wcdv_pivot_colval_boundary');
 		}
 
-		self._addSortingToHeader(data, 'vertical', {field: field}, headingThControls);
+		self._addSortingToHeader(data, 'vertical', {field: field}, headingThControls.get(0));
 
 		self.setCss(headingTh, field);
 		self.setAlignment(headingTh, fcc, typeInfo.get(field));
@@ -4154,7 +4259,7 @@ GridTableGroupSummary.prototype.drawHeader = function (columns, data, typeInfo, 
 
 					self.csv.addCol(fcc.displayText || field);
 
-					self._addSortingToHeader(data, 'vertical', {groupFieldIndex: fieldIdx}, headingThControls, getProp(data, 'agg', 'info', 'group'));
+					self._addSortingToHeader(data, 'vertical', {groupFieldIndex: fieldIdx}, headingThControls.get(0), getProp(data, 'agg', 'info', 'group'));
 
 					self.setCss(headingTh, field);
 
@@ -4183,7 +4288,7 @@ GridTableGroupSummary.prototype.drawBody = function (data, typeInfo, columns, co
 	var aggType, aggInfo, rowAgg;
 
 	_.each(data.data, function (rowGroup, groupNum) {
-		var tr = jQuery('<tr>');
+		var tr = document.createElement('tr');
 		self.csv.addRow();
 
 		_.each(self.opts.displayOrder, function (what, displayOrderIndex) {
@@ -4209,14 +4314,19 @@ GridTableGroupSummary.prototype.drawBody = function (data, typeInfo, columns, co
 					// that using Numeral exactly as specified for the "Amount" field.
 
 					_.each(self.opts.addCols, function (addCol) {
+						var td = document.createElement('td');
 						var addColResult = addCol.value(data.data, groupNum, rowAgg, aggType);
+						var addColText;
 
-						if (addColResult instanceof Element || addColResult instanceof jQuery) {
-							var td = jQuery('<td>').append(addColResult);
+						if (addColResult instanceof jQuery) {
+							addColResult = addColResult.get(0);
+						}
+
+						if (addColResult instanceof Element) {
+							td.appendChild(addColResult);
+							self.csv.addCol(addColResult.innerText);
 						}
 						else {
-							var addColText;
-
 							if (aggInfo.instance.inheritFormatting) {
 								addColText = format(aggInfo.colConfig[0], aggInfo.typeInfo[0], addColResult, {
 									alwaysFormat: true
@@ -4228,15 +4338,15 @@ GridTableGroupSummary.prototype.drawBody = function (data, typeInfo, columns, co
 									convert: false
 								});
 							}
-							td = jQuery('<td>').text(addColText);
+							td.innerText = addColText;
+							self.csv.addCol(addColText);
 						}
 
 						if (getProp(opts, 'pivotConfig', 'aggField')) {
 							self.setAlignment(td, self.colConfig.get(opts.pivotConfig.aggField), typeInfo.get(opts.pivotConfig.aggField));
 						}
 
-						td.appendTo(tr);
-						self.csv.addCol(td.text());
+						tr.appendChild(td);
 					});
 				}
 			}
@@ -4465,7 +4575,7 @@ GridTablePivot.prototype.drawHeader = function (columns, data, typeInfo, opts) {
 				.append(headingThContainer)
 				._makeDraggableField();
 
-			self._addSortingToHeader(data, 'vertical', {groupFieldIndex: fieldIdx}, headingThControls, getPropDef([], data, 'agg', 'info', 'cell'));
+			self._addSortingToHeader(data, 'vertical', {groupFieldIndex: fieldIdx}, headingThControls.get(0), getPropDef([], data, 'agg', 'info', 'cell'));
 
 			self.setCss(th, field);
 
@@ -4535,7 +4645,7 @@ GridTablePivot.prototype.drawHeader = function (columns, data, typeInfo, opts) {
 			.append(headingThContainer)
 			._makeDraggableField();
 
-		self._addSortingToHeader(data, 'horizontal', {pivotFieldIndex: pivotFieldIdx}, headingThControls, getPropDef([], data, 'agg', 'info', 'cell'));
+		self._addSortingToHeader(data, 'horizontal', {pivotFieldIndex: pivotFieldIdx}, headingThControls.get(0), getPropDef([], data, 'agg', 'info', 'cell'));
 
 		self.setCss(th, pivotField);
 
@@ -4607,7 +4717,7 @@ GridTablePivot.prototype.drawHeader = function (columns, data, typeInfo, opts) {
 				// We only allow sorting on the final
 
 				if (isLastPivotField) {
-					self._addSortingToHeader(data, 'vertical', {colVal: data.colVals[colValIndex], aggNum: 0}, headingThControls, getPropDef([], data, 'agg', 'info', 'cell'));
+					self._addSortingToHeader(data, 'vertical', {colVal: data.colVals[colValIndex], aggNum: 0}, headingThControls.get(0), getPropDef([], data, 'agg', 'info', 'cell'));
 				}
 
 				if (ai.cell.length === 1) {
@@ -4792,7 +4902,7 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 	_.each(data.data, function (rowGroup, groupNum) {
 		self.csv.addRow();
 
-		var tr = jQuery('<tr>');
+		var tr = document.createElement('tr');
 
 		_.each(self.opts.displayOrder, function (what, displayOrderIndex) {
 			if (typeof what === 'string') {
@@ -4820,7 +4930,7 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 					_.each(rowGroup, function (colGroup, pivotNum) {
 						if (ai.cell.length === 0) {
 							// There's no cell aggregate functions, so there isn't anything to put in the cell.
-							tr.append(document.createElement('td'));
+							tr.appendChild(document.createElement('td'));
 						}
 						else {
 							// Every cell aggregate function is going to make a separate cell.
@@ -4829,20 +4939,23 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 								var aggType = aggInfo.instance.getType();
 								var agg = data.agg.results.cell[aggNum];
 								var aggResult = agg[groupNum][pivotNum];
-								var td = jQuery('<td>')
-									.addClass('wcdv_pivot_cell')
-									.attr({
-										'data-rowval-index': groupNum,
-										'data-colval-index': pivotNum
-									});
+
+								var td = document.createElement('td');
+								td.classList.add('wcdv_pivot_cell');
+								td.setAttribute('data-rowval-index', groupNum);
+								td.setAttribute('data-colval-index', pivotNum);
 
 								rowAgg.push(aggResult);
 
 								var text;
 
-								if (isElement(aggResult)) {
-									td.append(aggResult);
-									self.csv.addCol(getElement(aggResult).innerText);
+								if (aggResult instanceof jQuery) {
+									aggResult = aggResult.get(0);
+								}
+
+								if (aggResult instanceof Element) {
+									td.appendChild(aggResult);
+									self.csv.addCol(aggResult.innerText);
 								}
 								else {
 									if (aggInfo.instance.inheritFormatting) {
@@ -4856,7 +4969,7 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 											convert: false
 										});
 									}
-									td.text(text);
+									td.innerText = text;
 									self.csv.addCol(text);
 								}
 
@@ -4866,7 +4979,7 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 								}
 
 								if ((self.opts.drawInternalBorders || ai.cell.length > 1) && aiCellIndex === 0) {
-									td.addClass('wcdv_pivot_colval_boundary');
+									td.classList.add('wcdv_pivot_colval_boundary');
 								}
 
 								// REMOVED: How do we let the user set sizes &c. when doing a pivot table?
@@ -4874,7 +4987,7 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 
 								self.setAlignment(td, aggInfo.colConfig[0], aggInfo.typeInfo[0], aggType);
 
-								td.appendTo(tr);
+								tr.appendChild(td);
 							});
 						}
 					});
@@ -4898,13 +5011,18 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 
 					_.each(self.opts.addCols, function (addCol) {
 						var addColResult = addCol.value(data.data, groupNum, rowAgg, aggType);
+						var td = document.createElement('td');
+						var addColText;
 
-						if (addColResult instanceof Element || addColResult instanceof jQuery) {
-							var td = jQuery('<td>').append(addColResult);
+						if (addColResult instanceof jQuery) {
+							addColResult = addColResult.get(0);
+						}
+
+						if (addColResult instanceof Element) {
+							td.appendChild(addColResult);
+							self.csv.addCol(addColResult.innerText);
 						}
 						else {
-							var addColText;
-
 							if (false && aggInfo.instance.inheritFormatting) {
 								addColText = format(aggInfo.colConfig[0], aggInfo.typeInfo[0], addColResult, {
 									alwaysFormat: true
@@ -4916,22 +5034,22 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 									convert: false
 								});
 							}
-							td = jQuery('<td>').text(addColText);
+							td.innerText = addColText;
+							self.csv.addCol(addColText);
 						}
 
 						if (getProp(opts, 'pivotConfig', 'aggField')) {
 							self.setAlignment(td, self.colConfig.get(opts.pivotConfig.aggField), typeInfo.get(opts.pivotConfig.aggField));
 						}
 
-						td.appendTo(tr);
-						self.csv.addCol(td.text());
+						tr.appendChild(td);
 					});
 					break;
 				}
 			}
 		});
 
-		tr.appendTo(self.ui.tbody);
+		self.ui.tbody.append(tr);
 	});
 
 	// ===========================================================================
@@ -4989,7 +5107,7 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 
 					// Add sorting to the header we just created.
 
-					self._addSortingToHeader(data, 'horizontal', {aggType: 'pivot', aggNum: aggNum}, headingThControls, getPropDef([], data, 'agg', 'info', 'cell'));
+					self._addSortingToHeader(data, 'horizontal', {aggType: 'pivot', aggNum: aggNum}, headingThControls.get(0), getPropDef([], data, 'agg', 'info', 'cell'));
 
 					break;
 				case 'cells':
@@ -5027,7 +5145,7 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 						}
 
 						if (_.every(data.pivotSpec, function (ps) { return ps.fun == null; })) {
-							self._addDrillDownClass(td);
+							self._addDrillDownClass(td.get(0));
 						}
 
 						if (ai.cell.length > 1) {

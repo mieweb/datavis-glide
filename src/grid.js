@@ -205,7 +205,8 @@ function makeJsonOrderBy(o) {
  */
 
 /**
- * @typedef {object} Grid~ColConfigItem
+ * @typedef {object} Grid~FieldColConfig
+ * Represents the column configuration for a single field.
  *
  * @property {string} field
  * We're configuring the output of this field.
@@ -249,7 +250,7 @@ function makeJsonOrderBy(o) {
  */
 
 /**
- * @typedef {OrdMap.<string, Grid~ColConfigItem>} Grid~ColConfig
+ * @typedef {OrdMap.<string, Grid~FieldColConfig>} Grid~ColConfig
  * A collection of configurations across all the available fields in the grid.  If a field isn't in
  * this object, then it might as well not exist.
  */
