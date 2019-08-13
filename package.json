@@ -6,7 +6,7 @@
   "devDependencies": {
     "bluebird": "^3.5.5",
     "chai": "^4.2.0",
-    "chromedriver": "^2.46.0",
+    "chromedriver": "^76.0.0",
     "es6-symbol": "^3.1.1",
     "eslint": "^5.16.0",
     "jsdoc": "^3.6.3",
@@ -40,7 +40,7 @@
     "moment": "^2.24.0",
     "numeral": "^2.0.6",
     "papaparse": "^4.6.3",
-    "serve-handler": "^6.1.0",
+    "serve-handler": "^6.1.1",
     "sprintf-js": "^1.1.2",
     "sumoselect": "^3.0.5",
     "underscore": "^1.9.1"
