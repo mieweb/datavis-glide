@@ -931,6 +931,7 @@ Grid.prototype._addTitleWidgets = function (titlebar, doingServerFilter, runImme
 			evt.stopPropagation();
 			self.view.source.cancel();
 		})
+		.hide()
 		.appendTo(notHeader);
 
 	if (typeof self.tagOpts.helpText === 'string' && self.tagOpts.helpText !== '') {
