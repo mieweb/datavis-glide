@@ -26,6 +26,7 @@ import {
 } from './util/misc.js';
 
 import {AggregateInfo} from './aggregates.js';
+import {GridFilterSet} from './grid_filter.js';
 import {GridRenderer} from './grid_renderer.js';
 import {View, GROUP_FUNCTION_REGISTRY} from './view.js';
 
