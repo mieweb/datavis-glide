@@ -70,7 +70,7 @@ describe('Group Functions', function () {
 			expected: 'CBAD'
 		}, {
 			source: 'xyz.csv',
-			expected: ''
+			expected: 'XYZ'
 		}]
 	}, {
 		name: 'Defn and Prefs',

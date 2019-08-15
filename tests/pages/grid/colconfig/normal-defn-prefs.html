@@ -27,7 +27,13 @@ $(document).ready(function () {
 	});
 	prefs.addPerspective(null, 'C,B', {
 		grid: {
-			columns: ['C', 'B']
+			colConfig: {
+				_keys: ['C', 'B'],
+				_map: {
+					B: {field: 'B'},
+					C: {field: 'C'}
+				}
+			}
 		}
 	});
 	prefs.setCurrentPerspective('C,B');
