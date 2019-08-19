@@ -9,7 +9,7 @@ PANDOC_INPUT=$(addprefix doc/,$(addsuffix .pandoc,$(PANDOC_FILES)))
 
 .PHONY:	doc jsdoc pandoc clean tags examples serve test tests
 
-all:	dist/wcdatavis.min.js examples
+all:	$(DIST_FILES)
 
 dist/wcdatavis.js:	rollup.config.js datavis.js $(SOURCE)
 	npm run rollup
