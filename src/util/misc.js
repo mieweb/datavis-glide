@@ -2537,7 +2537,7 @@ export var concatLog = {
 
 export var debug = {
 	info: function (tag) {
-		if (!MIE.DEBUGGING) {
+		if (!(window.MIE && window.MIE.DEBUGGING)) {
 			return;
 		}
 
@@ -2547,7 +2547,7 @@ export var debug = {
 		return log.info.apply(window.console, args);
 	},
 	warn: function (tag) {
-		if (!MIE.DEBUGGING) {
+		if (!(window.MIE && window.MIE.DEBUGGING)) {
 			return;
 		}
 
@@ -2557,7 +2557,7 @@ export var debug = {
 		return log.warn.apply(window.console, args);
 	},
 	error: function (tag) {
-		if (!MIE.DEBUGGING) {
+		if (!(window.MIE && window.MIE.DEBUGGING)) {
 			return;
 		}
 

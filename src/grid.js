@@ -32,6 +32,7 @@ import {GridRenderer} from './grid_renderer.js';
 import './grid_table.js';
 import {ColConfigWin} from './col_config_win.js';
 import {FileSource} from './source.js';
+import {trans} from './trans.js';
 
 // Server-Side Filter/Sort {{{1
 
@@ -452,7 +453,7 @@ var Grid = makeSubclass('Grid', Object, function (id, view, defn, tagOpts, cb) {
 	}
 
 	self.ui.titlebar = jQuery('<div class="wcdv_grid_titlebar">')
-		.attr('title', MIE.trans('SHOWHIDE'))
+		.attr('title', trans('SHOWHIDE'))
 		.on('click', function (evt) {
 			evt.stopPropagation();
 			self.toggle();
@@ -729,8 +730,7 @@ var Grid = makeSubclass('Grid', Object, function (id, view, defn, tagOpts, cb) {
 	 * Store self object so it can be accessed from other JavaScript in the page.
 	 */
 
-	window.MIE.WC_DataVis.grids = window.MIE.WC_DataVis.grids || {};
-	window.MIE.WC_DataVis.grids[id] = self;
+	setProp(self, window, 'MIE', 'WC_DataVis', 'grids', id);
 });
 
 // Mixins {{{2
@@ -1021,7 +1021,7 @@ Grid.prototype._addTitleWidgets = function (titlebar, doingServerFilter, runImme
 		'style': 'font-size: 18px',
 		'class': 'wcdv_icon_button wcdv_text-primary'
 	})
-		.attr('title', MIE.trans('SHOWHIDEOPTS'))
+		.attr('title', trans('SHOWHIDEOPTS'))
 		.click(function (evt) {
 			evt.stopPropagation();
 			if (evt.shiftKey) {
@@ -1050,7 +1050,7 @@ Grid.prototype._addTitleWidgets = function (titlebar, doingServerFilter, runImme
 		'style': 'font-size: 18px',
 		'class': 'wcdv_icon_button wcdv_text-primary showhide'
 	})
-		.attr('title', MIE.trans('SHOWHIDE'))
+		.attr('title', trans('SHOWHIDE'))
 		.click(function (evt) {
 			evt.stopPropagation();
 			self.toggle();

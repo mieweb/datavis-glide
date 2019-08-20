@@ -119,7 +119,7 @@ HttpSource.prototype.parseData = function (data) {
 	var self = this
 		, result = {
 			data: [],
-			typeInfo: new MIE.OrdMap()
+			typeInfo: new OrdMap()
 		};
 
 	//debug.info('DATA SOURCE // HTTP // PARSER', 'Data = ' + ((data instanceof XMLDocument) ? '%o' : '%O'), data);

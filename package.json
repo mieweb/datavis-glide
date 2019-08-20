@@ -1,28 +1,21 @@
 {
   "name": "wcdatavis",
-  "version": "1.0.0",
+  "version": "0.0.0",
   "description": "Data visualization library",
-  "license": "TBD",
-  "devDependencies": {
-    "bluebird": "^3.5.5",
-    "chai": "^4.2.0",
-    "chromedriver": "^76.0.0",
-    "es6-symbol": "^3.1.1",
-    "eslint": "^5.16.0",
-    "jsdoc": "^3.6.3",
-    "jshint": "^2.10.2",
-    "json5": "^2.1.0",
-    "lodash": "^4.17.15",
-    "mocha": "^5.2.0",
-    "nightwatch": "^0.9.21",
-    "rollup": "^0.67.4",
-    "rollup-plugin-commonjs": "^9.3.4",
-    "rollup-plugin-node-builtins": "^2.1.2",
-    "rollup-plugin-node-globals": "^1.4.0",
-    "rollup-plugin-node-resolve": "^3.4.0",
-    "selenium-webdriver": "^4.0.0-alpha.4",
-    "serve": "^11.1.0",
-    "uglify-js": "^3.6.0"
+  "keywords": ["grid", "graph", "data", "visualization"],
+  "license": "UNLICENSED",
+  "private": true,
+  "author": "Taylor Venable <tvenable@mieweb.com>",
+  "files": [
+    "dist/wcdatavis.css",
+    "dist/wcdatavis.js",
+    "dist/wcdatavis.min.js"
+  ],
+  "main": "index.js",
+  "browser": "datavis.js",
+  "repository": {
+    "type": "git",
+    "url": "https://repo.mieweb.com/scm/dv/wcdatavis.git"
   },
   "scripts": {
     "lint": "eslint src",
@@ -44,5 +37,26 @@
     "sprintf-js": "^1.1.2",
     "sumoselect": "^3.0.5",
     "underscore": "^1.9.1"
+  },
+  "devDependencies": {
+    "bluebird": "^3.5.5",
+    "chai": "^4.2.0",
+    "chromedriver": "^76.0.0",
+    "es6-symbol": "^3.1.1",
+    "eslint": "^5.16.0",
+    "jsdoc": "^3.6.3",
+    "jshint": "^2.10.2",
+    "json5": "^2.1.0",
+    "lodash": "^4.17.15",
+    "mocha": "^5.2.0",
+    "nightwatch": "^0.9.21",
+    "rollup": "^0.67.4",
+    "rollup-plugin-commonjs": "^9.3.4",
+    "rollup-plugin-node-builtins": "^2.1.2",
+    "rollup-plugin-node-globals": "^1.4.0",
+    "rollup-plugin-node-resolve": "^3.4.0",
+    "selenium-webdriver": "^4.0.0-alpha.4",
+    "serve": "^11.1.0",
+    "uglify-js": "^3.6.0"
   }
 }

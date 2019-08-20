@@ -22,6 +22,7 @@ import {Prefs} from './prefs.js';
 import {
 	GraphRendererGoogle,
 } from './graph_renderer.js';
+import {trans} from './trans.js';
 
 // Graph {{{1
 
@@ -372,7 +373,7 @@ Graph.prototype._addTitleWidgets = function (titlebar) {
 		'style': 'font-size: 18px',
 		'class': 'wcdv_icon_button wcdv_text-primary'
 	})
-		.attr('title', MIE.trans('SHOWHIDEOPTS'))
+		.attr('title', trans('SHOWHIDEOPTS'))
 		.click(function (evt) {
 			evt.stopPropagation();
 			self.ui.toolbar.toggle();
@@ -388,7 +389,7 @@ Graph.prototype._addTitleWidgets = function (titlebar) {
 		'style': 'font-size: 18px',
 		'class': 'wcdv_icon_button wcdv_text-primary showhide'
 	})
-		.attr('title', MIE.trans('SHOWHIDE'))
+		.attr('title', trans('SHOWHIDE'))
 		.click(function (evt) {
 			evt.stopPropagation();
 			self.toggle();
