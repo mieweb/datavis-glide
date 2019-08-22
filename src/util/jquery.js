@@ -150,7 +150,8 @@ jQuery.fn.extend({
 
 		var button = jQuery('<button>', {
 			'type': 'button',
-			'disabled': jQuery(self).prop('disabled')
+			'disabled': jQuery(self).prop('disabled'),
+			'title': self.attr('title')
 		})
 			.addClass('wcdv_icon_button wcdv_button_left')
 			.on('click', function () {
@@ -166,12 +167,16 @@ jQuery.fn.extend({
 			if (self._isChecked()) {
 				onIcon.show();
 				offIcon.hide();
-				button.attr('title', opts.on.tooltip);
+				if (opts.on.tooltip != null) {
+					button.attr('title', opts.on.tooltip);
+				}
 			}
 			else {
 				onIcon.hide();
 				offIcon.show();
-				button.attr('title', opts.off.tooltip);
+				if (opts.off.tooltip != null) {
+					button.attr('title', opts.off.tooltip);
+				}
 			}
 		};
 
