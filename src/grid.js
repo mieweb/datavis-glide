@@ -2327,6 +2327,12 @@ Grid.prototype.setColConfig = function (colConfig, opts) {
 		break;
 	case 'prefs':
 		if (self.colConfigRestricted) {
+			self.colConfig.each(function (v, k) {
+				if (colConfig.isSet(k)) {
+					_.defaults(colConfig.get(k), v);
+				}
+			});
+
 			// The column configuration is restricted by defn, so remove anything from prefs that's
 			// missing from defn.
 
