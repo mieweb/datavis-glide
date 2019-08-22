@@ -84,7 +84,7 @@ ColConfigWin.prototype.show = function (posElt, onSave) {
 			'overflow-y': 'scroll'
 		}).appendTo(orderWin));
 
-	var colTableHeader = jQuery('<thead><th class="wcdv_bottom_border_teal">Field</th><th class="wcdv_bottom_border_teal">Display</th><th colspan="4" class="wcdv_bottom_border_teal">Options</th>')
+	var colTableHeader = jQuery('<thead><th class="wcdv_bottom_border_teal">Field</th><th class="wcdv_bottom_border_teal">Display</th><th colspan="5" class="wcdv_bottom_border_teal">Options</th>')
 		.appendTo(colTable);
 
 	var keys = current.keys();
@@ -114,7 +114,10 @@ ColConfigWin.prototype.show = function (posElt, onSave) {
 			.addClass('wcdv_width_1em')
 			.appendTo(tr);
 
-		var renameBtn = jQuery('<button>', {'type': 'button', 'title': 'Rename'})
+		var renameBtn = jQuery('<button>', {
+			'type': 'button',
+			'title': 'Rename column in table.'
+		})
 			.addClass('wcdv_icon_button')
 			.append(fontAwesome('fa-pencil'))
 			.on('click', function () {
@@ -134,7 +137,10 @@ ColConfigWin.prototype.show = function (posElt, onSave) {
 			.addClass('wcdv_width_1em')
 			.appendTo(tr);
 
-		var isPinnedCheckbox = jQuery('<input>', {'type': 'checkbox'})
+		var isPinnedCheckbox = jQuery('<input>', {
+			'type': 'checkbox',
+			'title': 'Pin column to left side of table?'
+		})
 			.prop('checked', getPropDef(false, colConfig, 'isPinned'))
 			.on('change', function () {
 				colConfig.isPinned = isPinnedCheckbox.prop('checked');
@@ -152,16 +158,7 @@ ColConfigWin.prototype.show = function (posElt, onSave) {
 				}
 			})
 			.appendTo(td)
-			._makeIconCheckbox({
-				off: {
-					icon: 'fa-thumb-tack',
-					classes: 'wcdv_icon_checkbox_off'
-				},
-				on: {
-					icon: 'fa-thumb-tack',
-					classes: 'wcdv_icon_checkbox_on fa-rotate-90'
-				}
-			});
+			._makeIconCheckbox('fa-thumb-tack');
 
 		if (getPropDef(false, colConfig, 'isPinned')) {
 			pinnedCount += 1;
@@ -171,14 +168,32 @@ ColConfigWin.prototype.show = function (posElt, onSave) {
 			.addClass('wcdv_width_1em')
 			.appendTo(tr);
 
-		var isHiddenCheckbox = jQuery('<input>', {'type': 'checkbox'})
+		var isHiddenCheckbox = jQuery('<input>', {
+			'type': 'checkbox',
+			'title': 'Hide column?'
+		})
 			.prop('disabled', !getPropDef(true, colConfig, 'canHide'))
 			.prop('checked', getPropDef(false, colConfig, 'isHidden'))
 			.on('change', function () {
 				colConfig.isHidden = isHiddenCheckbox.prop('checked');
 			})
 			.appendTo(td)
-			._makeIconCheckbox('fa-eye-slash', 'fa-eye');
+			._makeIconCheckbox('fa-ban');
+
+		td = jQuery('<td>')
+			.addClass('wcdv_width_1em')
+			.appendTo(tr);
+
+		var allowHtmlCheckbox = jQuery('<input>', {
+			'type': 'checkbox',
+			'title': 'Allow HTML to be rendered?'
+		})
+			.prop('checked', getPropDef(false, colConfig, 'allowHtml'))
+			.on('change', function () {
+				colConfig.allowHtml = allowHtmlCheckbox.prop('checked');
+			})
+			.appendTo(td)
+			._makeIconCheckbox('fa-code');
 
 		/*
 		td = jQuery('<td>')
@@ -198,7 +213,10 @@ ColConfigWin.prototype.show = function (posElt, onSave) {
 			.addClass('wcdv_width_1em')
 			.appendTo(tr);
 
-		var dragButton = jQuery('<button>', {'type': 'button', 'title': 'Click and drag to reorder columns'})
+		var dragButton = jQuery('<button>', {
+			'type': 'button',
+			'title': 'Click and drag to reorder columns'
+		})
 			.addClass('wcdv_icon_button drag-handle')
 			.append(fontAwesome('fa-arrows-v'))
 			.appendTo(td);
