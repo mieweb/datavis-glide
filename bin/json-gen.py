@@ -22,6 +22,7 @@ WORDS = open(os.getenv('DICT_FILE', '/usr/share/dict/words')).read().splitlines(
 STATES = ['Alabama', 'Alaska', 'Arizona', 'Arkansas', 'California', 'Colorado', 'Connecticut', 'Delaware', 'Florida', 'Georgia', 'Hawaii', 'Idaho', 'Illinois', 'Indiana', 'Iowa', 'Kansas', 'Kentucky', 'Louisiana', 'Maine', 'Maryland', 'Massachusetts', 'Michigan', 'Minnesota', 'Mississippi', 'Missouri', 'Montana Nebraska', 'Nevada', 'New Hampshire', 'New Jersey', 'New Mexico', 'New York', 'North Carolina', 'North Dakota', 'Ohio', 'Oklahoma', 'Oregon', 'Pennsylvania', 'Rhode Island', 'South Carolina', 'South Dakota', 'Tennessee', 'Texas', 'Utah', 'Vermont', 'Virginia', 'Washington', 'West Virginia', 'Wisconsin', 'Wyoming']
 RANDOMS = {}
 RANDOM_SEED = { 'seed': None }
+LAST = {}
 
 def init_random(name=None):
     if name == None:
@@ -36,53 +37,66 @@ def clamp(val, low, high):
     return max(min(val, high), low)
 
 def random_int(name='random_int', min=0, max=100, **opts):
+    global LAST
     r = init_random(name)
     val = r.randint(min, max)
     if opts.get('output_type') == 'string':
         if 'format' in opts:
-            return format_decimal(val, format=opts['format'])
+            ret = format_decimal(val, format=opts['format'])
         else:
-            return str(val)
+            ret = str(val)
     else:
-        return val
+        ret = val
+    LAST[name] = ret
+    return ret
 
 def random_float(name='random_float', min=0, max=1, **opts):
+    global LAST
     r = init_random(name)
     val = r.uniform(min, max)
     if opts.get('output_type') == 'string':
         if 'format' in opts:
-            return format_decimal(val, format=opts['format'])
+            ret = format_decimal(val, format=opts['format'])
         elif 'fixed' in opts:
-            return str(decimal.Decimal(val).quantize(decimal.Decimal('1.' + ('0' * opts['fixed']))))
+            ret = str(decimal.Decimal(val).quantize(decimal.Decimal('1.' + ('0' * opts['fixed']))))
         else:
-            return str(val)
+            ret = str(val)
     else:
         if 'fixed' in opts:
-            return float(decimal.Decimal(val).quantize(decimal.Decimal('1.' + ('0' * opts['fixed']))))
+            ret = float(decimal.Decimal(val).quantize(decimal.Decimal('1.' + ('0' * opts['fixed']))))
         else:
-            return val
+            ret = val
+    LAST[name] = ret
+    return ret
 
 def random_date(name='random_date', min='1900-01-01', max='2100-01-01', **opts):
+    global LAST
     r = init_random(name)
     min = time.mktime(time.strptime(min, '%Y-%m-%d'))
     max = time.mktime(time.strptime(max, '%Y-%m-%d'))
     val = date.fromtimestamp(r.randint(min, max))
     if 'format' in opts:
-        return format_date(val, opts['format'])
+        ret = format_date(val, opts['format'])
     else:
-        return str(val)
+        ret = str(val)
+    LAST[name] = ret
+    return ret
 
 def random_datetime(name='random_datetime', min='1900-01-01 00:00:00', max='2099-12-31 23:59:59', **opts):
+    global LAST
     r = init_random(name)
     min = time.mktime(time.strptime(min, '%Y-%m-%d %H:%M:%S'))
     max = time.mktime(time.strptime(max, '%Y-%m-%d %H:%M:%S'))
     val = datetime.fromtimestamp(r.randint(min, max))
     if 'format' in opts:
-        return format_datetime(val, opts['format'])
+        ret = format_datetime(val, opts['format'])
     else:
-        return str(val)
+        ret = str(val)
+    LAST[name] = ret
+    return ret
 
 def random_element(name, set, dist='uniform'):
+    global LAST
     r = init_random(name)
     if dist == 'triangular':
         i = round(r.triangular(0, len(set) - 1))
@@ -92,15 +106,23 @@ def random_element(name, set, dist='uniform'):
         i = clamp(round(r.normalvariate(mu, sigma)), 0, len(set) - 1)
     else:
         i = round(r.uniform(0, len(set) - 1))
-    return set[i]
+    ret = set[i]
+    LAST[name] = ret
+    return ret
 
 def word_dict(name='word_dict'):
+    global LAST
     r = init_random(name)
-    return WORDS[r.randint(0, len(WORDS))]
+    ret = WORDS[r.randint(0, len(WORDS))]
+    LAST[name] = ret
+    return ret
 
 def state(name='state'):
+    global LAST
     r = init_random(name)
-    return r.choice(STATES)
+    ret = r.choice(STATES)
+    LAST[name] = ret
+    return ret
 
 def random_seed(n):
     RANDOM_SEED['seed'] = n
@@ -119,15 +141,22 @@ def repeat(times, val):
 
 CYCLE = {}
 def cycle(name, lst):
+    global LAST
     if name in CYCLE:
         c = CYCLE[name]
         c['index'] += 1
         if c['index'] >= len(c['list']):
             c['index'] = 0
-        return c['list'][c['index']]
+        ret = c['list'][c['index']]
     else:
         CYCLE[name] = { 'index': 0, 'list': lst }
-        return lst[0]
+        ret = lst[0]
+    LAST[name] = ret
+    return ret
+
+def last(name):
+    global LAST
+    return LAST[name]
 
 def process(node):
     env = { 'random_int': random_int,
@@ -140,6 +169,7 @@ def process(node):
             'choice': random.choice,
             'state': state,
             'cycle': cycle,
+            'last': last,
             'RANDOM_SEED': RANDOM_SEED }
     r = re.compile(r'\$<\s*(.*?)\s*>\$')
     def recur(node):
