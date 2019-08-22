@@ -1405,7 +1405,7 @@ GridTable.prototype.drawBody_rowVals = function (data, tr, groupNum) {
 			headingThValue.appendChild(rowValElt);
 		}
 		else if (fcc.allowHtml) {
-			headingThValue.innerHtml = rowValElt;
+			headingThValue.innerHTML = rowValElt;
 		}
 		else {
 			headingThValue.innerText = rowValElt;
