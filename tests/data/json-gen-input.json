@@ -6,6 +6,7 @@
       "string1": "$< word_dict() >$"
       , "country": "$< cycle('country', ['United States', 'Canada', 'Mexico', 'England', 'France', 'Germany', 'Switzerland', 'Japan', 'China', 'South Korea']) >$"
       , "fruit": "$< random_element('fruit', ['Apple', 'Banana', 'Blueberry', 'Cherry', 'Grape', 'Kiwi', 'Mango', 'Orange', 'Pineapple', 'Strawberry'], 'normal') >$"
+      , "link": "$< '<a href=\"https://en.wikipedia.org/wiki/' + last('fruit') + '\">' + last('fruit') + '</a>' >$"
       , "state": "$< state() >$"
       , "int1": "$< random_int('int1', 0, 9999, output_type='number') >$"
       , "int2": "$< random_int('int2', 0, 9999, output_type='string') >$"
@@ -56,6 +57,7 @@
     , { "field": "country", "type": "string" }
     , { "field": "state", "type": "string" }
     , { "field": "fruit", "type": "string" }
+    , { "field": "link", "type": "string" }
     , { "field": "int1", "type": "number", "internalType": "primitive" }
     , { "field": "int2", "type": "number", "internalType": "primitive" }
     , { "field": "int3", "type": "number", "internalType": "primitive" }
