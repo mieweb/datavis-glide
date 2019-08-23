@@ -3,7 +3,8 @@
   "data": [
     "$< repeat(ARGS['COUNT'], VALUE) >$",
     {
-      "string1": "$< word_dict() >$"
+        "rowId": "$< sequence('rowId', 1) >$"
+      , "string1": "$< word_dict() >$"
       , "country": "$< cycle('country', ['United States', 'Canada', 'Mexico', 'England', 'France', 'Germany', 'Switzerland', 'Japan', 'China', 'South Korea']) >$"
       , "fruit": "$< random_element('fruit', ['Apple', 'Banana', 'Blueberry', 'Cherry', 'Grape', 'Kiwi', 'Mango', 'Orange', 'Pineapple', 'Strawberry'], 'normal') >$"
       , "link": "$< '<a href=\"https://en.wikipedia.org/wiki/' + last('fruit') + '\">' + last('fruit') + '</a>' >$"
@@ -53,7 +54,8 @@
     }
   ],
   "typeInfo": [
-    { "field": "string1", "type": "string" }
+      { "field": "rowId", "type": "number" }
+    , { "field": "string1", "type": "string" }
     , { "field": "country", "type": "string" }
     , { "field": "state", "type": "string" }
     , { "field": "fruit", "type": "string" }
