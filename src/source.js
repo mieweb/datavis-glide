@@ -254,6 +254,8 @@ HttpSource.prototype.getData = function (params, cont) {
 	var al = logAsync('HttpSource#getData');
 	self.xhr = jQuery.ajax(self.url, {
 		method: self.method,
+		data: params,
+		traditional: true,
 		dataType: self.dataType,
 		error: function (jqXHR, textStatus, errorThrown) {
 			al.finish();
