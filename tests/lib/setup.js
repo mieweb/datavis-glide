@@ -1,23 +1,53 @@
-const handler = require('serve-handler');
 const http = require('http');
+const url = require('url');
+
+const serveHandler = require('serve-handler');
+const _ = require('lodash');
+
+const reflectCgi = (req, res, u) => {
+  let o = {
+    data: _.map(Object.keys(u.query).sort(), (k) => {
+      return {name: k, value: u.query[k]};
+    }),
+    typeInfo: [{
+      field: 'name',
+      type: 'string'
+    }, {
+      field: 'value',
+      type: 'string'
+    }]
+  };
+  res.setHeader('Content-Type', 'application/json');
+  res.end(JSON.stringify(o));
+}
+
+const handler = (opts) => (req, res) => {
+  let u = url.parse(req.url, true);
+  if (u.pathname === '/reflect/cgi') {
+    return reflectCgi(req, res, u);
+  }
+  else {
+    return serveHandler(req, res, opts);
+  }
+};
 
 function server() {
-	before(async function () {
-		server = http.createServer((request, response) => {
-			return handler(request, response, {
-				public: 'tests/pages',
-				cleanUrls: false
-			});
-		});
+	let s;
 
-		return server.listen(3000, () => {
-			console.log('Running at http://localhost:3000');
-		});
+	before(function () {
+		s = http.createServer(handler({
+      cleanUrls: false,
+			public: 'tests/pages'
+    }));
+		return s.listen(3000);
 	});
 
-	after(async function () {
-		return server.close();
+	after(function () {
+		return s.close();
 	});
 }
 
-exports.server = server;
+module.exports = {
+	server: server,
+	handler: handler
+};
