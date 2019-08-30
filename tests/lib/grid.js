@@ -1,4 +1,5 @@
 const _ = require('lodash');
+const Promise = require("bluebird");
 const {By, Key} = require('selenium-webdriver');
 const until = require('selenium-webdriver/lib/until');
 const {asyncMap, asyncFilter, selectByText, selectByValue, sleep} = require('./util.js');
@@ -256,7 +257,32 @@ class Grid {
 		return selectByText(dropdown, field);
 	}
 
+	async clearFilter() {
+		const control = await this.driver.findElement(By.css('div.wcdv_filter_control'));
+		return control.findElement(By.css('span.wcdv_control_clear_button')).click();
+	}
+
 	async setFilter(field, type, op, value) {
+		async function sumoSelect_selectNone(sumoSelectDiv) {
+			const optWrapper = await sumoSelectDiv.findElement(By.css('div.optWrapper'));
+			/* BAD WAY OF DOING IT
+			// First find a partially checked "select all" box.  Clicking this selects everything.
+			let selectAll = await optWrapper.findElements(By.css('p.select-all.partial'));
+			if (selectAll.length === 1) {
+				await selectAll[0].click();
+			}
+			// Click the "select all" checkbox (again, if it was partially selected before).
+			selectAll = await optWrapper.findElements(By.css('p.select-all.selected'));
+			if (selectAll.length === 1) {
+				await selectAll[0].click();
+			}
+			*/
+			const selected = await optWrapper.findElements(By.css('ul.options > li.opt.selected'));
+			if (selected.length > 0) {
+				await Promise.each(selected, (s) => s.click());
+			}
+		}
+
 		const control = await this.driver.findElement(By.css('div.wcdv_filter_control'));
 		// Find the item in the filter control for this field.
 		const controlField = await asyncFilter(await this.driver.findElements(By.css('div.wcdv_filter_control > div > ul > li[data-wcdv-field]')), async (li) => await li.getAttribute('data-wcdv-field') === field);
@@ -275,17 +301,21 @@ class Grid {
 			const sumoselect = await controlField[0].findElement(By.css('div.wcdv_filter_control_filter > div.SumoSelect'));
 			// Open the SumoSelect dropdown.
 			await sumoselect.findElement(By.css('p.SelectBox')).click();
+			const optWrapper = await sumoselect.findElement(By.css('div.optWrapper'));
+			// Make sure everything is unselected first.
+			await sumoSelect_selectNone(sumoselect);
 			// Find the items in the dropdown that match what was requested...
-			const labels = await sumoselect.findElements(By.css('div.optWrapper > ul.options > li > label'));
+			const labels = await optWrapper.findElements(By.css('ul.options > li > label'));
 			const matchingLabels = await asyncFilter(labels, async (label) => value.indexOf(await label.getText()) >= 0);
 			// ...and click on them!
 			await Promise.all(_.map(matchingLabels, (elt) => elt.click()));
 			// Click the "OK" button.
-			await sumoselect.findElement(By.css('div.optWrapper > div.MultiControls > p.btnOk')).click();
+			await optWrapper.findElement(By.css('div.MultiControls > p.btnOk')).click();
 			break;
 		}
 		case 'input': {
 			const input = await controlField[0].findElement(By.css('div.wcdv_filter_control_filter > input'));
+			await input.clear();
 			await input.sendKeys(value, Key.ENTER);
 			break;
 		}

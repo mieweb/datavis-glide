@@ -12,9 +12,16 @@ describe('Filter', function() {
 	const logging = new LoggingPrefs();
 	logging.setLevel(LoggingType.BROWSER, LoggingLevel.ALL);
 	let driver;
-	
-	before(function () {
+	let grid;
+
+	before(async function () {
 		driver = new Builder().forBrowser('chrome').setLoggingPrefs(logging).build();
+	});
+
+	before(async function () {
+		await driver.get('http://localhost:3000/grid/default.html');
+		grid = new Grid(driver);
+		await grid.waitForIdle();
 	});
 
 	// We need to clear the local storage before each test.  However:
@@ -27,11 +34,7 @@ describe('Filter', function() {
 	//
 	// Therefore, we clear local storage after the test is done instead.  SO DON'T MOVE IT HERE!
 
-	beforeEach(async function () {
-		await driver.get('http://localhost:3000/grid/default.html');
-	});
-
-	afterEach(async function () {
+	after(async function () {
 		await driver.executeScript('window.localStorage.clear()');
 	});
 
@@ -42,11 +45,16 @@ describe('Filter', function() {
 	});
 
 	describe('string filter', function () {
-		it('can filter one in', async function () {
-			let grid = new Grid(driver);
-			await grid.waitForIdle();
-
+		before(async function () {
 			await grid.addFilter('country');
+		});
+
+		after(async function () {
+			await grid.clearFilter();
+			await grid.waitForIdle();
+		});
+
+		it('can filter one in', async function () {
 			await grid.setFilter('country', 'sumoselect', '$in', ['Canada']);
 			await grid.waitForIdle();
 
@@ -56,10 +64,6 @@ describe('Filter', function() {
 		});
 
 		it('can filter one not-in', async function () {
-			let grid = new Grid(driver);
-			await grid.waitForIdle();
-
-			await grid.addFilter('country');
 			await grid.setFilter('country', 'sumoselect', '$nin', ['Canada']);
 			await grid.waitForIdle();
 
@@ -67,10 +71,6 @@ describe('Filter', function() {
 		});
 
 		it('can filter multiple in', async function () {
-			let grid = new Grid(driver);
-			await grid.waitForIdle();
-
-			await grid.addFilter('country');
 			await grid.setFilter('country', 'sumoselect', '$in', ['Canada', 'Japan']);
 			await grid.waitForIdle();
 
@@ -80,10 +80,6 @@ describe('Filter', function() {
 		});
 
 		it('can filter multiple not-in', async function () {
-			let grid = new Grid(driver);
-			await grid.waitForIdle();
-
-			await grid.addFilter('country');
 			await grid.setFilter('country', 'sumoselect', '$nin', ['Canada', 'Japan']);
 			await grid.waitForIdle();
 
@@ -148,16 +144,20 @@ describe('Filter', function() {
 			{ field: 'float9', source: 'string w/ commas', rep: 'bignumber', ex: 'float_fixed' }
 		], function ({field, source, rep, ex}) {
 			describe(field + ' (' + source + ' --> ' + rep + ')', function () {
+				before(async function () {
+					await grid.addFilter(field);
+				});
+
+				after(async function () {
+					await grid.clearFilter();
+					await grid.waitForIdle();
+				});
+
 				_.each(expected[ex].results, function (r) {
 					it('can filter ' + r.name, async function () {
-						let grid = new Grid(driver);
-						await grid.waitForIdle();
-
-						await grid.addFilter(field);
 						await grid.setFilter(field, 'input', r.op, expected[ex].value);
 						await grid.waitForIdle();
 
-						sleep(1);
 						assert.equal(await grid.getNumRows(), r.expected);
 					});
 				});
@@ -166,10 +166,13 @@ describe('Filter', function() {
 	});
 
 	describe('blank filters', function () {
-		it('number filter is blank', async function () {
-			let grid = new Grid(driver);
+		beforeEach(async function () {
+			await driver.executeScript('window.localStorage.clear()');
+			driver.navigate().refresh();
 			await grid.waitForIdle();
+		});
 
+		it('number filter is blank', async function () {
 			await grid.addFilter('int1');
 			await grid.addFilter('country');
 			await grid.setFilter('country', 'sumoselect', '$in', ['Canada']);
@@ -179,10 +182,8 @@ describe('Filter', function() {
 			assert.equal(await grid.getCell('country', 0), 'Canada');
 			assert.equal(await grid.getCell('country', -1), 'Canada');
 		});
-		it('date filter is blank', async function () {
-			let grid = new Grid(driver);
-			await grid.waitForIdle();
 
+		it('date filter is blank', async function () {
 			await grid.addFilter('date1');
 			await grid.addFilter('country');
 			await grid.setFilter('country', 'sumoselect', '$in', ['Canada']);
