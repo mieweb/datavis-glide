@@ -27,7 +27,7 @@
     "test": "mocha -t 10000 tests/selenium/*.js",
     "rollup": "rollup -c rollup.config.js",
     "uglify": "uglifyjs -c -o dist/wcdatavis.min.js dist/wcdatavis.js",
-    "http-server": "micro-dev bin/http-server.js"
+    "http-server": "micro-dev -p 5000 bin/http-server.js"
   },
   "dependencies": {
     "bignumber.js": "^8.1.1",
