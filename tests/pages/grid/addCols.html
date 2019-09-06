@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8"/>
+		<script src="../jquery-latest.js"></script>
+		<script src="../jquery-ui.js"></script>
+		<script src="../blockUI.js"></script>
+		<script src="../contextMenu.js"></script>
+		<script src="../sumoselect.js"></script>
+		<script src="../flatpickr.js"></script>
+		<script src="../wcdatavis.js"></script>
+		<link rel="stylesheet" href="../font-awesome.css"/>
+		<link rel="stylesheet" href="../jquery-ui.css"/>
+		<link rel="stylesheet" href="../contextMenu.css"/>
+		<link rel="stylesheet" href="../sumoselect.css"/>
+		<link rel="stylesheet" href="../flatpickr.css"/>
+		<link rel="stylesheet" href="../base.css"/>
+		<link rel="stylesheet" href="../wcdatavis.css"/>
+		<script>
+$(document).ready(function () {
+	MIE.DEBUGGING = true;
+
+	function randElt(l) {
+		return l[Math.floor(Math.random() * l.length)];
+	}
+
+	var source = new MIE.WC_DataVis.Source({
+		type: 'http',
+		url: '../random100.json'
+	});
+	var view = new MIE.WC_DataVis.View(source, 'TEST:GRID:DEFAULT');
+	new MIE.WC_DataVis.Grid('grid', view, {
+		id: 'grid',
+		table: {
+			features: {
+				limit: false,
+				rowSelect: true,
+			},
+			whenPlain: {
+				addCols: [{
+					name: 'Kaiju',
+					value: function (rowData, rowNum) {
+						return randElt(['Godzilla', 'Mothra', 'Ghidorah', 'Anguirius', 'Rodan', 'Gigan']);
+					}
+				}, {
+					name: 'Shouting Fruit',
+					value: function (rowData, rowNum) {
+						return rowData['fruit'].value.toUpperCase();
+					}
+				}]
+			}
+		},
+		source: source,
+	}, {
+		title: 'Test - Grid - Add Cols',
+		showControls: true
+	});
+});
+		</script>
+	</head>
+	<body>
+		<div id="grid"></div>
+	</body>
+</html>
