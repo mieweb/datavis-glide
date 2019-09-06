@@ -38,14 +38,17 @@ $(document).ready(function () {
 			},
 			whenPlain: {
 				addCols: [{
-					name: 'Kaiju',
-					value: function (rowData, rowNum) {
-						return randElt(['Godzilla', 'Mothra', 'Ghidorah', 'Anguirius', 'Rodan', 'Gigan']);
-					}
-				}, {
 					name: 'Shouting Fruit',
 					value: function (rowData, rowNum) {
 						return rowData['fruit'].value.toUpperCase();
+					}
+				}, {
+					name: 'Kaiju Link',
+					value: function (rowData, rowNum) {
+						var kaiju = randElt(['Godzilla', 'Mothra', 'Ghidorah', 'Anguirius', 'Rodan', 'Gigan']);
+						return jQuery('<a>', {
+							href: 'https://wikizilla.org/wiki/' + kaiju
+						}).text(kaiju);
 					}
 				}]
 			}
