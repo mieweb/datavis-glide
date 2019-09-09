@@ -108,8 +108,12 @@ Csv.prototype.addRow = function (rowId) {
  * The value to add.
  */
 
-Csv.prototype.addCol = function (x) {
+Csv.prototype.addCol = function (x, opts) {
 	var self = this;
+
+	opts = _.defaults(opts, {
+		prepend: false
+	});
 
 	if (x == null) {
 		x = '';
@@ -124,7 +128,12 @@ Csv.prototype.addCol = function (x) {
 		self.addRow();
 	}
 
-	self.lastRow.rowData.push(x);
+	if (opts.prepend) {
+		self.lastRow.rowData.unshift(x);
+	}
+	else {
+		self.lastRow.rowData.push(x);
+	}
 };
 
 // #clear {{{2
@@ -1542,7 +1551,9 @@ GridTable.prototype.drawBody_rowVals = function (data, tr, rowValIndex) {
 		}
 
 		th[i].appendChild(headingThContainer);
-		self.csv.addCol(headingThValue.innerText);
+		self.csv.addCol(headingThValue.innerText, {
+			prepend: true
+		});
 
 		if (data.isPivot && i === data.groupFields.length - 1) {
 			self._addSortingToHeader(data, 'horizontal', {rowVal: data.rowVals[rowValIndex], aggNum: 0}, headingThControls, getPropDef([], data, 'agg', 'info', 'cell'));
