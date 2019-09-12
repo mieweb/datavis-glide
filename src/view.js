@@ -855,7 +855,7 @@ View.prototype.sort = function (cont) {
 					rowValIdxMap[s.oldIndex] = newIndex;
 				});
 
-				if (self.data.isGroup) {
+				if (self.data.isGroup || self.data.isPivot) {
 					// Update the groupMetadata tree's use of rowValIndex to correspond to the new ordering of
 					// rowvals.  This means both the `rowValIndex` property of each node in the tree, and the
 					// lookup object.  If this isn't done, then some parts of the UI (like the rowvals in group
