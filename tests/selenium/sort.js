@@ -67,9 +67,22 @@ describe('Sort', function() {
 			// DATA FORMAT: {...}
 			//
 			//   * groupBy: List of fields to group by.
+			//   * spotCheck: List of rowvals w/ counts to check during each sort.
 			//   * tests: Array of tests to run with that grouping.
 
 			groupBy: ['fruit'],
+			spotCheck: [
+				{ rowVal: ['Apple'],      count: 9   },
+				{ rowVal: ['Banana'],     count: 24  },
+				{ rowVal: ['Blueberry'],  count: 79  },
+				{ rowVal: ['Cherry'],     count: 135 },
+				{ rowVal: ['Grape'],      count: 233 },
+				{ rowVal: ['Kiwi'],       count: 248 },
+				{ rowVal: ['Mango'],      count: 146 },
+				{ rowVal: ['Orange'],     count: 85  },
+				{ rowVal: ['Pineapple'],  count: 32  },
+				{ rowVal: ['Strawberry'], count: 9   }
+			],
 			tests: [
 
 				// DATA FORMAT: [field, rowValMin, rowValMax, aggMin, aggMax]
@@ -78,13 +91,25 @@ describe('Sort', function() {
 				//   * rowValMin: Minimum rowval in that field.
 				//   * rowValMax: Maximum rowval in that field.
 
-				['fruit', ['Banana'], ['Strawberry']]
+				['fruit', ['Apple'], ['Strawberry']]
 			]
 		}, {
 			groupBy: ['fruit', 'country'],
+			spotCheck: [
+				{ rowVal: ['Apple', 'France'],          count: 2  },
+				{ rowVal: ['Banana', 'Switzerland'],    count: 4  },
+				{ rowVal: ['Blueberry', 'Germany'],     count: 10 },
+				{ rowVal: ['Cherry', 'Japan'],          count: 17 },
+				{ rowVal: ['Grape', 'China'],           count: 31 },
+				{ rowVal: ['Kiwi', 'Mexico'],           count: 23 },
+				{ rowVal: ['Mango', 'Canada'],          count: 18 },
+				{ rowVal: ['Orange', 'United States'],  count: 8  },
+				{ rowVal: ['Pineapple', 'South Korea'], count: 5  },
+				{ rowVal: ['Strawberry', 'England'],    count: 3  }
+			],
 			tests: [
-				['fruit', ['Banana', 'Canada'], ['Strawberry', 'Germany']],
-				['country', ['Banana', 'Canada'], ['Mango', 'United States']]
+				['fruit', ['Apple', 'China'], ['Strawberry', 'Mexico']],
+				['country', ['Banana', 'Canada'], ['Pineapple', 'United States']]
 			]
 		}],
 		pivot: {}
@@ -122,7 +147,7 @@ describe('Sort', function() {
 		_.each(sortInfo.group, async (si) => {
 			describe(`grouping by ${JSON.stringify(si.groupBy)}`, function () {
 				before(async function () {
-					await driver.get('http://localhost:3000/grid/default.html');
+					await driver.get('http://localhost:3000/grid/basic/random1000.html');
 					grid = new Grid(driver);
 					await grid.waitForIdle();
 
@@ -142,16 +167,37 @@ describe('Sort', function() {
 				_.each(si.tests, async (t) => {
 					const [field, rowValMin, rowValMax] = t;
 
-					it(`${field}`, async function () {
-						await grid.sortBy(field, `${field}, Ascending`);
-						await grid.waitForIdle();
-						assert.deepEqual(await grid.getRowVal(0), rowValMin, 'sort asc -> check min');
-						assert.deepEqual(await grid.getRowVal(-2), rowValMax, 'sort asc -> check max'); // -2 because of the total row
+					_.each(['Ascending', 'Descending'], (dir) => {
+						describe(`${field} ${dir}`, function () {
+							before(async function () {
+								await grid.sortBy(field, `${field}, ${dir}`);
+								await grid.waitForIdle();
+							});
 
-						await grid.sortBy(field, `${field}, Descending`);
-						await grid.waitForIdle();
-						assert.deepEqual(await grid.getRowVal(0), rowValMax, 'sort desc -> check max');
-						assert.deepEqual(await grid.getRowVal(-2), rowValMin, 'sort desc -> check min'); // -2 because of the total row
+							it('has correct min/max', async function () {
+								assert.deepEqual(await grid.getRowVal(0), dir === 'Ascending' ? rowValMin : rowValMax, 'sort asc -> check min');
+								assert.deepEqual(await grid.getRowVal(-2), dir === 'Ascending' ? rowValMax : rowValMin, 'sort asc -> check max'); // -2 because of the total row
+							});
+
+							// TODO This way of doing things is much simpler, but each spot check takes a long time,
+							// so they timeout unless put into individual tests.
+							//
+							// if (si.spotCheck != null) {
+							// 	await Promise.each(si.spotCheck, async (sc) => {
+							// 		assert.equal(await grid.getAggResult_byVal(sc.rowVal), sc.count);
+							// 	});
+							// }
+
+							if (si.spotCheck != null) {
+								describe('passes spot checks', function () {
+									_.each(si.spotCheck, (sc) => {
+										it(`${JSON.stringify(sc.rowVal)}: ${sc.count}`, async function () {
+											assert.equal(await grid.getAggResult_byVal(sc.rowVal), sc.count);
+										});
+									});
+								});
+							}
+						});
 					});
 				});
 			});
