@@ -1339,9 +1339,35 @@ View.prototype.sort = function (cont) {
 				return next(false);
 			}
 
+			// NOTE We're intentionally making the sort stable only when sorting ascending.
+			//
+			// When sorting rowvals/colvals:
+			//
+			// Since we're always starting from the same set of data (which is sorted asc by each element
+			// of the rowval/colval in turn), no matter which direction we sort, this has the effect of
+			// making the following work:
+			//
+			//   X,Y             X,Y            X,Y
+			//  -----           -----          -----
+			//   A,A             C,C            A,A
+			//   A,B             C,B            A,B
+			//   A,C             C,A            A,C
+			//   B,A  ========>  B,C  =======>  B,A
+			//   B,B   X, DESC   B,B   X, ASC   B,B
+			//   B,C  ========>  B,A  =======>  B,C
+			//   C,A             A,C            C,A
+			//   C,B             A,B            C,B
+			//   C,C             A,A            C,C
+			//
+			// This magickally does the expected thing, in every scenario.  Fields other than the one
+			// sorted by (in the example above, Y) end up sorted in the same direction, left to right.
+			//
+			// FIXME This will need to be adjusted when we support multiple sorts.  Both directions should
+			// be stable when we do that, or else it won't work as expected.
+
 			comparison = function (a, b) {
 				if (spec.dir.toUpperCase() === 'ASC') {
-					return cmp(a.sortSource, b.sortSource) < 0;
+					return cmp(a.sortSource, b.sortSource) <= 0;
 				}
 				else if (spec.dir.toUpperCase() === 'DESC') {
 					return cmp(a.sortSource, b.sortSource) > 0;
