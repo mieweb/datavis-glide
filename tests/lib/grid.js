@@ -571,6 +571,15 @@ class Grid {
 			throw new Error('Call Error: `opts.result` must be: "text" or "element"');
 
 		const trs = await this.driver.findElements(By.css('div.wcdv_grid div.wcdv_grid_table > table > tbody > tr'));
+
+		if (rowValIdx >= trs.length || (rowValIdx < 0 && rowValIdx < trs.length * -1)) {
+			throw new Error(`Test Error: Looking for rowValIdx = ${rowValIdx}, but only ${trs.length} rowVals were found`);
+		}
+
+		if (rowValIdx < 0) {
+			rowValIdx = trs.length + rowValIdx;
+		}
+
 		const ths = await trs[rowValIdx].findElements(By.css('th > div.wcdv_heading_container > span.wcdv_heading_title'));
 		const th = ths[groupFieldIdx];
 		switch (opts.result) {
