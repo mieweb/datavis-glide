@@ -639,23 +639,26 @@ class Grid {
 			// TODO
 			throw new Error('not implemented');
 		}
-		else if (rowVal.length > 1) {
-			// TODO
-			throw new Error('not implemented');
-		}
 		else {
 			const trs = await table.findElements(By.css('tbody > tr'));
-			const rowValHeaders = await table.findElements(By.css('tbody > tr > th'));
-			const th = await asyncFilter(rowValHeaders, async (elt) => await elt.getText() === rowVal[0], {reportPosition: true});
-			if (th.length === 0) {
-				throw new Error(`No such rowval: ${rowVal[0]}`);
+			let rowValPos;
+
+			for (let trIdx = 0; trIdx < trs.length; trIdx += 1) {
+				let ths = await trs[trIdx].findElements(By.css('th'));
+				let checks = await Promise.mapSeries(ths, async (th, thIdx) => await th.getText() === rowVal[thIdx]);
+				if (_.every(checks)) {
+					rowValPos = trIdx;
+					break;
+				}
 			}
-			if (th.length > 1) {
-				throw new Error(`Too many matching rowvals: ${rowVal[0]}`);
+
+			if (rowValPos == null) {
+				throw new Error(`No such rowval: ${JSON.stringify(rowVal)}`);
 			}
-			const tds = await trs[th[0].pos].findElements(By.css(`tbody > tr > td[data-rowval-index]`));
+
+			const tds = await trs[rowValPos].findElements(By.css(`tbody > tr > td[data-rowval-index]`));
 			if (tds.length === 0) {
-				throw new Error(`No cell for rowval: ${rowVal[0]}`);
+				throw new Error(`No cell for rowval: ${JSON.stringify(rowVal)}`);
 			}
 			if (tds.length < aggNum + 1) {
 				throw new Error(`No such aggnum: ${aggNum}`);
