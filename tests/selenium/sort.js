@@ -1,3 +1,4 @@
+const Promise = require("bluebird");
 const assert = require('assert');
 const _ = require('lodash');
 const Grid = require('../lib/grid.js');
@@ -13,12 +14,9 @@ describe('Sort', function() {
 	logging.setLevel(LoggingType.BROWSER, LoggingLevel.ALL);
 	let driver;
 	let grid;
-	
+
 	before(async function () {
 		driver = new Builder().forBrowser('chrome').setLoggingPrefs(logging).build();
-		await driver.get('http://localhost:3000/grid/default.html');
-		grid = new Grid(driver);
-		await grid.waitForIdle();
 	});
 
 	after(async function () {
@@ -27,48 +25,136 @@ describe('Sort', function() {
 		}
 	});
 
-	const sortInfo = [
-		['string1', 'Erotes', 'zigzagged', 'random dictionary word'],
-		['int1', '18', '9882', 'integer (number → number)'],
-		['int2', '18', '9882', 'integer (string → number)'],
-		['int3', '18', '9882', 'integer (string → numeral)'],
-		['int4', '18', '9882', 'integer (number → numeral)'],
-		['int5', '18', '9882', 'integer (string → numeral)'],
-		['int6', '18', '9882', 'integer (string → numeral)'],
-		['int7', '18', '9882', 'integer (number → bignumber)'],
-		['int8', '18', '9882', 'integer (string → bignumber)'],
-		['int9', '18', '9882', 'integer (string → bignumber)'],
-		['float1', '11.427050324968356', '9961.582135696373', 'float (number → number)'],
-		['float2', '11.427050324968356', '9961.582135696373', 'float (string → number)'],
-		['float3', '11.427', '9961.582', 'float (string w/ commas → number)'],
-		['float4', '11.427050324968356', '9961.582135696373', 'float (number → numeral)'],
-		['float5', '11.427050324968356', '9961.582135696373', 'float (string → numeral)'],
-		['float6', '11.427', '9961.582', 'float (string w/ commas → numeral)'],
-		['float7', '11.427050324968356', '9961.582135696373', 'float (number → bignumber)'],
-		['float8', '11.427050324968356', '9961.582135696373', 'float (string → bignumber)'],
-		['float9', '11.427', '9961.582', 'float (string w/ commas → bignumber)'],
-		['currency1', '$11.43', '$9,961.58', 'currency (number : currency → number)'],
-		['currency2', '$11.43', '$9,961.58', 'currency (string : currency → number)'],
-		['currency3', '$11.43', '$9,961.58', 'currency (string : currency → numeral)'],
-		['currency4', '$11.43', '$9,961.58', 'currency (string : string → numeral)'],
-		['date1', 'November 30, 1901', 'January 10, 2094', 'date (string → string)'],
-		['date2', 'November 30, 1901', 'January 10, 2094', 'date (string → moment)'],
-		['date3', 'November 30, 1901', 'January 10, 2094', 'date (string → moment)']
-	];
+	const sortInfo = {
+		plain: [
 
-	_.each(sortInfo, async (si) => {
-		const [field, min, max, desc] = si;
+			// DATA FORMAT: [field, min, max, info]
+			//
+			//   * field: What field to sort by.
+			//   * min: Minimum value in that field.
+			//   * max: Maximum value in that field.
+			//   * info: What the field represents, used for test messages.
 
-		it(`${field}, ${desc}`, async function () {
-			await grid.sortBy(field, `${field}, Ascending`);
+			['string1', 'Erotes', 'zigzagged', 'random dictionary word'],
+			['int1', '18', '9882', 'integer (number → number)'],
+			['int2', '18', '9882', 'integer (string → number)'],
+			['int3', '18', '9882', 'integer (string → numeral)'],
+			['int4', '18', '9882', 'integer (number → numeral)'],
+			['int5', '18', '9882', 'integer (string → numeral)'],
+			['int6', '18', '9882', 'integer (string → numeral)'],
+			['int7', '18', '9882', 'integer (number → bignumber)'],
+			['int8', '18', '9882', 'integer (string → bignumber)'],
+			['int9', '18', '9882', 'integer (string → bignumber)'],
+			['float1', '11.427050324968356', '9961.582135696373', 'float (number → number)'],
+			['float2', '11.427050324968356', '9961.582135696373', 'float (string → number)'],
+			['float3', '11.427', '9961.582', 'float (string w/ commas → number)'],
+			['float4', '11.427050324968356', '9961.582135696373', 'float (number → numeral)'],
+			['float5', '11.427050324968356', '9961.582135696373', 'float (string → numeral)'],
+			['float6', '11.427', '9961.582', 'float (string w/ commas → numeral)'],
+			['float7', '11.427050324968356', '9961.582135696373', 'float (number → bignumber)'],
+			['float8', '11.427050324968356', '9961.582135696373', 'float (string → bignumber)'],
+			['float9', '11.427', '9961.582', 'float (string w/ commas → bignumber)'],
+			['currency1', '$11.43', '$9,961.58', 'currency (number : currency → number)'],
+			['currency2', '$11.43', '$9,961.58', 'currency (string : currency → number)'],
+			['currency3', '$11.43', '$9,961.58', 'currency (string : currency → numeral)'],
+			['currency4', '$11.43', '$9,961.58', 'currency (string : string → numeral)'],
+			['date1', 'November 30, 1901', 'January 10, 2094', 'date (string → string)'],
+			['date2', 'November 30, 1901', 'January 10, 2094', 'date (string → moment)'],
+			['date3', 'November 30, 1901', 'January 10, 2094', 'date (string → moment)']
+		],
+		group: [{
+
+			// DATA FORMAT: {...}
+			//
+			//   * groupBy: List of fields to group by.
+			//   * tests: Array of tests to run with that grouping.
+
+			groupBy: ['fruit'],
+			tests: [
+
+				// DATA FORMAT: [field, rowValMin, rowValMax, aggMin, aggMax]
+				//
+				//   * field: What group field to sort by.
+				//   * rowValMin: Minimum rowval in that field.
+				//   * rowValMax: Maximum rowval in that field.
+
+				['fruit', ['Banana'], ['Strawberry']]
+			]
+		}, {
+			groupBy: ['fruit', 'country'],
+			tests: [
+				['fruit', ['Banana', 'Canada'], ['Strawberry', 'Germany']],
+				['country', ['Banana', 'Canada'], ['Mango', 'United States']]
+			]
+		}],
+		pivot: {}
+	};
+
+	describe('plain output', function () {
+		before(async function () {
+			await driver.get('http://localhost:3000/grid/default.html');
+			grid = new Grid(driver);
 			await grid.waitForIdle();
-			assert.equal(await grid.getCell(field, 0), min);
-			assert.equal(await grid.getCell(field, -1), max);
+		});
 
-			await grid.sortBy(field, `${field}, Descending`);
-			await grid.waitForIdle();
-			assert.equal(await grid.getCell(field, 0), max);
-			assert.equal(await grid.getCell(field, -1), min);
+		after(async function () {
+			await driver.executeScript('window.localStorage.clear()');
+		});
+
+		_.each(sortInfo.plain, async (si) => {
+			const [field, min, max, desc] = si;
+
+			it(`${field}, ${desc}`, async function () {
+				await grid.sortBy(field, `${field}, Ascending`);
+				await grid.waitForIdle();
+				assert.equal(await grid.getCell(field, 0), min);
+				assert.equal(await grid.getCell(field, -1), max);
+
+				await grid.sortBy(field, `${field}, Descending`);
+				await grid.waitForIdle();
+				assert.equal(await grid.getCell(field, 0), max);
+				assert.equal(await grid.getCell(field, -1), min);
+			});
+		});
+	});
+
+	describe('group output', function () {
+		_.each(sortInfo.group, async (si) => {
+			describe(`grouping by ${JSON.stringify(si.groupBy)}`, function () {
+				before(async function () {
+					await driver.get('http://localhost:3000/grid/default.html');
+					grid = new Grid(driver);
+					await grid.waitForIdle();
+
+					await Promise.each(si.groupBy, async (g) => {
+						await grid.addGroup(g);
+						await grid.waitForIdle();
+					});
+
+					await grid.setGroupMode('summary');
+					await grid.waitForIdle();
+				});
+
+				after(async function () {
+					await driver.executeScript('window.localStorage.clear()');
+				});
+
+				_.each(si.tests, async (t) => {
+					const [field, rowValMin, rowValMax] = t;
+
+					it(`${field}`, async function () {
+						await grid.sortBy(field, `${field}, Ascending`);
+						await grid.waitForIdle();
+						assert.deepEqual(await grid.getRowVal(0), rowValMin, 'sort asc -> check min');
+						assert.deepEqual(await grid.getRowVal(-2), rowValMax, 'sort asc -> check max'); // -2 because of the total row
+
+						await grid.sortBy(field, `${field}, Descending`);
+						await grid.waitForIdle();
+						assert.deepEqual(await grid.getRowVal(0), rowValMax, 'sort desc -> check max');
+						assert.deepEqual(await grid.getRowVal(-2), rowValMin, 'sort desc -> check min'); // -2 because of the total row
+					});
+				});
+			});
 		});
 	});
 });
