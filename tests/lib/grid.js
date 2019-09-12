@@ -49,18 +49,51 @@ class GridUi {
 
 // Grid {{{1
 
+/**
+ * @class
+ * Provides a convenient way of interacting with a grid.
+ */
+
 class Grid {
+	/**
+	 * Construct a proxy to a grid on a page.
+	 *
+	 * @param {selenium-webdriver.ThenableWebDriver} driver
+	 * @param {string} [id="grid"]
+	 */
+
 	constructor(driver, id = 'grid') {
 		this.driver = driver;
 		this.id = id;
 		this.ui = new GridUi(this.driver, this.id);
 	}
 
+	/**
+	 * Print out console messages from the browser.  Prints all the messages that were produced since
+	 * the last time this method was called.
+	 */
+
 	async dumpLogs() {
 		(await this.driver.manage().logs().get(LoggingType.BROWSER)).forEach((l) => {
 			console.log(l.message.replace(/\\u003C/g, '<'));
 		});
 	}
+
+	/**
+	 * Wait for the grid to become idle.
+	 *
+	 * @param {object} [opts]
+	 *
+	 * @param {boolean} [opts.showLogs=false]
+	 * If true, show console messages from the browser, including messages produced by this method as
+	 * we check to see if the grid is idle.
+	 *
+	 * @param {boolean} [opts.debug=false]
+	 * If true, print a message on stdout indicating that we are waiting.
+	 *
+	 * @param {number} [opts.timeout=2000]
+	 * Number of milliseconds between idle checks.
+	 */
 
 	async waitForIdle(opts = {}) {
 		_.defaultsDeep(opts, {

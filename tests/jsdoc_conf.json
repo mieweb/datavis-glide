@@ -1,0 +1,26 @@
+{
+    "plugins": [
+        "plugins/markdown"
+    ],
+    "opts": {
+        "template": "../jaguarjs-jsdoc",
+        "destination": "jsdoc"
+    },
+    "templates": {
+        "systemName": "DataVis Test Lib",
+        "copyright": "Copyright © Medical Informatics Engineering, Inc.",
+        "theme": "spacelab",
+        "linenums": true,
+        "collapseSymbols": false,
+        "inverseNav": true,
+        "methodHeadingReturns": true,
+        "outputSourceFiles": true,
+        "applicationName": "DataVis Test Lib",
+        "meta": {
+            "title": "DataVis Test Lib JSDoc"
+        },
+        "default": {
+            "outputSourceFiles": true
+        }
+    }
+}
