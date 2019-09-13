@@ -4549,7 +4549,7 @@ var GridTablePivot = makeSubclass('GridTablePivot', GridTable, function (grid, d
 
 	debug.info('GRID TABLE - PIVOT', 'Constructing grid table; features = %O', features);
 
-	setPropDef(['rowVals', 'cells', 'groupAggregates'], self.opts, 'displayOrder');
+	setPropDef(['rowVals', 'cells', 'groupAggregates', 'addCols'], self.opts, 'displayOrder');
 });
 
 // #canRender {{{2
