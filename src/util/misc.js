@@ -2755,11 +2755,19 @@ export function convert(cell, fti) {
  * This is often used when outputting aggregate function results that have a different type from the
  * type of the field they're applied on (e.g. "distinct values" always produces a string, even if
  * it's applied over a field that contains dates or currency).
+ *
+ * @param {boolean} [saferCaching=true]
+ * If true, only cache non-Element results from calling the `render` function on a cell.  In the
+ * event that the cell is displayed more than once (e.g. group summary or pivot output, where the
+ * single cell representing a rowval element is shown in each rowval having it as a member), if we
+ * cache the Element, it will be reused, and thus moved around on the page, causing all but one
+ * instance of the cell to disappear.
  */
 
 export function format(fcc, fti, cell, opts) {
 	var newVal
-		, isNegative = false;
+		, isNegative = false
+		, isSafeToCache = true;
 
 	fcc = fcc || {};
 	fti = fti || {};
@@ -2768,7 +2776,8 @@ export function format(fcc, fti, cell, opts) {
 	_.defaults(opts, {
 		debug: false,
 		overrideType: null,
-		convert: true
+		convert: true,
+		saferCaching: true
 	});
 
 	if (opts.debug) {
@@ -3140,15 +3149,23 @@ export function format(fcc, fti, cell, opts) {
 	}
 
 	// If there's a rendering function, pass the (possibly formatted) value through it to get the new
-	// value to display.
+	// value to display.  If the rendering function returns an Element (possibly built via jQuery),
+	// mark the result as unsafe to cache, because an Element can't be on the page more than once, so
+	// we need to have the rendering function make it every time, in the event that the same cell is
+	// displayed more than once in the grid.
 
 	if (typeof cell.render === 'function') {
 		result = cell.render(result);
+		if (opts.saferCaching && (result instanceof jQuery || result instanceof Element)) {
+			isSafeToCache = false;
+		}
 	}
 
-	cell.cachedRender = result;
+	if (isSafeToCache) {
+		cell.cachedRender = result;
+	}
 
-	return cell.cachedRender;
+	return result;
 }
 
 // Date and Time Formatting {{{1

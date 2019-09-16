@@ -1380,6 +1380,10 @@ GridTable.prototype.drawBody_rowVals = function (data, tr, rowValIndex) {
 	var th = [];
 	var i;
 
+	// Iterate through the group fields from last to first, navigating through the group metadata tree
+	// from leaf (last group field) to root (first group field).  Along the way, construct the <TH>
+	// elements for the rowval elements in reverse order.
+
 	for (i = data.groupFields.length - 1; i >= 0; i -= 1) {
 		var groupField = data.groupFields[i];
 		var groupSpec = data.groupSpec[i];
@@ -1393,6 +1397,17 @@ GridTable.prototype.drawBody_rowVals = function (data, tr, rowValIndex) {
 			};
 			v = metadataNode.rowValElt;
 		}
+
+		// The rowValCell is a representative cell that matches the rowValElt.  If there is more than
+		// one rowVal containing the same rowValElt, the rowValCell is shared between them all.  It's
+		// the same representative cell.  Because it's shared, we need to enable `saferCaching` so any
+		// Element produced by a `render` function on the cell doesn't get reused and moved around on
+		// the page.  A good example of this issue can be seen in the allowHtml tests, on the link3 and
+		// link4 fields which use a `render` function to create an <A> element.
+		//
+		// After more difficulty was discovered, `saferCaching` was turned on by default.  This will
+		// have some performance impacts, but until a different way is found to implement this, it's
+		// necessary.
 
 		v = format(fcc, t, v);
 
@@ -1428,7 +1443,6 @@ GridTable.prototype.drawBody_rowVals = function (data, tr, rowValIndex) {
 			headingThValue.innerText = v;
 		}
 
-		th[i].appendChild(headingThContainer);
 		self.csv.addCol(headingThValue.innerText, {
 			prepend: true
 		});
