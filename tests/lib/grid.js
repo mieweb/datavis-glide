@@ -118,13 +118,29 @@ class Grid {
 		}, opts.timeout);
 	}
 
+	/**
+	 * Refresh the grid.
+	 */
+
 	async refresh() {
 		return this.ui.refreshBtn.click();
 	}
 
+	/**
+	 * Toggle the control panel.
+	 */
+
 	async toggleControls() {
 		return this.ui.gearBtn.click();
 	}
+
+	/**
+	 * Set the source URL.  Useful for simulating when data changes on the server.  You'll still need
+	 * to call `refresh()` to obtain it.
+	 *
+	 * @param {string} url
+	 * The absolute URL (including protocol) to retrieve data from.
+	 */
 
 	async setSourceUrl(url) {
 		return this.driver.executeScript(`MIE.WC_DataVis.grids['${this.id}'].view.source.origin.url = '${url}'`);
@@ -136,11 +152,26 @@ class Grid {
 		return tds[colNum].getText();
 	}
 
+	/**
+	 * Tells how many rows there are in the table.  Includes any total rows at the bottom, if the data
+	 * has been grouped or pivotted.  Also includes any "show more" rows, in limited plain output.
+	 *
+	 * @returns {number}
+	 * Number of rows in the table.
+	 */
+
 	async getNumRows() {
 		const trs = await this.driver.findElements(By.css('div.wcdv_grid div.wcdv_grid_table > table > tbody > tr'));
 		//const visible = await asyncFilter(trs, async (elt) => await elt.isDisplayed());
 		return trs.length;
 	}
+
+	/**
+	 * Set the group mode between summary and detail.
+	 *
+	 * @param {string} kind
+	 * The group mode.  Must be either "summary" or "detail."
+	 */
 
 	async setGroupMode(kind) {
 		return this.driver.findElement(By.css(`input[type=radio][name=groupOutput][value=${kind}]`)).click();
