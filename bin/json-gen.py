@@ -20,6 +20,7 @@ import json5
 
 WORDS = open(os.getenv('DICT_FILE', '/usr/share/dict/words')).read().splitlines()
 STATES = ['Alabama', 'Alaska', 'Arizona', 'Arkansas', 'California', 'Colorado', 'Connecticut', 'Delaware', 'Florida', 'Georgia', 'Hawaii', 'Idaho', 'Illinois', 'Indiana', 'Iowa', 'Kansas', 'Kentucky', 'Louisiana', 'Maine', 'Maryland', 'Massachusetts', 'Michigan', 'Minnesota', 'Mississippi', 'Missouri', 'Montana Nebraska', 'Nevada', 'New Hampshire', 'New Jersey', 'New Mexico', 'New York', 'North Carolina', 'North Dakota', 'Ohio', 'Oklahoma', 'Oregon', 'Pennsylvania', 'Rhode Island', 'South Carolina', 'South Dakota', 'Tennessee', 'Texas', 'Utah', 'Vermont', 'Virginia', 'Washington', 'West Virginia', 'Wisconsin', 'Wyoming']
+LIPSUM = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.'
 RANDOMS = {}
 RANDOM_SEED = { 'seed': None }
 LAST = {}
@@ -165,6 +166,9 @@ def sequence(name, start=1):
     LAST[name] = ret
     return ret
 
+def lipsum(count = 1):
+    return ' '.join([LIPSUM] * count)
+
 def last(name):
     global LAST
     return LAST[name]
@@ -181,6 +185,7 @@ def process(node):
             'state': state,
             'cycle': cycle,
             'sequence': sequence,
+            'lipsum': lipsum,
             'last': last,
             'RANDOM_SEED': RANDOM_SEED }
     r = re.compile(r'\$<\s*(.*?)\s*>\$')
@@ -195,7 +200,7 @@ def process(node):
                         return recur(node)
                 node[key] = recur(val)
         elif type(node) is list:
-            if len(node) == 2:
+            if len(node) == 2 and type(node[0]) is str:
                 match = r.fullmatch(node[0])
                 if match:
                     env['ARGS'] = args.args
