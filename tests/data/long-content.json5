@@ -1,0 +1,14 @@
+{
+  "$< random_seed(0) >$": null,
+  "data": [
+    "$< repeat(10, VALUE) >$",
+    {
+        "rowId": "$< sequence('rowId', 1) >$"
+      , "lipsum": "$< lipsum(5) >$"
+    }
+  ],
+  "typeInfo": [
+      { "field": "rowId", "type": "number" }
+    , { "field": "lipsum", "type": "string" }
+  ]
+}
