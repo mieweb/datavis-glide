@@ -2378,7 +2378,7 @@ export var loadScript = (function () {
 /**
  * Set the value of a table cell.
  *
- * @param {HTMLTableCellElement} cell
+ * @param {jQuery|HTMLTableCellElement} cell
  * @param {Element|jQuery|string|number} value
  * @param {object} opts
  * @param {string} opts.field
@@ -2389,8 +2389,12 @@ export var loadScript = (function () {
 export function setTableCell(cell, value, opts) {
 	opts = opts || {};
 
-	var fcc = (opts.field && opts.colConfig && opts.colConfig.get(opts.field)) || {};
-	var fti = (opts.field && opts.typeInfo && opts.typeInfo.get(opts.field)) || {};
+	var fcc = (opts.colConfig instanceof OrdMap && opts.colConfig.get(opts.field)) || opts.colConfig || {};
+	var fti = (opts.typeInfo instanceof OrdMap && opts.typeInfo.get(opts.field)) || opts.typeInfo || {};
+
+	if (cell instanceof jQuery) {
+		cell = cell.get(0);
+	}
 
 	if (!(cell instanceof HTMLTableCellElement)) {
 		throw new Error('Call Error: `cell` must be a HTMLTableCellElement instance');
@@ -2439,7 +2443,7 @@ export function setTableCell(cell, value, opts) {
 /**
  * Set the value of an element.
  *
- * @param {Element} container
+ * @param {jQuery|Element} container
  * @param {Element|jQuery|string|number} value
  * @param {object} opts
  * @param {string} opts.field
@@ -2450,8 +2454,12 @@ export function setTableCell(cell, value, opts) {
 export function setElement(container, value, opts) {
 	opts = opts || {};
 
-	var fcc = (opts.field && opts.colConfig && opts.colConfig.get(opts.field)) || {};
-	var fti = (opts.field && opts.typeInfo && opts.typeInfo.get(opts.field)) || {};
+	var fcc = (opts.colConfig instanceof OrdMap && opts.colConfig.get(opts.field)) || opts.colConfig || {};
+	var fti = (opts.typeInfo instanceof OrdMap && opts.typeInfo.get(opts.field)) || opts.typeInfo || {};
+
+	if (container instanceof jQuery) {
+		container = container.get(0);
+	}
 
 	if (!(container instanceof Element)) {
 		throw new Error('Call Error: `container` must be an Element instance');

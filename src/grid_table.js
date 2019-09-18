@@ -1633,15 +1633,20 @@ GridTable.prototype.drawBody_groupAggregates = function (data, tr, groupNum, dis
 				text = format(aggInfo.colConfig[0], aggInfo.typeInfo[0], aggResult, {
 					overrideType: aggType
 				});
+				setTableCell(td, text, {
+					field: aggInfo.fields[0],
+					colConfig: aggInfo.colConfig[0],
+					typeInfo: aggInfo.typeInfo[0]
+				});
 			}
 			else {
 				text = format(null, null, aggResult, {
 					overrideType: aggType,
 					convert: false
 				});
+				setTableCell(td, text);
 			}
-			td.innerText = text;
-			self.csv.addCol(text);
+			self.csv.addCol(td.innerText);
 		}
 
 		// Allow drilldown, but only when there's no group function set.  This limitation is currently
@@ -4629,15 +4634,20 @@ GridTableGroupSummary.prototype.drawBody = function (data, typeInfo, columns, co
 							text = format(aggInfo.colConfig[0], aggInfo.typeInfo[0], aggResult, {
 								overrideType: aggInfo.instance.getType()
 							});
+							setTableCell(td, text, {
+								field: aggInfo.fields[0],
+								colConfig: aggInfo.colConfig[0],
+								typeInfo: aggInfo.typeInfo[0]
+							});
 						}
 						else {
 							text = format(null, null, aggResult, {
 								overrideType: aggInfo.instance.getType(),
 								convert: false
 							});
+							setTableCell(td, text);
 						}
-						td.text(text);
-						self.csv.addCol(text);
+						self.csv.addCol(td.innerText);
 					}
 
 					if (self.opts.drawInternalBorders || ai.cell.length > 1) {
@@ -4835,11 +4845,11 @@ GridTablePivot.prototype.drawHeader = function (columns, data, typeInfo, opts) {
 		}
 	};
 
-	//                              ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
-	// +---------------------------+--------------------------------------+-----------+
-	// |                           | COLVAL 1.1              | COLVAL 1.2 |           |
-	// +---------------------------+------------+------------+------------+-----------+
-	// |                           | COLVAL 2.1 | COLVAL 2.2 | COLVAL 2.1 |           |
+	//                ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
+	// +-------------+-------------+--------------------------------------+-----------+
+	// |             | PIVOT FIELD | COLVAL 1.1              | COLVAL 1.2 |           |
+	// +-------------+-------------+------------+------------+------------+-----------+
+	// |             | PIVOT FIELD | COLVAL 2.1 | COLVAL 2.2 | COLVAL 2.1 |           |
 	// +-------------+-------------+------------+------------+------------+-----------+
 	// | GROUP FIELD | GROUP FIELD |                                      | GROUP AGG |
 	// +-------------+-------------+--------------------------------------+-----------+
@@ -4853,10 +4863,10 @@ GridTablePivot.prototype.drawHeader = function (columns, data, typeInfo, opts) {
 
 		var fcc = self.colConfig.get(pivotField) || {};
 		var pivotSpec = data.pivotSpec[pivotFieldIdx];
-		var t = self.typeInfo.get(pivotField);
+		var fti = self.typeInfo.get(pivotField);
 
 		if (pivotSpec.fun != null) {
-			t = {
+			fti = {
 				type: GROUP_FUNCTION_REGISTRY.get(pivotSpec.fun).resultType
 			};
 		}
@@ -4906,7 +4916,7 @@ GridTablePivot.prototype.drawHeader = function (columns, data, typeInfo, opts) {
 
 		for (colValIndex = 0; colValIndex < data.colVals.length; colValIndex += 1) {
 			colVal = data.colVals[colValIndex][pivotFieldIdx];
-			colVal = format(self.colConfig.get(pivotField), t, colVal);
+			colVal = format(self.colConfig.get(pivotField), fti, colVal);
 
 			if (colVal !== lastColVal || isLastPivotField) {
 				if (lastColVal !== null) {
@@ -4933,8 +4943,13 @@ GridTablePivot.prototype.drawHeader = function (columns, data, typeInfo, opts) {
 				lastColVal = colVal;
 				lastColValCount = 1;
 
-				span = jQuery('<span>').addClass('wcdv_heading_title').text(colVal);
-				self.csv.addCol(colVal);
+				span = jQuery('<span>').addClass('wcdv_heading_title');
+				setElement(span, colVal, {
+					field: pivotField,
+					colConfig: fcc,
+					typeInfo: fti
+				});
+				self.csv.addCol(span.text());
 
 				headingThControls = jQuery('<div>');
 
@@ -5195,15 +5210,20 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 										text = format(aggInfo.colConfig[0], aggInfo.typeInfo[0], aggResult, {
 											overrideType: aggType
 										});
+										setTableCell(td, text, {
+											field: aggInfo.fields[0],
+											colConfig: aggInfo.colConfig[0],
+											typeInfo: aggInfo.typeInfo[0]
+										});
 									}
 									else {
 										text = format(null, null, aggResult, {
 											overrideType: aggType,
 											convert: false
 										});
+										setTableCell(td, text);
 									}
-									td.innerText = text;
-									self.csv.addCol(text);
+									self.csv.addCol(td.innerText);
 								}
 
 								if (_.every(data.groupSpec, function (gs) { return gs.fun == null; })
@@ -5366,15 +5386,20 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 								text = format(aggInfo.colConfig[0], aggInfo.typeInfo[0], aggResult, {
 									overrideType: aggInfo.instance.getType()
 								});
+								setTableCell(td, text, {
+									field: aggInfo.fields[0],
+									colConfig: aggInfo.colConfig[0],
+									typeInfo: aggInfo.typeInfo[0]
+								});
 							}
 							else {
 								text = format(null, null, aggResult, {
 									overrideType: aggInfo.instance.getType(),
 									convert: false
 								});
+								setTableCell(td, text);
 							}
-							td.text(text);
-							self.csv.addCol(text);
+							self.csv.addCol(td.text());
 						}
 
 						if (_.every(data.pivotSpec, function (ps) { return ps.fun == null; })) {
@@ -5430,15 +5455,20 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 								text = format(aggInfo.colConfig[0], aggInfo.typeInfo[0], aggResult, {
 									overrideType: aggInfo.instance.getType()
 								});
+								setTableCell(td, text, {
+									field: aggInfo.fields[0],
+									colConfig: aggInfo.colConfig[0],
+									typeInfo: aggInfo.typeInfo[0]
+								});
 							}
 							else {
 								text = format(null, null, aggResult, {
 									overrideType: aggInfo.instance.getType(),
 									convert: false
 								});
+								setTableCell(td, text);
 							}
-							td.text(text);
-							self.csv.addCol(text);
+							self.csv.addCol(td.text());
 						}
 
 						if (self.opts.drawInternalBorders || ai.cell.length > 1) {
