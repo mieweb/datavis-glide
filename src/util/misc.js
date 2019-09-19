@@ -2402,7 +2402,7 @@ export function setTableCell(cell, value, opts) {
 
 	var container = cell;
 
-	if (fcc.maxHeight != null) {
+	if (fcc.maxHeight != null && value !== '') {
 		var wrapper = document.createElement('div');
 		wrapper.classList.add('wcdv_maxheight_wrapper');
 		wrapper.style.maxHeight = fcc.maxHeight;
