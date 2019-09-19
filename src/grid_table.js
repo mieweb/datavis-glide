@@ -1138,6 +1138,128 @@ GridTable.prototype._getAggInfo = function (data) {
 	return ai;
 };
 
+// #_setupFullValueWin {{{2
+
+/**
+ * Setup the behavior to show the full value of a cell when it's been truncated due to having the
+ * `maxHeight` property set in the column config.
+ *
+ * For plain output, you need to set:
+ *
+ *   - `data-row-num` on the TR
+ *   - `data-wcdv-field` on the TD
+ *
+ * For group & pivot output, you need to set:
+ *
+ *   - `data-rowval-index` on the TR (for group & cell aggregates)
+ *   - `data-colval-index` on the TD (for pivot & cell aggregates)
+ *   - `data-wcdv-agg-scope` on the TD
+ *   - `data-wcdv-agg-num` on the TD
+ */
+
+GridTable.prototype._setupFullValueWin = function (data) {
+	var self = this;
+
+	// Create a window that will show the full value of a cell whose display has been truncated by
+	// setting the `maxHeight` property in the column configuration.
+
+	var fullValueWinDiv = document.createElement('div');
+
+	var fullValueWinEffect = {
+		effect: 'fade',
+		duration: 100
+	};
+
+	var fullValueWin = jQuery('<div>', { title: 'Full Value' }).dialog({
+		autoOpen: false,
+		modal: true,
+		width: 800,
+		show: fullValueWinEffect,
+		hide: fullValueWinEffect,
+	});
+
+	fullValueWin.append(fullValueWinDiv);
+
+	// When the "show full value" button is clicked, use the attached data attributes to determine the
+	// value that will be shown in the window.
+
+	self.ui.tbody.on('click', 'button.wcdv_show_full_value', function (evt) {
+		evt.stopPropagation();
+
+		var btn = jQuery(this);
+		var td = btn.parents('td');
+		var tr = td.parents('tr');
+
+		var field
+			, rowNum
+			, rvi
+			, cvi
+			, aggScope
+			, aggNum
+			, aggInfo
+			, aggResult
+			, val;
+
+		if (data.isPlain) {
+			field = td.attr('data-wcdv-field');
+			rowNum = +tr.attr('data-row-num');
+			val = getProp(data, 'data', rowNum, 'rowData', field, 'cachedRender');
+			setElement(fullValueWinDiv, val);
+		}
+		else if (data.isGroup || data.isPivot) {
+			aggScope = td.attr('data-wcdv-agg-scope');
+			aggNum = +td.attr('data-wcdv-agg-num');
+
+			switch (aggScope) {
+			case 'cell':
+				rvi = +tr.attr('data-rowval-index');
+				cvi = +td.attr('data-colval-index');
+				aggResult = data.agg.results[aggScope][aggNum][rvi][cvi];
+				break;
+			case 'group':
+				rvi = +tr.attr('data-rowval-index');
+				aggResult = data.agg.results[aggScope][aggNum][rvi];
+				break;
+			case 'pivot':
+				cvi = +td.attr('data-colval-index');
+				aggResult = data.agg.results[aggScope][aggNum][cvi];
+				break;
+			case 'all':
+				aggResult = data.agg.results[aggScope][aggNum];
+				break;
+			}
+
+			aggInfo = data.agg.info[aggScope][aggNum];
+			field = getProp(aggInfo, 'fields', 0);
+
+			if (isElement(aggResult)) {
+				setElement(fullValueWinDiv, aggResult);
+			}
+			else {
+				if (aggInfo.instance.inheritFormatting) {
+					val = format(aggInfo.colConfig[0], aggInfo.typeInfo[0], aggResult, {
+						overrideType: aggInfo.instance.getType()
+					});
+					setElement(fullValueWinDiv, val, {
+						field: aggInfo.fields[0],
+						colConfig: aggInfo.colConfig[0],
+						typeInfo: aggInfo.typeInfo[0]
+					});
+				}
+				else {
+					val = format(null, null, aggResult, {
+						overrideType: aggInfo.instance.getType(),
+						convert: false
+					});
+					setElement(fullValueWinDiv, val);
+				}
+			}
+		}
+
+		fullValueWin.dialog('open');
+	});
+};
+
 // #draw {{{2
 
 GridTable.prototype.draw = function (root, opts, cont) {
@@ -1619,6 +1741,8 @@ GridTable.prototype.drawBody_groupAggregates = function (data, tr, groupNum, dis
 
 		var td = document.createElement('td');
 		td.setAttribute('data-rowval-index', groupNum);
+		td.setAttribute('data-wcdv-agg-scope', 'group');
+		td.setAttribute('data-wcdv-agg-num', aggNum);
 
 		if (aggResult instanceof jQuery) {
 			aggResult = aggResult.get(0);
@@ -1638,6 +1762,7 @@ GridTable.prototype.drawBody_groupAggregates = function (data, tr, groupNum, dis
 					colConfig: aggInfo.colConfig[0],
 					typeInfo: aggInfo.typeInfo[0]
 				});
+				td.setAttribute('data-wcdv-field', aggInfo.fields[0]);
 			}
 			else {
 				text = format(null, null, aggResult, {
@@ -1701,6 +1826,12 @@ GridTable.prototype.clear = function () {
 
 	if (self.features.limit && self.defn.table.limit.method === 'more') {
 		jQuery(self.scrollEventElement).off(self.scrollEvents);
+	}
+
+	// Remove the event handler from clicking on the "show full value" buttons.
+
+	if (getProp(self, 'ui', 'tbody') != null) {
+		self.ui.tbody.off('click', 'button.wcdv_show_full_value');
 	}
 
 	self.view.off('*', self, {silent: true});
@@ -2298,41 +2429,7 @@ GridTablePlain.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 
 	self.ui.tbody.children().remove();
 
-	// Create a window that will show the full value of a cell whose display has been truncated by
-	// setting the `maxHeight` property in the column configuration.
-
-	var fullValueWinDiv = document.createElement('div');
-
-	var fullValueWinEffect = {
-		effect: 'fade',
-		duration: 100
-	};
-
-	var fullValueWin = jQuery('<div>', { title: 'Full Value' }).dialog({
-		autoOpen: false,
-		modal: true,
-		width: 800,
-		show: fullValueWinEffect,
-		hide: fullValueWinEffect,
-	});
-
-	fullValueWin.append(fullValueWinDiv);
-
-	// When the "show full value" button is clicked, use the attached data attributes to determine the
-	// value that will be shown in the window.
-
-	self.ui.tbody.on('click', 'button.wcdv_show_full_value', function (evt) {
-		evt.stopPropagation();
-		var btn = jQuery(this);
-		var td = btn.parents('td');
-		var tr = td.parents('tr');
-		var field = td.attr('data-wcdv-field');
-		var rowNum = +tr.attr('data-row-num');
-		var val = getProp(data, 'data', rowNum, 'rowData', field, 'cachedRender');
-		setElement(fullValueWinDiv, val);
-		fullValueWin.dialog('option', 'title', 'Full Value (' + field + ')');
-		fullValueWin.dialog('open');
-	});
+	self._setupFullValueWin(data);
 
 	var renderDataRow = function (row) {
 		var tr, td;
@@ -4522,8 +4619,12 @@ GridTableGroupSummary.prototype.drawBody = function (data, typeInfo, columns, co
 	var ai = self._getAggInfo(data);
 	var aggType, aggInfo, rowAgg;
 
+	self._setupFullValueWin(data);
+
 	_.each(data.data, function (rowGroup, groupNum) {
 		var tr = document.createElement('tr');
+		tr.setAttribute('data-rowval-index', groupNum);
+
 		self.csv.addRow();
 
 		_.each(self.opts.displayOrder, function (what, displayOrderIndex) {
@@ -4623,6 +4724,8 @@ GridTableGroupSummary.prototype.drawBody = function (data, typeInfo, columns, co
 						, td;
 
 					td = jQuery('<td>');
+					td.attr('data-wcdv-agg-scope', 'all');
+					td.attr('data-wcdv-agg-num', aggInfo.aggNum);
 					aggResult = data.agg.results.all[aggInfo.aggNum];
 
 					if (isElement(aggResult)) {
@@ -5147,10 +5250,13 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 		}
 	}
 
+	self._setupFullValueWin(data);
+
 	_.each(data.data, function (rowGroup, groupNum) {
 		self.csv.addRow();
 
 		var tr = document.createElement('tr');
+		tr.setAttribute('data-rowval-index', groupNum);
 
 		_.each(self.opts.displayOrder, function (what, displayOrderIndex) {
 			if (typeof what === 'string') {
@@ -5192,6 +5298,8 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 								td.classList.add('wcdv_pivot_cell');
 								td.setAttribute('data-rowval-index', groupNum);
 								td.setAttribute('data-colval-index', pivotNum);
+								td.setAttribute('data-wcdv-agg-scope', 'cell');
+								td.setAttribute('data-wcdv-agg-num', aggInfo.aggNum);
 
 								rowAgg.push(aggResult);
 
@@ -5375,6 +5483,8 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 						var td = jQuery('<td>').attr({
 							'data-colval-index': colValIdx
 						});
+						td.attr('data-wcdv-agg-scope', 'pivot');
+						td.attr('data-wcdv-agg-num', aggInfo.aggNum);
 						var aggResult = data.agg.results.pivot[aggNum][colValIdx];
 
 						if (isElement(aggResult)) {
@@ -5445,6 +5555,8 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 						aggInfo = data.agg.info.all[aggNum];
 						aggResult = data.agg.results.all[aggNum];
 						td = jQuery('<td>');
+						td.attr('data-wcdv-agg-scope', 'all');
+						td.attr('data-wcdv-agg-num', aggInfo.aggNum);
 
 						if (isElement(aggResult)) {
 							td.append(aggResult);
