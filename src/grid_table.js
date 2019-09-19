@@ -1174,6 +1174,11 @@ GridTable.prototype._setupFullValueWin = function (data) {
 		autoOpen: false,
 		modal: true,
 		width: 800,
+		maxHeight: 600,
+		classes: {
+			"ui-dialog": "ui-corner-all wcdv_dialog",
+			"ui-dialog-titlebar": "ui-corner-all",
+		},
 		show: fullValueWinEffect,
 		hide: fullValueWinEffect,
 	});
