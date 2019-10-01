@@ -2421,7 +2421,7 @@ export function setTableCell(cell, value, opts) {
 
 		var showValueSpan = document.createElement('span');
 		showValueSpan.classList.add('fa');
-		showValueSpan.classList.add('fa-arrows-alt');
+		showValueSpan.classList.add('fa-asterisk');
 
 		container = document.createElement('div');
 
