@@ -32,10 +32,7 @@ $(document).ready(function () {
 				limit: false,
 				rowSelect: true,
 			},
-			columns: ['rowId', {
-				field: 'lipsum',
-				maxHeight: '10ex'
-			}]
+			columns: ['rowId'].concat(['string1', 'country', 'state', 'fruit', 'link', 'lipsum'].map((f) => ({field: f, maxHeight: '10ex'})))
 		},
 		source: source,
 	}, {

@@ -1,14 +1,108 @@
 {
   "$< random_seed(0) >$": null,
   "data": [
-    "$< repeat(10, VALUE) >$",
+    "$< repeat(1000, VALUE) >$",
     {
         "rowId": "$< sequence('rowId', 1) >$"
+      , "string1": "$< word_dict() >$"
+      , "country": "$< cycle('country', ['United States', 'Canada', 'Mexico', 'England', 'France', 'Germany', 'Switzerland', 'Japan', 'China', 'South Korea']) >$"
+      , "state": "$< state() >$"
+      , "fruit": "$< random_element('fruit', ['Apple', 'Banana', 'Blueberry', 'Cherry', 'Grape', 'Kiwi', 'Mango', 'Orange', 'Pineapple', 'Strawberry'], 'normal') >$"
+      , "link": "$< '<a href=\"https://en.wikipedia.org/wiki/' + last('fruit') + '\">' + last('fruit') + '</a>' >$"
       , "lipsum": "$< lipsum(5) >$"
+      , "int1": "$< random_int('int1', 0, 9999, output_type='number') >$"
+      , "int2": "$< random_int('int2', 0, 9999, output_type='string') >$"
+      , "int3": "$< random_int('int3', 0, 9999, output_type='string', format='#,##0') >$"
+      , "int4": "$< random_int('int4', 0, 9999, output_type='number') >$"
+      , "int5": "$< random_int('int5', 0, 9999, output_type='string') >$"
+      , "int6": "$< random_int('int6', 0, 9999, output_type='string', format='#,##0') >$"
+      , "int7": "$< random_int('int7', 0, 9999, output_type='number') >$"
+      , "int8": "$< random_int('int8', 0, 9999, output_type='string') >$"
+      , "int9": "$< random_int('int9', 0, 9999, output_type='string', format='#,##0') >$"
+      , "float1": "$< random_float('float1', 0, 9999, output_type='number') >$"
+      , "float2": "$< random_float('float2', 0, 9999, output_type='string') >$"
+      , "float3": "$< random_float('float3', 0, 9999, output_type='string', format='#,##0.###') >$"
+      , "float4": "$< random_float('float4', 0, 9999, output_type='number') >$"
+      , "float5": "$< random_float('float5', 0, 9999, output_type='string') >$"
+      , "float6": "$< random_float('float6', 0, 9999, output_type='string', format='#,##0.###') >$"
+      , "float7": "$< random_float('float7', 0, 9999, output_type='number') >$"
+      , "float8": "$< random_float('float8', 0, 9999, output_type='string') >$"
+      , "float9": "$< random_float('float9', 0, 9999, output_type='string', format='#,##0.###') >$"
+      , "currency1": "$< random_float('currency1', 0, 9999, output_type='number', fixed=2) >$"
+      , "currency2": "$< random_float('currency2', 0, 9999, output_type='string', format='#,##0.##') >$"
+      , "currency3": "$< random_float('currency3', 0, 9999, output_type='string', format='$#,##0.##') >$"
+      , "currency4": "$< random_float('currency4', 0, 9999, output_type='string', format='$#,##0.##') >$"
+      , "date1": "$< random_date('date1', format='yyyy-MM-dd') >$"
+      , "date2": "$< random_date('date2', format='MMM d, yyyy') >$"
+      , "date3": "$< random_date('date3', format='MM/dd/yyyy') >$"
+      , "datetime1": "$< random_datetime('datetime1', format='yyyy-MM-dd HH:mm:ss') >$"
+      , "datetime2": "$< random_datetime('datetime2', format='MMM d, yyyy HH:mm:ss') >$"
+      , "datetime3": "$< random_datetime('datetime3', format='MM/dd/yyyy HH:mm:ss') >$"
+      , "datetime4": "$< random_datetime('datetime4', min='2010-01-01 08:00:00', max='2010-01-01 08:01:00', format='yyyy-MM-dd HH:mm:ss') >$"
+      , "datetime5": "$< random_datetime('datetime5', min='2010-01-01 08:00:00', max='2010-01-01 08:01:00', format='MMM d, yyyy HH:mm:ss') >$"
+      , "datetime6": "$< random_datetime('datetime6', min='2010-01-01 08:00:00', max='2010-01-01 08:01:00', format='MM/dd/yyyy HH:mm:ss') >$"
+      , "datetime7": "$< random_datetime('datetime7', min='2010-01-01 08:00:00', max='2010-01-01 08:59:59', format='yyyy-MM-dd HH:mm:\\'0\\'0') >$"
+      , "datetime8": "$< random_datetime('datetime8', min='2010-01-01 08:00:00', max='2010-01-01 08:59:59', format='MMM d, yyyy HH:mm:\\'0\\'0') >$"
+      , "datetime9": "$< random_datetime('datetime9', min='2010-01-01 08:00:00', max='2010-01-01 08:59:59', format='MM/dd/yyyy HH:mm:\\'0\\'0') >$"
+      , "datetime10": "$< random_datetime('datetime10', min='2010-01-01 00:00:00', max='2010-01-31 23:59:59', format='yyyy-MM-dd HH:mm:ss') >$"
+      , "datetime11": "$< random_datetime('datetime11', min='2010-01-01 00:00:00', max='2010-01-31 23:59:59', format='MMM d, yyyy HH:mm:ss') >$"
+      , "datetime12": "$< random_datetime('datetime12', min='2010-01-01 00:00:00', max='2010-01-31 23:59:59', format='MM/dd/yyyy HH:mm:ss') >$"
+      , "fixedPrecision1": 0.7
+      , "fixedPrecision2": "0.7"
+      , "fixedPrecision3": "$0.70"
+      , "boolean1": "$< cycle('boolean1', [0, 1]) >$"
+      , "boolean2": "$< cycle('boolean2', [1, 0]) >$"
     }
   ],
   "typeInfo": [
       { "field": "rowId", "type": "number" }
+    , { "field": "string1", "type": "string" }
+    , { "field": "country", "type": "string" }
+    , { "field": "state", "type": "string" }
+    , { "field": "fruit", "type": "string" }
+    , { "field": "link", "type": "string" }
     , { "field": "lipsum", "type": "string" }
+    , { "field": "int1", "type": "number", "internalType": "primitive" }
+    , { "field": "int2", "type": "number", "internalType": "primitive" }
+    , { "field": "int3", "type": "number", "internalType": "primitive" }
+    , { "field": "int4", "type": "number", "internalType": "numeral" }
+    , { "field": "int5", "type": "number", "internalType": "numeral" }
+    , { "field": "int6", "type": "number", "internalType": "numeral" }
+    , { "field": "int7", "type": "number", "internalType": "bignumber" }
+    , { "field": "int8", "type": "number", "internalType": "bignumber" }
+    , { "field": "int9", "type": "number", "internalType": "bignumber" }
+    , { "field": "float1", "type": "number", "internalType": "primitive" }
+    , { "field": "float2", "type": "number", "internalType": "primitive" }
+    , { "field": "float3", "type": "number", "internalType": "primitive" }
+    , { "field": "float4", "type": "number", "internalType": "numeral" }
+    , { "field": "float5", "type": "number", "internalType": "numeral" }
+    , { "field": "float6", "type": "number", "internalType": "numeral" }
+    , { "field": "float7", "type": "number", "internalType": "bignumber" }
+    , { "field": "float8", "type": "number", "internalType": "bignumber" }
+    , { "field": "float9", "type": "number", "internalType": "bignumber" }
+    , { "field": "currency1", "type": "currency" }
+    , { "field": "currency2", "type": "currency" }
+    , { "field": "currency3", "type": "currency" }
+    , { "field": "currency4", "type": "string" }
+    , { "field": "date1", "type": "date" }
+    , { "field": "date2", "type": "date", "format": "MMMM D, YYYY" }
+    , { "field": "date3", "type": "date", "format": "MM/DD/YYYY" }
+    , { "field": "datetime1", "type": "datetime" }
+    , { "field": "datetime2", "type": "datetime", "format": "MMMM D, YYYY HH:mm:ss" }
+    , { "field": "datetime3", "type": "datetime", "format": "MM/DD/YYYY HH:mm:ss" }
+    , { "field": "datetime4", "type": "datetime" }
+    , { "field": "datetime5", "type": "datetime", "format": "MMMM D, YYYY HH:mm:ss" }
+    , { "field": "datetime6", "type": "datetime", "format": "MM/DD/YYYY HH:mm:ss" }
+    , { "field": "datetime7", "type": "datetime" }
+    , { "field": "datetime8", "type": "datetime", "format": "MMMM D, YYYY HH:mm:ss" }
+    , { "field": "datetime9", "type": "datetime", "format": "MM/DD/YYYY HH:mm:ss" }
+    , { "field": "datetime10", "type": "datetime" }
+    , { "field": "datetime11", "type": "datetime", "format": "MMMM D, YYYY HH:mm:ss" }
+    , { "field": "datetime12", "type": "datetime", "format": "MM/DD/YYYY HH:mm:ss" }
+    , { "field": "fixedPrecision1", "type": "number" }
+    , { "field": "fixedPrecision2", "type": "number" }
+    , { "field": "fixedPrecision3", "type": "currency" }
+    , { "field": "boolean1", "type": "number" }
+    , { "field": "boolean2", "type": "number" }
   ]
 }
