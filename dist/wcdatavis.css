@@ -34,6 +34,7 @@ td button.wcdv_icon_button_incell {
 	*/
 	float: right;
 	border: none;
+	margin-left: 4px; /* to keep left-aligned data (like numbers) from running into it */
 	padding: 2px;
 	border-radius: 2px;
 	background-color: #E0E0E080;
