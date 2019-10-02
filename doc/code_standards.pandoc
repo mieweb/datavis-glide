@@ -1,7 +1,0 @@
-# Code Standards
-
-#. Code is indented with tabs.  Each tab is 2 visual spaces.
-#. When changing code, prioritize leaving lines untouched (don't reformat lines, even if they don't meet these standards).
-#. Write in an object-oriented style.
-#. Don't [cuddle your else keywords](http://wiki.c2.com/?CuddledElseBlocks).
-#. Combine declarations for variables without initializers; use separate declarations for variables with initializers.

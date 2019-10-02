@@ -1,0 +1,119 @@
+# Events
+
+## Source ([Source JSDoc](https://zeus.med-web.com/~tvenable/doc/wcdatavis/jsdoc/Source.html))
+
+  - `dataUpdated`
+
+  - `getTypeInfo`
+
+## View ([View JSDoc](https://zeus.med-web.com/~tvenable/doc/wcdatavis/jsdoc/View.html))
+
+### Sort
+
+  - `sortSet(spec)`
+    
+    Fired when the view is configured to sort the data.
+
+  - `sortBegin`
+    
+    Fired when the view starts sorting data.
+
+  - `sortEnd`
+    
+    Fired when the view finishes sorting data.
+
+  - `sort(rowNum, index)`
+    
+    Fired when operating on plain data, for each row after it has been
+    sorted. This is used to dynamically rearrange the rows in a grid
+    table in plain output, which can be faster than completely
+    re-rendering the entire table.
+    
+      - `rowNum` — The unique ID of the row, used to identify it.
+      - `index` — The new index of the row within the output.
+    
+    Example: `(42, 0)` means that the row with ID 42 is now the first
+    row in the output.
+
+### Filter
+
+  - `filterSet(spec)`
+    
+    Fired when the view is configured to filter the data.
+
+  - `invalidFilterField(field)`
+
+  - `filterBegin`
+
+  - `filterEnd`
+
+  - `filter(rowNum, isHidden)`
+
+### Group
+
+  - `groupSet(spec)`
+
+  - `invalidGroupField(field)`
+
+### Pivot
+
+  - `pivotSet(spec)`
+
+  - `invalidPivotField(field)`
+
+### Aggregate
+
+  - `aggregateSet(spec)`
+
+  - `invalidAggregate(aggNum, reason)`
+
+### Data
+
+  - `dataUpdated`
+
+  - `getTypeInfo(typeInfo)`
+
+  - `fetchDataBegin`
+
+  - `fetchDataEnd`
+
+  - `workBegin`
+
+  - `workEnd(workEndObj, ops)`
+
+## Grid ([Grid JSDoc](https://zeus.med-web.com/~tvenable/doc/wcdatavis/jsdoc/Grid.html))
+
+  - `showControls`
+
+  - `hideControls`
+
+## Grid Table ([GridTable JSDoc](https://zeus.med-web.com/~tvenable/doc/wcdatavis/jsdoc/GridTable.html))
+
+  - `unableToRender(ops)`
+
+  - `limited`
+
+  - `unlimited`
+
+## Prefs
+
+  - `perspectiveAdded(name)`
+
+  - `perspectiveDeleted(name)`
+
+  - `perspectiveRenamed(oldName, newName)`
+
+  - `perspectiveChanged(newName)`
+
+  - `moduleBound(moduleName, module, target, opts)`
+    
+    Fired when something calls `Prefs#bind()` to bind an object to the
+    prefs system using a `PrefsModule`.
+
+  - `prefsHistoryStatus(canGoForward, canGoBack)`
+    
+    Fired when something causes the history stack to be changed.
+
+  - `prefsReset`
+    
+    Fired when the preferences system is reset.

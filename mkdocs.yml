@@ -1,0 +1,8 @@
+site_name: DataVis
+repo_url: https://repo.mieweb.com/projects/DV/repos/wcdatavis/
+site_author: Taylor Venable <tvenable@mieweb.com>
+theme: readthedocs
+docs_dir: doc/md
+site_dir: doc/html
+markdown_extensions:
+  - extra

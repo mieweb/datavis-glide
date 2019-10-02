@@ -1,8 +1,6 @@
-Examples
-========
+# Examples
 
-Data Generation
----------------
+## Data Generation
 
 Testing data is created using <http://www.json-generator.com/> with the
 specification in `examples/spec.txt` to drive it.

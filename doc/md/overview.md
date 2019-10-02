@@ -1,14 +1,11 @@
-Class Overview & Relationships
-==============================
+# Class Overview & Relationships
 
 This is a reference for all the main classes involved in the datavis
 library, and how they relate to each other.
 
-GRAPH
------
+## GRAPH
 
-GRID
-----
+## GRID
 
 This is the user interface for the grid, including the title bar and
 menu. It is named after the `<WCGRID>` layout tag that creates it.
@@ -19,58 +16,54 @@ object-oriented), the WCGRID class is considered the wrapper around all
 those functions. Eventually it will be refactored to actually be so in
 the implementation.
 
--   GridTable (×1) *when not in pivot mode*
-
+  - GridTable (×1) *when not in pivot mode*
+    
     This directly renders the data in an HTML table. When in pivot mode,
     the PivotControl manages the GridTable.
 
--   GridFilterSet (×1) *when not in pivot mode*
-
+  - GridFilterSet (×1) *when not in pivot mode*
+    
     A collection of all filters on all columns in the grid. WCGRID does
     not interact with the individual GridFilter instances, only with the
     GridFilterSet.
-
+    
     Important methods:
+    
+      - `add()` — Invoked by the "add filter" button.
+      - `reset()` — Invoked by the "reset" link.
 
-    -   `add()` --- Invoked by the \"add filter\" button.
-    -   `reset()` --- Invoked by the \"reset\" link.
-
--   PivotControl (×1) *when in pivot mode*
-
+  - PivotControl (×1) *when in pivot mode*
+    
     This manages the user interface for changing the group or pivot of
     the data. It manages its own GridFilterSet and GridTable for
     filtering and showing the data.
 
--   Prefs (×1)
+  - Prefs (×1)
 
-PivotControl
-------------
+## PivotControl
 
--   GridTable (×1)
--   GridFilterSet (×1)
+  - GridTable (×1)
+  - GridFilterSet (×1)
 
-GridTable
----------
+## GridTable
 
--   View (×1)
-
+  - View (×1)
+    
     The view is used as the source of data that is output within the
     grid.
-
+    
     Important methods:
+    
+      - `getData()`
 
-    -   `getData()`
+## View
 
-View
-----
+  - Source (×1) — The backing source of the data used by this view.
 
--   Source (×1) --- The backing source of the data used by this view.
-
-Source
-------
+## Source
 
 The Source class presents a unified interface for obtaining data and
-metadata (e.g. field information) from some provider. A Source instance
+metadata (e.g. field information) from some provider. A Source instance
 wraps an instance of a class which implements the specifics of getting
 data from the provider. These provider classes are registered by name in
 the `Source.sources` object.
