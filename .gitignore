@@ -14,9 +14,13 @@ examples/wcdatavis.min.js
 examples/wcdatavis.css
 examples/wcdatavis-extra.css
 examples/test/*.json
+tests/data/*.csv
 tests/data/*.json
+tests/data/*.xml
 tests/pages/wcdatavis.js
 tests/pages/wcdatavis.css
+tests/pages/*.csv
 tests/pages/*.json
+tests/pages/*.xml
 npm-debug.log
 reports
