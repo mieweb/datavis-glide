@@ -1,10 +1,9 @@
-JSON5=../../node_modules/.bin/json5
-JSON5_FILES=$(wildcard *.json5)
-JSON_FILES=$(patsubst %.json5,%.json,$(JSON5_FILES))
+JSON5_FILES=$(wildcard templates/*.json5)
+JSON_FILES=$(patsubst templates/%.json5,%.json,$(JSON5_FILES))
 JSON_GEN=../../bin/json-gen.py
-JSON_GEN_INPUT=./json-gen-input.json
+JSON_GEN_INPUT=./templates/json-gen-input.json
 
-all:	$(JSON_FILES) random100.json random500.json random1000.json random10000.json number-format-str.json
+all:	$(JSON_FILES) random100.json random100.xml random100.csv random500.json random1000.json random10000.json number-format-str.json
 
 clean:
 	rm -f $(JSON_FILES)
@@ -12,6 +11,12 @@ clean:
 
 random100.json:	$(JSON_GEN_INPUT)
 	$(JSON_GEN) -D COUNT=100 < $^ > $@
+
+random100.xml:	$(JSON_GEN_INPUT)
+	$(JSON_GEN) -D COUNT=100 -f xml < $^ > $@
+
+random100.csv:	$(JSON_GEN_INPUT)
+	$(JSON_GEN) -D COUNT=100 -f csv < $^ > $@
 
 random500.json:	$(JSON_GEN_INPUT)
 	$(JSON_GEN) -D COUNT=500 < $^ > $@
@@ -22,8 +27,5 @@ random1000.json:	$(JSON_GEN_INPUT)
 random10000.json:	$(JSON_GEN_INPUT)
 	$(JSON_GEN) -D COUNT=10000 < $^ > $@
 
-number-format-str.json:	number-format-str.in.json
-	$(JSON_GEN) < $^ > $@
-
-$(JSON_FILES):%.json:	%.json5
+$(JSON_FILES):%.json:	templates/%.json5
 	$(JSON_GEN) -D COUNT=100 < $^ > $@
