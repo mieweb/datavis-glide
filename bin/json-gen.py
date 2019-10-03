@@ -7,6 +7,7 @@ from babel.numbers import format_decimal
 from datetime import date, datetime, time
 
 import copy
+import csv
 import decimal
 import json
 import random
@@ -17,6 +18,8 @@ import inspect
 import argparse
 
 import json5
+import dicttoxml
+import xml.dom.minidom
 
 WORDS = open(os.getenv('DICT_FILE', '/usr/share/dict/words')).read().splitlines()
 STATES = ['Alabama', 'Alaska', 'Arizona', 'Arkansas', 'California', 'Colorado', 'Connecticut', 'Delaware', 'Florida', 'Georgia', 'Hawaii', 'Idaho', 'Illinois', 'Indiana', 'Iowa', 'Kansas', 'Kentucky', 'Louisiana', 'Maine', 'Maryland', 'Massachusetts', 'Michigan', 'Minnesota', 'Mississippi', 'Missouri', 'Montana Nebraska', 'Nevada', 'New Hampshire', 'New Jersey', 'New Mexico', 'New York', 'North Carolina', 'North Dakota', 'Ohio', 'Oklahoma', 'Oregon', 'Pennsylvania', 'Rhode Island', 'South Carolina', 'South Dakota', 'Tennessee', 'Texas', 'Utah', 'Vermont', 'Virginia', 'Washington', 'West Virginia', 'Wisconsin', 'Wyoming']
@@ -218,7 +221,20 @@ def process(node):
 def parse(input, output):
     obj = json5.load(input)
     process(obj)
-    json.dump(obj, output, indent=2)
+    if args.format == 'json':
+        json.dump(obj, output, indent=2)
+    elif args.format == 'csv':
+        writer = csv.DictWriter(output, [fti['field'] for fti in obj['typeInfo']])
+        writer.writeheader()
+        writer.writerows(obj['data'])
+    elif args.format == 'xml':
+        newTypeInfo = {}
+        for fti in obj['typeInfo']:
+            newTypeInfo[fti['field']] = fti
+        obj['typeInfo'] = newTypeInfo
+        xmlString = dicttoxml.dicttoxml(obj, attr_type = False)
+        dom = xml.dom.minidom.parseString(xmlString)
+        print(dom.toprettyxml(), file=output)
 
 class DefineAction(argparse.Action):
     def __init__(self, option_strings, dest, nargs=None, **kwargs):
@@ -233,6 +249,7 @@ class DefineAction(argparse.Action):
 
 cliArgsParser = argparse.ArgumentParser(description='Generate JSON test files')
 cliArgsParser.add_argument('-D', action=DefineAction, dest='args')
+cliArgsParser.add_argument('-f', action='store', dest='format', default='json')
 args = cliArgsParser.parse_args()
 
 parse(sys.stdin, sys.stdout)
