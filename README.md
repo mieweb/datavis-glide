@@ -41,8 +41,23 @@ The number one convention is to avoid making unnecessary diffs.  Follow the styl
 
 ## Building Documentation
 
-* Run `git submodule update --init` to get the JSDoc templates that this project uses.
-* Run `make jsdoc` to build the documentation.
+### Manual
+
+The manual covers how to use and develop DataVis.  It's written in Markdown and compiled to HTML using a Python program called mkdocs.  You need the following Python modules to build the manual.
+
+* mkdocs
+* mkdocs-material
+* pymdown-extensions
+
+Run `make mkdocs` to build the manual.  You can also run `mkdocs serve` to start a web server that will automatically reload your browser when changes are made to the corresponding Markdown files, ideal when working on the documentation.
+
+### API Documentation
+
+The API documentation covers every class and method in DataVis.  It's written in the comments of the source code and is compiled to HTML using a JavaScript program called jsdoc.  Follow these steps to build the API documentation:
+
+1. Run `git submodule update --init` to get the JSDoc templates that this project uses.
+2. Run `npm install` to get JSDoc and all its dependencies.
+3. Run `make jsdoc` to build the API documentation.
 
 ## Running
 
@@ -57,7 +72,8 @@ DataVis uses Mocha + Selenium for browser testing.  Run `npm install` and then `
 A Python program called `json-gen` is used to generate test data files.  You'll need the following modules:
 
 * babel
-* jsoncomment
+* json5
+* dicttoxml
 
 You'll also need a word list, as some of the data files contain random dictionary words.  The tests expect the word list from the `words` package, specifically version `3.0-17.el6` from CentOS.  By default, `json-gen` expects to find this word list at `/usr/share/dict/words` — if you have this file elsewhere, you can specify that path as the `DICT_FILE` environment variable when running *make*.
 
@@ -65,7 +81,9 @@ You'll also need a word list, as some of the data files contain random dictionar
 
 * `bin` — Contains programs used to build other stuff, e.g. a JSON generator.
 * `dist` — After compiling with `make`, contains the JS and CSS files for DataVis.
-* `doc` — Pandoc documentation source.
+* `doc` — The user & developer manual.
+  * `md` — Manual Markdown source files.
+  * `html` — Manual HTML output files.
 * `examples`
   * `graph` — Examples using graph output.
   * `grid` — Examples using grid output.
