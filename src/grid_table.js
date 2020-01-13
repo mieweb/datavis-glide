@@ -973,17 +973,19 @@ GridTable.prototype._addDrillDownHandler = function (tbl, data) {
 
 		if (rowValIndex != null) {
 			_.each(data.rowVals[rowValIndex], function (x, i) {
-				filter[data.groupFields[i]] = {
-					'$eq': x
-				};
+				var gs = data.groupSpec[i];
+				filter[data.groupFields[i]] = gs.fun != null
+					? GROUP_FUNCTION_REGISTRY.get(gs.fun).valueToFilter(x)
+					: { '$eq': x };
 			});
 		}
 
 		if (colValIndex != null) {
 			_.each(data.colVals[colValIndex], function (x, i) {
-				filter[data.pivotFields[i]] = {
-					'$eq': x
-				};
+				var ps = data.pivotSpec[i];
+				filter[data.pivotFields[i]] = ps.fun != null
+					? GROUP_FUNCTION_REGISTRY.get(ps.fun).valueToFilter(x)
+					: { '$eq': x };
 			});
 		}
 
@@ -1806,7 +1808,7 @@ GridTable.prototype.drawBody_groupAggregates = function (data, tr, groupNum, dis
 		// For example, day of week, because we can't filter to show "only Mondays."
 
 		if (_.every(data.groupSpec, function (gs) {
-			return gs.fun == null;
+			return gs.fun == null || GROUP_FUNCTION_REGISTRY.get(gs.fun).canFilter
 		})) {
 			self._addDrillDownClass(td);
 		}

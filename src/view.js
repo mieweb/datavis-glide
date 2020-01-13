@@ -3589,6 +3589,16 @@ View.prototype.prime = function (cont) {
  * If present, overrides the algorithm for sorting group values, e.g. "month" to sort month names by
  * chronological (rather than alphabetical) order.
  *
+ * @param {boolean} [canFilter=true]
+ * If true, a filter can be applied to the data based on the result of this group function.  Used to
+ * determine when drilldown is available, since drilling down means applying a filter that produces
+ * exactly the population of the group.
+ *
+ * @param {function} [spec.valueToFilter]
+ * If present, this function will be used to transform a value into a filter object that matches the
+ * value.  Used for things like date buckets (e.g. a value "2010 October" becomes a filter for dates
+ * from 10/1/2010 to 10/31/2010).
+ *
  * @class
  */
 
@@ -3617,15 +3627,23 @@ var GroupFunction = makeSubclass('GroupFunction', Object, function (spec) {
 		throw new Error('Call Error: `sortType` must be null or a string');
 	}
 
+	if (spec.valueToFilter != null && typeof spec.valueToFilter !== 'function') {
+		throw new Error('Call Error: `valueToFilter` must be null or a function');
+	}
+
 	spec = deepDefaults(spec, {
-		resultType: 'string'
+		resultType: 'string',
+		canFilter: true,
+		valueToFilter: function (s) {
+			return {'$eq': s};
+		}
 	});
 
 	if (spec.sortType == null) {
 		spec.sortType = spec.resultType;
 	}
 
-	copyProps(spec, self, ['displayName', 'allowedTypes', 'valueFun', 'resultType', 'sortType']);
+	copyProps(spec, self, ['displayName', 'allowedTypes', 'valueFun', 'resultType', 'sortType', 'canFilter', 'valueToFilter']);
 });
 
 // #applyValueFun {{{2
@@ -3659,6 +3677,12 @@ GROUP_FUNCTION_REGISTRY.set('year', new GroupFunction({
 			return 'Invalid Date';
 		}
 		return d.format('YYYY');
+	},
+	valueToFilter: function (s) {
+		return {
+			'$gte': moment(s, 'YYYY').format('YYYY-MM-DD HH:mm:ss'),
+			'$lte': moment(s, 'YYYY').add(1, 'years').subtract(1, 'seconds').format('YYYY-MM-DD HH:mm:ss')
+		};
 	}
 }));
 
@@ -3673,7 +3697,10 @@ GROUP_FUNCTION_REGISTRY.set('quarter', new GroupFunction({
 			return 'Invalid Date';
 		}
 		return d.format('[Q]Q');
-	}
+	},
+	// The View does not currently offer a filter that matches a date within a specific quarter
+	// regardless of year (e.g. all dates in Q1 in any year).
+	canFilter: false
 }));
 
 GROUP_FUNCTION_REGISTRY.set('month', new GroupFunction({
@@ -3688,7 +3715,10 @@ GROUP_FUNCTION_REGISTRY.set('month', new GroupFunction({
 		}
 		return d.format('MMM');
 	},
-	sortType: 'month'
+	sortType: 'month',
+	// The View does not currently offer a filter that matches a date within a specific month
+	// regardless of year (e.g. all dates in October in any year).
+	canFilter: false
 }));
 
 GROUP_FUNCTION_REGISTRY.set('week_iso', new GroupFunction({
@@ -3702,7 +3732,10 @@ GROUP_FUNCTION_REGISTRY.set('week_iso', new GroupFunction({
 			return 'Invalid Date';
 		}
 		return d.format('[W]WW');
-	}
+	},
+	// The View does not currently offer a filter that matches a date within a specific week
+	// regardless of year.
+	canFilter: false
 }));
 
 GROUP_FUNCTION_REGISTRY.set('day', new GroupFunction({
@@ -3717,7 +3750,13 @@ GROUP_FUNCTION_REGISTRY.set('day', new GroupFunction({
 		}
 		return d.format('YYYY-MM-DD');
 	},
-	resultType: 'date'
+	resultType: 'date',
+	valueToFilter: function (s) {
+		return {
+			'$gte': moment(s).format('YYYY-MM-DD HH:mm:ss'),
+			'$lte': moment(s).add(1, 'days').subtract(1, 'seconds').format('YYYY-MM-DD HH:mm:ss')
+		};
+	}
 }));
 
 GROUP_FUNCTION_REGISTRY.set('day_of_week', new GroupFunction({
@@ -3732,7 +3771,10 @@ GROUP_FUNCTION_REGISTRY.set('day_of_week', new GroupFunction({
 		}
 		return d.format('ddd');
 	},
-	sortType: 'day_of_week'
+	sortType: 'day_of_week',
+	// The View does not currently offer a filter that matches a date for a specific day of the week
+	// (e.g. find all dates that fall on Tuesday).
+	canFilter: false
 }));
 
 GROUP_FUNCTION_REGISTRY.set('year_and_quarter', new GroupFunction({
@@ -3746,6 +3788,12 @@ GROUP_FUNCTION_REGISTRY.set('year_and_quarter', new GroupFunction({
 			return 'Invalid Date';
 		}
 		return d.format('YYYY [Q]Q');
+	},
+	valueToFilter: function (s) {
+		return {
+			'$gte': moment(s, 'YYYY [Q]Q').format('YYYY-MM-DD HH:mm:ss'),
+			'$lte': moment(s, 'YYYY [Q]Q').add(1, 'quarters').subtract(1, 'seconds').format('YYYY-MM-DD HH:mm:ss')
+		};
 	}
 }));
 
@@ -3761,7 +3809,13 @@ GROUP_FUNCTION_REGISTRY.set('year_and_month', new GroupFunction({
 		}
 		return d.format('YYYY MMM');
 	},
-	sortType: 'year_and_month'
+	sortType: 'year_and_month',
+	valueToFilter: function (s) {
+		return {
+			'$gte': moment(s, 'YYYY MMM').format('YYYY-MM-DD HH:mm:ss'),
+			'$lte': moment(s, 'YYYY MMM').add(1, 'months').subtract(1, 'seconds').format('YYYY-MM-DD HH:mm:ss')
+		};
+	}
 }));
 
 GROUP_FUNCTION_REGISTRY.set('year_and_week_iso', new GroupFunction({
@@ -3775,6 +3829,12 @@ GROUP_FUNCTION_REGISTRY.set('year_and_week_iso', new GroupFunction({
 			return 'Invalid Date';
 		}
 		return d.format('YYYY [W]WW');
+	},
+	valueToFilter: function (s) {
+		return {
+			'$gte': moment(s, 'YYYY [W]WW').format('YYYY-MM-DD HH:mm:ss'),
+			'$lte': moment(s, 'YYYY [W]WW').add(1, 'weeks').subtract(1, 'seconds').format('YYYY-MM-DD HH:mm:ss')
+		};
 	}
 }));
 
