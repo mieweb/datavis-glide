@@ -367,6 +367,11 @@ function makeJsonOrderBy(o) {
  * @property {string} colConfigSource
  * Where the column configuration came from, recognized values are: `defn`, `typeinfo`.
  *
+ * @property {boolean} colConfigRestricted
+ * If true, then the available columns in column configuration are restricted and cannot be added to
+ * via the source or user preferences.  In other words, the set of available columns is restricted
+ * to the subset specified via the grid definition.
+ *
  * @borrows GridTable#getSelection
  * @borrows GridTable#setSelection
  * @borrows GridTable#select
@@ -2332,6 +2337,10 @@ Grid.prototype.setColConfig = function (colConfig, opts) {
 
 		return false;
 	};
+
+	if (typeof getProp(self.defn, 'advice', 'setColConfig', 'before') === 'function') {
+		self.defn.advice.setColConfig.before(colConfig, opts.from, self);
+	}
 
 	switch (opts.from) {
 	case 'defn':
