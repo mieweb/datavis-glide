@@ -17,6 +17,15 @@ view handles filtering, sorting, grouping, and other things which the
 data source does not. So how does the view return its data? There are
 two formats, depending on whether the data is grouped or not.
 
+``` mermaid
+graph TD
+  getData["source#getData()"] --> filter
+  filter --> group
+  group --> pivot
+  pivot --> aggregates
+  aggregates --> sort
+```
+
 ## Configuration
 
 ### Filter
@@ -24,13 +33,13 @@ two formats, depending on whether the data is grouped or not.
 ### Group
 
   - `fieldNames`
-    
+
     An array of the fields to group by.
 
 ### Pivot
 
   - `fieldNames`
-    
+
     An array of the fields to pivot by.
 
 ### Aggregates
@@ -49,23 +58,23 @@ The value for each of these properties is the same, an array of
 aggregate function specs. Each spec looks like this:
 
   - `fun` : string (required)
-    
+
     Name of the aggregate function, a key in
     `MIE.WC_DataVis.AGGREGATE_REGISTRY`.
 
   - `isHidden` : boolean
-    
+
     If true, then the aggregate function is calculated, but not
     displayed. One use for this is to sort based on the function result,
     when you don’t actually care to see what the value is.
 
   - `fields` : string array
-    
+
     Names of the fields to apply the function to, for example the “sum”
     function takes one field.
 
   - `opts` : object
-    
+
     Extra options that are allowed by individual aggregate functions. A
     really common one is `separator`, which is used by functions that
     concatenate values.
@@ -84,76 +93,76 @@ whether the data has been grouped or pivotted.
 ## Data Object
 
   - `isPlain`
-    
+
     True if the data is plain (i.e. not grouped or pivotted).
 
   - `isGroup`
-    
+
     True if the data is grouped.
 
   - `isPivot`
-    
+
     True if the data is pivotted.
 
   - `groupFields`
-    
+
     A list of the fields (from the source, e.g. columns in a system
     report) that we’re grouping by, in order.
 
   - `rowVals`
-    
+
     An array of all combinations of values of group fields which exist
     in the data. Every element in the array is itself an array where the
     first element is a value of the first group field, the second
     element is a value of the second group field, etc.
 
   - `pivotFields`
-    
+
     A list of the fields (from the source, e.g. columns in a system
     report) that we’re pivotting by, in order.
 
   - `colVals`
-    
+
     An array of all combinations of values of pivot fields which exist
     in the data. Every element in the array is itself an array where the
     first element is a value of the first pivot field, the second
     element is a value of the second pivot field, etc.
 
   - `data`
-    
+
     When doing normal output, this is just an array of rows.
-    
+
     When doing grouped output, this is an array of groups. The group
     index corresponds to the index in `rowVals` for the same group. Each
     group is an array of rows that are in that group.
-    
+
     When doing pivotted output, this is an array of groups. The group
     index corresponds to the index in `rowVals` for the same group. Each
     group is an array of pivots. The pivot index corresponds to the
     index in `colVals` for the same pivot. Each pivot is an array of
     rows that are in that group and pivot.
-    
+
     However many intervening layers there are for groups and pivots, the
     row itself has two properties.
-    
+
       - `rowNum`
-        
+
         This is a unique identifier used to track a row. This is
         currently used to facilitate filtering (e.g. “hide rows 2, 3,
         and 7”) and reordering (e.g. “move row X above row Y”).
-    
+
       - `rowData`
-        
+
         This holds the object containing the actual data.
 
 ### Example
 
     groupFields = ["A", "B"]
     rowVals = [[1, 1], [1, 2], [2, 1], [2, 2]]
-    
+
     pivotFields = ["C", "D"]
     colVals = [[3, 3], [3, 4], [4, 3], [4, 4]]
-    
+
     data = [
       [
           [row, row, ...] // each row has A = 1, B = 1, C = 3, D = 3
