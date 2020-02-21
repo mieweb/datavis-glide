@@ -30,6 +30,7 @@ import {Prefs, PrefsBackendTemporary} from './prefs.js';
 import {View} from './view.js';
 import {GridRenderer} from './grid_renderer.js';
 import './grid_table.js';
+import './renderers/grid/handlebars.js';
 import {ColConfigWin} from './col_config_win.js';
 import {FileSource} from './source.js';
 import {trans} from './trans.js';

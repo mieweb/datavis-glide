@@ -1,5 +1,5 @@
 JSDOC=./node_modules/.bin/jsdoc
-SOURCE=$(wildcard src/*.js) $(wildcard src/util/*.js)
+SOURCE=$(shell find src -type f -name '*.js')
 DIST_FILES=$(addprefix dist/,wcdatavis.js wcdatavis.min.js wcdatavis.css)
 EXAMPLE_FILES=$(patsubst dist/%,examples/%,$(DIST_FILES))
 
