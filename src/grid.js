@@ -32,6 +32,7 @@ import {GridRenderer} from './grid_renderer.js';
 import './grid_table.js';
 import './renderers/grid/handlebars.js';
 import {ColConfigWin} from './col_config_win.js';
+import {HandlebarsEditor} from './ui/handlebars.js';
 import {FileSource} from './source.js';
 import {trans} from './trans.js';
 
@@ -447,6 +448,9 @@ var Grid = makeSubclass('Grid', Object, function (id, view, defn, tagOpts, cb) {
 	}
 
 	self.colConfigWin = new ColConfigWin(self, self.colConfig);
+	self.handlebarsEditor = new HandlebarsEditor(self, function () {
+		self.redraw();
+	});
 
 	/*
 	 * Set up other container elements.
@@ -1093,8 +1097,6 @@ Grid.prototype._addTitleWidgets = function (titlebar, doingServerFilter, runImme
 
 Grid.prototype._addPlainButtons = function (toolbar) {
 	var self = this;
-	var aggSpec;
-	var showTotalRow;
 
 	if (self.features.limit) {
 		self.ui.limit_div = jQuery('<div>').css({'display': 'inline-block'}).appendTo(toolbar);
@@ -1135,6 +1137,17 @@ Grid.prototype._addPlainButtons = function (toolbar) {
 					from: 'ui'
 				});
 			});
+		})
+		.appendTo(toolbar)
+	;
+
+	jQuery('<button>', {
+		'type': 'button'
+	})
+		.append(fontAwesome('fa-pencil'))
+		.append('Handlebars Editor')
+		.on('click', function (evt) {
+			self.handlebarsEditor.show();
 		})
 		.appendTo(toolbar)
 	;
@@ -1668,54 +1681,60 @@ Grid.prototype.redraw = function () {
 		}
 
 		if (self.defn.renderer != null) {
+			self.rendererName = self.defn.renderer;
+
 			rendererCtor = GridRenderer.registry.get(self.defn.renderer);
 			rendererCtorOpts = deepCopy(self.defn.rendererOpts);
 		}
-		else if (ops && ops.pivot) {
-			rendererCtor = GridRenderer.registry.get(getPropDef('table_pivot', self.defn, 'whenPivot', 'renderer'));
-			rendererCtorOpts = deepCopy(self.defn.table.whenPivot);
-
-			self.debug(null, 'Creating pivot grid table');
-
-			self.ui.toolbar_plain.hide();
-			self.ui.toolbar_group.hide();
-			self.ui.toolbar_pivot.show();
-		}
-		else if (ops && ops.group) {
-			switch (self.defn.table.groupMode) {
-			case 'summary':
-				rendererCtor = GridRenderer.registry.get(getPropDef('table_group_summary', self.defn, 'whenGroup', 'renderer'));
-				break;
-			case 'detail':
-				rendererCtor = GridRenderer.registry.get(getPropDef('table_group_detail', self.defn, 'whenGroup', 'renderer'));
-				break;
-			}
-
-			rendererCtorOpts = deepCopy(self.defn.table.whenGroup);
-
-			if (self.ui.footer) {
-				rendererCtorOpts.footer = self.ui.footer;
-			}
-
-			self.debug(null, 'Creating group grid table');
-
-			self.ui.toolbar_plain.hide();
-			self.ui.toolbar_group.show();
-			self.ui.toolbar_pivot.hide();
-		}
 		else {
-			rendererCtor = GridRenderer.registry.get(getPropDef('table_plain', self.defn, 'whenPlain', 'renderer'));
-			rendererCtorOpts = deepCopy(self.defn.table.whenPlain);
+			self.rendererName = 'table';
 
-			if (self.ui.footer) {
-				rendererCtorOpts.footer = self.ui.footer;
+			if (ops && ops.pivot) {
+				rendererCtor = GridRenderer.registry.get(getPropDef('table_pivot', self.defn, 'whenPivot', 'renderer'));
+				rendererCtorOpts = deepCopy(self.defn.table.whenPivot);
+
+				self.debug(null, 'Creating pivot grid table');
+
+				self.ui.toolbar_plain.hide();
+				self.ui.toolbar_group.hide();
+				self.ui.toolbar_pivot.show();
 			}
+			else if (ops && ops.group) {
+				switch (self.defn.table.groupMode) {
+				case 'summary':
+					rendererCtor = GridRenderer.registry.get(getPropDef('table_group_summary', self.defn, 'whenGroup', 'renderer'));
+					break;
+				case 'detail':
+					rendererCtor = GridRenderer.registry.get(getPropDef('table_group_detail', self.defn, 'whenGroup', 'renderer'));
+					break;
+				}
 
-			self.debug(null, 'Creating plain grid table');
+				rendererCtorOpts = deepCopy(self.defn.table.whenGroup);
 
-			self.ui.toolbar_plain.show();
-			self.ui.toolbar_group.hide();
-			self.ui.toolbar_pivot.hide();
+				if (self.ui.footer) {
+					rendererCtorOpts.footer = self.ui.footer;
+				}
+
+				self.debug(null, 'Creating group grid table');
+
+				self.ui.toolbar_plain.hide();
+				self.ui.toolbar_group.show();
+				self.ui.toolbar_pivot.hide();
+			}
+			else {
+				rendererCtor = GridRenderer.registry.get(getPropDef('table_plain', self.defn, 'whenPlain', 'renderer'));
+				rendererCtorOpts = deepCopy(self.defn.table.whenPlain);
+
+				if (self.ui.footer) {
+					rendererCtorOpts.footer = self.ui.footer;
+				}
+
+				self.debug(null, 'Creating plain grid table');
+
+				self.ui.toolbar_plain.show();
+				self.ui.toolbar_group.hide();
+				self.ui.toolbar_pivot.hide();
+			}
 		}
 
 		if (self.renderer) {
