@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8"/>
+		<script src="../../jquery-latest.js"></script>
+		<script src="../../jquery-ui.js"></script>
+		<script src="../../blockUI.js"></script>
+		<script src="../../contextMenu.js"></script>
+		<script src="../../sumoselect.js"></script>
+		<script src="../../flatpickr.js"></script>
+		<script src="../../wcdatavis.js"></script>
+		<link rel="stylesheet" href="../../font-awesome.css"/>
+		<link rel="stylesheet" href="../../jquery-ui.css"/>
+		<link rel="stylesheet" href="../../contextMenu.css"/>
+		<link rel="stylesheet" href="../../sumoselect.css"/>
+		<link rel="stylesheet" href="../../flatpickr.css"/>
+		<link rel="stylesheet" href="../../base.css"/>
+		<link rel="stylesheet" href="../../wcdatavis.css"/>
+		<script>
+$(document).ready(function () {
+	MIE.DEBUGGING = true;
+
+	var source = new MIE.WC_DataVis.Source({
+		type: 'http',
+		url: '../../fuel-economy.csv'
+	});
+
+	var view = new MIE.WC_DataVis.View(source, 'Fuel Economy');
+	new MIE.WC_DataVis.Grid('grid', view, {
+		id: 'grid',
+		renderer: 'handlebars',
+		rendererOpts: {
+			whenPlain: {
+				template: '<h1>{{Division}} {{Carline}}</h1><ul><li>City: {{[City FE (Guide) - Conventional Fuel]}} MPG</li><li>Highway: {{[Hwy FE (Guide) - Conventional Fuel]}} MPG</li></ul>'
+			},
+			whenGroup: {
+				template: '<h1>{{rowval 0}}</h1>'
+			}
+		},
+		source: source
+	}, {
+		title: '2019 Fuel Economy',
+		showControls: true
+	});
+});
+		</script>
+	</head>
+	<body>
+		<div id="grid"></div>
+	</body>
+</html>
