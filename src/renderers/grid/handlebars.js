@@ -68,6 +68,14 @@ var GridRendererHandlebars = makeSubclass('GridRendererHandlebars', GridRenderer
 	});
 });
 
+// #_validateFeatures {{{2
+
+GridRendererHandlebars.prototype._validateFeatures = function () {
+	var self = this;
+	self.features.limit = false;
+};
+
+
 // #canRender {{{2
 
 GridRendererHandlebars.prototype.canRender = function (what) {

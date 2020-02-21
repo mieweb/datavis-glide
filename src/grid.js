@@ -33,6 +33,7 @@ import './grid_table.js';
 import './renderers/grid/handlebars.js';
 import {ColConfigWin} from './col_config_win.js';
 import {HandlebarsEditor} from './ui/handlebars.js';
+import {PlainToolbar, GroupToolbar, PivotToolbar, PrefsToolbar} from './ui/toolbars/grid.js';
 import {FileSource} from './source.js';
 import {trans} from './trans.js';
 
@@ -520,32 +521,24 @@ var Grid = makeSubclass('Grid', Object, function (id, view, defn, tagOpts, cb) {
 		.appendTo(self.ui.content)
 	;
 
-	self.ui.toolbar_prefs = jQuery('<div>')
-		.addClass('wcdv_toolbar_section')
-		.appendTo(self.ui.toolbar);
-	self._addPrefsButtons(self.ui.toolbar_prefs);
+	self.ui.toolbar_prefs = new PrefsToolbar(self);
+	self.ui.toolbar_prefs.attach(self.ui.toolbar);
 
 	self.prefs.bind('grid', self, {
-		toolbar: self.ui.toolbar_prefs
+		toolbar: self.ui.toolbar_prefs.ui.root
 	});
 
-	self.ui.toolbar_plain = jQuery('<div>')
-		.addClass('wcdv_toolbar_section')
-		.hide()
-		.appendTo(self.ui.toolbar);
-	self._addPlainButtons(self.ui.toolbar_plain);
+	self.ui.toolbar_plain = new PlainToolbar(self);
+	self.ui.toolbar_plain.attach(self.ui.toolbar);
+	self.ui.toolbar_plain.hide();
 
-	self.ui.toolbar_group = jQuery('<div>')
-		.addClass('wcdv_toolbar_section')
-		.hide()
-		.appendTo(self.ui.toolbar);
-	self._addGroupButtons(self.ui.toolbar_group);
+	self.ui.toolbar_group = new GroupToolbar(self);
+	self.ui.toolbar_group.attach(self.ui.toolbar);
+	self.ui.toolbar_group.hide();
 
-	self.ui.toolbar_pivot = jQuery('<div>')
-		.addClass('wcdv_toolbar_section')
-		.hide()
-		.appendTo(self.ui.toolbar);
-	self._addPivotButtons(self.ui.toolbar_pivot);
+	self.ui.toolbar_pivot = new PivotToolbar(self);
+	self.ui.toolbar_pivot.attach(self.ui.toolbar);
+	self.ui.toolbar_pivot.hide();
 
 	self.ui.controls = jQuery('<div>', { 'class': 'wcdv_grid_control' });
 	self.ui.filterControl = jQuery('<div>', { 'class': 'wcdv_control_pane wcdv_filter_control' });
@@ -1084,573 +1077,6 @@ Grid.prototype._addTitleWidgets = function (titlebar, doingServerFilter, runImme
 	;
 };
 
-// #_addPlainButtons {{{2
-
-/**
- * Add plain-related controls to the grid's toolbar.
- *
- * @method
- *
- * @param {jQuery} toolbar
- * Toolbar section that will contain the buttons.
- */
-
-Grid.prototype._addPlainButtons = function (toolbar) {
-	var self = this;
-
-	if (self.features.limit) {
-		self.ui.limit_div = jQuery('<div>').css({'display': 'inline-block'}).appendTo(toolbar);
-
-		// Create a checkbox that will toggle the "automatically show more" feature for the grid table.
-
-		makeToggleCheckbox(self.defn, ['table', 'limit', 'autoShowMore'], true, 'Show More on Scroll', self.ui.limit_div);
-
-		// Create a button that will show all the rows when clicked.  We fake this a little bit by just
-		// turning off the "limit" feature and letting the grid table be redrawn (changing the features
-		// causes it to be redrawn).
-		//
-		// TODO: This should disable the "automatically show more" checkbox (need to make sure it gets
-		// re-enabled if we switch grid tables and come back - as "limit" feature will be reset to its
-		// default value).
-
-		jQuery('<button>', {'type': 'button'})
-			.on('click', function (evt) {
-				self.renderer.updateFeatures({
-					'block': true,
-					'progress': true,
-					'limit': false
-				});
-			})
-			.text('Show All Rows')
-			.appendTo(self.ui.limit_div)
-		;
-	}
-
-	jQuery('<button>', {
-		'type': 'button'
-	})
-		.append(fontAwesome('fa-columns'))
-		.append('Columns')
-		.on('click', function (evt) {
-			self.colConfigWin.show(self.ui.controls, function (colConfig) {
-				self.setColConfig(colConfig, {
-					from: 'ui'
-				});
-			});
-		})
-		.appendTo(toolbar)
-	;
-
-	jQuery('<button>', {
-		'type': 'button'
-	})
-		.append(fontAwesome('fa-pencil'))
-		.append('Handlebars Editor')
-		.on('click', function (evt) {
-			self.handlebarsEditor.show();
-		})
-		.appendTo(toolbar)
-	;
-};
-
-// #_addGroupButtons {{{2
-
-/**
- * Add group-related controls to the grid's toolbar.
- *
- * @method
- *
- * @param {jQuery} toolbar
- * Toolbar section that will contain the buttons.
- */
-
-Grid.prototype._addGroupButtons = function (toolbar) {
-	var self = this;
-	var aggSpec;
-	var showTotalRow, colConfigWinBtn;
-	var pinRowvals;
-
-	var enableDisable = function (selected) {
-		switch (selected) {
-		case 'summary':
-			showTotalRow.prop('disabled', false);
-			pinRowvals.prop('disabled', false);
-			colConfigWinBtn.prop('disabled', true);
-			break;
-		case 'detail':
-			showTotalRow.prop('disabled', true);
-			pinRowvals.prop('disabled', true);
-			colConfigWinBtn.prop('disabled', false);
-			break;
-		}
-	};
-
-	// Create radio buttons to switch between summary and detail group grid tables.
-
-	makeRadioButtons(
-		self.defn
-		, ['table', 'groupMode']
-		, 'detail'
-		, null
-		, 'groupOutput'
-		, [{label: 'Summary', value: 'summary'}
-			, {label: 'Detail', value: 'detail'}]
-		, null
-		, function (selected) {
-			enableDisable(selected);
-			self.redraw();
-		}
-		, toolbar
-	);
-
-	self.view.on(View.events.aggregateSet, function (a) {
-		aggSpec = deepCopy(a);
-	});
-
-	showTotalRow = makeToggleCheckbox(
-		self.defn,
-		['table', 'whenGroup', 'showTotalRow'],
-		true,
-		'Total Row',
-		toolbar,
-		function (isChecked) {
-			var agg = self.view.getAggregate();
-
-			if (!isChecked) {
-				aggSpec = deepCopy(agg);
-				delete agg.all;
-			}
-			else {
-				agg.all = aggSpec.all;
-			}
-
-			self.view.setAggregate(agg, {
-				sendEvent: false
-			});
-		}
-	);
-
-	pinRowvals = makeToggleCheckbox(
-		self.defn,
-		['table', 'whenGroup', 'pinRowvals'],
-		false,
-		'Pin Groups',
-		toolbar,
-		function (isChecked) {
-			self.redraw();
-		}
-	);
-
-	colConfigWinBtn = jQuery('<button>', {
-		'type': 'button'
-	})
-		.append(fontAwesome('fa-columns'))
-		.append('Columns')
-		.on('click', function (evt) {
-			self.colConfigWin.show(self.ui.controls, function (colConfig) {
-				self.setColConfig(colConfig, {
-					from: 'ui'
-				});
-			});
-		})
-		.appendTo(toolbar)
-	;
-
-	enableDisable(self.defn.table.groupMode);
-};
-
-// #_addPivotButtons {{{2
-
-/**
- * Add pivot-related controls to the grid's toolbar.
- *
- * @method
- *
- * @param {jQuery} toolbar
- * Toolbar section that will contain the buttons.
- */
-
-Grid.prototype._addPivotButtons = function (toolbar) {
-	var self = this;
-	var aggSpec;
-
-	self.view.on(View.events.aggregateSet, function (a) {
-		aggSpec = deepCopy(a);
-	});
-
-	makeToggleCheckbox(
-		self.defn,
-		['table', 'whenPivot', 'showTotalCol'],
-		true,
-		'Total Row/Column',
-		toolbar,
-		function (isChecked) {
-			var agg = self.view.getAggregate();
-
-			if (!isChecked) {
-				aggSpec = deepCopy(agg);
-				delete agg.group;
-				delete agg.pivot;
-				delete agg.all;
-			}
-			else {
-				agg.group = aggSpec.group;
-				agg.pivot = aggSpec.pivot;
-				agg.all = aggSpec.all;
-			}
-
-			self.view.setAggregate(agg, {
-				sendEvent: false
-			});
-		}
-	);
-
-	makeToggleCheckbox(
-		self.defn,
-		['table', 'whenGroup', 'pinRowvals'],
-		false,
-		'Pin Groups',
-		toolbar,
-		function (isChecked) {
-			self.redraw();
-		}
-	);
-};
-
-// #_addPrefsButtons {{{2
-
-/**
- * Add preference-related controls to the grid's toolbar.
- *
- * @method
- *
- * @param {jQuery} toolbar
- * Toolbar section that will contain the buttons.
- */
-
-Grid.prototype._addPrefsButtons = function (toolbar) {
-	var self = this;
-
-	var div = jQuery('<div>')
-		.addClass('wcdv_toolbar_view')
-		.css({'display': 'inline-block'})
-		.appendTo(toolbar)
-	;
-
-	var options = {};
-
-	var showHideBtns = function () {
-		var p = self.prefs.getPerspective(dropdown.val());
-
-		if (p == null) {
-			throw new Error('No such perspective: ' + dropdown.val());
-		}
-
-		if (p.opts.isTemporary) {
-			saveAsBtn.show();
-		}
-		else {
-			saveAsBtn.hide();
-		}
-
-		if (p.opts.isEssential) {
-			renameBtn.hide();
-			deleteBtn.hide();
-		}
-		else {
-			renameBtn.show();
-			deleteBtn.show();
-		}
-	};
-
-	var removePerspectiveFromDropdown = function (name) {
-		options[name].remove();
-		delete options[name];
-	};
-
-	// Clicking this button will reset all preferences back to the initial set (i.e. just "Main
-	// Perspective" and no changes in the view from its default).  Perhaps useful when you have too
-	// many different perspectives set, but I feel better having it as a safety in case your prefs
-	// somehow get really messed up and don't work at all anymore.  This button is always shown.
-
-	var resetBtn = jQuery('<button>', {'type': 'button', 'title': 'Reset'})
-		.addClass('wcdv_icon_button wcdv_text-primary')
-		.append(fontAwesome('fa-undo'))
-		.on('click', function () {
-			self.prefs.reset();
-		})
-		.appendTo(div)
-	;
-
-	var backBtn = jQuery('<button>', {'type': 'button'})
-		.append(fontAwesome('fa-chevron-circle-left'))
-		.attr('title', 'Back')
-		.attr('disabled', true)
-		.addClass('wcdv_icon_button wcdv_text-primary')
-		.on('click', function () {
-			self.prefs.back();
-		})
-		.appendTo(div)
-	;
-
-	var forwardBtn = jQuery('<button>', {'type': 'button'})
-		.append(fontAwesome('fa-chevron-circle-right'))
-		.attr('title', 'Forward')
-		.attr('disabled', true)
-		.addClass('wcdv_icon_button wcdv_text-primary')
-		.on('click', function () {
-			self.prefs.forward();
-		})
-		.appendTo(div)
-	;
-
-	/*
-	var historyBtn = jQuery(fontAwesome('fa-clock-o', 'wcdv_button', 'History'))
-		.on('click', function () {
-			self.prefs._historyDebug();
-		})
-		.appendTo(div)
-	;
-	*/
-
-	// Dropdown of all the available perspectives, plus an entry that (when selected) prompts for the
-	// name of a new perspective.
-
-	var dropdown = jQuery('<select>')
-		.append(jQuery('<option>', { value: 'NEW' }).text('New Perspective...'))
-		.on('change', function (evt) {
-			if (dropdown.val() === 'NEW') {
-				var name = prompt('Enter new perspective name', self.prefs.currentPerspective.name);
-				if (name) {
-					self.prefs.addPerspective(null, name);
-					self.prefs.save();
-				}
-				else {
-					// User cancelled the dialog, so just put the dropdown back to whatever the current
-					// perspective is.
-					dropdown.val(self.prefs.currentPerspective.id);
-				}
-				return;
-			}
-
-			self.prefs.setCurrentPerspective(dropdown.val());
-			showHideBtns();
-		})
-		.appendTo(div)
-	;
-
-	var warnMsgText = jQuery('<span>');
-
-	var warnMsgContent = jQuery('<div>')
-		.append(fontAwesome('fa-info-circle').css('padding-right', '0.25em').addClass('wcdv_text-primary'))
-		.append(warnMsgText);
-
-	var warnMsg = fontAwesome('fa-info-circle', 'wcdv_info_icon')
-		.attr({'title': 'Info'})
-		.hide()
-		.tooltip({
-			classes: {
-				'ui-tooltip': 'ui-corner-all ui-widget-shadow wcdv_info_tooltip wcdv_border-primary'
-			},
-			show: { delay: 1000 },
-			content: warnMsgContent,
-		})
-		.appendTo(div)
-	;
-
-	if (self.prefs.backend instanceof PrefsBackendTemporary) {
-		warnMsgText.text('The preferences system is not configured to permanently save perspectives.');
-		warnMsg.show();
-	}
-
-	var saveAsBtnTooltipContent = jQuery('<div>')
-		.append(fontAwesome('fa-info-circle').css('padding-right', '0.25em').addClass('wcdv_text-primary'))
-		.append('This pre-defined perspective cannot be saved with this name.  Click to save with a new name.  After that, any changes will be saved under the new name.');
-
-	var saveAsBtn = jQuery('<button>', {'type': 'button', 'title': 'Save As...'})
-		.append(fontAwesome('fa-save'))
-		.addClass('wcdv_icon_button wcdv_text-primary')
-		.tooltip({
-			classes: {
-				'ui-tooltip': 'ui-corner-all ui-widget-shadow wcdv_info_tooltip wcdv_border-primary'
-			},
-			show: { delay: 1000 },
-			content: saveAsBtnTooltipContent
-		})
-		.on('click', function () {
-			var name = prompt('Enter new perspective name', self.prefs.currentPerspective.name);
-			if (name != null) {
-				self.prefs.addPerspective(name);
-				self.prefs.save();
-			}
-		})
-		.appendTo(div)
-	;
-
-	var saveBtnTooltipContent = jQuery('<div>')
-		.append(fontAwesome('fa-info-circle').css('padding-right', '0.25em').addClass('wcdv_text-primary'))
-		.append('Click to save the current configuration.  The next time this grid is visited, the previously saved configuration will automatically be used.');
-
-	var saveBtn = jQuery('<button>', {'type': 'button', 'title': 'Save'})
-		.append(fontAwesome('fa-save'))
-		.addClass('wcdv_icon_button wcdv_text-primary')
-		.hide()
-		.tooltip({
-			classes: {
-				'ui-tooltip': 'ui-corner-all ui-widget-shadow wcdv_info_tooltip wcdv_border-primary'
-			},
-			show: { delay: 1000 },
-			content: saveBtnTooltipContent
-		})
-		.on('click', function () {
-			self.prefs.reallySave();
-		})
-		.appendTo(div)
-	;
-
-	// Clicking this button will show a prompt to rename the currently selected perspective.  If you
-	// cancel the prompt, nothing will happen.  This button is only shown when the currently selected
-	// perspective is not "Main Perspective" as it cannot be renamed.
-	//
-	// XXX: What if the user types in the name of an existing perspective?
-	// XXX: What if the user types in "Main Perspective" ?
-	// XXX: What if the user types in "NEW" ?
-
-	var renameBtn = jQuery('<button>', {'type': 'button', 'title': 'Rename'})
-		.addClass('wcdv_icon_button wcdv_text-primary')
-		.append(fontAwesome('fa-pencil'))
-		.on('click', function () {
-			var id = dropdown.val();
-			var p = self.prefs.getPerspective(id);
-
-			if (p.opts.isEssential) {
-				alert('Cannot rename essential perspective!');
-			}
-			else {
-				var newName = prompt('Rename view "' + p.name + '" to what?');
-				if (newName) {
-					self.prefs.renamePerspective(id, newName);
-				}
-			}
-		})
-		.appendTo(div)
-	;
-
-	// Clicking this button will delete the currently selected perspective and switch back to "Main
-	// Perspective".  It is only shown when the currently selected perspective is not "Main
-	// Perspective" as it cannot be deleted.
-
-	var deleteBtn = jQuery('<button>', {'type': 'button', 'title': 'Delete'})
-		.addClass('wcdv_icon_button wcdv_text-primary')
-		.append(fontAwesome('fa-trash'))
-		.on('click', function () {
-			self.prefs.deletePerspective(dropdown.val());
-		})
-		.appendTo(div)
-	;
-
-	// Get the list of available perspectives from the Prefs instance and put them into the dropdown.
-	// The initial perspective will be selected by default.  This DOES NOT actually load that
-	// perspective, it's just for the UI.
-	//
-	// XXX: Is it possible for perspectives to change by some other route so that we need to know
-	// about it to update the UI?
-
-	setTimeout(function () {
-		self.prefs.prime(function () {
-			self.prefs.getPerspectives(function (ids) {
-				_.each(_.sortBy(_.map(ids, function (id) {
-					return self.prefs.getPerspective(id);
-				}), 'name'), function (o) {
-					if (options[o.id] == null) {
-						options[o.id] = jQuery('<option>', { 'value': o.id })
-							.text(o.name)
-							.appendTo(dropdown);
-					}
-				});
-
-				dropdown.val(self.prefs.currentPerspective.id);
-				showHideBtns();
-			});
-
-			self.prefs.on('perspectiveAdded', function (id) {
-				if (options[id] == null) {
-					var p = self.prefs.getPerspective(id);
-					options[id] = jQuery('<option>', { value: id })
-						.text(p.name)
-						.appendTo(dropdown);
-				}
-			}, {
-				info: 'Adding new perspective to dropdown'
-			});
-
-			self.prefs.on('perspectiveDeleted', function (id) {
-				if (options[id] == null) {
-					throw new Error(sprintf.sprintf('Received `perspectiveDeleted` event that references unknown perspective: id = "%s"', id));
-				}
-				options[id].remove();
-				delete options[id];
-			}, {
-				info: 'Removing perspective from dropdown'
-			});
-
-			self.prefs.on('perspectiveRenamed', function (id, newName) {
-				if (options[id] == null) {
-					throw new Error(sprintf.sprintf('Received `perspectiveRenamed` event that references unknown perspective: id = "%s"', id));
-				}
-				options[id].text(newName);
-			}, {
-				info: 'Changing perspective name in dropdown'
-			});
-
-			self.prefs.on('perspectiveChanged', function (id) {
-				if (options[id] == null) {
-					throw new Error(sprintf.sprintf('Received `perspectiveChanged` event that references unknown perspective: id = "%s"', id));
-				}
-				if (self.prefs.currentPerspective.isUnsaved) {
-					saveBtn.show();
-				}
-				else {
-					saveBtn.hide();
-				}
-				dropdown.val(id);
-				showHideBtns();
-				self.redraw();
-			}, {
-				info: 'Changing dropdown to reflect new current perspective'
-			});
-
-			self.prefs.on('prefsReset', function () {
-				_.each(options, function (elt) {
-					elt.remove();
-				});
-				options = {};
-			}, {
-				info: 'Deleting all perspectives from the dropdown'
-			});
-
-			self.prefs.on('prefsChanged', function () {
-				var cp = self.prefs.currentPerspective;
-				var o = options[cp.id];
-				o.text('[*] ' + cp.name);
-				saveBtn.show();
-			});
-
-			self.prefs.on('prefsSaved', function () {
-				var cp = self.prefs.currentPerspective;
-				var o = options[cp.id];
-				o.text(cp.name);
-				saveBtn.hide();
-			});
-
-			self.prefs.on('prefsHistoryStatus', function (back, forward) {
-				backBtn.attr('disabled', !back);
-				forwardBtn.attr('disabled', !forward);
-			});
-		});
-	});
-};
-
 // #clear {{{2
 
 Grid.prototype.clear = function () {
@@ -1694,10 +1120,6 @@ Grid.prototype.redraw = function () {
 				rendererCtorOpts = deepCopy(self.defn.table.whenPivot);
 
 				self.debug(null, 'Creating pivot grid table');
-
-				self.ui.toolbar_plain.hide();
-				self.ui.toolbar_group.hide();
-				self.ui.toolbar_pivot.show();
 			}
 			else if (ops && ops.group) {
 				switch (self.defn.table.groupMode) {
@@ -1716,10 +1138,6 @@ Grid.prototype.redraw = function () {
 				}
 
 				self.debug(null, 'Creating group grid table');
-
-				self.ui.toolbar_plain.hide();
-				self.ui.toolbar_group.show();
-				self.ui.toolbar_pivot.hide();
 			}
 			else {
 				rendererCtor = GridRenderer.registry.get(getPropDef('table_plain', self.defn, 'whenPlain', 'renderer'));
@@ -1730,10 +1148,6 @@ Grid.prototype.redraw = function () {
 				}
 
 				self.debug(null, 'Creating plain grid table');
-
-				self.ui.toolbar_plain.show();
-				self.ui.toolbar_group.hide();
-				self.ui.toolbar_pivot.hide();
 			}
 		}
 
@@ -1746,6 +1160,27 @@ Grid.prototype.redraw = function () {
 
 		self.ui.exportBtn.attr('disabled', true);
 		self.renderer = new rendererCtor(self, self.defn, self.view, self.features, rendererCtorOpts, self.timing, self.id, self.colConfig);
+
+		// Update the toolbar sections.  This needs to be done after creating the renderer because the
+		// renderer validates (and possibly changes) the supported features, and that changes what parts
+		// of the toolbar we show.  Obviously, we shouldn't show buttons for features that the current
+		// renderer doesn't implement.
+
+		if (ops && ops.pivot) {
+			self.ui.toolbar_plain.hide();
+			self.ui.toolbar_group.hide();
+			self.ui.toolbar_pivot.show();
+		}
+		else if (ops && ops.group) {
+			self.ui.toolbar_plain.hide();
+			self.ui.toolbar_group.show();
+			self.ui.toolbar_pivot.hide();
+		}
+		else {
+			self.ui.toolbar_plain.show();
+			self.ui.toolbar_group.hide();
+			self.ui.toolbar_pivot.hide();
+		}
 
 		self.renderer.on('renderBegin', function () {
 			self._isIdle = false;

@@ -2582,6 +2582,7 @@ export function makeRadioButtons(rootObj, path, def, label, name, values, conv, 
 			.appendTo(root);
 	});
 	root.find('input[type=radio]').val([initial]);
+	return root;
 }
 
 // Input / Output {{{1
