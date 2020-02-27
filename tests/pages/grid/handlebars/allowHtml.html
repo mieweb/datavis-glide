@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8"/>
+		<script src="../../jquery-latest.js"></script>
+		<script src="../../jquery-ui.js"></script>
+		<script src="../../blockUI.js"></script>
+		<script src="../../contextMenu.js"></script>
+		<script src="../../sumoselect.js"></script>
+		<script src="../../flatpickr.js"></script>
+		<script src="../../wcdatavis.js"></script>
+		<link rel="stylesheet" href="../../font-awesome.css"/>
+		<link rel="stylesheet" href="../../jquery-ui.css"/>
+		<link rel="stylesheet" href="../../contextMenu.css"/>
+		<link rel="stylesheet" href="../../sumoselect.css"/>
+		<link rel="stylesheet" href="../../flatpickr.css"/>
+		<link rel="stylesheet" href="../../base.css"/>
+		<link rel="stylesheet" href="../../wcdatavis.css"/>
+		<script>
+$(document).ready(function () {
+	MIE.DEBUGGING = true;
+
+	var prefs = new MIE.WC_DataVis.Prefs('TEST:GRID:HANDLEBARS:ALLOWHTML', null, {
+		backend: {
+			type: 'temporary'
+		}
+	});
+
+	MIE.WC_DataVis.Source.converters.link3 = function (cell, field, fti, info) {
+		cell.render = function (displayText) {
+			var a = document.createElement('a');
+			a.setAttribute('href', 'https://en.wikipedia.org/wiki/' + cell.value);
+			a.innerText = displayText;
+			return a;
+		};
+		return true; // conversion successful
+	};
+
+	MIE.WC_DataVis.Source.converters.link4 = function (cell, field, fti, info) {
+		cell.render = function (displayText) {
+			var a = document.createElement('a');
+			a.setAttribute('href', 'https://en.wikipedia.org/wiki/' + cell.value);
+			a.innerText = 'Same Text, Different Link';
+			return a;
+		};
+		return true; // conversion successful
+	};
+
+	MIE.WC_DataVis.Source.converters.date = function (cell, field, fti, info) {
+		cell.render = function (displayText) {
+			var a = document.createElement('a');
+			a.setAttribute('href', 'https://example.com/');
+			a.innerText = displayText;
+			return a;
+		};
+		return true; // conversion successful
+	};
+
+	var source = new MIE.WC_DataVis.Source({
+		type: 'http',
+		url: '../../allowHtml.json',
+		conversion: {'link3': ['link3'], 'link4': ['link4'], 'date': ['date']}
+	});
+	var view = new MIE.WC_DataVis.View(source, 'view', {
+		prefs: prefs
+	});
+	new MIE.WC_DataVis.Grid('grid', view, {
+		id: 'grid',
+		renderer: 'handlebars',
+		rendererOpts: {
+			whenPlain: {
+				before: '<ul>',
+				item: '<li>{{{link1}}} — {{{link2}}} — {{{link3}}} — {{{link4}}} — {{{date}}}</li>',
+				after: '</ul>'
+			},
+			whenGroup: {
+				item: '<h1>{{rowval 0}}</h1>'
+			},
+			whenPivot: {
+				before: '<ul>',
+				item: '<li>{{rowval 0}} - {{colval 0}}</li>',
+				after: '</ul>'
+			}
+		},
+		table: {
+			columns: [{
+				field: 'link1',
+				allowHtml: true
+			}, 'link2', {
+				field: 'link3',
+				allowHtml: true
+			}, 'link4', 'date']
+		},
+		prefs: prefs,
+		source: source,
+	}, {
+		title: 'Test - Grid - Handlebars - AllowHtml',
+		showControls: true
+	});
+});
+		</script>
+	</head>
+	<body>
+		<div id="grid"></div>
+	</body>
+</html>

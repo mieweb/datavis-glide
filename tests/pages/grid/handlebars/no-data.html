@@ -25,7 +25,7 @@ $(document).ready(function () {
 		url: '../../no-data.json'
 	});
 
-	var view = new MIE.WC_DataVis.View(source, 'empty');
+	var view = new MIE.WC_DataVis.View(source, 'view');
 	new MIE.WC_DataVis.Grid('grid', view, {
 		id: 'grid',
 		renderer: 'handlebars',
@@ -36,7 +36,7 @@ $(document).ready(function () {
 		},
 		source: source
 	}, {
-		title: 'Grid — Handlebars — Empty'
+		title: 'Test - Grid - Handlebars - No Data'
 	});
 });
 		</script>
