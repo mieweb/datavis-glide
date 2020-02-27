@@ -43,7 +43,9 @@ var HandlebarsEditor = makeSubclass('HandlebarsEditor', Object, function (grid, 
 				// Update the configuration of the grid.
 
 				self.tabData.each(function (v, k) {
-					setProp(v.inputs['item'].val(), self.grid.defn, 'rendererOpts', k, 'template');
+					_.each(['empty', 'before', 'item', 'after'], function (t) {
+						setProp(v.inputs[t].val(), self.grid.defn, 'rendererOpts', k, t);
+					});
 				});
 
 				self.win.dialog('close');
@@ -75,6 +77,7 @@ var HandlebarsEditor = makeSubclass('HandlebarsEditor', Object, function (grid, 
 		var div = jQuery('<div>', {id: 'wcdv_hbe_' + name});
 
 		_.each([
+			{id: 'empty', label: 'Empty', rows: 4},
 			{id: 'before', label: 'Before', rows: 4},
 			{id: 'item', label: 'Item', rows: 8},
 			{id: 'after', label: 'After', rows: 4}
@@ -121,7 +124,9 @@ HandlebarsEditor.prototype.show = function () {
 	self.tabData.each(function (v, k) {
 		var config = getProp(self.grid.defn, 'rendererOpts', k);
 		if (config != null) {
-			v.inputs['item'].val(config.template);
+			_.each(['empty', 'before', 'item', 'after'], function (t) {
+				v.inputs[t].val(config[t]);
+			});
 		}
 	});
 
