@@ -22,32 +22,21 @@ $(document).ready(function () {
 
 	var source = new MIE.WC_DataVis.Source({
 		type: 'http',
-		url: '../../fuel-economy.csv'
+		url: '../../no-data.json'
 	});
 
-	var view = new MIE.WC_DataVis.View(source, 'Fuel Economy');
+	var view = new MIE.WC_DataVis.View(source, 'empty');
 	new MIE.WC_DataVis.Grid('grid', view, {
 		id: 'grid',
 		renderer: 'handlebars',
 		rendererOpts: {
 			whenPlain: {
-				before: '<h1>Fuel Economy</h1>',
-				item: '<h2>{{Division}} {{Carline}}</h2><ul><li>City: {{[City FE (Guide) - Conventional Fuel]}} MPG</li><li>Highway: {{[Hwy FE (Guide) - Conventional Fuel]}} MPG</li></ul>',
-				after: '<h1>That\'s All Folks!</h1>'
-			},
-			whenGroup: {
-				item: '<h1>{{rowval 0}}</h1>'
-			},
-			whenPivot: {
-				before: '<ul>',
-				item: '<li>{{rowval 0}} - {{colval 0}}</li>',
-				after: '</ul>'
+				empty: '<h1>No Data</h1>'
 			}
 		},
 		source: source
 	}, {
-		title: '2019 Fuel Economy',
-		showControls: true
+		title: 'Grid — Handlebars — Empty'
 	});
 });
 		</script>
