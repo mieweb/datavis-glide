@@ -86,46 +86,104 @@ GridRendererHandlebars.prototype.canRender = function (what) {
 
 GridRendererHandlebars.prototype._draw_plain = function (root, data, typeInfo, opts) {
 	var self = this;
+	var html = '';
 
-	_.each(data.data, function (row) {
-		var div = jQuery('<div>').appendTo(root);
-		var context = {};
-		_.each(row.rowData, function (v, k) {
-			context[k] = v.value;
-		});
-		div.html(self.template(context));
-	});
+	if (data.data.length === 0) {
+		if (self.empty != null) {
+			html += self.empty();
+		}
+	}
+	else {
+		if (self.before != null) {
+			html += self.before();
+		}
+
+		if (self.item != null) {
+			_.each(data.data, function (row) {
+				var context = {};
+				_.each(row.rowData, function (v, k) {
+					context[k] = v.value;
+				});
+				html += self.item(context);
+			});
+		}
+
+		if (self.after != null) {
+			html += self.after();
+		}
+	}
+
+	root.html(html);
 };
 
 // #_draw_group {{{2
 
 GridRendererHandlebars.prototype._draw_group = function (root, data, typeInfo, opts) {
 	var self = this;
+	var html = '';
 
-	_.each(data.data, function (group, rowValIndex) {
-		var div = jQuery('<div>').appendTo(root);
-		var context = {
-			rowValIndex: rowValIndex
-		};
-		div.html(self.template(context));
-	});
+	if (data.data.length === 0) {
+		if (self.empty != null) {
+			html += self.empty();
+		}
+	}
+	else {
+		if (self.before != null) {
+			html += self.before();
+		}
+
+		if (self.item != null) {
+			_.each(data.data, function (group, rowValIndex) {
+				var context = {
+					rowValIndex: rowValIndex
+				};
+				html += self.item(context);
+			});
+		}
+
+		if (self.after != null) {
+			html += self.after();
+		}
+	}
+
+	root.html(html);
 };
 
 // #_draw_pivot {{{2
 
 GridRendererHandlebars.prototype._draw_pivot = function (root, data, typeInfo, opts) {
 	var self = this;
+	var html = '';
 
-	_.each(data.data, function (group, rowValIndex) {
-		_.each(group, function (pivot, colValIndex) {
-			var div = jQuery('<div>').appendTo(root);
-			var context = {
-				rowValIndex: rowValIndex,
-				colValIndex: colValIndex
-			};
-			div.html(self.template(context));
-		});
-	});
+	if (data.data.length === 0) {
+		if (self.empty != null) {
+			html += self.empty();
+		}
+	}
+	else {
+		if (self.before != null) {
+			html += self.before();
+		}
+
+		if (self.item != null) {
+			_.each(data.data, function (group, rowValIndex) {
+				_.each(group, function (pivot, colValIndex) {
+					var div = jQuery('<div>').appendTo(root);
+					var context = {
+						rowValIndex: rowValIndex,
+						colValIndex: colValIndex
+					};
+					html += self.item(context);
+				});
+			});
+		}
+
+		if (self.after != null) {
+			html += self.after();
+		}
+	}
+
+	root.html(html);
 };
 
 // #draw {{{2
@@ -142,18 +200,35 @@ GridRendererHandlebars.prototype.draw = function (root, cont, opts) {
 			return cont();
 		}
 
-		if (data.isPlain) {
-			self.template = Handlebars.compile(self.opts.whenPlain.template);
-			self._draw_plain(root, data, typeInfo, opts);
+		var k1 = data.isPlain ? 'plain'
+			: data.isGroup ? 'group'
+			: data.isPivot ? 'pivot'
+			: null;
+
+		var configKey = data.isPlain ? 'whenPlain'
+			: data.isGroup ? 'whenGroup'
+			: data.isPivot ? 'whenPivot'
+			: null;
+
+		var config = self.opts[configKey] || {};
+
+		if (config.empty != null) {
+			self.empty = Handlebars.compile(config.empty);
 		}
-		else if (data.isGroup) {
-			self.template = Handlebars.compile(self.opts.whenGroup.template);
-			self._draw_group(root, data, typeInfo, opts);
+
+		if (config.before != null) {
+			self.before = Handlebars.compile(config.before);
 		}
-		else if (data.isPivot) {
-			self.template = Handlebars.compile(self.opts.whenPivot.template);
-			self._draw_group(root, data, typeInfo, opts);
+
+		if (config.item != null) {
+			self.item = Handlebars.compile(config.item);
 		}
+
+		if (config.after != null) {
+			self.after = Handlebars.compile(config.after);
+		}
+
+		self['_draw_' + k1](root, data, typeInfo, opts);
 
 		self.addWorkHandler();
 
