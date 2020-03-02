@@ -1,4 +1,4 @@
-# Grid Table
+# Table Grid Renderer
 
 A grid table is a representation of the actual data table that appears
 when rendering a grid, both in normal and in pivot mode. The grid table

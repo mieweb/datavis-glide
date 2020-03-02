@@ -27,7 +27,11 @@ nav:
   - View:
       - Primary Operations: view/view.md
       - Group Functions: view/group_funs.md
-  - Grid: grid.md
+  - Grid:
+      - Overview: grid/index.md
+      - Renderers:
+          - Table: grid/renderers/table.md
+          - Handlebars: grid/renderers/handlebars.md
   - Graph: graph.md
   - Preferences: prefs.md
   - Performance: performance.md
