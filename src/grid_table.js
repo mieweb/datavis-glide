@@ -17,6 +17,7 @@ import {
 	isElement,
 	isVisible,
 	log,
+	makeOperationButton,
 	makeSubclass,
 	mergeSort2,
 	mixinEventHandling,
@@ -1294,6 +1295,33 @@ GridTable.prototype.draw = function (root, opts, cont) {
 			});
 		}
 
+		// All operations buttons share the same 'onClick' callback.
+
+		if (self.features.operations) {
+			jQuery(self.root).on('click.wcdv_operation', 'button.wcdv_operation', function () {
+				var btn = this;
+				var opType = btn.getAttribute('data-operation-type');
+				var opIndex = btn.getAttribute('data-operation-index');
+				var sel, rowNum, field, op;
+
+				switch (opType) {
+				case 'multiple':
+					break;
+				case 'single_row':
+					rowNum = +(jQuery(btn).parents('tr').attr('data-row-num'));
+					op = self.defn.operations.single.row[opIndex];
+					op.callback(self.data.data[rowNum]);
+					break;
+				case 'single_field':
+					field = jQuery(btn).parents('td').attr('data-wcdv-field');
+					rowNum = +(jQuery(btn).parents('tr').attr('data-row-num'));
+					op = self.defn.operations.single.field[field][opIndex];
+					op.callback(self.data.data[rowNum].rowData[field].value, self.data.data[rowNum]);
+					break;
+				}
+			});
+		}
+
 		var tr;
 		var srcIndex = 0;
 
@@ -1487,7 +1515,12 @@ GridTable.prototype.draw = function (root, opts, cont) {
 						}
 					});
 					if (pinnedColumns > 0) {
+						// Figure out if there's a column for the row selection checkbox.
 						if (self.features.rowSelect) {
+							pinnedColumns += 1;
+						}
+						// Figure out if there's a column for row-based operations.
+						if (self.hasOperations('single_row')) {
 							pinnedColumns += 1;
 						}
 						self.ui.tbl.attr('data-tttype', 'sidescroll');
@@ -1855,6 +1888,10 @@ GridTable.prototype.clear = function () {
 
 	if (self.features.limit && self.defn.table.limit.method === 'more') {
 		jQuery(self.scrollEventElement).off(self.scrollEvents);
+	}
+
+	if (self.features.operations) {
+		jQuery(self.root).off('click.wcdv_operation', 'button.wcdv_operation');
 	}
 
 	// Remove the event handler from clicking on the "show full value" buttons.
@@ -2271,6 +2308,15 @@ GridTablePlain.prototype.drawHeader = function (columns, data, typeInfo, opts) {
 		}
 	}
 
+	// Create the column for row-based operations.
+
+	if (self.hasOperations('single_row')) {
+		headingTh = jQuery('<th>', {
+			'class': 'wcdv_group_col_spacer'
+		});
+		headingTr.append(headingTh);
+	}
+
 	var progress = self.makeProgress('Filter');
 
 	/*
@@ -2292,6 +2338,10 @@ GridTablePlain.prototype.drawHeader = function (columns, data, typeInfo, opts) {
 
 		if (self.features.rowSelect) {
 			colIndex += 1; // Add a column for the row selection checkbox.
+		}
+
+		if (self.hasOperations('single_row')) {
+			colIndex += 1; // Add a column for row-based operations.
 		}
 
 		var headingText = fcc.displayText || field;
@@ -2480,6 +2530,21 @@ GridTablePlain.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 			}
 		}
 
+		// Create the cell that contains row-based operations.
+
+		if (self.hasOperations('single_row')) {
+			td = document.createElement('td');
+			td.classList.add('wcdv_group_col_spacer');
+			td.classList.add('wcdv_pivot_colval_boundary');
+			td.classList.add('wcdv_nowrap');
+
+			_.each(self.defn.operations.single.row, function (op, index) {
+				td.appendChild(makeOperationButton('single_row', op, index));
+			});
+
+			tr.appendChild(td);
+		}
+
 		// Create the data cells.
 
 		_.each(columns, function (field, colIndex) {
@@ -2492,10 +2557,21 @@ GridTablePlain.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 			setTableCell(td, value, {
 				field: field,
 				colConfig: self.colConfig,
-				typeInfo: typeInfo
+				typeInfo: typeInfo,
+				operations: getProp(self.defn, 'operations', 'single', 'field', field)
 			});
 
-			if (fcc.maxHeight != null) {
+			// Buttons within cells share a common 'onClick' handler, e.g. all "show full value" buttons
+			// have the same callback.  In that handler, we need to be able to figure out what field we
+			// were called for.  So if we're going to render buttons within the data cell, we need to
+			// attach the field name so it can be used by the handler.
+			//
+			// There are two such situations right now:
+			//
+			//   1. When `maxHeight` is set on the field (the "show full value" button).
+			//   2. When there are operations on the field.
+
+			if (fcc.maxHeight != null || self.hasOperations('single_field', field)) {
 				td.setAttribute('data-wcdv-field', field);
 			}
 
@@ -2546,6 +2622,7 @@ GridTablePlain.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 
 		var colSpan = columns.length
 			+ (self.features.rowSelect ? 1 : 0)
+			+ (self.hasOperations('single_row') ? 1 : 0)
 			+ (getPropDef(0, self.opts, 'addCols', 'length'))
 			+ (self.features.rowReorder ? 1 : 0);
 

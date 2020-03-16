@@ -2148,6 +2148,8 @@ export function isLocked(defn, name) {
  * @namespace util.html
  */
 
+// outerHtml {{{2
+
 /**
  * Returns the HTML used to construct the argument.
  */
@@ -2155,6 +2157,8 @@ export function isLocked(defn, name) {
 export function outerHtml(elt) {
 	return jQuery('<div>').append(elt).html();
 }
+
+// getText {{{2
 
 /**
  * Get all the next nodes which are direct children of the specified nodes.
@@ -2172,19 +2176,27 @@ export function getText(selector) {
 	});
 }
 
+// isVisible {{{2
+
 export function isVisible(elt) {
 	return elt.css('display') !== 'none' && elt.css('visibility') === 'visible';
 }
 
+// isElement {{{2
+
 export function isElement(x) {
 	return x instanceof Element || x instanceof jQuery;
 }
+
+// getElement {{{2
 
 export function getElement(x) {
 	return x instanceof Element ? x
 		: x instanceof jQuery ? x.get(0)
 		: null;
 }
+
+// isElementInViewport {{{2
 
 /*
  * Taken from --
@@ -2223,6 +2235,8 @@ export function isElementInViewport (parent, elt) {
 	}
 }
 
+// onVisibilityChange {{{2
+
 export function onVisibilityChange(parent, elt, callback) {
 	var old_visible;
 	return function () {
@@ -2235,6 +2249,8 @@ export function onVisibilityChange(parent, elt, callback) {
 		}
 	}
 }
+
+// fontAwesome {{{2
 
 export function fontAwesome(icon, cls, title) {
 	var span = jQuery('<span>')
@@ -2257,6 +2273,8 @@ export function fontAwesome(icon, cls, title) {
 
 	return span;
 }
+
+// loadScript {{{2
 
 /**
  * @function loadScript
@@ -2375,6 +2393,8 @@ export var loadScript = (function () {
 	};
 })();
 
+// setTableCell {{{2
+
 /**
  * Set the value of a table cell.
  *
@@ -2391,6 +2411,7 @@ export function setTableCell(cell, value, opts) {
 
 	var fcc = (opts.colConfig instanceof OrdMap && opts.colConfig.get(opts.field)) || opts.colConfig || {};
 	var fti = (opts.typeInfo instanceof OrdMap && opts.typeInfo.get(opts.field)) || opts.typeInfo || {};
+	var ops = opts.operations || [];
 
 	if (cell instanceof jQuery) {
 		cell = cell.get(0);
@@ -2423,22 +2444,58 @@ export function setTableCell(cell, value, opts) {
 		showValueSpan.classList.add('fa');
 		showValueSpan.classList.add('fa-asterisk');
 
+		var operationDiv = document.createElement('div');
+		operationDiv.style.display = 'inline-block';
+		operationDiv.style.float = 'right';
+
+		_.each(ops, function (op, index) {
+			operationDiv.appendChild(makeOperationButton('single_field', op, index, {inCell: true}));
+		});
+
 		container = document.createElement('div');
 
 		// cell (td)
 		//   wrapper (div)
 		//     showValueBtn (button)
 		//       showValueSpan (span.fa)
-		//     container (div)
+		//     operationDiv (div)
+		//       (button) (button) (button) ...
+		//     container (div) <-- holds the actual data value
 
 		cell.appendChild(wrapper);
 		wrapper.appendChild(showValueBtn);
 		showValueBtn.appendChild(showValueSpan);
+		wrapper.appendChild(operationDiv);
+		wrapper.appendChild(container);
+	}
+	else if (ops.length > 0) {
+		var wrapper = document.createElement('div');
+
+		var operationDiv = document.createElement('div');
+		operationDiv.style.display = 'inline-block';
+		operationDiv.style.float = 'right';
+
+		_.each(ops, function (op, index) {
+			operationDiv.appendChild(makeOperationButton('single_field', op, index, {inCell: true}));
+		});
+
+		container = document.createElement('div');
+
+		// cell (td)
+		//   wrapper (div)
+		//     operationDiv (div)
+		//       (button) (button) (button) ...
+		//     container (div) <-- holds the actual data value
+
+		cell.appendChild(wrapper);
+		wrapper.appendChild(operationDiv);
 		wrapper.appendChild(container);
 	}
 
 	setElement(container, value, opts);
 }
+
+// setElement {{{2
 
 /**
  * Set the value of an element.
@@ -2480,6 +2537,42 @@ export function setElement(container, value, opts) {
 	else {
 		container.innerText = value;
 	}
+}
+
+// makeOperationButton {{{2
+
+export function makeOperationButton(type, op, index, opts) {
+	opts = opts || {};
+
+	_.defaults(opts, {
+		inCell: false
+	});
+
+	var btn = document.createElement('button');
+	btn.setAttribute('type', 'button');
+	btn.setAttribute('data-operation-type', type);
+	btn.setAttribute('data-operation-index', index);
+	btn.classList.add('wcdv_operation');
+	if (op.label) {
+		btn.classList.add('wcdv_nowrap');
+		if (op.icon) {
+			btn.appendChild(fontAwesome(op.icon).get(0));
+		}
+		btn.append(op.label);
+	}
+	else {
+		btn.classList.add('wcdv_icon_button');
+		if (opts.inCell) {
+			btn.classList.add('wcdv_icon_button_incell');
+			btn.classList.add('wcdv_icon_button_nolabel');
+			btn.style.float = 'initial';
+		}
+		btn.appendChild(fontAwesome(op.icon).get(0));
+	}
+	if (op.tooltip) {
+		btn.setAttribute('title', op.tooltip);
+	}
+	return btn;
 }
 
 // makeCheckbox {{{2

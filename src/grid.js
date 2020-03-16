@@ -842,7 +842,8 @@ Grid.prototype._validateFeatures = function () {
 		'floatingHeader',
 		'block',
 		'progress',
-		'incremental'
+		'incremental',
+		'operations'
 	];
 
 	// When the user has specified the `footer` option, enable the footer feature (if it hasn't

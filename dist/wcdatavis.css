@@ -633,6 +633,10 @@ tr.wcdv_grid_filterrow th.wcdv_grid_filtercol {
 	margin-right: auto;
 }
 
+.wcdv_nowrap {
+	white-space: nowrap;
+}
+
 /*
  * The "show more rows" button, shown when using the "more" limit method.
  */

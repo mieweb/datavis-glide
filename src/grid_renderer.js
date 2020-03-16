@@ -5,6 +5,7 @@ import jQuery from 'jquery';
 import {
 	debug,
 	deepCopy,
+	getPropDef,
 	I,
 	makeSubclass,
 	mixinEventHandling,
@@ -185,6 +186,41 @@ GridRenderer.prototype.toString = function () {
 
 GridRenderer.prototype._validateFeatures = function () {
 	return true;
+};
+
+// #hasOperations {{{2
+
+/**
+ * Indicates if there are operations registered for the requested situation.
+ *
+ * @param {string} type
+ * What type of operations we're checking for: `multiple`, `single_row`, or `single_field`.
+ *
+ * @param {string} [field]
+ * When `type` is `single_field`, this is the field we want to know about.
+ *
+ * @example
+ * hasOperations('multiple')
+ * hasOperations('single_field', 'Employee')
+ */
+
+GridRenderer.prototype.hasOperations = function (type, field) {
+	var self = this;
+
+	if (!self.features.operations) {
+		return false;
+	}
+
+	switch (type) {
+	case 'multiple':
+		return getPropDef(0, self.defn, 'operations', 'multiple', 'length') > 0
+	case 'single_row':
+		return getPropDef(0, self.defn, 'operations', 'single', 'row', 'length') > 0
+	case 'single_field':
+		return getPropDef(0, self.defn, 'operations', 'single', 'field', field, 'length') > 0
+	default:
+		return false;
+	}
 };
 
 // Registry {{{1
