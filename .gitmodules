@@ -1,3 +1,3 @@
 [submodule "jaguarjs-jsdoc"]
 	path = jaguarjs-jsdoc
-	url = ssh://repo.mieweb.com:7999/dv/jaguarjs-jsdoc
+	url = git@github.mieweb.com:datavis/jaguarjs-jsdoc.git
