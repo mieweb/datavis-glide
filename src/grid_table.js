@@ -2239,13 +2239,7 @@ var GridTablePlain = makeSubclass('GridTablePlain', GridTable, function (grid, d
  */
 
 GridTablePlain.prototype.canRender = function (what) {
-	switch (what) {
-	case 'plain':
-		return true;
-	case 'group':
-	case 'pivot':
-		return false;
-	}
+	return ['plain'].indexOf(what) >= 0;
 };
 
 // #drawHeader {{{2
@@ -3284,13 +3278,7 @@ var GridTableGroupDetail = makeSubclass('GridTableGroupDetail', GridTable, funct
  */
 
 GridTableGroupDetail.prototype.canRender = function (what) {
-	switch (what) {
-	case 'group':
-		return true;
-	case 'plain':
-	case 'pivot':
-		return false;
-	}
+	return ['group'].indexOf(what) >= 0;
 };
 
 // #drawHeader {{{2
@@ -4645,13 +4633,7 @@ var GridTableGroupSummary = makeSubclass('GridTableGroupSummary', GridTable, fun
  */
 
 GridTableGroupSummary.prototype.canRender = function (what) {
-	switch (what) {
-	case 'group':
-		return true;
-	case 'plain':
-	case 'pivot':
-		return false;
-	}
+	return ['group'].indexOf(what) >= 0;
 };
 
 // #drawHeader {{{2
@@ -4978,13 +4960,7 @@ var GridTablePivot = makeSubclass('GridTablePivot', GridTable, function (grid, d
  */
 
 GridTablePivot.prototype.canRender = function (what) {
-	switch (what) {
-	case 'pivot':
-		return true;
-	case 'plain':
-	case 'group':
-		return false;
-	}
+	return ['pivot'].indexOf(what) >= 0;
 };
 
 // #drawHeader {{{2
