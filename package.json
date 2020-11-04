@@ -20,7 +20,7 @@
   "browser": "datavis.js",
   "repository": {
     "type": "git",
-    "url": "https://repo.mieweb.com/scm/dv/wcdatavis.git"
+    "url": "https://github.mieweb.com/datavis/wcdatavis.git"
   },
   "scripts": {
     "lint": "eslint src",

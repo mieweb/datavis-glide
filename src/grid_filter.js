@@ -557,10 +557,15 @@ StringDropdownGridFilterSumo.prototype.setValue = function (val) {
 	if (!_.isArray(val)) {
 		val = [val];
 	}
+	else {
+		val = _.flatten(val);
+	}
 
 	_.each(val, function (v) {
-		self.pleaseDontFireChangeEvent = true;
-		self.input.get(0).sumo.selectItem(v);
+		if (typeof v === 'string') {
+			self.pleaseDontFireChangeEvent = true;
+			self.input.get(0).sumo.selectItem(v);
+		}
 	});
 };
 
