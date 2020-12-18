@@ -4820,18 +4820,21 @@ GridTableGroupSummary.prototype.drawBody = function (data, typeInfo, columns, co
 				break;
 			case 'groupAggregates':
 				_.each(ai.all, function (aggInfo, aiAllIndex) {
-					var aggResult
-						, text
-						, td;
+					var aggResult = data.agg.results.all[aggInfo.aggNum];
 
-					td = jQuery('<td>');
-					td.attr('data-wcdv-agg-scope', 'all');
-					td.attr('data-wcdv-agg-num', aggInfo.aggNum);
-					aggResult = data.agg.results.all[aggInfo.aggNum];
+					var td = document.createElement('td');
+					td.setAttribute('data-wcdv-agg-scope', 'all');
+					td.setAttribute('data-wcdv-agg-num', aggInfo.aggNum);
 
-					if (isElement(aggResult)) {
-						td.append(aggResult);
-						self.csv.addCol(getElement(aggResult).innerText);
+					var text;
+
+					if (aggResult instanceof jQuery) {
+						aggResult = aggResult.get(0);
+					}
+
+					if (aggResult instanceof Element) {
+						td.appendChild(aggResult);
+						self.csv.addCol(aggResult.innerText);
 					}
 					else {
 						if (aggInfo.instance.inheritFormatting) {
@@ -4855,11 +4858,12 @@ GridTableGroupSummary.prototype.drawBody = function (data, typeInfo, columns, co
 					}
 
 					if (self.opts.drawInternalBorders || ai.all.length > 1) {
-						td.addClass(aiAllIndex === 0 ? 'wcdv_pivot_aggregate_boundary' : 'wcdv_pivot_colval_boundary');
+						td.classList.add(aiAllIndex === 0 ? 'wcdv_pivot_aggregate_boundary' : 'wcdv_pivot_colval_boundary');
 					}
 
 					self.setAlignment(td, aggInfo.colConfig[0], aggInfo.typeInfo[0], aggInfo.instance.getType());
-					td.appendTo(tr);
+
+					tr.append(td);
 				});
 				break;
 			}
