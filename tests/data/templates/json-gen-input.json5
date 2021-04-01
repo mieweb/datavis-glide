@@ -34,21 +34,35 @@
       , "date1": "$< random_date('date1', format='yyyy-MM-dd') >$"
       , "date2": "$< random_date('date2', format='MMM d, yyyy') >$"
       , "date3": "$< random_date('date3', format='MM/dd/yyyy') >$"
+      , "time1": "$< random_time('time1', format='HH:mm:ss') >$"
+      , "time2": "$< random_time('time2', format='hh:mm:ss a') >$"
+      , "time3": "$< random_time('time3', format='h:mm:ss a') >$"
+      , "time4": "$< random_time('time4', format='HH:mm') >$"
+      , "time5": "$< random_time('time5', format='hh:mm a') >$"
+      , "time6": "$< random_time('time6', format='h:mm a') >$"
       , "datetime1": "$< random_datetime('datetime1', format='yyyy-MM-dd HH:mm:ss') >$"
       , "datetime2": "$< random_datetime('datetime2', format='MMM d, yyyy HH:mm:ss') >$"
       , "datetime3": "$< random_datetime('datetime3', format='MM/dd/yyyy HH:mm:ss') >$"
+      // random datetimes within the same minute
       , "datetime4": "$< random_datetime('datetime4', min='2010-01-01 08:00:00', max='2010-01-01 08:01:00', format='yyyy-MM-dd HH:mm:ss') >$"
       , "datetime5": "$< random_datetime('datetime5', min='2010-01-01 08:00:00', max='2010-01-01 08:01:00', format='MMM d, yyyy HH:mm:ss') >$"
       , "datetime6": "$< random_datetime('datetime6', min='2010-01-01 08:00:00', max='2010-01-01 08:01:00', format='MM/dd/yyyy HH:mm:ss') >$"
+      // random datetimes within the same hour
       , "datetime7": "$< random_datetime('datetime7', min='2010-01-01 08:00:00', max='2010-01-01 08:59:59', format='yyyy-MM-dd HH:mm:\\'0\\'0') >$"
       , "datetime8": "$< random_datetime('datetime8', min='2010-01-01 08:00:00', max='2010-01-01 08:59:59', format='MMM d, yyyy HH:mm:\\'0\\'0') >$"
       , "datetime9": "$< random_datetime('datetime9', min='2010-01-01 08:00:00', max='2010-01-01 08:59:59', format='MM/dd/yyyy HH:mm:\\'0\\'0') >$"
+      // random datetimes within the same day
       , "datetime10": "$< random_datetime('datetime10', min='2010-01-01 00:00:00', max='2010-01-01 23:59:59', format='yyyy-MM-dd HH:mm:ss') >$"
       , "datetime11": "$< random_datetime('datetime11', min='2010-01-01 00:00:00', max='2010-01-01 23:59:59', format='MMM d, yyyy HH:mm:ss') >$"
       , "datetime12": "$< random_datetime('datetime12', min='2010-01-01 00:00:00', max='2010-01-01 23:59:59', format='MM/dd/yyyy HH:mm:ss') >$"
+      // random datetimes within the same month
       , "datetime13": "$< random_datetime('datetime13', min='2010-01-01 00:00:00', max='2010-01-31 23:59:59', format='yyyy-MM-dd HH:mm:ss') >$"
       , "datetime14": "$< random_datetime('datetime14', min='2010-01-01 00:00:00', max='2010-01-31 23:59:59', format='MMM d, yyyy HH:mm:ss') >$"
       , "datetime15": "$< random_datetime('datetime15', min='2010-01-01 00:00:00', max='2010-01-31 23:59:59', format='MM/dd/yyyy HH:mm:ss') >$"
+      // random datetimes within the same year
+      , "datetime16": "$< random_datetime('datetime16', min='2010-01-01 00:00:00', max='2010-12-31 23:59:59', format='yyyy-MM-dd HH:mm:ss') >$"
+      , "datetime17": "$< random_datetime('datetime17', min='2010-01-01 00:00:00', max='2010-12-31 23:59:59', format='MMM d, yyyy HH:mm:ss') >$"
+      , "datetime18": "$< random_datetime('datetime18', min='2010-01-01 00:00:00', max='2010-12-31 23:59:59', format='MM/dd/yyyy HH:mm:ss') >$"
       , "fixedPrecision1": 0.7
       , "fixedPrecision2": "0.7"
       , "fixedPrecision3": "$0.70"
@@ -88,6 +102,12 @@
     , { "field": "date1", "type": "date" }
     , { "field": "date2", "type": "date", "format": "MMMM D, YYYY" }
     , { "field": "date3", "type": "date", "format": "MM/DD/YYYY" }
+    , { "field": "time1", "type": "time", "format": "HH:mm:ss" }
+    , { "field": "time2", "type": "time", "format": "hh:mm:ss a" }
+    , { "field": "time3", "type": "time", "format": "h:mm:ss a" }
+    , { "field": "time4", "type": "time", "format": "HH:mm" }
+    , { "field": "time5", "type": "time", "format": "hh:mm a" }
+    , { "field": "time6", "type": "time", "format": "h:mm a" }
     , { "field": "datetime1", "type": "datetime" }
     , { "field": "datetime2", "type": "datetime", "format": "MMMM D, YYYY HH:mm:ss" }
     , { "field": "datetime3", "type": "datetime", "format": "MM/DD/YYYY HH:mm:ss" }
@@ -103,6 +123,9 @@
     , { "field": "datetime13", "type": "datetime" }
     , { "field": "datetime14", "type": "datetime", "format": "MMMM D, YYYY HH:mm:ss" }
     , { "field": "datetime15", "type": "datetime", "format": "MM/DD/YYYY HH:mm:ss" }
+    , { "field": "datetime16", "type": "datetime" }
+    , { "field": "datetime17", "type": "datetime", "format": "MMMM D, YYYY HH:mm:ss" }
+    , { "field": "datetime18", "type": "datetime", "format": "MM/DD/YYYY HH:mm:ss" }
     , { "field": "fixedPrecision1", "type": "number" }
     , { "field": "fixedPrecision2", "type": "number" }
     , { "field": "fixedPrecision3", "type": "currency" }

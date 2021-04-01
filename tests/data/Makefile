@@ -1,7 +1,7 @@
 JSON5_FILES=$(wildcard templates/*.json5)
 JSON_FILES=$(patsubst templates/%.json5,%.json,$(JSON5_FILES))
 JSON_GEN=../../bin/json-gen.py
-JSON_GEN_INPUT=./templates/json-gen-input.json
+JSON_GEN_INPUT=./templates/json-gen-input.json5
 
 all:	$(JSON_FILES) random100.json random100.xml random100.csv random500.json random1000.json random10000.json number-format-str.json
 
