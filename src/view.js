@@ -2268,7 +2268,7 @@ View.prototype.group = function () {
 				}
 				else {
 					groupFun = GROUP_FUNCTION_REGISTRY.get(groupSpecElt.fun);
-					groupFunResult = groupFun.applyValueFun(value);
+					groupFunResult = groupFun.applyValueFun(value, self.typeInfo.get(groupSpecElt.field));
 					natRep = getNatRep(groupFunResult);
 					origKeys[groupFieldIndex][natRep] = groupFunResult;
 				}
@@ -2853,7 +2853,7 @@ View.prototype.pivot = function () {
 					}
 					else {
 						groupFun = GROUP_FUNCTION_REGISTRY.get(pivotSpecElt.fun);
-						natRep = groupFun.applyValueFun(value);
+						natRep = groupFun.applyValueFun(value, self.typeInfo.get(pivotSpecElt.field));
 						origKeys[pivotFieldIndex][natRep] = natRep;
 					}
 					setProp(natRep, row.rowData[pivotSpecElt.field], 'natRep', 'pivot', pivotFieldIndex);
@@ -3659,8 +3659,8 @@ var GroupFunction = makeSubclass('GroupFunction', Object, function (spec) {
  * The value that should be used for grouping purposes.
  */
 
-GroupFunction.prototype.applyValueFun = function (x) {
-	return this.valueFun ? this.valueFun(x) : x;
+GroupFunction.prototype.applyValueFun = function (x, fti) {
+	return this.valueFun ? this.valueFun(x, fti) : x;
 };
 
 // Group Function Registry {{{1
@@ -3916,6 +3916,60 @@ GROUP_FUNCTION_REGISTRY.set('day_and_time_15min', new GroupFunction({
 		return {
 			'$gte': moment(s).format('YYYY-MM-DD HH:mm:ss'),
 			'$lte': moment(s).add(15, 'minutes').subtract(1, 'seconds').format('YYYY-MM-DD HH:mm:ss')
+		};
+	}
+}));
+
+// Hour {{{2
+
+GROUP_FUNCTION_REGISTRY.set('time_1hr', new GroupFunction({
+	category: 'time',
+	displayName: 'Time: 1 hr slices',
+	allowedTypes: ['time'],
+	valueFun: function (d, fti) {
+		if (typeof d === 'string') {
+			d = moment(d, getProp(fti, 'format'));
+		}
+		if (!moment.isMoment(d) || !d.isValid()) {
+			return 'Invalid Date';
+		}
+		return d.format('HH:00:00');
+	},
+	resultType: 'time',
+	valueToFilter: function (s) {
+		return {
+			'$gte': moment(s).format('HH:mm:ss'),
+			'$lte': moment(s).add(1, 'hours').subtract(1, 'seconds').format('HH:mm:ss')
+		};
+	}
+}));
+
+// Hour, Quarter Hour {{{2
+
+GROUP_FUNCTION_REGISTRY.set('time_15min', new GroupFunction({
+	category: 'time',
+	displayName: 'Time: 15 min slices',
+	allowedTypes: ['time'],
+	valueFun: function (d, fti) {
+		if (typeof d === 'string') {
+			d = moment(d, getProp(fti, 'format'));
+		}
+		if (!moment.isMoment(d) || !d.isValid()) {
+			return 'Invalid Date';
+		}
+		var min = d.minutes();
+		var minStr = (min >= 0 && min <= 14) ? '00'
+			: (min >= 15 && min <= 29) ? '15'
+			: (min >= 30 && min <= 44) ? '30'
+			: (min >= 45 && min <= 59) ? '45'
+			: '00';
+		return d.format('HH:' + minStr + ':00');
+	},
+	resultType: 'time',
+	valueToFilter: function (s) {
+		return {
+			'$gte': moment(s).format('HH:mm:ss'),
+			'$lte': moment(s).add(15, 'minutes').subtract(1, 'seconds').format('HH:mm:ss')
 		};
 	}
 }));

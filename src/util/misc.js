@@ -3179,10 +3179,10 @@ export function format(fcc, fti, cell, opts) {
 		currencySymbol: '$'
 	}, defaultNumberFormat);
 
-	// Set default formatting strings for some types.  Note that we're NOT setting one for generic
-	// numbers, because they are often used in different ways (e.g. an ID should have no commas).
-
 	if (format == null) {
+		// Set the default formatting for each non-string type.  The general idea here is to be as
+		// precise as possible and let the user specify something more terse if they want to.
+
 		switch (t) {
 		case 'number':
 			format = deepCopy(defaultNumberFormat);
@@ -3196,9 +3196,16 @@ export function format(fcc, fti, cell, opts) {
 		case 'datetime':
 			format = 'LLL';
 			break;
+		case 'time':
+			format = 'LTS';
+			break;
 		}
 	}
 	else {
+		// The user has supplied some formatting that they want to use.  For numeric types, this can be
+		// done via an object (powerful but verbose), or via a string (less powerful but terse).  Parse
+		// the string if necessary, or merge the object with the default configuration.
+
 		switch (t) {
 		case 'number':
 			format = typeof format === 'string'
@@ -3232,6 +3239,7 @@ export function format(fcc, fti, cell, opts) {
 	else {
 		switch (t) {
 		case 'date':
+		case 'time':
 		case 'datetime':
 			if (opts.convert) {
 				convert(cell, fti);
@@ -3252,7 +3260,7 @@ export function format(fcc, fti, cell, opts) {
 			else {
 				// FIXME: Make this work without Moment.
 
-				var m = moment(cell.value);
+				var m = moment(cell.value, fti.format);
 
 				if (!m.isValid()) {
 					break;

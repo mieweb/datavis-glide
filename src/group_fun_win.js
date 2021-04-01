@@ -52,6 +52,7 @@ var GroupFunWin = makeSubclass('GroupFunWin', Object, function (title, groupFuns
 	categories.set('repeating', { display: 'Repeating' });
 	categories.set('date', { display: 'Date' });
 	categories.set('datetime', { display: 'Date & Time' });
+	categories.set('time', { display: 'Time' });
 	categories.set('other', { display: 'Other' });
 
 	// Create the UI for each category.

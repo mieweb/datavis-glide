@@ -1024,41 +1024,40 @@ Source.prototype.setConversionTypeInfo = function (data, typeInfo) {
 		if (fti.type === 'string') {
 			fti.internalType = 'string';
 		}
-		else if (['number', 'currency', 'date', 'datetime'].indexOf(fti.type) >= 0) {
+		else if (['number', 'currency'].indexOf(fti.type) >= 0) {
 			fti.deferDecoding = self.opts.deferDecoding;
-
-			if (fti.type === 'number' || fti.type === 'currency') {
-				fti.needsDecoding = true;
-				if (fti.internalType == null) {
-					if (fti.type === 'currency') {
-						fti.internalType = 'bignumber';
-					}
-					else {
-						fti.internalType = 'primitive';
-					}
+			fti.needsDecoding = true;
+			if (fti.internalType == null) {
+				if (fti.type === 'currency') {
+					fti.internalType = 'bignumber';
 				}
-				else if (['primitive', 'numeral', 'bignumber'].indexOf(fti.internalType) < 0) {
-					log.error('Invalid internalType "' + fti.internalType + '" requested for field "' + fti.field + '" - falling back to "primitive" instead');
+				else {
 					fti.internalType = 'primitive';
 				}
 			}
-			else if (fti.type === 'date' || fti.type === 'datetime') {
-				if ((fti.type === 'date' && (fti.format === undefined || fti.format === 'YYYY-MM-DD'))
-						|| (fti.type === 'datetime' && (fti.format === undefined || fti.format === 'YYYY-MM-DD HH:mm:ss'))) {
-					// The values are dates and/or times where the lexicographic sort is also chronological.
-					// So, there's no need to convert them to any special value internally to support sorting.
-					fti.internalType = 'string';
-				}
-				else {
-					fti.needsDecoding = true;
-					fti.internalType = 'moment';
-				}
+			else if (['primitive', 'numeral', 'bignumber'].indexOf(fti.internalType) < 0) {
+				log.error('Invalid internalType "' + fti.internalType + '" requested for field "' + fti.field + '" - falling back to "primitive" instead');
+				fti.internalType = 'primitive';
 			}
+		}
+		else if (['date', 'datetime', 'time'].indexOf(fti.type) >= 0) {
+			fti.deferDecoding = self.opts.deferDecoding;
+			if ((fti.type === 'date' && (fti.format === undefined || fti.format === 'YYYY-MM-DD'))
+					|| (fti.type === 'datetime' && (fti.format === undefined || fti.format === 'YYYY-MM-DD HH:mm:ss'))
+					|| (fti.type === 'time' && (fti.format === undefined || fti.format === 'HH:mm:ss' || fti.format === 'HH:mm'))) {
+				// The values are dates and/or times where the lexicographic sort is also chronological.
+				// So, there's no need to convert them to any special value internally to support sorting.
+				fti.internalType = 'string';
+			}
+			else {
+				fti.needsDecoding = true;
+				fti.internalType = 'moment';
+			}
+		}
 
-			if (fti.deferDecoding) {
-				self.debug('CONVERSION', 'Deferring conversion until <%s> { field = "%s", type = "%s", format = "%s" }',
-					fti.needsDecoding ? 'SORT' : 'DISPLAY', f, fti.type, fti.format);
-			}
+		if (fti.deferDecoding) {
+			self.debug('CONVERSION', 'Deferring conversion until <%s> { field = "%s", type = "%s", format = "%s" }',
+				fti.needsDecoding ? 'SORT' : 'DISPLAY', f, fti.type, fti.format);
 		}
 	});
 };
