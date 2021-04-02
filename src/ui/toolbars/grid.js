@@ -384,7 +384,9 @@ var PrefsToolbar = makeSubclass('PrefsToolbar', ToolbarSection, function (grid) 
 		.addClass('wcdv_icon_button wcdv_text-primary')
 		.append(fontAwesome('fa-undo'))
 		.on('click', function () {
-			grid.prefs.reset();
+			if (confirm('Are you sure you want to reset all configuration, delete all perspectives, and start over?')) {
+				grid.prefs.reset();
+			}
 		})
 		.appendTo(div)
 	;
@@ -551,7 +553,9 @@ var PrefsToolbar = makeSubclass('PrefsToolbar', ToolbarSection, function (grid) 
 		.addClass('wcdv_icon_button wcdv_text-primary')
 		.append(fontAwesome('fa-trash'))
 		.on('click', function () {
-			grid.prefs.deletePerspective(dropdown.val());
+			if (confirm('Are you sure you want to delete this perspective?')) {
+				grid.prefs.deletePerspective(dropdown.val());
+			}
 		})
 		.appendTo(div)
 	;
