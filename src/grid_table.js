@@ -2873,7 +2873,7 @@ GridTablePlain.prototype.drawFooter = function (columns, data, typeInfo) {
 						debug.info('GRID TABLE - PLAIN // FOOTER - ' + field + ' // ' + tag, 'Converting data: { field = "%s", type = "%s" }',
 							fti.field, fti.type);
 
-						self.view.source.convertAll(data.dataByRowId, fti.field);
+						self.view.convertAll(data.dataByRowId, fti.field);
 					}
 
 					fti.deferDecoding = false;
@@ -4227,7 +4227,7 @@ GridTableGroupDetail.prototype.drawFooter = function (columns, data, typeInfo) {
 						debug.info('GRID TABLE - PLAIN // FOOTER - ' + field + ' // ' + tag, 'Converting data: { field = "%s", type = "%s" }',
 							fti.field, fti.type);
 
-						self.view.source.convertAll(data.dataByRowId, fti.field);
+						self.view.convertAll(data.dataByRowId, fti.field);
 					}
 
 					fti.deferDecoding = false;
