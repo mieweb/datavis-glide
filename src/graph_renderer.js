@@ -15,7 +15,7 @@ import {
 	setProp,
 } from './util/misc.js';
 import {AggregateInfo} from './aggregates';
-import {GROUP_FUNCTION_REGISTRY} from './view.js';
+import {GROUP_FUNCTION_REGISTRY} from './group_fun.js';
 
 // GraphRenderer {{{1
 

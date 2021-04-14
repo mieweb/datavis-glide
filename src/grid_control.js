@@ -18,7 +18,8 @@ import {
 
 import './util/jquery.js';
 import {AGGREGATE_REGISTRY} from './aggregates.js';
-import {View, GROUP_FUNCTION_REGISTRY} from './view.js';
+import {View} from './view.js';
+import {GROUP_FUNCTION_REGISTRY} from './group_fun.js';
 import {Grid} from './grid.js';
 import {GridFilterSet} from './grid_filter.js';
 import {GroupFunWin} from './group_fun_win.js';

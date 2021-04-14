@@ -31,7 +31,8 @@ import {
 import {AggregateInfo} from './aggregates.js';
 import {GridFilterSet} from './grid_filter.js';
 import {GridRenderer} from './grid_renderer.js';
-import {View, GROUP_FUNCTION_REGISTRY} from './view.js';
+import {View} from './view.js';
+import {GROUP_FUNCTION_REGISTRY} from './group_fun.js';
 
 import handlebarsUtil from './util/handlebars.js';
 
