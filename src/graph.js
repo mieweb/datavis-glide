@@ -17,7 +17,7 @@ import {
 } from './util/misc.js';
 import OrdMap from './util/ordmap.js';
 
-import {View} from './view.js';
+import {ComputedView} from './computed_view.js';
 import {Prefs} from './prefs.js';
 import {
 	GraphRendererGoogle,
@@ -46,7 +46,7 @@ import {trans} from './trans.js';
  * Can either be a function that returns an object, or just an object.  If it's a function, it
  * receives the group fields and pivot fields as arguments.
  *
- * @mixes View~AggregateSpec
+ * @mixes ComputedView~AggregateSpec
  */
 
 // Constructor {{{2
@@ -56,7 +56,7 @@ import {trans} from './trans.js';
  *
  * @param {string} id
  *
- * @param {View} view
+ * @param {ComputedView} view
  *
  * @param {Graph~Config} opts
  *
@@ -65,7 +65,7 @@ import {trans} from './trans.js';
  * Represents a graph.
  *
  * @property {string} id
- * @property {View} view
+ * @property {ComputedView} view
  * @property {object} devConfig
  * @property {object} userConfig
  * @property {object} opts
@@ -95,8 +95,8 @@ var Graph = makeSubclass('Graph', Object, function (id, view, devConfig, opts) {
 		throw new Error('Call Error: `id` must be a string');
 	}
 
-	if (!(view instanceof View)) {
-		throw new Error('Call Error: `view` must be an instance of MIE.WC_DataVis.View');
+	if (!(view instanceof ComputedView)) {
+		throw new Error('Call Error: `view` must be an instance of MIE.WC_DataVis.ComputedView');
 	}
 
 	if (self.opts.prefs != null && !(self.opts.prefs instanceof Prefs)) {
@@ -156,7 +156,7 @@ var Graph = makeSubclass('Graph', Object, function (id, view, devConfig, opts) {
 		}
 
 		if (config != null) {
-			debug.info('GRAPH // HANDLER (View.workEnd)',
+			debug.info('GRAPH // HANDLER (ComputedView.workEnd)',
 				'Matching configuration: %O', config);
 
 			var graphType = config.graphType;

@@ -31,7 +31,7 @@ import {
 import {AggregateInfo} from './aggregates.js';
 import {GridFilterSet} from './grid_filter.js';
 import {GridRenderer} from './grid_renderer.js';
-import {View} from './view.js';
+import {ComputedView} from './computed_view.js';
 import {GROUP_FUNCTION_REGISTRY} from './group_fun.js';
 
 import handlebarsUtil from './util/handlebars.js';
@@ -310,7 +310,7 @@ Csv.prototype.setOrder = function (rowId, pos) {
  *
  * @property {Array.<GridTable~AddCols>} [addCols]
  * Columns to add to the table.  These are always computed as rows are rendered, and they are not
- * backed by the View so they can't be sorted or filtered.  This option is best used as a way of
+ * backed by the ComputedView so they can't be sorted or filtered.  This option is best used as a way of
  * adding some UI to the table row.
  *
  * @property {object} [events]
@@ -350,7 +350,7 @@ Csv.prototype.setOrder = function (rowId, pos) {
  *
  * @property {object} defn
  *
- * @property {View} view
+ * @property {ComputedView} view
  *
  * @property {object} features
  *
@@ -401,7 +401,7 @@ var GridTable = makeSubclass('GridTable', GridRenderer, function () {
  *
  * @event GridTable#unableToRender
  *
- * @param {View~OperationsPerformed} ops
+ * @param {ComputedView~OperationsPerformed} ops
  * The operations performed by the view.
  */
 
@@ -661,13 +661,13 @@ GridTable.prototype.setAlignment = function (elt, fcc, fti, overrideType, fallba
  * Indicates whether the sorting is `horizontal` (i.e. sorting reorders columns) or `vertical` (i.e.
  * sorting reorders rows).
  *
- * @param {View~SortSpec} spec
+ * @param {ComputedView~SortSpec} spec
  * The sort spec.
  *
  * @param {Element} th
  * Where to place the sort icon.
  *
- * @param {Array.<View~AggInfo>} agg
+ * @param {Array.<ComputedView~AggInfo>} agg
  * Aggregate functions which we can sort by their results.
  */
 
@@ -841,7 +841,7 @@ GridTable.prototype._addSortingToHeader = function (data, orientation, spec, con
 				return;
 			}
 
-			var aggType = aggInfo.instance.getType();
+			//var aggType = aggInfo.instance.getType();
 			sortIcon_menu_items[gensym()] = {
 				name: aggInfo.instance.getFullName() + ', Ascending',
 				icon: 'fa-sort-amount-asc',
@@ -1029,7 +1029,7 @@ GridTable.prototype.addSortHandler = function () {
 	if (self.features.sort) {
 //		if (self.features.limit) {
 			self.view.on('sortEnd', function () {
-				debug.info('GRID TABLE // HANDLER (View.sortEnd)', 'Marking table to be redrawn');
+				debug.info('GRID TABLE // HANDLER (ComputedView.sortEnd)', 'Marking table to be redrawn');
 				self.needsRedraw = true;
 			}, { who: self });
 //		}
@@ -1070,17 +1070,17 @@ GridTable.prototype.addFilterHandler = function () {
 	self.view.off('filter');
 
 //	if (self.features.limit || self.view.opts.saveViewConfig) {
-		self.view.on(View.events.filterEnd, function () {
-			debug.info('GRID TABLE // HANDLER (View.filterEnd)', 'Marking table to be redrawn');
+		self.view.on(ComputedView.events.filterEnd, function () {
+			debug.info('GRID TABLE // HANDLER (ComputedView.filterEnd)', 'Marking table to be redrawn');
 			self.needsRedraw = true;
 		}, { who: self });
 //	}
 //	else {
 //		var even = false; // Rows are 1-based to match our CSS zebra-striping.
 //
-//		self.view.on(View.events.filter, function (rowNum, hide) {
+//		self.view.on(ComputedView.events.filter, function (rowNum, hide) {
 //			if (isNothing(self.ui.tr[rowNum])) {
-//				debug.info('GRID TABLE // HANDLER (View.filter)', 'We were told to ' + (hide ? 'hide' : 'show') + ' row ' + rowNum + ', but it doesn\'t exist');
+//				debug.info('GRID TABLE // HANDLER (ComputedView.filter)', 'We were told to ' + (hide ? 'hide' : 'show') + ' row ' + rowNum + ', but it doesn\'t exist');
 //				return;
 //			}
 //
@@ -1371,9 +1371,9 @@ GridTable.prototype.draw = function (root, opts, cont) {
 
 		self.ui.contextMenus.appendTo(document.body);
 
-		self.view.on(View.events.workBegin, function () {
+		self.view.on(ComputedView.events.workBegin, function () {
 			if (self.features.block) {
-				debug.info('GRID TABLE // HANDLER (View.workBegin)', 'Blocking table body');
+				debug.info('GRID TABLE // HANDLER (ComputedView.workBegin)', 'Blocking table body');
 				if (getProp(self.defn, 'table', 'block', 'wholePage')) {
 					jQuery.blockUI(blockConfig);
 				}
@@ -1390,9 +1390,9 @@ GridTable.prototype.draw = function (root, opts, cont) {
 			}
 		}, { who: self });
 
-		self.view.on(View.events.workEnd, function () {
+		self.view.on(ComputedView.events.workEnd, function () {
 			if (self.features.block) {
-				debug.info('GRID TABLE // HANDLER (View.workEnd)', 'Unblocking table body');
+				debug.info('GRID TABLE // HANDLER (ComputedView.workEnd)', 'Unblocking table body');
 				if (getProp(self.defn, 'table', 'block', 'wholePage')) {
 					jQuery.unblockUI();
 				}
@@ -2215,7 +2215,7 @@ GridTable.prototype._updateSelectionGui = function () {
  *
  * @property {object} defn
  *
- * @property {View} view
+ * @property {ComputedView} view
  *
  * @property {Element} root
  *
@@ -2264,7 +2264,7 @@ GridTablePlain.prototype.canRender = function (what) {
  * @param {Array.<string>} columns A list of the fields that are to be included as columns within
  * the GridTablePlain.
  *
- * @param {View~Data} data
+ * @param {ComputedView~Data} data
  *
  * @param {Source~TypeInfo} typeInfo
  *
@@ -2329,7 +2329,7 @@ GridTablePlain.prototype.drawHeader = function (columns, data, typeInfo, opts) {
 
 	/*
 	 * Set up the GridFilterSet instance that manages the (potentially multiple) filters on each
-	 * column of the View that belongs to this GridTablePlain.
+	 * column of the ComputedView that belongs to this GridTablePlain.
 	 */
 
 	if (self.features.filter) {
@@ -3015,16 +3015,16 @@ GridTablePlain.prototype.updateFeatures = function (f) {
 GridTablePlain.prototype.addWorkHandler = function () {
 	var self = this;
 
-	self.view.on(View.events.workEnd, function (info, ops) {
-		debug.info('GRID TABLE - PLAIN // HANDLER (View.workEnd)', 'View has finished doing work');
+	self.view.on(ComputedView.events.workEnd, function (info, ops) {
+		debug.info('GRID TABLE - PLAIN // HANDLER (ComputedView.workEnd)', 'ComputedView has finished doing work');
 
 		if (ops.group || ops.pivot) {
-			debug.info('GRID TABLE - PLAIN // HANDLER (View.workEnd)', 'Unable to render this data: %O', ops);
+			debug.info('GRID TABLE - PLAIN // HANDLER (ComputedView.workEnd)', 'Unable to render this data: %O', ops);
 			self.fire('unableToRender', null, ops);
 			return;
 		}
 
-		debug.info('GRID TABLE - PLAIN // HANDLER (View.workEnd)', 'Redrawing because the view has done work');
+		debug.info('GRID TABLE - PLAIN // HANDLER (ComputedView.workEnd)', 'Redrawing because the view has done work');
 		self.draw(self.root);
 	}, { who: self });
 };
@@ -3037,8 +3037,8 @@ GridTablePlain.prototype.addWorkHandler = function () {
 //	// limiting output because otherwise, sort and filter callbacks don't need to redraw the whole
 //	// grid, and they are taken care of by the 'sort' and 'filter' events on a row-by-row basis.
 //
-//	self.view.on(View.events.workEnd, function (info, ops) {
-//		debug.info('GRID TABLE // HANDLER (View.workEnd)', 'View has finished doing work');
+//	self.view.on(ComputedView.events.workEnd, function (info, ops) {
+//		debug.info('GRID TABLE // HANDLER (ComputedView.workEnd)', 'ComputedView has finished doing work');
 //
 //		if (ops.group || ops.pivot) {
 //
@@ -3051,7 +3051,7 @@ GridTablePlain.prototype.addWorkHandler = function () {
 //		}
 //
 //		if (self.needsRedraw) {
-//			debug.info('GRID TABLE // HANDLER (View.workEnd)', 'Redrawing because the view has done work');
+//			debug.info('GRID TABLE // HANDLER (ComputedView.workEnd)', 'Redrawing because the view has done work');
 //
 //			self.needsRedraw = false;
 //
@@ -4326,15 +4326,15 @@ GridTableGroupDetail.prototype.drawFooter = function (columns, data, typeInfo) {
 GridTableGroupDetail.prototype.addWorkHandler = function () {
 	var self = this;
 
-	self.view.on(View.events.workEnd, function (info, ops) {
-		debug.info('GRID TABLE - GROUP - DETAIL // HANDLER (View.workEnd)', 'View has finished doing work');
+	self.view.on(ComputedView.events.workEnd, function (info, ops) {
+		debug.info('GRID TABLE - GROUP - DETAIL // HANDLER (ComputedView.workEnd)', 'ComputedView has finished doing work');
 
 		if (!ops.group || ops.pivot) {
 			self.fire('unableToRender', null, ops);
 			return;
 		}
 
-		debug.info('GRID TABLE - GROUP - DETAIL // HANDLER (View.workEnd)', 'Redrawing because the view has done work');
+		debug.info('GRID TABLE - GROUP - DETAIL // HANDLER (ComputedView.workEnd)', 'Redrawing because the view has done work');
 		self.draw(self.root);
 	}, { who: self });
 };
@@ -4929,15 +4929,15 @@ GridTableGroupSummary.prototype.drawFooter = function (columns, data, typeInfo) 
 GridTableGroupSummary.prototype.addWorkHandler = function () {
 	var self = this;
 
-	self.view.on(View.events.workEnd, function (info, ops) {
-		debug.info('GRID TABLE - GROUP - SUMMARY // HANDLER (View.workEnd)', 'View has finished doing work');
+	self.view.on(ComputedView.events.workEnd, function (info, ops) {
+		debug.info('GRID TABLE - GROUP - SUMMARY // HANDLER (ComputedView.workEnd)', 'ComputedView has finished doing work');
 
 		if (!ops.group || ops.pivot) {
 			self.fire('unableToRender', null, ops);
 			return;
 		}
 
-		debug.info('GRID TABLE - GROUP - SUMMARY // HANDLER (View.workEnd)', 'Redrawing because the view has done work');
+		debug.info('GRID TABLE - GROUP - SUMMARY // HANDLER (ComputedView.workEnd)', 'Redrawing because the view has done work');
 		self.draw(self.root);
 	}, { who: self });
 };
@@ -5785,16 +5785,16 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 GridTablePivot.prototype.addWorkHandler = function () {
 	var self = this;
 
-	self.view.on(View.events.workEnd, function (info, ops) {
-		debug.info('GRID TABLE - PIVOT // HANDLER (View.workEnd)', 'View has finished doing work');
+	self.view.on(ComputedView.events.workEnd, function (info, ops) {
+		debug.info('GRID TABLE - PIVOT // HANDLER (ComputedView.workEnd)', 'ComputedView has finished doing work');
 
 		if (!ops.pivot) {
-			debug.info('GRID TABLE - PIVOT // HANDLER (View.workEnd)', 'Unable to render this data: %O', ops);
+			debug.info('GRID TABLE - PIVOT // HANDLER (ComputedView.workEnd)', 'Unable to render this data: %O', ops);
 			self.fire('unableToRender', null, ops);
 			return;
 		}
 
-		debug.info('GRID TABLE - PIVOT // HANDLER (View.workEnd)', 'Redrawing because the view has done work');
+		debug.info('GRID TABLE - PIVOT // HANDLER (ComputedView.workEnd)', 'Redrawing because the view has done work');
 		self.draw(self.root);
 	}, { who: self });
 };

@@ -8,6 +8,7 @@ import {
 	convert,
 	debug,
 	deepCopy,
+	deepDefaults,
 	getParamsFromUrl,
 	getProp,
 	log,
@@ -15,6 +16,8 @@ import {
 	makeSubclass,
 	mixinDebugging,
 	mixinEventHandling,
+	mixinLogging,
+	mixinNameSetting,
 	stringValueType,
 } from './util/misc.js';
 
@@ -499,6 +502,9 @@ FileSource.prototype.getTypeInfo = function (cont) {
  *
  * @param {object} opts
  *
+ * @param {string} [opts.name]
+ * Name of this instance used for logging messages; if omitted, one will be generated automatically.
+ *
  * @param {boolean} [opts.deferDecoding=false] If true, defer conversion of numeric and date types
  * (using Numeral and Moment) until required (when displayed or upon sort).
  *
@@ -506,7 +512,6 @@ FileSource.prototype.getTypeInfo = function (cont) {
  * current page's URL.  These are overridden by any other parameters.
  *
  * @class
- * @property {string} name
  * @property {function} error
  * @property {string} type
  * @property {object} cache
@@ -514,23 +519,38 @@ FileSource.prototype.getTypeInfo = function (cont) {
  * @property {object} locks
  * @property {Array<function>} subscribers
  * @property {boolean} guessColumnTypes
+ *
+ * @property {string} discriminatorField
+ * Name of the field used as a discriminator that tells us whether or not we've seen a given row
+ * before or not.  Only one discriminator field is allowed.
+ *
+ * Example: `close_date` to ensure that we only capture new data based on the `close_date` of the
+ * row.
+ *
+ * @property {Array.<Array.<any>>} discriminatorRanges
+ * A list of [min, max] pairs indicating that we've already seen rows with the discriminator field
+ * set to a value between the min and max.
+ *
+ * Example: `[['2020-01-01 00:00:00', '2020-03-31 23:59:59']]`, to indicate that we've already seen
+ * data from Q1 2020.
  */
 
 var Source = makeSubclass('Source', Object, function (spec, params, userTypeInfo, opts) {
 	var self = this;
 
-	self.name = spec.name; // The name of the data source, by which it can be addressed later.
+	opts = deepDefaults(opts, {
+		deferDecoding: true,
+		passThroughParams: false
+	});
+
+	self.setName(opts.name);
+
 	self.error = spec.error; // Error reporting function.
 	self.type = spec.type; // Where we're getting the data from.
 	self.cache = {};
 	self.params = params;
 	self.locks = {};
-	self.opts = opts || {};
-
-	_.defaults(self.opts, {
-		deferDecoding: true,
-		passThroughParams: false
-	});
+	self.opts = opts;
 
 	self.eventHandlers = {};
 	_.each(_.keys(Source.events), function (evt) {
@@ -604,6 +624,8 @@ mixinEventHandling(Source, [
 ]);
 
 mixinDebugging(Source);
+mixinLogging(Source);
+mixinNameSetting(Source);
 
 // Event JSDoc {{{2
 
@@ -940,11 +962,57 @@ Source.prototype.postProcess = function (data, cont) {
 			_.each(row, function (val, field) {
 				var fti = typeInfo.get(field);
 
-				if (fti != null && !fti.deferDecoding) {
+				// We also must convert now if this column is used as the discriminator.  Mostly this is
+				// because using a date discriminator is much easier if we already have it parsed in Moment.
+
+				if (fti != null && (!fti.deferDecoding || field === self.discriminatorField)) {
 					convert(row[field], fti);
 				}
+
 			});
 		});
+
+		// Step #4 - Find the new min/max for discriminator ranges, if that's something we're doing.
+
+		if (self.discriminatorField != null) {
+			var dfti = typeInfo.get(self.discriminatorField);
+			var cmp = getComparisonFn.byType(dfti);
+
+			var newMin = null;
+			var newMax = null;
+
+			self.debug('POST-PROCESSING', 'Checking discriminator ranges for "%s" field (type = %s)', self.discriminatorField, dfti.type);
+
+			_.each(data, function (row, rowNum) {
+				var val = row[self.discriminatorField].value;
+				var inRange = false;
+				for (var i = 0; i < self.discriminatorRanges.length && !inRange; i += 1) {
+					var range = self.discriminatorRanges[i];
+					if (cmp(range[0], val) <= 0 && cmp(val, range[1]) <= 0) {
+						inRange = true;
+					}
+				}
+				if (inRange) {
+					// This row is already within a discriminator range, so mark it to be removed.
+					data[rowNum] = null;
+				}
+				else {
+					// Update min/max for the new discriminator range.
+
+					if (newMin == null || cmp(val, newMin) < 0) {
+						newMin = val;
+					}
+					if (newMax == null || cmp(newMax, val) > 0) {
+						newMax = val;
+					}
+				}
+			});
+
+			self.addDiscriminatorRange([newMin, newMax]);
+
+			// Get rid of the rows we marked earlier as being within an existing range.
+			data = _.without(data, null);
+		}
 
 		self.debug('POST-PROCESSING', 'Post-processing finished');
 
@@ -1257,6 +1325,67 @@ Source.prototype.setToolbar = function (toolbar) {
 
 	if (typeof self.origin.setToolbar === 'function') {
 		self.origin.setToolbar(toolbar);
+	}
+};
+
+// #setDiscriminatorField {{{2
+
+Source.prototype.setDiscriminatorField = function (field) {
+	this.discriminatorField = field;
+};
+
+// #setDiscriminatorRanges {{{2
+
+Source.prototype.setDiscriminatorRanges = function (ranges) {
+	this.discriminatorRanges = ranges;
+};
+
+// #addDiscriminatorRange {{{2
+
+Source.prototype.addDiscriminatorRange = function (range) {
+	this.discriminatorRanges.push(range);
+};
+
+// #clearDiscriminatorRanges {{{2
+
+Source.prototype.clearDiscriminatorRanges = function () {
+	this.discriminatorRanges = [];
+};
+
+// #condenseDiscriminatorRanges {{{2
+
+/**
+ * Eliminate gaps within individual discriminator ranges.  Think of this like "garbage collection"
+ * for the discriminator ranges.  You could have a Source that updates every hour to get new stuff,
+ * which would slowly build up a bunch of hour-long ranges.  We need a way to keep that list from
+ * growing indefinitely, and that's what this does by collapsing all the ranges into a single range
+ * corresponding to the overall min/max of all ranges.
+ */
+
+Source.prototype.condenseDiscriminatorRanges = function () {
+	var self = this;
+
+	if (self.discriminatorRanges.length === 0) {
+		return;
+	}
+
+	var newMin = null;
+	var newMax = null;
+
+	_.each(self.discriminatorRanges, function (range) {
+		if (newMin == null || cmp(range[0], newMin) < 0) {
+			newMin = range[0];
+		}
+		if (newMax == null || cmp(newMax, range[1]) > 0) {
+			newMax = range[1];
+		}
+	});
+
+	if (newMin == null || newMax == null) {
+		self.clearDiscriminatorRanges();
+	}
+	else {
+		self.setDiscriminatorRanges([[newMin, newMax]]);
 	}
 };
 

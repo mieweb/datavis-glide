@@ -1,6 +1,7 @@
 import jQuery from 'jquery';
 
 import {
+	isVisible,
 	makeSubclass,
 } from '../util/misc.js';
 
@@ -40,6 +41,13 @@ ToolbarSection.prototype.show = function () {
 ToolbarSection.prototype.hide = function () {
 	var self = this;
 	self.ui.root.hide();
+};
+
+// #isVisible {{{2
+
+ToolbarSection.prototype.isVisible = function () {
+	var self = this;
+	return isVisible(self.ui.root);
 };
 
 // #update {{{2

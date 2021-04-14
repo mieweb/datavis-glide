@@ -18,7 +18,7 @@ import {
 
 import './util/jquery.js';
 import {AGGREGATE_REGISTRY} from './aggregates.js';
-import {View} from './view.js';
+import {ComputedView} from './computed_view.js';
 import {GROUP_FUNCTION_REGISTRY} from './group_fun.js';
 import {Grid} from './grid.js';
 import {GridFilterSet} from './grid_filter.js';
@@ -596,7 +596,7 @@ AggregateControlField.prototype.getInfo = function () {
  *
  * @param {Grid} grid
  * @param {OrdMap.<Grid~ColConfig>} colConfig
- * @param {View} view
+ * @param {ComputedView} view
  * @param {object} features
  * @param {Timing} timing
  *
@@ -614,7 +614,7 @@ AggregateControlField.prototype.getInfo = function () {
  *   Use `self.fields` to set whatever properties are needed on the view.
  *
  * @property {Grid} grid
- * @property {View} view
+ * @property {ComputedView} view
  * @property {object} features
  * @property {Timing} timing
  * @property {OrdMap.<Grid~ColConfig>} colConfig
@@ -1122,7 +1122,7 @@ var GroupControl = makeSubclass('GroupControl', GridControl, function () {
 
 	self.super.ctor.apply(self, arguments);
 
-	self.view.on(View.events.invalidGroupField, function (field) {
+	self.view.on(ComputedView.events.invalidGroupField, function (field) {
 		_.each(self.controlFieldsByField[field], function (cf) {
 			cf.showError('This field does not exist in the data.');
 		});
@@ -1194,7 +1194,7 @@ GroupControl.prototype.draw = function (parent) {
 		var fields = (spec && spec.fieldNames) || [];
 		self.clear({ updateView: false });
 		debug.info('GRID // GROUP CONTROL',
-			'View set group fields to: ' + JSON.stringify(fields));
+			'ComputedView set group fields to: ' + JSON.stringify(fields));
 		_.each(fields, function (field) {
 			self.addField(field, getProp(self.colConfig.get(field), 'displayText'), { updateView: false });
 		});
@@ -1295,7 +1295,7 @@ var PivotControl = makeSubclass('PivotControl', GridControl, function () {
 
 	self.super.ctor.apply(self, arguments);
 
-	self.view.on(View.events.invalidPivotField, function (field) {
+	self.view.on(ComputedView.events.invalidPivotField, function (field) {
 		_.each(self.controlFieldsByField[field], function (cf) {
 			cf.showError('This field does not exist in the data.');
 		});
@@ -1368,7 +1368,7 @@ PivotControl.prototype.draw = function (parent) {
 		var fields = (spec && spec.fieldNames) || [];
 		self.clear({ updateView: false });
 		debug.info('GRID // PIVOT CONTROL',
-			'View set pivot fields to: ' + JSON.stringify(fields));
+			'ComputedView set pivot fields to: ' + JSON.stringify(fields));
 		_.each(fields, function (field) {
 			self.addField(field, getProp(self.colConfig.get(field), 'displayText'), { updateView: false });
 		});
@@ -1380,7 +1380,7 @@ PivotControl.prototype.draw = function (parent) {
 // #updateView {{{2
 
 /**
- * Set the pivot configuration on the View.  The pivot configuration consists of:
+ * Set the pivot configuration on the ComputedView.  The pivot configuration consists of:
  *
  *   - Fields that are part of the pivot.
  */
@@ -1471,7 +1471,7 @@ var AggregateControl = makeSubclass('AggregateControl', GridControl, function ()
 
 	self.super.ctor.apply(self, arguments);
 
-	self.view.on(View.events.invalidAggregate, function (aggNum, errMsg) {
+	self.view.on(ComputedView.events.invalidAggregate, function (aggNum, errMsg) {
 		self.controlFields[aggNum].showError(errMsg);
 	});
 }, {
@@ -1571,10 +1571,10 @@ AggregateControl.prototype.draw = function (parent) {
 		}
 
 		debug.info('GRID // AGGREGATE CONTROL',
-							 'View set aggregate to: ' + JSON.stringify(spec));
+							 'ComputedView set aggregate to: ' + JSON.stringify(spec));
 	};
 
-	self.view.on(View.events.aggregateSet, function (spec) {
+	self.view.on(ComputedView.events.aggregateSet, function (spec) {
 		syncAgg(spec)
 	}, { who: self });
 	*/
@@ -1584,7 +1584,7 @@ AggregateControl.prototype.draw = function (parent) {
 		self.clear({ updateView: false });
 		if (spec != null) {
 			debug.info('GRID // AGGREGATE CONTROL',
-				'View set aggregate to: ' + JSON.stringify(spec.all));
+				'ComputedView set aggregate to: ' + JSON.stringify(spec.all));
 
 			_.each(spec.all, function (agg) {
 				self.addField(agg.fun, AGGREGATE_REGISTRY.get(agg.fun).prototype.name, { updateView: false }, {
@@ -1740,7 +1740,7 @@ AggregateControl.prototype.toString = function () {
  *
  * @param {object} defn
  *
- * @param {View} view
+ * @param {ComputedView} view
  *
  * @param {Grid~Features} features
  *
@@ -1817,7 +1817,7 @@ FilterControl.prototype.draw = function (parent) {
 
 	self.addViewConfigChangeHandler('filterSet', function () {
 		var spec = self.view.getFilter();
-		debug.info('GRID // FILTER CONTROL', 'View set filter to: %O', spec);
+		debug.info('GRID // FILTER CONTROL', 'ComputedView set filter to: %O', spec);
 		self.clear({ updateView: false });
 		_.each(spec, function (fieldSpec, field) {
 			self.addField(field, getProp(self.colConfig.get(field), 'displayText'), { updateView: false });

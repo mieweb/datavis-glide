@@ -4,14 +4,18 @@ import jQuery from 'jquery';
 import {
 	deepCopy,
 	fontAwesome,
+	log,
 	makeRadioButtons,
 	makeSubclass,
 	makeToggleCheckbox,
+	mixinLogging,
 } from '../../util/misc.js';
 
 import {ToolbarSection} from '../toolbar.js';
-import {PrefsBackendTemporary} from '../../prefs.js';
+import {PrefsBackendTemporary} from '../../prefs_backend.js';
 import {GridTableOptsWin} from '../windows/grid_table_opts.js';
+import {ComputedView} from '../../computed_view.js';
+import {MirageView} from '../../mirage_view.js';
 
 // PlainToolbar {{{1
 
@@ -358,7 +362,7 @@ var PrefsToolbar = makeSubclass('PrefsToolbar', ToolbarSection, function (grid) 
 	var options = {};
 
 	var showHideBtns = function () {
-		var p = grid.prefs.getPerspective(dropdown.val());
+		var p = grid.prefs.getPerspective({ id: dropdown.val() });
 
 		if (p == null) {
 			throw new Error('No such perspective: ' + dropdown.val());
@@ -483,6 +487,8 @@ var PrefsToolbar = makeSubclass('PrefsToolbar', ToolbarSection, function (grid) 
 		warnMsg.show();
 	}
 
+	// Save As {{{2
+
 	var saveAsBtnTooltipContent = jQuery('<div>')
 		.append(fontAwesome('fa-info-circle').css('padding-right', '0.25em').addClass('wcdv_text-primary'))
 		.append('This pre-defined perspective cannot be saved with this name.  Click to save with a new name.  After that, any changes will be saved under the new name.');
@@ -498,14 +504,12 @@ var PrefsToolbar = makeSubclass('PrefsToolbar', ToolbarSection, function (grid) 
 			content: saveAsBtnTooltipContent
 		})
 		.on('click', function () {
-			var name = prompt('Enter new perspective name', grid.prefs.currentPerspective.name);
-			if (name != null) {
-				grid.prefs.addPerspective(name);
-				grid.prefs.save();
-			}
+			grid.prefs.clonePerspective();
 		})
 		.appendTo(div)
 	;
+
+	// Save {{{2
 
 	var saveBtnTooltipContent = jQuery('<div>')
 		.append(fontAwesome('fa-info-circle').css('padding-right', '0.25em').addClass('wcdv_text-primary'))
@@ -528,6 +532,8 @@ var PrefsToolbar = makeSubclass('PrefsToolbar', ToolbarSection, function (grid) 
 		.appendTo(div)
 	;
 
+	// Rename {{{2
+
 	// Clicking this button will show a prompt to rename the currently selected perspective.  If you
 	// cancel the prompt, nothing will happen.  This button is only shown when the currently selected
 	// perspective is not "Main Perspective" as it cannot be renamed.
@@ -541,7 +547,7 @@ var PrefsToolbar = makeSubclass('PrefsToolbar', ToolbarSection, function (grid) 
 		.append(fontAwesome('fa-pencil'))
 		.on('click', function () {
 			var id = dropdown.val();
-			var p = grid.prefs.getPerspective(id);
+			var p = grid.prefs.getPerspective({ id: id });
 
 			if (p.opts.isEssential) {
 				alert('Cannot rename essential perspective!');
@@ -555,6 +561,8 @@ var PrefsToolbar = makeSubclass('PrefsToolbar', ToolbarSection, function (grid) 
 		})
 		.appendTo(div)
 	;
+
+	// Delete {{{2
 
 	// Clicking this button will delete the currently selected perspective and switch back to "Main
 	// Perspective".  It is only shown when the currently selected perspective is not "Main
@@ -571,6 +579,8 @@ var PrefsToolbar = makeSubclass('PrefsToolbar', ToolbarSection, function (grid) 
 		.appendTo(div)
 	;
 
+	// }}}2
+
 	// Get the list of available perspectives from the Prefs instance and put them into the dropdown.
 	// The initial perspective will be selected by default.  This DOES NOT actually load that
 	// perspective, it's just for the UI.
@@ -582,7 +592,7 @@ var PrefsToolbar = makeSubclass('PrefsToolbar', ToolbarSection, function (grid) 
 		grid.prefs.prime(function () {
 			grid.prefs.getPerspectives(function (ids) {
 				_.each(_.sortBy(_.map(ids, function (id) {
-					return grid.prefs.getPerspective(id);
+					return grid.prefs.getPerspective({ id: id });
 				}), 'name'), function (o) {
 					if (options[o.id] == null) {
 						options[o.id] = jQuery('<option>', { 'value': o.id })
@@ -597,7 +607,7 @@ var PrefsToolbar = makeSubclass('PrefsToolbar', ToolbarSection, function (grid) 
 
 			grid.prefs.on('perspectiveAdded', function (id) {
 				if (options[id] == null) {
-					var p = grid.prefs.getPerspective(id);
+					var p = grid.prefs.getPerspective({ id: id });
 					options[id] = jQuery('<option>', { value: id })
 						.text(p.name)
 						.appendTo(dropdown);
@@ -625,11 +635,11 @@ var PrefsToolbar = makeSubclass('PrefsToolbar', ToolbarSection, function (grid) 
 				info: 'Changing perspective name in dropdown'
 			});
 
-			grid.prefs.on('perspectiveChanged', function (id) {
+			grid.prefs.on('perspectiveChanged', function (id, p) {
 				if (options[id] == null) {
 					throw new Error(sprintf.sprintf('Received `perspectiveChanged` event that references unknown perspective: id = "%s"', id));
 				}
-				if (grid.prefs.currentPerspective.isUnsaved) {
+				if (p.isUnsaved) {
 					saveBtn.show();
 				}
 				else {
@@ -637,7 +647,6 @@ var PrefsToolbar = makeSubclass('PrefsToolbar', ToolbarSection, function (grid) 
 				}
 				dropdown.val(id);
 				showHideBtns();
-				grid.redraw();
 			}, {
 				info: 'Changing dropdown to reflect new current perspective'
 			});
@@ -715,6 +724,82 @@ var RendererToolbar = makeSubclass('RendererToolbar', ToolbarSection, function (
 	});
 });
 
+// ComputedViewToolbar {{{1
+
+var ComputedViewToolbar = makeSubclass('ComputedViewToolbar', ToolbarSection, function (grid) {
+	var self = this;
+
+	self.super.ctor.apply(self, []);
+	self.ui.root.addClass('wcdv_toolbar_section');
+
+	self.grid = grid;
+
+	var div = jQuery('<div>')
+		.addClass('wcdv_toolbar_view')
+		.css({'display': 'inline-block'})
+		.appendTo(self.ui.root)
+	;
+
+	// Store {{{2
+
+	// This button creates a MirageView from the current view, and switches my grid's view to the new
+	// MirageView.  If an error occurs, it should abort and leave things the way they are.
+
+	jQuery('<button>', {'type': 'button', 'title': 'Store Displayed Data'})
+		.append(fontAwesome('fa-save'))
+		.append('Store Displayed Data')
+		.on('click', function () {
+			var perspectiveName = prompt('Enter new perspective name', grid.prefs.currentPerspective.name);
+			if (perspectiveName != null) {
+				grid.mirageView.initFromView(grid.view.prefs, grid.view, grid.view.source, function () {
+					// XXX Clone the new perspective, redraw the grid, then switch to the mirage and save it?
+					// Or make the mirage first and lie to it about the perspective name, then clone it?
+					grid.mirageView.setPerspectiveName(perspectiveName);
+					grid.mirageView.save(function () {
+						// FIXME Needs to be a better way of doing this.  Either reuse the existing mirageView
+						// or provide an API to switch the target of a prefs module.
+						// grid.prefs.modules.mirageView.target = grid.mirageView;
+
+						// Cloning the current perspective will cause it to be added and switched to, which
+						// causes the grid to change to the mirage view we just made, and redraw.
+
+						grid.prefs.clonePerspective(null, perspectiveName, function (config) {
+							config.mirageView = deepCopy(config.computedView);
+							config.isLive = false;
+
+							return config;
+						}, function () {
+						}, function (errMsg) {
+							if (errMsg != null) {
+								alert(errMsg);
+							}
+						});
+					}, function (msg) {
+						log.error('Failed to save mirage view: ' + msg);
+					});
+				}, function (msg) {
+					log.error('Failed to initialize mirage view: ' + msg);
+				});
+			}
+		})
+		.appendTo(div)
+	;
+
+	// }}}2
+
+	// Control my own visibility by only showing myself when the view in use by my grid is a
+	// ComputedView.  Other types of views have their own toolbars.
+
+	self.grid.on('renderEnd', function () {
+		if (self.grid.view instanceof ComputedView) {
+			self.show();
+		}
+		else {
+			self.hide();
+		}
+	});
+});
+
 // Exports {{{1
 
 export {
@@ -723,4 +808,5 @@ export {
 	PivotToolbar,
 	PrefsToolbar,
 	RendererToolbar,
+	ComputedViewToolbar,
 };

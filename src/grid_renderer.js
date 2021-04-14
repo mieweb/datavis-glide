@@ -13,7 +13,7 @@ import {
 
 import OrdMap from './util/ordmap.js';
 import Lock from './util/lock.js';
-import {View} from './view.js';
+import {ComputedView} from './computed_view.js';
 
 // GridRenderer {{{1
 
@@ -24,7 +24,7 @@ import {View} from './view.js';
  *
  * @param {object} defn
  *
- * @param {View} view
+ * @param {ComputedView} view
  *
  * @param {object} features
  *

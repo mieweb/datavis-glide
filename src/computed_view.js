@@ -28,11 +28,11 @@ import {
 	isElement,
 	log,
 	logAsync,
-	makeSetters,
 	makeSubclass,
 	mergeSort4,
 	mixinDebugging,
 	mixinEventHandling,
+	mixinNameSetting,
 	objFromArray,
 	pigeonHoleSort,
 	setProp,
@@ -44,37 +44,210 @@ import Lock from './util/lock.js';
 import {Source} from './source.js';
 import {Prefs} from './prefs.js';
 import {AGGREGATE_REGISTRY, AggregateInfo} from './aggregates.js';
+import {View} from './view.js';
 import {GROUP_FUNCTION_REGISTRY} from './group_fun.js';
 
-// View {{{1
+// ComputedView {{{1
 // JSDoc Types {{{2
-// View~Data {{{3
+// ComputedView~Data {{{3
 
 /**
- * @typedef View~Data
+ * @typedef ComputedView~Data
  *
  * @property {boolean} isPlain
+ * If true, then the data has not been grouped.
+ *
  * @property {boolean} isGroup
+ * If true, then the data has been grouped but not pivotted.
+ *
  * @property {boolean} isPivot
- * @property {Array.<View~Data_Row>} data
+ * If true, then the data has been grouped and pivotted.
+ *
+ * @property {(Array.<ComputedView~Data_Row> | Array.<ComputedView~Data_Group> | Array.<ComputedView~Data_Pivot>)} data
+ * Contains the data fully processed with the filter, group, pivot, aggregate, and sort
+ * configuration set in the view.  Depending on the operations performed, this property has
+ * different structures... see the specific type you need below.
+ *
+ * @property {Array.<ComputedView~Data_Row>} dataByRowId
+ * Contains all the row-oriented data from the source accessible by the unique row ID of any given
+ * data row.  Useful for operations on selections even when the output isn't strictly row-based
+ * (e.g. selecting stuff in the grouped tree view).
+ *
+ * @property {Array.<Array.<string>>} rowVals
+ * @property {Array.<Array.<string>>} colVals
+ *
+ * @property {Array.<string>} groupFields
+ * List of fields grouped by.  This is derived from the full `groupSpec` property.
+ *
+ * Alternatively: `self.data.groupSpec.fieldNames.map((fn) => fs.fieldName || fs)`
+ *
+ * @property {Array.<string>} pivotFields
+ * List of fields pivotted by.  This is derived from the full `pivotSpec` property.
+ *
+ * Alternatively: `self.data.pivotSpec.fieldNames.map((fn) => fs.fieldName || fs)`
+ *
+ * @property {ComputedView~GroupSpec} groupSpec
+ * The full spec provided for how to group the data, with erroneous elements (e.g. requests to group
+ * on fields that don't exist in the data) removed.
+ *
+ * @property {ComputedView~PivotSpec} pivotSpec
+ * The full spec provided for how to pivot the data, with erroneous elements (e.g. requests to pivot
+ * on fields that don't exist in the data) removed.
+ *
+ * @property {groupMetadata} groupMetadata
+ * Contains information about how grouping was done, useful for constructing trees of grouped data.
+ *
+ * @property {object} agg
+ *
+ * @property {object} agg.info
+ * Container of metadata about all aggregate functions that have been computed.
+ *
+ * @property {Array.<AggregateInfo>} group
+ * Metadata about aggregate functions which are evaluated over data from the same group.
+ *
+ * @property {Array.<AggregateInfo>} pivot
+ * Metadata about aggregate functions which are evaluated over data from the same pivot.
+ *
+ * @property {Array.<AggregateInfo>} cell
+ * Metadata about aggregate functions which are evaluated over data within the same group & pivot
+ * (the intersection of: rows that fall into the group set, and rows that fall into the pivot set).
+ *
+ * @property {Array.<AggregateInfo>} all
+ * Metadata about aggregate functions which are evaluated over all data.
+ *
+ * @property {object} agg.results
+ *
+ * @property {Array.<Array.<AggRes>>} agg.results.group
+ * Aggregate results computed for data in the same group.  The array indices represent:
+ *
+ *   - the aggregate function number
+ *   - the rowval index
+ *
+ * For example:
+ *
+ *   - grouping by State
+ *   - the rowValIndex of Georgia is 7
+ *   - and the only aggregate function is count
+ *   - there's 4200 rows with State = Georgia
+ *
+ * ```
+ * data.agg.results.group[0][7] = 4200
+ * ```
+ *
+ * @property {Array.<Array.<AggRes>>} agg.results.pivot
+ * Aggregate results computed for data in the same pivot.  The array indices represent:
+ *
+ *   - the aggregate function number
+ *   - the colval index
+ *
+ * For example:
+ *
+ *   - pivotting by Fruit
+ *   - the rowValIndex of Peach is 3
+ *   - and the only aggregate function is count
+ *   - there's 6000 rows with Fruit = Peach
+ *
+ * ```
+ * data.agg.results.pivot[0][3] = 6000
+ * ```
+ *
+ * @property {Array.<Array.<Array.<AggRes>>>} agg.results.cell
+ * Aggregate results computed for data in the same group & pivot (i.e. the intersection of the sets
+ * of row in the group, and the set of rows in the pivot).  The array indices represent:
+ *
+ *   - the aggregate function number
+ *   - the rowval index
+ *   - the colval index
+ *
+ * For example:
+ *
+ *   - grouping by State
+ *   - the rowValIndex of Georgia is 7
+ *   - pivotting by Fruit
+ *   - the rowValIndex of Peach is 3
+ *   - and the only aggregate function is count
+ *   - there's 3600 rows with State = Georgia and Fruit = Peach
+ *
+ * ```
+ * data.agg.results.cell[0][7][3] = 3600
+ * ```
+ *
+ * @property {Array.<AggRes>} agg.results.all
+ * Aggregate results computed for all data.  The array index represents:
+ *
+ *   - the aggregate function number
+ *
+ * For example:
+ *
+ *   - there's two aggregate functions for count & sum(Cost)
+ *   - there are 10000 rows total
+ *   - the total cost is $18,000
+ *
+ * ```
+ * data.agg.results.all[0] = 10000
+ * data.agg.results.all[1] = 18000
+ * ```
  */
 
-// View~Data_Row {{{3
+/**
+ * @typedef {jQuery|Element|any} AggRes
+ * An aggregate result.  A `jQuery` or `Element` instance will be inserted directly, any other data
+ * type (probably a string or number) will be formatted appropriately.
+ */
+
+// ComputedView~Data_Row {{{3
 
 /**
- * @typedef View~Data_Row
+ * @typedef ComputedView~Data_Row
  *
  * @property {number} rowNum A unique row number, which is used to track rows when they are moved
  * within the GridTable instance, e.g. by reordering the rows manually, or by sorting.
  *
- * @property {Object.<string, View~Data_Field>} rowData Contains the data for the row; keys are
+ * @property {Object.<string, ComputedView~Data_Cell>} rowData Contains the data for the row; keys are
  * field names, and values are objects representing the value of that field within the row.
  */
 
-// View~Data_Field {{{3
+// ComputedView~Data_Group {{{3
 
 /**
- * @typedef View~Data_Field
+ * @typedef {Array.<ComputedView~Data_Row>} ComputedView~Data_Group
+ *
+ * Contains the rows that belong to a particular group.  Indexed by the so-called `rowValIndex`
+ * which corresponds to an elements of `data.rowVals` (see {@link ComputedView~Data}).
+ *
+ * @example
+ * view.getData((data) => {
+ *   let rvi = 42;
+ *   let rv = data.rowVals[rvi];
+ *   let rvd = data.data[rvi];
+ *   console.log(`Group #${rvi} = ${JSON.stringify(rv)}, containing rows: %O`, rvd);
+ * });
+ */
+
+// ComputedView~Data_Pivot {{{3
+
+/**
+ * @typedef {Array.<Array.<ComputedView~Data_Row>>} ComputedView~Data_Pivot
+ *
+ * Contains the rows that belong to the particular group/pivot combination.  Indexed first by the
+ * so-called `rowValIndex` and then by the `colValIndex` (which correspond to elements of
+ * `data.rowVals` and `data.colVals`, respectively — see {@link ComputedView~Data}).
+ *
+ * @example
+ * view.getData((data) => {
+ *   let rvi = 42;
+ *   let cvi = 3;
+ *   let rv = data.rowVals[rvi];
+ *   let cv = data.colVals[cvi];
+ *   let d = data.data[rvi][cvi];
+ *   console.log(`Group #${rvi}.${cvi} = ${JSON.stringify(rv)} / ${JSON.stringify(cv), containing rows: %O`, d);
+ * });
+ */
+
+// ComputedView~Data_Cell {{{3
+
+/**
+ * @typedef ComputedView~Data_Cell
  *
  * @property {any} orig The original representation of the data as it came from the data source.
  * This is mostly only useful when displaying the value, when no `render` function has been
@@ -84,35 +257,35 @@ import {GROUP_FUNCTION_REGISTRY} from './group_fun.js';
  * and filtering.  This corresponds to the type of the field, e.g. when the field has a type of
  * "date," this property contains a Moment instance.
  *
- * @property {View~Data_Field_Render} [render] If this property exists, it specifies a function
+ * @property {ComputedView~Data_Cell_Render} [render] If this property exists, it specifies a function
  * that is used to turn the internal representation into a printable value that will be placed into
  * the cell when the table is output.
  */
 
-// View~Data_Field_Render {{{3
+// ComputedView~Data_Cell_Render {{{3
 
 /**
  * A function called by the GridTable instance to produce a value that will be placed into a cell in
  * the table output.  An example usage would be to create a link based on the value of the cell.
  *
- * @callback View~Data_Field_Render
+ * @callback ComputedView~Data_Cell_Render
  *
  * @returns {Element|jQuery|string} What should be put into the cell in the table output.
  */
 
-// View~FilterSpec {{{3
+// ComputedView~FilterSpec {{{3
 
 /**
- * @typedef {Object<string,string>|Object<string,View~FilterSpecValue>} View~FilterSpec
+ * @typedef {Object<string,string>|Object<string,ComputedView~FilterSpecValue>} ComputedView~FilterSpec
  * The specification used for filtering within a data view.  The keys are column names, and the
  * values are either strings (implying an equality relationship) or objects indicating a more
  * complex relationship.
  */
 
-// View~FilterSpecValue {{{3
+// ComputedView~FilterSpecValue {{{3
 
 /**
- * @typedef {Object<string,any>} View~FilterSpecValue
+ * @typedef {Object<string,any>} ComputedView~FilterSpecValue
  * A value within the filter spec object.  In order for a row to "pass" the filter, all of the
  * conditions supplied must be true.  At least one of the following must be provided.
  *
@@ -126,13 +299,13 @@ import {GROUP_FUNCTION_REGISTRY} from './group_fun.js';
  * @property {Array.<string|number>} [$nin] Allow things that are not elements of the set value.
  */
 
-// View~GroupSpec {{{3
+// ComputedView~GroupSpec {{{3
 
 /**
- * @typedef {object} View~GroupSpec
+ * @typedef {object} ComputedView~GroupSpec
  * Specifies how to group the data.
  *
- * @property {Array.<View~GroupSpecElt|string>} fieldNames
+ * @property {Array.<ComputedView~GroupSpecElt|string>} fieldNames
  * List of the fields to group by.  When an element is a string, that's the same as being an object
  * with only the `field` property, i.e. `['foo'] = [{field: 'foo'}]`.
  *
@@ -140,10 +313,10 @@ import {GROUP_FUNCTION_REGISTRY} from './group_fun.js';
  * Additional rowvals to add, even if they don't exist in the data naturally.
  */
 
-// View~GroupSpecElt {{{3
+// ComputedView~GroupSpecElt {{{3
 
 /**
- * @typedef {object} View~GroupSpecElt
+ * @typedef {object} ComputedView~GroupSpecElt
  *
  * @property {string} field
  * Name of the field to use for grouping.
@@ -153,10 +326,10 @@ import {GROUP_FUNCTION_REGISTRY} from './group_fun.js';
  * by this field.
  */
 
-// View~PivotSpec {{{3
+// ComputedView~PivotSpec {{{3
 
 /**
- * @typedef {object} View~PivotSpec
+ * @typedef {object} ComputedView~PivotSpec
  * An object telling how to pivot the data.
  *
  * @property {Array.<object|string>} fieldNames
@@ -174,33 +347,33 @@ import {GROUP_FUNCTION_REGISTRY} from './group_fun.js';
  * Additional colvals to add, even if they don't exist in the data naturally.
  */
 
-// View~AggregateSpec {{{3
+// ComputedView~AggregateSpec {{{3
 
 /**
- * @typedef {object} View~AggregateSpec
+ * @typedef {object} ComputedView~AggregateSpec
  * An object telling what aggregate functions to calculate on the data.
  *
- * @property {Array.<View~AggregateTypeSpec>} cell
+ * @property {Array.<ComputedView~AggregateTypeSpec>} cell
  * Aggregate functions applied over the rows that match a single rowval and colval.  Only calculated
  * for pivot output.
  *
- * @property {Array.<View~AggregateTypeSpec>} group
+ * @property {Array.<ComputedView~AggregateTypeSpec>} group
  * Aggregate functions applied over the rows that match a single rowval.  Calculated for both group
  * summary output and pivot output.
  *
- * @property {Array.<View~AggregateTypeSpec>} pivot
+ * @property {Array.<ComputedView~AggregateTypeSpec>} pivot
  * Aggregate functions applied over the rows that match a single colval.  Only calculated for pivot
  * output.
  *
- * @property {Array.<View~AggregateTypeSpec>} all
+ * @property {Array.<ComputedView~AggregateTypeSpec>} all
  * Aggregate functions applied over all rows.  Calculated for both group summary output and pivot
  * output.
  */
 
-// View~AggregateTypeSpec {{{3
+// ComputedView~AggregateTypeSpec {{{3
 
 /**
- * @typedef {object} View~AggregateTypeSpec
+ * @typedef {object} ComputedView~AggregateTypeSpec
  * An object specifying a single aggregate function.
  *
  * @property {string} fun
@@ -225,31 +398,31 @@ import {GROUP_FUNCTION_REGISTRY} from './group_fun.js';
  * If true, then this aggregate should be used for graphing.
  */
 
-// View~SortSpec {{{3
+// ComputedView~SortSpec {{{3
 
 /**
- * @typedef {object} View~SortSpec
+ * @typedef {object} ComputedView~SortSpec
  *
- * @property {View~SortSpecVert} vertical
- * @property {View~SortSpecHoriz} horizontal
+ * @property {ComputedView~SortSpecVert} vertical
+ * @property {ComputedView~SortSpecHoriz} horizontal
  */
 
 /**
- * @typedef {View~SortSpecVertPlain|View~SortSpecVertGroup|View~SortSpecVertPivot} View~SortSpecVert
+ * @typedef {ComputedView~SortSpecVertPlain|ComputedView~SortSpecVertGroup|ComputedView~SortSpecVertPivot} ComputedView~SortSpecVert
  *
  * @property {string} dir
  * Which direction to sort, either "ASC" or "DESC".
  */
 
 /**
- * @typedef {object} View~SortSpecVertPlain
+ * @typedef {object} ComputedView~SortSpecVertPlain
  *
  * @property {string} field
  * @property {Array.<string>} [values]
  */
 
 /**
- * @typedef {object} View~SortSpecVertGroup
+ * @typedef {object} ComputedView~SortSpecVertGroup
  *
  * @property {string} [field]
  * @property {number} [groupFieldIndex]
@@ -259,7 +432,7 @@ import {GROUP_FUNCTION_REGISTRY} from './group_fun.js';
  */
 
 /**
- * @typedef {object} View~SortSpecVertPivot
+ * @typedef {object} ComputedView~SortSpecVertPivot
  *
  * @property {string} [field]
  * @property {string} [groupFieldIndex]
@@ -282,14 +455,14 @@ import {GROUP_FUNCTION_REGISTRY} from './group_fun.js';
  */
 
 /**
- * @typedef {View~SortSpecHorizPivot} View~SortSpecHoriz
+ * @typedef {ComputedView~SortSpecHorizPivot} ComputedView~SortSpecHoriz
  *
  * @property {string} dir
  * Which direction to sort, either "ASC" or "DESC".
  */
 
 /**
- * @typedef {object} View~SortSpecHorizPivot
+ * @typedef {object} ComputedView~SortSpecHorizPivot
  *
  * @property {string} [field]
  * @property {string} [pivotFieldIndex]
@@ -311,10 +484,10 @@ import {GROUP_FUNCTION_REGISTRY} from './group_fun.js';
  *   - Using `{aggType: 'pivot'}`.
  */
 
-// View~OperationsPerformed {{{3
+// ComputedView~OperationsPerformed {{{3
 
 /**
- * @typedef {object} View~OperationsPerformed
+ * @typedef {object} ComputedView~OperationsPerformed
  *
  * @property {boolean} filter
  * True if the data was filtered.
@@ -336,26 +509,34 @@ import {GROUP_FUNCTION_REGISTRY} from './group_fun.js';
  * is the same, the way its represented to the user (filtered, sorted, grouped, or pivotted)
  * changes.
  *
+ * @param {Source} source
+ *
+ * @param {object} [opts]
+ * Additional options.
+ *
+ * @param {string} [opts.name]
+ * Name of this instance used for logging messages; if omitted, one will be generated automatically.
+ *
  * @class
  *
  * @property {Source} source
  *
- * @property {View~FilterSpec} filterSpec
+ * @property {ComputedView~FilterSpec} filterSpec
  *
- * @property {View~SortSpec} sortSpec
+ * @property {ComputedView~SortSpec} sortSpec
  *
- * @property {View~GroupSpec} groupSpec
+ * @property {ComputedView~GroupSpec} groupSpec
  *
- * @property {View~PivotSpec} pivotSpec
+ * @property {ComputedView~PivotSpec} pivotSpec
  *
  * @property {Timing} timing For keeping track of how long it takes to do things in the view.
  */
 
-var View = makeSubclass('View', Object, function (name, source, opts) {
+var ComputedView = makeSubclass('ComputedView', View, function (source, opts) {
 	var self = this;
 
-	if (!(source instanceof Source) && !(source instanceof View)) {
-		throw new Error('Call Error: `source` must be an instance of MIE.WC_DataVis.Source or MIE.WC_DataVis.View');
+	if (!(source instanceof Source) && !(source instanceof ComputedView)) {
+		throw new Error('Call Error: `source` must be an instance of MIE.WC_DataVis.Source or MIE.WC_DataVis.ComputedView');
 	}
 
 	opts = deepDefaults(opts, {
@@ -382,14 +563,15 @@ var View = makeSubclass('View', Object, function (name, source, opts) {
 
 	self.echo(self.source, ['fetchDataBegin', 'fetchDataEnd']);
 
-	self.name = name || source.getName() || gensym();
+	self.setName(opts.name);
+
 	self.colConfig = new OrdMap();
 
 	self.timing = new Timing();
 
 	self.lock = new Lock(self.getDebugTag());
 
-	// Set the default configuration for a new View.  Setting explicit defaults is a good practice to
+	// Set the default configuration for a new ComputedView.  Setting explicit defaults is a good practice to
 	// maintain, but it also makes sure that when prefs are loaded later, any `null` values they set
 	// compare correctly to what we already have, and not make it look like something has changed.
 
@@ -404,11 +586,13 @@ var View = makeSubclass('View', Object, function (name, source, opts) {
 	}
 
 	self.isBoundToPrefs = false;
+}, {
+	prefsModule: 'computedView'
 });
 
 // Mixins {{{2
 
-mixinEventHandling(View, [
+mixinEventHandling(ComputedView, [
 	'fetchDataBegin'      // Started fetching data from the source.
 , 'fetchDataEnd'        // Done fetching data from the source.
 , 'getTypeInfo'         // Type information has been retrieved from the source.
@@ -436,101 +620,94 @@ mixinEventHandling(View, [
 , 'invalidAggregate'    // An aggregate function is invalid.
 ]);
 
-delegate(View, 'source', ['getUniqueVals', 'convertAll', 'setToolbar']);
+delegate(ComputedView, 'source', ['getUniqueVals', 'convertAll', 'setToolbar']);
 
-makeSetters(View, [
-	{ name: 'setFilter',    prop: 'filterSpec',    event: 'filterSet'    },
-	{ name: 'setGroup',     prop: 'groupSpec',     event: 'groupSet'     },
-	{ name: 'setPivot',     prop: 'pivotSpec',     event: 'pivotSet'     },
-	{ name: 'setAggregate', prop: 'aggregateSpec', event: 'aggregateSet' },
-	{ name: 'setSort',      prop: 'sortSpec',      event: 'sortSet'      },
-]);
-
-mixinDebugging(View);
-mixinLogging(View);
+mixinDebugging(ComputedView);
+mixinLogging(ComputedView);
+mixinNameSetting(ComputedView);
 
 // Event JSDoc {{{3
 
 /**
  * Fired when the view has started getting data from the source.
  *
- * @event View#fetchDataBegin
+ * @event ComputedView#fetchDataBegin
  */
 
 /**
  * Fired when the view has finished getting data from the source.
  *
- * @event View#fetchDataEnd
+ * @event ComputedView#fetchDataEnd
  */
 
 /**
  * Fired when new type information is available from the source.
  *
- * @event View#getTypeInfo
+ * @event ComputedView#getTypeInfo
  */
 
 /**
  * Fired when new data is available from the source.
  *
- * @event View#dataUpdated
+ * @event ComputedView#dataUpdated
  */
 
 /**
  * Fired when the view has started doing work with data.
  *
- * @event View#workBegin
+ * @event ComputedView#workBegin
  */
 
 /**
  * Fired when the view has finished doing work with data.
  *
- * @event View#workEnd
+ * @event ComputedView#workEnd
  *
- * @param {View~OperationsPerformed} ops
+ * @param {ComputedView~OperationsPerformed} ops
  * An object identifying what operations were performed.
  */
 
 /**
  * Fired when the sort configuration is set in the view.
  *
- * @event View#sortSet
+ * @event ComputedView#sortSet
  */
 
 /**
  * Fired when the filter configuration is set in the view.
  *
- * @event View#filterSet
+ * @event ComputedView#filterSet
  */
 
 /**
  * Fired when the group configuration is set in the view.
  *
- * @event View#groupSet
+ * @event ComputedView#groupSet
  */
 
 /**
  * Fired when the pivot configuration is set in the view.
  *
- * @event View#pivotSet
+ * @event ComputedView#pivotSet
  */
 
 /**
  * Fired when the aggregate configuration is set in the view.
  *
- * @event View#aggregateSet
+ * @event ComputedView#aggregateSet
  */
 
 /**
  * Fired when the view starts a sort operation.
  *
- * @event View#sortBegin
+ * @event ComputedView#sortBegin
  */
 
 /**
  * Fired when the view has determined the final sort position of a record.  One place this is used
  * is by GridTable to update itself without having to completely redraw from scratch after sorting.
  *
- * @event View#sort
+ * @event ComputedView#sort
  *
  * @param {number} rowNum
  * The unique ID of the row.
@@ -542,13 +719,13 @@ mixinLogging(View);
 /**
  * Fired when the view finishes a sort operation.
  *
- * @event View#sortEnd
+ * @event ComputedView#sortEnd
  */
 
 /**
  * Fired when the view starts a filter operation.
  *
- * @event View#filterBegin
+ * @event ComputedView#filterBegin
  */
 
 /**
@@ -556,7 +733,7 @@ mixinLogging(View);
  * used is by GridTable to update itself without having to completely redraw from scratch after
  * filtering.
  *
- * @event View#filter
+ * @event ComputedView#filter
  *
  * @param {number} rowNum
  * The unique ID of the row.
@@ -568,56 +745,56 @@ mixinLogging(View);
 /**
  * Fired when the view finishes a filter operation.
  *
- * @event View#filterEnd
+ * @event ComputedView#filterEnd
  */
 
 /**
  * Fired when attempting to filter by an invalid field.
  *
- * @event View#invalidFilterField
+ * @event ComputedView#invalidFilterField
  */
 
 /**
  * Fired when attempting to group by an invalid field.
  *
- * @event View#invalidGroupField
+ * @event ComputedView#invalidGroupField
  */
 
 /**
  * Fired when attempting to pivot by an invalid field.
  *
- * @event View#invalidPivotField
+ * @event ComputedView#invalidPivotField
  */
 
 /**
  * Fired when attempting to sort by an invalid field.
  *
- * @event View#invalidSortField
+ * @event ComputedView#invalidSortField
  */
 
 /**
  * Fired when attempting to set an invalid aggregate.
  *
- * @event View#invalidAggregate
+ * @event ComputedView#invalidAggregate
  */
 
 // #toString {{{2
 
-View.prototype.toString = function () {
+ComputedView.prototype.toString = function () {
 	var self = this;
-	return 'View (' + self.name + ')';
+	return 'ComputedView (' + self.name + ')';
 };
 
 // #getDebugTag {{{2
 
-View.prototype.getDebugTag = function () {
+ComputedView.prototype.getDebugTag = function () {
 	var self = this;
 	return 'VIEW {name="' + self.name + '"}';
 };
 
 // #_maybeDecode {{{2
 
-View.prototype._maybeDecode = function (tag, fti) {
+ComputedView.prototype._maybeDecode = function (tag, fti) {
 	var self = this;
 
 	if (fti.needsDecoding) {
@@ -631,25 +808,6 @@ View.prototype._maybeDecode = function (tag, fti) {
 	fti.needsDecoding = false;
 };
 
-// **** DEPRECATED **** #init {{{2
-
-// View.prototype.init = function (cont) {
-// 	var self = this;
-//
-// 	if (typeof cont !== 'function') {
-// 		throw new Error('Call Error: `cont` must be a function');
-// 	}
-//
-// 	return self.prefs.prime(function () {
-// 		if (!self.isBoundToPrefs) {
-// 			self.prefs.bind('view', self);
-// 			self.isBoundToPrefs = true;
-// 		}
-//
-// 		return cont();
-// 	});
-// };
-
 // #addClient {{{2
 
 /**
@@ -657,7 +815,7 @@ View.prototype._maybeDecode = function (tag, fti) {
  * can tell if a graph is watching this view or not.
  */
 
-View.prototype.addClient = function (client, kind) {
+ComputedView.prototype.addClient = function (client, kind) {
 	var self = this;
 
 	self.clients = self.clients || {};
@@ -671,7 +829,7 @@ View.prototype.addClient = function (client, kind) {
  * Check to see if we have a client of the specified kind.
  */
 
-View.prototype.hasClientKind = function (kind) {
+ComputedView.prototype.hasClientKind = function (kind) {
 	var self = this;
 
 	return getPropDef(0, self.clients, kind, 'length') > 0;
@@ -685,7 +843,7 @@ View.prototype.hasClientKind = function (kind) {
  * @return {number} The number of rows shown in the table output.
  */
 
-View.prototype.getRowCount = function () {
+ComputedView.prototype.getRowCount = function () {
 	var self = this;
 
 	if (self.data.isPlain) {
@@ -717,7 +875,7 @@ View.prototype.getRowCount = function () {
  * being sorted (e.g. because they have been filtered out).
  */
 
-View.prototype.getTotalRowCount = function () {
+ComputedView.prototype.getTotalRowCount = function () {
 	return this.source.cache.data.length;
 };
 
@@ -726,11 +884,11 @@ View.prototype.getTotalRowCount = function () {
 /**
  * Set the sorting spec for the view.
  *
- * @param {View~SortSpec} spec
+ * @param {ComputedView~SortSpec} spec
  * @param {object} [opts]
  */
 
-View.prototype._setSort = function (spec, opts) {
+ComputedView.prototype.setSort = function (spec, opts) {
 	var self = this
 		, args = Array.prototype.slice.call(arguments)
 		, isDifferent = false;
@@ -752,13 +910,7 @@ View.prototype._setSort = function (spec, opts) {
 
 	isDifferent = !_.isEqual(self.sortSpec, spec);
 
-	self.sortSpec = spec;
-
-	if (opts.sendEvent) {
-		self.fire('sortSet', {
-			notTo: opts.dontSendEventTo
-		}, spec);
-	}
+	self.super.setSort(spec, opts);
 
 	if (isDifferent && self.prefs != null && opts.savePrefs) {
 		self.prefs.save();
@@ -775,7 +927,7 @@ View.prototype._setSort = function (spec, opts) {
 
 // #getSort {{{2
 
-View.prototype.getSort = function () {
+ComputedView.prototype.getSort = function () {
 	var self = this;
 
 	return self.sortSpec;
@@ -787,7 +939,7 @@ View.prototype.getSort = function () {
  * Clear the sort spec for the view.
  */
 
-View.prototype.clearSort = function (opts) {
+ComputedView.prototype.clearSort = function (opts) {
 	return this.setSort(null, opts);
 };
 
@@ -800,7 +952,7 @@ View.prototype.clearSort = function (opts) {
  * @param {function} cont Continuation function to which the sorted data is passed.
  */
 
-View.prototype.sort = function (cont) {
+ComputedView.prototype.sort = function (cont) {
 	var self = this
 		, timingEvt = ['Data Source "' + self.source.name + '" : ' + self.name, 'Sorting']
 		, conv = I
@@ -1554,9 +1706,9 @@ View.prototype.sort = function (cont) {
  *   - $in, $nin
  *
  * @method
- * @memberof View
+ * @memberof ComputedView
  *
- * @param {View~FilterSpec} spec How to perform filtering.
+ * @param {ComputedView~FilterSpec} spec How to perform filtering.
  *
  * @param {object} progress
  *
@@ -1572,7 +1724,7 @@ View.prototype.sort = function (cont) {
  * If true, automatically update data to match new filter.
  */
 
-View.prototype._setFilter = function (spec, progress, opts) {
+ComputedView.prototype.setFilter = function (spec, progress, opts) {
 	var self = this
 		, args = Array.prototype.slice.call(arguments)
 		, isDifferent = false;
@@ -1620,11 +1772,7 @@ View.prototype._setFilter = function (spec, progress, opts) {
 	self.filterSpec = spec;
 	self.filterProgress = progress;
 
-	if (opts.sendEvent) {
-		self.fire('filterSet', {
-			notTo: opts.dontSendEventTo
-		}, spec);
-	}
+	self.super.setFilter(spec, opts);
 
 	if (isDifferent && self.prefs != null && opts.savePrefs) {
 		self.prefs.save();
@@ -1641,7 +1789,7 @@ View.prototype._setFilter = function (spec, progress, opts) {
 
 // #getFilter {{{2
 
-View.prototype.getFilter = function () {
+ComputedView.prototype.getFilter = function () {
 	var self = this;
 
 	return self.filterSpec;
@@ -1664,7 +1812,7 @@ View.prototype.getFilter = function () {
  * If true, automatically update data to match new filter.
  */
 
-View.prototype.clearFilter = function (opts) {
+ComputedView.prototype.clearFilter = function (opts) {
 	this.setFilter(null, null, opts);
 };
 
@@ -1676,7 +1824,7 @@ View.prototype.clearFilter = function (opts) {
  * @returns {boolean} True if the view has been filtered.
  */
 
-View.prototype.isFiltered = function () {
+ComputedView.prototype.isFiltered = function () {
 	return this.filterSpec != null;
 };
 
@@ -1688,7 +1836,7 @@ View.prototype.isFiltered = function () {
  * @param {function} cont Continuation function to which the filtered data is passed.
  */
 
-View.prototype.filter = function (cont) {
+ComputedView.prototype.filter = function (cont) {
 	var self = this
 		, timingEvt = ['Data Source "' + self.source.name + '" : ' + self.name, 'Filtering'];
 
@@ -1911,7 +2059,7 @@ View.prototype.filter = function (cont) {
 				self.filterProgress.update(i, self.data.data.length);
 			}
 
-			logAsync('View#filter');
+			logAsync('ComputedView#filter');
 			return window.setTimeout(doFilter);
 		}
 		else {
@@ -1952,7 +2100,7 @@ View.prototype.filter = function (cont) {
 /**
  * Set the specification for how the data will be grouped.
  *
- * @param {View~GroupSpec} spec
+ * @param {ComputedView~GroupSpec} spec
  * The grouping configuration.
  *
  * @param {object} [opts]
@@ -1967,7 +2115,7 @@ View.prototype.filter = function (cont) {
  * If true, automatically update data to match new grouping.
  */
 
-View.prototype._setGroup = function (spec, opts, cont) {
+ComputedView.prototype.setGroup = function (spec, opts, cont) {
 	var self = this
 		, args = Array.prototype.slice.call(arguments)
 		, isDifferent = false;
@@ -2037,13 +2185,7 @@ View.prototype._setGroup = function (spec, opts, cont) {
 
 	isDifferent = !_.isEqual(self.groupSpec, spec);
 
-	self.groupSpec = spec;
-
-	if (opts.sendEvent) {
-		self.fire('groupSet', {
-			notTo: opts.dontSendEventTo
-		}, spec);
-	}
+	self.super.setGroup(spec, opts);
 
 	if (isDifferent && self.prefs != null && opts.savePrefs) {
 		self.prefs.save();
@@ -2065,11 +2207,11 @@ View.prototype._setGroup = function (spec, opts, cont) {
 /**
  * Get the grouping configuration.
  *
- * @returns {View~GroupSpec}
+ * @returns {ComputedView~GroupSpec}
  * The grouping config currently being used by this view.
  */
 
-View.prototype.getGroup = function () {
+ComputedView.prototype.getGroup = function () {
 	var self = this;
 
 	return self.groupSpec;
@@ -2092,7 +2234,7 @@ View.prototype.getGroup = function () {
  * If true, automatically update data to match new grouping.
  */
 
-View.prototype.clearGroup = function (opts) {
+ComputedView.prototype.clearGroup = function (opts) {
 	return this.setGroup(null, opts);
 };
 
@@ -2169,7 +2311,7 @@ View.prototype.clearGroup = function (opts) {
  * @property {string} groupField
  * Name of the field that we're grouping by at this level.
  *
- * @property {View~GroupSpecElt} groupSpec
+ * @property {ComputedView~GroupSpecElt} groupSpec
  * The full group spec for the grouping done at this level.
  */
 
@@ -2178,7 +2320,7 @@ View.prototype.clearGroup = function (opts) {
  * no return value.
  */
 
-View.prototype.group = function () {
+ComputedView.prototype.group = function () {
 	var self = this
 		, finalGroupSpec = []
 		, newData
@@ -2398,6 +2540,8 @@ View.prototype.group = function () {
 			// rows (because it's not a rowVal leaf).  This case is handled by setting numRows = 0 above.
 
 			if (node.children == null) {
+				// We're not in the middle of the metadata tree, this is a leaf node.
+
 				if (node.rows != null) {
 					node.numRows = node.rows.length;
 				}
@@ -2405,18 +2549,37 @@ View.prototype.group = function () {
 			else {
 				node.numChildren = _.keys(node.children).length;
 				node.rows = [];
+
+				// Update the parent node in each child, continue the post-order traversal in each, and then
+				// after the metadata is fully constructed in each child, build this node's metadata.
+
 				_.each(node.children, function (child) {
 					child.parent = node;
 					postorder(child, depth + 1);
 					node.numRows += child.numRows;
 					node.rows = node.rows.concat(child.rows);
 				});
+
+				// Depth 0 is for the root, it doesn't actually represent any data (i.e. it's not part of a
+				// rowval), it's just a structural container of everything else.
+
 				if (depth > 0) {
 					// FIXME Assumes that node.children.length > 0.
+
+					// Copy the `rowValIndex` from the first child.  I actually can't remember why we do it
+					// this way, because this node within the tree has children from multiple rowVals.
+
 					node.rowValIndex = node.children[_.keys(node.children)[0]].rowValIndex;
+
+					// We only have to set `rowValElt` here in non-leaves because it's already been set in the
+					// leaves when we created them.  We're just filling in the upper levels of the tree now.
+
 					node.rowValElt = rowVals[node.rowValIndex][depth - 1];
 				}
 			}
+
+			// Depth 0 is for the root, it doesn't actually represent any data (i.e. it's not part of a
+			// rowval), it's just a structural container of everything else.
 
 			if (depth > 0) {
 				node.groupFieldIndex = depth - 1;
@@ -2484,7 +2647,7 @@ View.prototype.group = function () {
 /**
  * Set the pivot configuration.
  *
- * @param {View~PivotSpec} spec
+ * @param {ComputedView~PivotSpec} spec
  * The pivot configuration.
  *
  * @param {object} [opts]
@@ -2499,7 +2662,7 @@ View.prototype.group = function () {
  * If true, automatically update data to match new pivot config.
  */
 
-View.prototype._setPivot = function (spec, opts) {
+ComputedView.prototype.setPivot = function (spec, opts) {
 	var self = this
 		, args = Array.prototype.slice.call(arguments)
 		, isDifferent = false;
@@ -2570,13 +2733,7 @@ View.prototype._setPivot = function (spec, opts) {
 
 	isDifferent = !_.isEqual(self.pivotSpec, spec);
 
-	self.pivotSpec = spec;
-
-	if (opts.sendEvent) {
-		self.fire('pivotSet', {
-			notTo: opts.dontSendEventTo
-		}, spec);
-	}
+	self.super.setPivot(spec, opts);
 
 	if (isDifferent && self.prefs != null && opts.savePrefs) {
 		self.prefs.save();
@@ -2598,11 +2755,11 @@ View.prototype._setPivot = function (spec, opts) {
 /**
  * Get the pivot configuration.
  *
- * @returns {View~PivotSpec}
+ * @returns {ComputedView~PivotSpec}
  * The pivot config currently being used by this view.
  */
 
-View.prototype.getPivot = function () {
+ComputedView.prototype.getPivot = function () {
 	var self = this;
 
 	return self.pivotSpec;
@@ -2625,13 +2782,13 @@ View.prototype.getPivot = function () {
  * If true, automatically update data to match new pivot config.
  */
 
-View.prototype.clearPivot = function (opts) {
+ComputedView.prototype.clearPivot = function (opts) {
 	return this.setPivot(null, opts);
 };
 
 // #pivot_orig {{{2
 
-View.prototype.pivot_orig = function () {
+ComputedView.prototype.pivot_orig = function () {
 	var self = this
 		, pivotFields = [] // Array of field names to pivot by.
 		, colValsTree // Tree of all possible column value combinations.
@@ -2774,7 +2931,7 @@ View.prototype.pivot_orig = function () {
 
 // #pivot_new {{{2
 
-View.prototype.pivot = function () {
+ComputedView.prototype.pivot = function () {
 	var self = this
 		, finalPivotSpec = [] // Array of field names to pivot by.
 		, colValsTree // Tree of all possible column value combinations.
@@ -2980,7 +3137,7 @@ View.prototype.pivot = function () {
 /**
  * Set the aggregate configuration.
  *
- * @param {View~AggregateSpecs} spec
+ * @param {ComputedView~AggregateSpecs} spec
  * The aggregate configuration.
  *
  * @param {object} [opts]
@@ -2995,7 +3152,7 @@ View.prototype.pivot = function () {
  * If true, automatically update data to match new pivot config.
  */
 
-View.prototype._setAggregate = function (spec, opts) {
+ComputedView.prototype.setAggregate = function (spec, opts) {
 	var self = this
 		, args = Array.prototype.slice.call(arguments)
 		, isDifferent = false;
@@ -3031,7 +3188,7 @@ View.prototype._setAggregate = function (spec, opts) {
 	isDifferent = !_.isEqual(self.aggregateSpec, spec);
 
 	if (spec == null) {
-		self.aggregateSpec = null;
+		self.super.setAggregate(null, opts);
 	}
 	else {
 		// Make sure we have typeInfo so we can perform the next check.
@@ -3079,13 +3236,7 @@ View.prototype._setAggregate = function (spec, opts) {
 			spec[aggType] = aggSpec;
 		});
 
-		self.aggregateSpec = deepCopy(spec);
-	}
-
-	if (opts.sendEvent) {
-		self.fire('aggregateSet', {
-			notTo: opts.dontSendEventTo
-		}, spec, shouldGraph);
+		self.super.setAggregate(deepCopy(spec), opts);
 	}
 
 	if (isDifferent && self.prefs != null && opts.savePrefs) {
@@ -3105,7 +3256,7 @@ View.prototype._setAggregate = function (spec, opts) {
 
 // #getAggregate {{{2
 
-View.prototype.getAggregate = function () {
+ComputedView.prototype.getAggregate = function () {
 	var self = this;
 
 	return self.aggregateSpec;
@@ -3113,7 +3264,7 @@ View.prototype.getAggregate = function () {
 
 // #clearAggregate {{{2
 
-View.prototype.clearAggregate = function (opts) {
+ComputedView.prototype.clearAggregate = function (opts) {
 	var self = this;
 
 	return self.setAggregate(objFromArray(['group', 'pivot', 'cell', 'all'], [[{fun: 'count'}]]), opts);
@@ -3121,7 +3272,7 @@ View.prototype.clearAggregate = function (opts) {
 
 // #aggregate {{{2
 
-View.prototype.aggregate = function (cont) {
+ComputedView.prototype.aggregate = function (cont) {
 	var self = this;
 
 	if (typeof cont !== 'function') {
@@ -3257,7 +3408,7 @@ View.prototype.aggregate = function (cont) {
 	cont(true);
 };
 
-// #getData (ABSTRACT) {{{2
+// #getData {{{2
 
 /**
  * Retrieves a fresh copy of the data for this view from the data source.
@@ -3268,23 +3419,165 @@ View.prototype.aggregate = function (cont) {
  * Why are you calling this function?  (Used to save debugging information for onUnlock handlers.)
  */
 
-View.prototype.getData = function (cont, reason) {
-	throw new Error('Implementation Error: `getData()` is abstract and must be implemented by a subclass of View');
+ComputedView.prototype.getData = function (cont, reason) {
+	var self = this;
+
+	if (cont != null && typeof cont !== 'function') {
+		throw new Error('Call Error: `cont` must be null or a function');
+	}
+
+	cont = cont || I;
+
+	if (self.lock.isLocked()) {
+		var lockMsg = 'Waiting to get data';
+		if (reason != null) {
+			lockMsg += ': ' + reason;
+		}
+		return self.lock.onUnlock(function () {
+			self.getData(cont);
+		}, lockMsg);
+	}
+	else {
+		var lockMsg = 'Getting data';
+		if (reason != null) {
+			lockMsg += ': ' + reason;
+		}
+		self.debug(lockMsg);
+	}
+
+	if (self.data !== undefined) {
+		self.debug(null, 'Got cached data: %O', self.data);
+		if (typeof cont === 'function') {
+			return cont(true, self.data);
+		}
+	}
+
+	var fail = function () {
+		self.lock.unlock();
+		return cont(false);
+	}
+
+	self.lock.lock();
+
+	return self.source.getData(function (ok, data) {
+		if (!ok) {
+			return fail();
+		}
+
+		return self.getTypeInfo(function (ok, typeInfo) {
+			if (!ok) {
+				return fail();
+			}
+
+			self.fire('workBegin');
+
+			var ops = {
+				filter: false,
+				group: false,
+				pivot: false,
+				sort: false
+			};
+
+			self.data = {
+				isPlain: true,
+				isGroup: false,
+				isPivot: false,
+				data: [],
+				dataByRowId: []
+			};
+
+			_.each(data, function (rowData, rowNum) {
+				self.data.data.push({
+					rowNum: rowNum,
+					rowData: rowData
+				});
+				self.data.dataByRowId[rowNum] = rowData;
+			});
+
+			return self.filter(function (didFilter, filteredData) {
+				ops.filter = didFilter;
+				if (didFilter) {
+					self.data.data = filteredData;
+				}
+				ops.group = self.group();
+				ops.pivot = self.pivot();
+				return self.aggregate(function () {
+					return self.sort(function (didSort) {
+						ops.sort = didSort;
+
+						var workEndObj = {
+							isPlain: self.data.isPlain,
+							isGroup: self.data.isGroup,
+							isPivot: self.data.isPivot
+						};
+
+						workEndObj.numRows = self.getRowCount();
+						if (self.isFiltered()) {
+							workEndObj.totalRows = self.getTotalRowCount();
+						}
+
+						if (self.data.isGroup) {
+							workEndObj.numGroups = self.data.rowVals.length;
+						}
+
+						if (self.data.isPivot) {
+							workEndObj.numGroups = self.data.rowVals.length;
+							workEndObj.numPivots = self.data.colVals.length;
+						}
+
+						// FIXME Why does this need to save prefs?  They should be saved when the configuration
+						// changes, not when we retrieve data.
+						//
+						// if (self.prefs != null) {
+						// 	self.prefs.save();
+						// }
+
+						self.lastOps = ops;
+						self.fire('workEnd', null, workEndObj, ops);
+
+						self.lock.unlock();
+						self.debug(null, 'Got new data: %O', self.data);
+						if (typeof cont === 'function') {
+							return cont(true, self.data);
+						}
+					}); // -- self.sort()
+				}); // -- self.aggregate()
+			}); // -- self.filter()
+		}); // -- self.getTypeInfo()
+	}); // -- self.getData()
 };
 
-// #getTypeInfo (ABSTRACT) {{{2
+// #getTypeInfo {{{2
 
 /**
  *
  */
 
-View.prototype.getTypeInfo = function (cont) {
-	throw new Error('Implementation Error: `getTypeInfo()` is abstract and must be implemented by a subclass of View');
+ComputedView.prototype.getTypeInfo = function (cont) {
+	var self = this;
+
+	if (typeof cont !== 'function') {
+		throw new Error('Call Error: `cont` must be a function');
+	}
+
+	if (self.typeInfo != null) {
+		return cont(true, self.typeInfo);
+	}
+
+	return self.source.getTypeInfo(function (ok, typeInfo) {
+		if (!ok) {
+			return cont(false);
+		}
+
+		self.typeInfo = typeInfo;
+		self.fire('getTypeInfo', null, self.typeInfo, self.colConfig);
+		return cont(true, self.typeInfo);
+	});
 };
 
 // #clearCache {{{2
 
-View.prototype.clearCache = function () {
+ComputedView.prototype.clearCache = function () {
 	var self = this;
 
 	self.data = undefined;
@@ -3295,13 +3588,13 @@ View.prototype.clearCache = function () {
 
 // #clearSourceData {{{2
 
-View.prototype.clearSourceData = function () {
+ComputedView.prototype.clearSourceData = function () {
 	var self = this;
 
 	if (self.source instanceof Source) {
 		self.source.clearCachedData();
 	}
-	else if (self.source instanceof View) {
+	else if (self.source instanceof ComputedView) {
 		self.source.clearSourceData();
 	}
 
@@ -3310,7 +3603,7 @@ View.prototype.clearSourceData = function () {
 
 // #refresh {{{2
 
-View.prototype.refresh = function () {
+ComputedView.prototype.refresh = function () {
 	var self = this;
 
 	self.debug(null, 'Refreshing...');
@@ -3324,7 +3617,7 @@ View.prototype.refresh = function () {
  * "clear" functions, but doesn't notify consumers that there's been work done until the end.
  */
 
-View.prototype.reset = function (opts) {
+ComputedView.prototype.reset = function (opts) {
 	var self = this;
 
 	opts = deepDefaults(opts, {
@@ -3356,7 +3649,7 @@ View.prototype.reset = function (opts) {
 
 // #getUniqueVals {{{2
 
-View.prototype.getUniqueVals = function (cont) {
+ComputedView.prototype.getUniqueVals = function (cont) {
 	var self = this;
 
 	return self.source.getUniqueVals(cont);
@@ -3364,7 +3657,7 @@ View.prototype.getUniqueVals = function (cont) {
 
 // #getLastOps {{{2
 
-View.prototype.getLastOps = function () {
+ComputedView.prototype.getLastOps = function () {
 	var self = this;
 
 	return self.lastOps;
@@ -3382,7 +3675,7 @@ View.prototype.getLastOps = function () {
  * The column configuration.
  */
 
-View.prototype.setColConfig = function (colConfig) {
+ComputedView.prototype.setColConfig = function (colConfig) {
 	var self = this;
 
 	if (!(colConfig instanceof OrdMap)) {
@@ -3394,53 +3687,8 @@ View.prototype.setColConfig = function (colConfig) {
 	self.colConfig = colConfig;
 };
 
-// **** DEPRECATED **** #prime {{{2
-
-// View.prototype.prime = function (cont) {
-// 	var self = this
-// 		, args = Array.prototype.slice.call(arguments);
-//
-// 	if (typeof cont !== 'function') {
-// 		throw new Error('Call Error: `cont` must be a function');
-// 	}
-//
-// 	if (self.isPrimed) {
-// 		return cont(false);
-// 	}
-//
-// 	if (self.lock.isLocked()) {
-// 		return self.lock.onUnlock(function () {
-// 			self.prime.apply(self, args);
-// 		}, 'Waiting to prime');
-// 	}
-//
-// 	self.lock.lock('Priming!');
-//
-// 	self.prefs.prime(function () {
-// 		self.source.getData(function () {
-// 			self.prefs.bind('view', self);
-// 			self.isPrimed = true;
-// 			self.lock.unlock();
-// 			cont(true);
-// 		});
-// 	});
-// };
-
-// #setPrefs {{{2
-
-View.prototype.setPrefs = function (prefs) {
-	var self = this;
-
-	if (!(prefs instanceof Prefs)) {
-		throw new Error('Call Error: `prefs` must be an instance of Prefs');
-	}
-
-	self.prefs = prefs;
-	self.prefs.bind(self.prefsModule, self);
-};
-
 // Exports {{{1
 
 export {
-	View
+	ComputedView
 };

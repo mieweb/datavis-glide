@@ -12,12 +12,15 @@ import {
 	fontAwesome,
 	getProp,
 	getPropDef,
+	I,
 	log,
 	makeRadioButtons,
 	makeSubclass,
 	makeToggleCheckbox,
 	mixinEventHandling,
 	mixinDebugging,
+	mixinLogging,
+	mixinNameSetting,
 	presentDownload,
 	setProp,
 	setPropDef,
@@ -25,17 +28,30 @@ import {
 } from './util/misc.js';
 import OrdMap from './util/ordmap.js';
 import Lock from './util/lock.js';
-import {AggregateControl, FilterControl, GroupControl, PivotControl} from './grid_control.js';
-import {Prefs, PrefsBackendTemporary} from './prefs.js';
-import {View} from './view.js';
-import {GridRenderer} from './grid_renderer.js';
+import {
+	AggregateControl,
+	FilterControl,
+	GroupControl,
+	PivotControl,
+} from './grid_control.js';
+import { Prefs } from './prefs.js';
+import { ComputedView } from './computed_view.js';
+import { MirageView } from './mirage_view.js';
+import { GridRenderer } from './grid_renderer.js';
 import './grid_table.js';
 import './renderers/grid/handlebars.js';
-import {ColConfigWin} from './col_config_win.js';
-import {HandlebarsEditor} from './ui/handlebars.js';
-import {PlainToolbar, GroupToolbar, PivotToolbar, PrefsToolbar, RendererToolbar} from './ui/toolbars/grid.js';
-import {FileSource} from './source.js';
-import {trans} from './trans.js';
+import { ColConfigWin } from './col_config_win.js';
+import { HandlebarsEditor } from './ui/handlebars.js';
+import {
+	ComputedViewToolbar,
+	PlainToolbar,
+	GroupToolbar,
+	PivotToolbar,
+	PrefsToolbar,
+	RendererToolbar,
+} from './ui/toolbars/grid.js';
+import { FileSource } from './source.js';
+import { trans } from './trans.js';
 
 // Server-Side Filter/Sort {{{1
 
@@ -312,14 +328,45 @@ function makeJsonOrderBy(o) {
  * the table.
  *
  * @property {boolean} [blockUI=false] If true, use BlockUI to prevent interaction with the table
- * while the View is doing something.
+ * while the ComputedView is doing something.
  *
  * @property {boolean} [nprogress=false] If true, use nprogress to show the progress of sort/filter
- * operations that the View is performing.
+ * operations that the ComputedView is performing.
  *
  * @property {boolean} [incremental=false] If true, render rows in the table incrementally, which
  * prevents UI freezes while doing so.  However, the overall time required to finish rendering the
  * table goes way up.
+ */
+
+/**
+ * @typedef {object} Grid~Opts
+ * Various options for the grid.
+ *
+ * @param {string} [name]
+ * The name of the grid, used for logging and debugging.  If not provided, one will be generated,
+ * but you won't like it.
+ *
+ * @param {boolean} [opts.runImmediately=true]
+ * If true, then show the grid immediately.
+ *
+ * @param {boolean} [opts.showOnDataChange=true]
+ * Whether or not to show the grid automatically when the view reports there's new data available.
+ * Useful when using push-oriented data flow, causing view updates to cascade to multiple outputs.
+ *
+ * @param {number} [opts.height]
+ * If present, sets the height of the grid.
+ *
+ * @param {string} [opts.title]
+ * If present, create a title bar for the grid.
+ *
+ * @param {string} [opts.helpText]
+ * If present, create a help bubble with this text.
+ *
+ * @param {boolean} [opts.showToolbar=true]
+ * Whether or not to show the toolbar by default.
+ *
+ * @param {boolean} [opts.showControls=false]
+ * Whether or not to show the controls by default.
  */
 
 // Constructor {{{2
@@ -334,15 +381,7 @@ function makeJsonOrderBy(o) {
  *
  * @param {Grid~Defn} defn The definition of the grid itself.
  *
- * @param {object} tagOpts Configuration of the decoration of the grid.
- *
- * @param {boolean} [tagOpts.runImmediately=true] If true, then show the grid immediately.
- *
- * @param {number} [tagOpts.height] If present, sets the height of the grid.
- *
- * @param {string} [tagOpts.title] If present, create a title bar for the grid.
- *
- * @param {string} [tagOpts.helpText] If present, create a help bubble with this text.
+ * @param {Grid~Opts} [opts] Configuration of the decoration of the grid.
  *
  * @param {function} cb A function that will be called after the grid has finished rendering, with
  * the underlying output method grid object (e.g. the jqxGrid instance) being passed.
@@ -351,7 +390,7 @@ function makeJsonOrderBy(o) {
  *
  * @property {string} id The ID of the div that contains the whole tag output.
  * @property {Grid~Defn} defn The definition object used to create the grid.
- * @property {wcgrid_tagOpts} tagOpts Options for the grid's container.
+ * @property {Grid~Opts} opts Options for the grid's container.
  * @property {object} grid The underlying grid object (e.g. a jqxGrid instance).
  * @property {object} ui Contains various user interface components which are tracked for convenience.
  * @property {Grid~Features} features
@@ -382,8 +421,17 @@ function makeJsonOrderBy(o) {
  * @borrows GridTable#isSelected
  */
 
-var Grid = makeSubclass('Grid', Object, function (id, view, defn, tagOpts, cb) {
+var Grid = makeSubclass('Grid', Object, function (defn, opts, cb) {
 	var self = this;
+
+	opts = deepDefaults(opts, {
+		runImmediately: true,
+		showOnDataChange: true,
+		showToolbar: true,
+		showControls: false,
+	});
+
+	self.setName(opts.name);
 
 	var rowCount = null; // Container span for the row counter.
 	var clearFilter = null; // Container span for the "clear filter" link.
@@ -391,8 +439,6 @@ var Grid = makeSubclass('Grid', Object, function (id, view, defn, tagOpts, cb) {
 	var viewDropdown = null;
 
 	self._isIdle = false;
-
-	self.view = view;
 
 	self.generateCsv = false;
 	self.csvReady = false;
@@ -402,51 +448,66 @@ var Grid = makeSubclass('Grid', Object, function (id, view, defn, tagOpts, cb) {
 	self.rootHasFixedHeight = false;
 	self.timing = new Timing();
 
-	// Clean up the inputs that we received.
-
-	defn = defn || {};
-	self._normalize(defn);
-
-	self.debug(null, 'Definition: %O', defn);
-
-	if (!(view instanceof View)) {
-		throw new Error('Call Error: `view` must be an instance of MIE.WC_DataVis.View');
-	}
-
-	deepDefaults(true, tagOpts, {
-		runImmediately: true,
-		showToolbar: true,
-		showControls: false,
-	});
-
-	self.defn = defn; // Definition used to retrieve data and output grid.
-	self.tagOpts = tagOpts; // Other tag options, not related to the grid.
+	self.defn = self._normalize(defn); // Definition used to retrieve data and output grid.
+	self.opts = opts; // Other tag options, not related to the grid.
 	self.grid = null; // List of all grids generated as a result.
 	self.ui = {}; // User interface elements.
 	self.selected = {}; // Information about what rows are selected.
 
+	self._validateFeatures();
+	self._validateId(self.defn.id);
+
+	self.debug(null, 'Definition: %O', defn);
+	self.debug(null, 'Options: %O', opts);
+
+	// Check the validity of the provided computed/mirage views and prefs.
+
+	if (defn.computedView != null && !(defn.computedView instanceof ComputedView)) {
+		throw new Error('Call Error: `defn.computedView` must be null or an instance of ComputedView');
+	}
+
+	if (defn.mirageView != null && !(defn.mirageView instanceof MirageView)) {
+		throw new Error('Call Error: `defn.mirageView` must be null or an instance of MirageView');
+	}
+
+	if (defn.prefs != null && !(defn.prefs instanceof Prefs)) {
+		throw new Error('Call Error: `defn.prefs` must be null or an instance of Prefs');
+	}
+
+	self.computedView = defn.computedView;
+	self.mirageView = defn.mirageView;
+	self.prefs = defn.prefs;
+
+	// Create default versions of the computed/mirage views and prefs if none were provided.
+
+	if (self.computedView == null) {
+		self.debug('COMPUTED VIEW', 'No computed view specified, creating our own.');
+		self.computedView = new ComputedView();
+	}
+
+	if (self.mirageView == null) {
+		self.debug('MIRAGE VIEW', 'No mirage view specified, creating our own.');
+		self.mirageView = new MirageView();
+	}
+
+	if (self.prefs == null) {
+		self.debug('PREFS', 'No prefs specified, creating our own.');
+		self.prefs = new Prefs(self.id);
+	}
+
+	// Make sure we're all using the same prefs.
+
+	self.computedView.setPrefs(self.prefs);
+	self.mirageView.setPrefs(self.prefs);
+
+	self.view = self.defn.computedView || self.defn.mirageView || self.computedView;
+
+	if (self.colConfig != null) {
+		self.view.setColConfig(self.colConfig);
+	}
 	self.view.addClient(self, 'grid');
 
 	self.defn.grid = self;
-
-	self._validateFeatures();
-	self._validateId(id);
-
-	if (defn.prefs != null && !(defn.prefs instanceof Prefs)) {
-		throw new Error('Call Error: `defn.prefs` must be null or an instance of MIE.WC_DataVis.Prefs');
-	}
-
-	if (defn.prefs != null) {
-		self.prefs = defn.prefs;
-	}
-	else if (self.view.prefs != null) {
-		self.debug('PREFS', 'Using prefs from connected view');
-		self.prefs = self.view.prefs;
-	}
-	else {
-		self.debug('PREFS', 'Creating new prefs');
-		self.prefs = new Prefs(self.id);
-	}
 
 	self.colConfigWin = new ColConfigWin(self, self.colConfig);
 	self.handlebarsEditor = new HandlebarsEditor(self, function () {
@@ -457,9 +518,9 @@ var Grid = makeSubclass('Grid', Object, function (id, view, defn, tagOpts, cb) {
 	 * Set up other container elements.
 	 */
 
-	self.ui.root = jQuery(document.getElementById(id))
+	self.ui.root = jQuery(document.getElementById(self.id))
 		.addClass('wcdv_grid')
-		.attr('data-title', id + '_title');
+		.attr('data-title', self.id + '_title');
 
 	self.ui.root.children().remove();
 
@@ -499,7 +560,7 @@ var Grid = makeSubclass('Grid', Object, function (id, view, defn, tagOpts, cb) {
 		})
 		.appendTo(self.ui.root);
 
-	self._addTitleWidgets(self.ui.titlebar, doingServerFilter, !!self.tagOpts.runImmediately, id);
+	self._addTitleWidgets(self.ui.titlebar, doingServerFilter, !!self.opts.runImmediately, self.id);
 
 	self.ui.content = jQuery('<div>', {
 		'class': 'wcdv_grid_content'
@@ -527,6 +588,9 @@ var Grid = makeSubclass('Grid', Object, function (id, view, defn, tagOpts, cb) {
 	self.prefs.bind('grid', self, {
 		toolbar: self.ui.toolbar_prefs.ui.root
 	});
+
+	self.ui.toolbar_computedView = new ComputedViewToolbar(self);
+	self.ui.toolbar_computedView.attach(self.ui.toolbar);
 
 	self.ui.toolbar_plain = new PlainToolbar(self);
 	self.ui.toolbar_plain.attach(self.ui.toolbar);
@@ -561,11 +625,11 @@ var Grid = makeSubclass('Grid', Object, function (id, view, defn, tagOpts, cb) {
 		}
 	}
 
-	if (!self.tagOpts.showToolbar) {
+	if (!self.opts.showToolbar) {
 		self.ui.toolbar.hide();
 	}
 
-	if (!self.tagOpts.showControls) {
+	if (!self.opts.showControls) {
 		self.ui.controls.hide();
 	}
 
@@ -628,11 +692,11 @@ var Grid = makeSubclass('Grid', Object, function (id, view, defn, tagOpts, cb) {
 		self.ui.grid.css({ 'overflow': 'auto' });
 	}
 
-	if (document.getElementById(id + '_footer')) {
+	if (document.getElementById(self.id + '_footer')) {
 		// There was a footer which was printed out by dashboard.c which we are now going to move
 		// inside the structure that we've been creating.
 
-		self.ui.footer = jQuery(document.getElementById(id + '_footer'));
+		self.ui.footer = jQuery(document.getElementById(self.id + '_footer'));
 	}
 
 	self.ui.root
@@ -672,7 +736,7 @@ var Grid = makeSubclass('Grid', Object, function (id, view, defn, tagOpts, cb) {
 	self.view.on('fetchDataBegin', function () {
 		self._setSpinner('loading');
 		self._showSpinner();
-		if (self.tagOpts.title) {
+		if (self.opts.title) {
 			self.ui.title._addTrailing(',');
 			self.ui.statusSpan.show().text('Loading...');
 			self.ui.rowCount.hide();
@@ -689,7 +753,7 @@ var Grid = makeSubclass('Grid', Object, function (id, view, defn, tagOpts, cb) {
 	self.view.source.on('fetchDataCancel', function () {
 		self.ui.cancelFetchBtn.hide();
 		if (initialRender) {
-			if (self.tagOpts.title) {
+			if (self.opts.title) {
 				self.ui.title._addTrailing(',');
 				self.ui.statusSpan.show().text('Not Loaded');
 				self.ui.rowCount.hide();
@@ -699,7 +763,7 @@ var Grid = makeSubclass('Grid', Object, function (id, view, defn, tagOpts, cb) {
 			self.hide();
 		}
 		else {
-			if (self.tagOpts.title) {
+			if (self.opts.title) {
 				self.ui.title._addTrailing(',');
 				self.ui.statusSpan.hide();
 				self.ui.rowCount.show();
@@ -712,7 +776,7 @@ var Grid = makeSubclass('Grid', Object, function (id, view, defn, tagOpts, cb) {
 		self._isIdle = false;
 		self._setSpinner('working');
 		self._showSpinner();
-		if (self.tagOpts.title) {
+		if (self.opts.title) {
 			self.ui.title._addTrailing(',');
 			self.ui.statusSpan.show().text('Processing...');
 			self.ui.rowCount.hide();
@@ -728,7 +792,7 @@ var Grid = makeSubclass('Grid', Object, function (id, view, defn, tagOpts, cb) {
 	});
 
 	self.view.on('dataUpdated', function () {
-		if (self.tagOpts.showOnDataChange && !self.isVisible()) {
+		if (self.opts.showOnDataChange && !self.isVisible()) {
 			self.show({ redraw: false });
 		}
 		self.redraw();
@@ -738,8 +802,21 @@ var Grid = makeSubclass('Grid', Object, function (id, view, defn, tagOpts, cb) {
 		self.colConfigFromTypeInfo(typeInfo);
 	});
 
-	if (self.tagOpts.runImmediately) {
-		self.show();
+	if (self.opts.runImmediately) {
+		self.prefs.prime(function () {
+			// Create a way to switch back and forth between the two types of views depending on if a
+			// perspective is live or not.
+
+			self.prefs.on('perspectiveChanged', function (id, p) {
+				self.setView();
+				self.redraw();
+			}, {
+				info: 'Changing view type to match new perspective'
+			});
+
+			self.setView();
+			self.redraw();
+		});
 	}
 	else {
 		self.hasRun = false;
@@ -750,7 +827,7 @@ var Grid = makeSubclass('Grid', Object, function (id, view, defn, tagOpts, cb) {
 	 * Store self object so it can be accessed from other JavaScript in the page.
 	 */
 
-	setProp(self, window, 'MIE', 'WC_DataVis', 'grids', id);
+	setProp(self, window, 'MIE', 'WC_DataVis', 'grids', self.id);
 });
 
 // Mixins {{{2
@@ -767,6 +844,8 @@ mixinEventHandling(Grid, [
 delegate(Grid, 'renderer', ['setSelection', 'getSelection', 'select', 'unselect', 'isSelected']);
 
 mixinDebugging(Grid);
+mixinLogging(Grid);
+mixinNameSetting(Grid);
 
 // Events JSDoc {{{3
 
@@ -805,7 +884,7 @@ mixinDebugging(Grid);
  *
  * @event Grid#selectionChange
  *
- * @param {Array.<View~Data_Row>} selected
+ * @param {Array.<ComputedView~Data_Row>} selected
  * Data from rows that are selected.
  */
 
@@ -890,6 +969,26 @@ Grid.prototype._validateId = function (id) {
 	setProp(id + '_gridContainer', self.defn, 'table', 'id');
 };
 
+// #setView {{{2
+
+Grid.prototype.setView = function () {
+	var self = this;
+
+	var p = self.prefs.currentPerspective;
+
+	// If the perspective is meant for live data then configure the grid to use a ComputedView.
+	// Otherwise, configure the grid to use a MirageView.
+
+	if (p.isLive()) {
+		self.debug('SET VIEW', 'Switching to Computed View for live data for perspective "%s"', p.name);
+		self.view = self.prefs.modules['computedView'].target;
+	}
+	else {
+		self.debug('SET VIEW', 'Switching to Mirage View for pre-computed data for perspective "%s"', p.name);
+		self.view = self.prefs.modules['mirageView'].target;
+		self.view.setPerspectiveName(p.name);
+	}
+};
 // #_addTitleWidgets {{{2
 
 /**
@@ -915,11 +1014,11 @@ Grid.prototype._addTitleWidgets = function (titlebar, doingServerFilter, runImme
 		.appendTo(titlebar)
 	;
 
-	self._setSpinner(self.tagOpts.runImmediately ? 'loading' : 'not-loaded');
+	self._setSpinner(self.opts.runImmediately ? 'loading' : 'not-loaded');
 
 	self.ui.title = jQuery('<strong>', {'id': id + '_title', 'data-parent': id})
 		.addClass('wcdv_title')
-		.text(self.tagOpts.title)
+		.text(self.opts.title)
 		.appendTo(titlebar);
 
 	var notHeader = jQuery('<span>', {'class': 'headingInfo'})
@@ -957,7 +1056,7 @@ Grid.prototype._addTitleWidgets = function (titlebar, doingServerFilter, runImme
 		.hide()
 		.appendTo(notHeader);
 
-	if (typeof self.tagOpts.helpText === 'string' && self.tagOpts.helpText !== '') {
+	if (typeof self.opts.helpText === 'string' && self.opts.helpText !== '') {
 		notHeader.append(' ');
 		fontAwesome('F059')
 			.tooltip({
@@ -965,7 +1064,7 @@ Grid.prototype._addTitleWidgets = function (titlebar, doingServerFilter, runImme
 					'ui-tooltip': 'ui-corner-all ui-widget-shadow wcdv_info_tooltip wcdv_border-primary'
 				},
 				show: { delay: 1000 },
-				content: self.tagOpts.helpText
+				content: self.opts.helpText
 			})
 			.appendTo(notHeader);
 	}
@@ -1096,160 +1195,173 @@ Grid.prototype.clear = function () {
  *
  * @method
  * @memberof Grid
+ *
+ * @param {function} [contOk]
+ * Function to call on success.
+ *
+ * @param {function} [contFail]
+ * Function to call on failure.
  */
 
-Grid.prototype.redraw = function () {
+Grid.prototype.redraw = function (contOk, contFail) {
 	var self = this;
+
+	if (contOk != null && typeof contOk !== 'function') {
+		throw new Error('Call Error: `contOk` must be null or a function');
+	}
+	if (contFail != null && typeof contFail != 'function') {
+		throw new Error('Call Error: `contFail` must be null or a function');
+	}
+
+	contOk = contOk || I;
+	contFail = contFail || I;
 
 	var makeGridTable = function () {
 		var rendererCtor
-			, rendererCtorOpts
-			, ops = self.view.getLastOps();
+			, rendererCtorOpts;
 
-		if (ops) {
-			self.debug(null, 'Creating grid table with view opertions: %O', ops);
-		}
-
-		if (self.defn.renderer != null) {
-			self.rendererName = self.defn.renderer;
-
-			rendererCtor = GridRenderer.registry.get(self.defn.renderer);
-			rendererCtorOpts = deepCopy(self.defn.rendererOpts);
-		}
-		else {
-			self.rendererName = 'table';
-
-			if (ops && ops.pivot) {
-				rendererCtor = GridRenderer.registry.get(getPropDef('table_pivot', self.defn, 'whenPivot', 'renderer'));
-				rendererCtorOpts = deepCopy(self.defn.table.whenPivot);
-
-				self.debug(null, 'Creating pivot grid table');
+		self.view.getData(function (ok, data) {
+			if (!ok) {
+				return contFail();
 			}
-			else if (ops && ops.group) {
-				switch (self.defn.table.groupMode) {
-				case 'summary':
-					rendererCtor = GridRenderer.registry.get(getPropDef('table_group_summary', self.defn, 'whenGroup', 'renderer'));
-					break;
-				case 'detail':
-					rendererCtor = GridRenderer.registry.get(getPropDef('table_group_detail', self.defn, 'whenGroup', 'renderer'));
-					break;
-				}
 
-				rendererCtorOpts = deepCopy(self.defn.table.whenGroup);
+			if (self.defn.renderer != null) {
+				self.rendererName = self.defn.renderer;
 
-				if (self.ui.footer) {
-					rendererCtorOpts.footer = self.ui.footer;
-				}
-
-				self.debug(null, 'Creating group grid table');
+				rendererCtor = GridRenderer.registry.get(self.defn.renderer);
+				rendererCtorOpts = deepCopy(self.defn.rendererOpts);
 			}
 			else {
-				rendererCtor = GridRenderer.registry.get(getPropDef('table_plain', self.defn, 'whenPlain', 'renderer'));
-				rendererCtorOpts = deepCopy(self.defn.table.whenPlain);
+				self.rendererName = 'table';
 
-				if (self.ui.footer) {
-					rendererCtorOpts.footer = self.ui.footer;
+				if (data.isPlain) {
+					rendererCtor = GridRenderer.registry.get(getPropDef('table_plain', self.defn, 'whenPlain', 'renderer'));
+					rendererCtorOpts = deepCopy(self.defn.table.whenPlain);
+
+					if (self.ui.footer) {
+						rendererCtorOpts.footer = self.ui.footer;
+					}
+
+					self.debug(null, 'Creating plain grid table');
 				}
+				else if (data.isGroup) {
+					switch (self.defn.table.groupMode) {
+					case 'summary':
+						rendererCtor = GridRenderer.registry.get(getPropDef('table_group_summary', self.defn, 'whenGroup', 'renderer'));
+						break;
+					case 'detail':
+						rendererCtor = GridRenderer.registry.get(getPropDef('table_group_detail', self.defn, 'whenGroup', 'renderer'));
+						break;
+					}
 
-				self.debug(null, 'Creating plain grid table');
-			}
-		}
+					rendererCtorOpts = deepCopy(self.defn.table.whenGroup);
 
-		if (self.renderer) {
-			self.renderer.destroy();
-		}
+					if (self.ui.footer) {
+						rendererCtorOpts.footer = self.ui.footer;
+					}
 
-		rendererCtorOpts.generateCsv = self.generateCsv;
-		rendererCtorOpts.fixedHeight = self.rootHasFixedHeight;
-
-		self.ui.exportBtn.attr('disabled', true);
-		self.renderer = new rendererCtor(self, self.defn, self.view, self.features, rendererCtorOpts, self.timing, self.id, self.colConfig);
-
-		// Update the toolbar sections.  This needs to be done after creating the renderer because the
-		// renderer validates (and possibly changes) the supported features, and that changes what parts
-		// of the toolbar we show.  Obviously, we shouldn't show buttons for features that the current
-		// renderer doesn't implement.
-
-		if (ops && ops.pivot) {
-			self.ui.toolbar_plain.hide();
-			self.ui.toolbar_group.hide();
-			self.ui.toolbar_pivot.show();
-		}
-		else if (ops && ops.group) {
-			self.ui.toolbar_plain.hide();
-			self.ui.toolbar_group.show();
-			self.ui.toolbar_pivot.hide();
-		}
-		else {
-			self.ui.toolbar_plain.show();
-			self.ui.toolbar_group.hide();
-			self.ui.toolbar_pivot.hide();
-		}
-
-		self.renderer.on('renderBegin', function () {
-			self._isIdle = false;
-			self.fire('renderBegin');
-		});
-		self.renderer.on('renderEnd', function () {
-			self.fire('renderEnd');
-			self._isIdle = true;
-		});
-
-		self.renderer.on('unableToRender', function () {
-			self._setExportStatus('notReady');
-			makeGridTable();
-		});
-
-		self.renderer.on('csvReady', function () {
-			if (self.exportLock.isLocked()) {
-				self.exportLock.unlock();
-			}
-			self._setExportStatus('ready');
-		});
-		self.renderer.on('generateCsvProgress', function (progress) {
-			if (progress === 0) {
-				self.ui.exportBtn.children('span.fa').remove();
-				self.ui.exportBtn.append(fontAwesome('fa-spinner', 'fa-spin'));
-			}
-		});
-
-		if (self.features.limit) {
-			self.renderer.on('limited', function () {
-				self.ui.limit_div.show();
-			});
-			self.renderer.on('unlimited', function () {
-				self.ui.limit_div.hide();
-			});
-		}
-
-		if (self.features.rowSelect) {
-			self.renderer.on('selectionChange', function (selection) {
-				if (selection.length === 0) {
-					self.ui.selectionInfo.text('');
+					self.debug(null, 'Creating group grid table');
 				}
-				else {
-					var addComma = self.ui.rowCount.text().length > 0;
-					var str = addComma ? ', ' : '';
-					str += selection.length + ' ' + (selection.length === 1 ? 'record' : 'records') + ' selected';
-					self.ui.selectionInfo.text(str);
-				}
-				self.fire('selectionChange', null, selection);
-			});
-		}
+				else if (data.isPivot) {
+					rendererCtor = GridRenderer.registry.get(getPropDef('table_pivot', self.defn, 'whenPivot', 'renderer'));
+					rendererCtorOpts = deepCopy(self.defn.table.whenPivot);
 
-		self.renderer.draw(self.ui.grid, null, function () {
-			self.setSelection();
-			self.ui.exportBtn.attr('disabled', false);
-			self.tableDoneCont();
+					self.debug(null, 'Creating pivot grid table');
+				}
+			}
+
+			if (self.renderer) {
+				self.renderer.destroy();
+			}
+
+			rendererCtorOpts.generateCsv = self.generateCsv;
+			rendererCtorOpts.fixedHeight = self.rootHasFixedHeight;
+
+			self.ui.exportBtn.attr('disabled', true);
+			self.renderer = new rendererCtor(self, self.defn, self.view, self.features, rendererCtorOpts, self.timing, self.id, self.colConfig);
+
+			// Update the toolbar sections.  This needs to be done after creating the renderer because the
+			// renderer validates (and possibly changes) the supported features, and that changes what parts
+			// of the toolbar we show.  Obviously, we shouldn't show buttons for features that the current
+			// renderer doesn't implement.
+
+			if (data.isPlain) {
+				self.ui.toolbar_plain.show();
+				self.ui.toolbar_group.hide();
+				self.ui.toolbar_pivot.hide();
+			}
+			else if (data.isGroup) {
+				self.ui.toolbar_plain.hide();
+				self.ui.toolbar_group.show();
+				self.ui.toolbar_pivot.hide();
+			}
+			else if (data.isPivot) {
+				self.ui.toolbar_plain.hide();
+				self.ui.toolbar_group.hide();
+				self.ui.toolbar_pivot.show();
+			}
+
+			self.renderer.on('renderBegin', function () {
+				self._isIdle = false;
+				self.fire('renderBegin');
+			});
+			self.renderer.on('renderEnd', function () {
+				self.fire('renderEnd');
+				self._isIdle = true;
+			});
+
+			self.renderer.on('unableToRender', function () {
+				self._setExportStatus('notReady');
+				makeGridTable();
+			});
+
+			self.renderer.on('csvReady', function () {
+				if (self.exportLock.isLocked()) {
+					self.exportLock.unlock();
+				}
+				self._setExportStatus('ready');
+			});
+			self.renderer.on('generateCsvProgress', function (progress) {
+				if (progress === 0) {
+					self.ui.exportBtn.children('span.fa').remove();
+					self.ui.exportBtn.append(fontAwesome('fa-spinner', 'fa-spin'));
+				}
+			});
+
+			if (self.features.limit) {
+				self.renderer.on('limited', function () {
+					self.ui.limit_div.show();
+				});
+				self.renderer.on('unlimited', function () {
+					self.ui.limit_div.hide();
+				});
+			}
+
+			if (self.features.rowSelect) {
+				self.renderer.on('selectionChange', function (selection) {
+					if (selection.length === 0) {
+						self.ui.selectionInfo.text('');
+					}
+					else {
+						var addComma = self.ui.rowCount.text().length > 0;
+						var str = addComma ? ', ' : '';
+						str += selection.length + ' ' + (selection.length === 1 ? 'record' : 'records') + ' selected';
+						self.ui.selectionInfo.text(str);
+					}
+					self.fire('selectionChange', null, selection);
+				});
+			}
+
+			self.renderer.draw(self.ui.grid, null, function () {
+				self.setSelection();
+				self.ui.exportBtn.attr('disabled', false);
+				self.tableDoneCont();
+			});
 		});
 	};
 
-	self.prefs.prime(function () {
-		self.view.prime(function () {
-			self.debug(null, 'Redrawing...');
-			makeGridTable();
-		});
-	});
+	self.debug(null, 'Redrawing...');
+	makeGridTable();
 };
 
 // #refresh {{{2
@@ -1292,7 +1404,7 @@ Grid.prototype._updateRowCount = function (info, ops) {
 
 	// When there's no titlebar, there's nothing for us to do here.
 
-	if (!self.tagOpts.title) {
+	if (!self.opts.title) {
 		return;
 	}
 
@@ -1342,7 +1454,7 @@ Grid.prototype.hide = function () {
 	self.ui.content.hide({
 		duration: 0,
 		done: function () {
-			if (self.tagOpts.title) {
+			if (self.opts.title) {
 				self.ui.showHideButton.removeClass('open fa-rotate-180');
 			}
 		}
@@ -1373,7 +1485,7 @@ Grid.prototype.show = function (opts) {
 	self.ui.content.show({
 		duration: 0,
 		done: function () {
-			if (self.tagOpts.title) {
+			if (self.opts.title) {
 				self.ui.showHideButton.addClass('open fa-rotate-180');
 			}
 			if (!self.hasRun && opts.redraw) {
@@ -1513,7 +1625,7 @@ Grid.prototype._setSpinner = function (what) {
 Grid.prototype._showSpinner = function () {
 	var self = this;
 
-	if (self.tagOpts.title) {
+	if (self.opts.title) {
 		self.ui.spinner.show();
 	}
 };
@@ -1527,7 +1639,7 @@ Grid.prototype._showSpinner = function () {
 Grid.prototype._hideSpinner = function () {
 	var self = this;
 
-	if (self.tagOpts.title) {
+	if (self.opts.title) {
 		self.ui.spinner.hide();
 	}
 };
@@ -1547,6 +1659,10 @@ Grid.prototype._hideSpinner = function () {
 
 Grid.prototype._normalize = function (defn) {
 	var self = this;
+
+	if (defn == null) {
+		defn = {};
+	}
 
 	if (defn.normalized) {
 		return;
@@ -1591,6 +1707,8 @@ Grid.prototype._normalize = function (defn) {
 	});
 
 	self._normalizeColumns(defn);
+
+	return defn;
 };
 
 // #_normalizeColumns {{{2
@@ -1598,9 +1716,9 @@ Grid.prototype._normalize = function (defn) {
 Grid.prototype._normalizeColumns = function (defn) {
 	var self = this;
 
-	// When the developer did not provider column configuration, take it from the View via typeInfo.
+	// When the developer did not provider column configuration, take it from the ComputedView via typeInfo.
 	// Potentially the source could change what fields it contains (e.g. add/remove a field to/from a
-	// report) and this would all still work OK, we would stay up-to-date because every time the View
+	// report) and this would all still work OK, we would stay up-to-date because every time the ComputedView
 	// got new typeInfo we would update our colConfig.
 
 	if (getProp(defn, 'table', 'columns') == null) {
@@ -1668,7 +1786,7 @@ Grid.prototype.export = function () {
 	}
 
 	if (self.csvReady) {
-		var fileName = (self.tagOpts.title || self.id) + '.csv';
+		var fileName = (self.opts.title || self.id) + '.csv';
 		var csv = self.renderer.getCsv();
 		var contentType = 'text/csv';
 		var blob = new Blob([csv], {'type': contentType});
@@ -1875,8 +1993,6 @@ Grid.prototype.setColConfig = function (colConfig, opts) {
 	if (opts.savePrefs) {
 		self.prefs.save();
 	}
-
-	self.view.setColConfig(self.colConfig); // TODO Convert to event model.
 
 	if (opts.sendEvent) {
 		self.fire('colConfigUpdate', {

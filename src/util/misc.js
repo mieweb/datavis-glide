@@ -1049,7 +1049,7 @@ export function setProp() {
 
 	for (var i = 0; i < args.length - 1; i += 1) {
 		if (o[args[i]] == null) {
-			o[args[i]] = {};
+			o[args[i]] = _.isNumber(args[i]) ? [] : {};
 		}
 
 		o = o[args[i]];
@@ -1072,7 +1072,7 @@ export function setPropDef() {
 
 	for (var i = 0; i < args.length - 1; i += 1) {
 		if (o[args[i]] === undefined) {
-			o[args[i]] = {};
+			o[args[i]] = _.isNumber(args[i]) ? [] : {};
 		}
 
 		o = o[args[i]];
@@ -1733,19 +1733,30 @@ export var mixinEventHandling = (function () {
 	var HANDLER_ID = 0;
 
 	return function (obj, events) {
-		obj.events = objFromArray(events);
+		if (events != null) {
+			obj.events = objFromArray(events);
+		}
 
-		var getName = function () {
-			return obj.toString === Object.toString
-				? obj.prototype.constructor.name
-				: obj.toString();
+		obj._seenEvents = {};
+		obj._eventHandlers = {
+			byEvent: {},
+			byId: {}
+		};
+
+		var getName = function (self) {
+			if (typeof self.toString === 'function' && self.toString !== Object.prototype.toString) {
+				return self.toString();
+			}
+			else {
+				return obj.prototype.constructor.name.toUpperCase();
+			}
 		};
 
 		var getTag = function (self) {
 			if (typeof self.getDebugTag === 'function') {
 				return self.getDebugTag();
 			}
-			else if (typeof self.toString === 'function' && self.toString !== Object.toString) {
+			else if (typeof self.toString === 'function' && self.toString !== Object.prototype.toString) {
 				return self.toString();
 			}
 			else {
@@ -1761,9 +1772,11 @@ export var mixinEventHandling = (function () {
 			if (self.eventHandlers == null) {
 				self.eventHandlers = {};
 
-				_.each(obj.events, function (evt) {
-					self.eventHandlers[evt] = [];
-				});
+				if (obj.events != null) {
+					_.each(obj.events, function (evt) {
+						self.eventHandlers[evt] = [];
+					});
+				}
 			}
 
 			if (self.eventHandlersById == null) {
@@ -1791,7 +1804,7 @@ export var mixinEventHandling = (function () {
 
 			opts = opts || {};
 
-			self._initEventHandlers();
+			//self._initEventHandlers();
 
 			if (!_.isArray(evt)) {
 				evt = [evt];
@@ -1800,8 +1813,8 @@ export var mixinEventHandling = (function () {
 				if (typeof e !== 'string') {
 					throw new Error('Call Error: `evt[' + i + ']` must be a string');
 				}
-				if (obj.events[e] === undefined) {
-					throw new Error('Unable to register handler on ' + getName() + ' for "' + e + '" event: no such event available');
+				if (obj.events != null && obj.events[e] === undefined) {
+					throw new Error('Unable to register handler on ' + getName(self) + ' for "' + e + '" event: no such event available');
 				}
 				src.on(e, function () {
 					self.fire(e);
@@ -1823,8 +1836,8 @@ export var mixinEventHandling = (function () {
 			}
 
 			_.each(evt, function (e) {
-				if (obj.events[e] === undefined) {
-					throw new Error('Unable to register handler on ' + getName() + ' for "' + e + '" event: no such event available');
+				if (obj.events != null && obj.events[e] === undefined) {
+					throw new Error('Unable to register handler on ' + getName(self) + ' for "' + e + '" event: no such event available');
 				}
 
 				var handler = {
@@ -1835,10 +1848,14 @@ export var mixinEventHandling = (function () {
 					limit: opts.limit
 				};
 
+				self.eventHandlers = self.eventHandlers || {};
+				self.eventHandlers[e] = self.eventHandlers[e] || [];
 				self.eventHandlers[e].push(handler);
+
+				self.eventHandlersById = self.eventHandlersById || [];
 				self.eventHandlersById[handler.id] = handler;
 
-				var msg = 'Adding "' + evt + '" event handler on ' + getName();
+				var msg = 'Adding "' + evt + '" event handler on ' + getName(self);
 				if (opts.who != null) {
 					msg += ' from ' + opts.who;
 				}
@@ -1865,7 +1882,7 @@ export var mixinEventHandling = (function () {
 			}
 
 			if (obj.events[evt] === undefined) {
-				throw new Error('Unable to register handler on ' + getName() + ' for "' + evt + '" event: no such event available');
+				throw new Error('Unable to register handler on ' + getName(self) + ' for "' + evt + '" event: no such event available');
 			}
 
 			var newHandlers = [];
@@ -1956,7 +1973,7 @@ export var mixinEventHandling = (function () {
 			// spamming millions of messages, which slows down the console).
 
 			if (!opts.silent) {
-				debug.info(getTag(self) + ' // FIRE', 'Triggering %d handlers for "%s" event on %s: %O', handlers.length, evt, getName(), args);
+				debug.info(getTag(self) + ' // FIRE', 'Triggering %d handlers for "%s" event on %s: %O', handlers.length, evt, getName(self), args);
 			}
 
 			// Execute all matching handlers in the order they were registered.  A break is added between
@@ -1971,10 +1988,10 @@ export var mixinEventHandling = (function () {
 				}
 
 				if (h.handler.info != null) {
-					debug.info(getTag(self) + ' // FIRE', 'Executing "%s" handler (%d of %d) on %s: %s', evt, i+1, handlers.length, getName(), h.handler.info);
+					debug.info(getTag(self) + ' // FIRE', 'Executing "%s" handler (%d of %d) on %s: %s', evt, i+1, handlers.length, getName(self), h.handler.info);
 				}
 				else {
-					debug.info(getTag(self) + ' // FIRE', 'Executing "%s" handler (%d of %d) on %s', evt, i+1, handlers.length, getName());
+					debug.info(getTag(self) + ' // FIRE', 'Executing "%s" handler (%d of %d) on %s', evt, i+1, handlers.length, getName(self));
 				}
 				h.handler.cb.apply(null, args);
 
@@ -1984,7 +2001,7 @@ export var mixinEventHandling = (function () {
 				if (h.handler.limit) {
 					h.handler.limit -= 1;
 					if (h.handler.limit <= 0) {
-						debug.info(getTag(self) + ' // FIRE', 'Removing "%s" handler #%d from %s after reaching invocation limit', evt, i+1, getName());
+						debug.info(getTag(self) + ' // FIRE', 'Removing "%s" handler #%d from %s after reaching invocation limit', evt, i+1, getName(self));
 						self.eventHandlers[evt][h.index] = null;
 					}
 				}
@@ -1992,7 +2009,7 @@ export var mixinEventHandling = (function () {
 				return opts.async ? window.setTimeout(next) : next();
 			}, function () {
 				if (!opts.silent) {
-					debug.info(getTag(self) + ' // FIRE', 'Done triggering handlers for "%s" event on %s', evt, getName());
+					debug.info(getTag(self) + ' // FIRE', 'Done triggering handlers for "%s" event on %s', evt, getName(self));
 				}
 
 				// Clean up handlers we removed (because they reached the limit).
@@ -2022,7 +2039,7 @@ export function mixinDebugging(obj, tagStart) {
 		else if (typeof self.getDebugTag === 'function') {
 			return self.getDebugTag();
 		}
-		else if (typeof self.toString === 'function' && self.toString !== Object.toString) {
+		else if (typeof self.toString === 'function' && self.toString !== Object.prototype.toString) {
 			return self.toString();
 		}
 		else {
@@ -2049,16 +2066,16 @@ export function mixinLogging(obj, tagPrefix) {
 	}
 
 	var getTag = function (self) {
-		if (typeof tagStart === 'function') {
-			return tagStart.call(self);
+		if (typeof tagPrefix === 'function') {
+			return tagPrefix.call(self);
 		}
-		else if (typeof tagStart === 'string') {
-			return tagStart;
+		else if (typeof tagPrefix === 'string') {
+			return tagPrefix;
 		}
 		else if (typeof self.getDebugTag === 'function') {
 			return self.getDebugTag();
 		}
-		else if (typeof self.toString === 'function' && self.toString !== Object.toString) {
+		else if (typeof self.toString === 'function' && self.toString !== Object.prototype.toString) {
 			return self.toString();
 		}
 		else {
@@ -2071,16 +2088,79 @@ export function mixinLogging(obj, tagPrefix) {
 			var args = Array.prototype.slice.call(arguments);
 			var tag = args.shift();
 			var msg = args.shift();
-			var prefix = ['[' + getTag(this) + ' // ' + tag + '] ' + msg];
+			var prefix = ['[' + getTag(this) + (tag != null ? ' // ' + tag : '') + '] ' + msg];
 			var call = Function.prototype.call;
 			call.apply(call, [console[loggerType], console].concat(prefix, args));
 		};
 	};
 
+	obj.prototype.logDebug = makeLogger('debug');
 	obj.prototype.logInfo = makeLogger('log');
 	obj.prototype.logWarning = makeLogger('warn');
 	obj.prototype.logError = makeLogger('error');
 }
+
+// makeSetters {{{2
+
+export function makeSetters(cls, setterList) {
+	_.each(setterList, function (s) {
+		cls.prototype[s.name] = function (x, opts) {
+			opts = deepDefaults(opts, {
+				sendEvent: true,
+				dontSendEventTo: [],
+			});
+			this[s.prop] = x;
+			if (s.event != null && opts.sendEvent) {
+				this.fire(s.event, {
+					notTo: opts.dontSendEventTo
+				}, x);
+			}
+		};
+	});
+};
+
+// delegate {{{2
+
+export function delegate(from, to, methods) {
+	if (!_.isArray(methods)) {
+		methods = [methods];
+	}
+	_.each(methods, function (m, i) {
+		if (typeof m !== 'string') {
+			throw new Error('Call Error: `methods[' + i + ']` must be a string');
+		}
+		from.prototype[m] = function () {
+			var args = Array.prototype.slice.call(arguments);
+			return this[to][m].apply(this[to], args);
+		};
+	});
+};
+
+// setName {{{2
+
+export function mixinNameSetting(cls) {
+	cls.prototype.__namesGenerated = 0;
+	cls.prototype.setName = function (name) {
+		var self = this;
+
+		if (name != null && !_.isString(name)) {
+			self.name = self.constructor.name + ' #' + (++cls.prototype.__namesGenerated);
+			self.logWarning(null, 'Name provided for this ' + self.constructor.name + ' instance is not a string.');
+		}
+		else if (name == null || name === '') {
+			self.name = self.constructor.name + ' #' + (++cls.prototype.__namesGenerated);
+			self.logWarning(null, 'Providing a name for this ' + self.constructor.name + ' instance is strongly recommended to improve logging.');
+		}
+		else {
+			self.name = name;
+		}
+	};
+	cls.prototype.getName = function () {
+		var self = this;
+
+		return self.name;
+	}
+};
 
 // Locking {{{1
 
@@ -3795,21 +3875,6 @@ Timing.prototype.dump = function (subject) {
 };
 
 // }}}1
-
-export function delegate(from, to, methods) {
-	if (!_.isArray(methods)) {
-		methods = [methods];
-	}
-	_.each(methods, function (m, i) {
-		if (typeof m !== 'string') {
-			throw new Error('Call Error: `methods[' + i + ']` must be a string');
-		}
-		from.prototype[m] = function () {
-			var args = Array.prototype.slice.call(arguments);
-			return this[to][m].apply(this[to], args);
-		};
-	});
-}
 
 // https://stackoverflow.com/questions/901115/
 

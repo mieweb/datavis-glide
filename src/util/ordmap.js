@@ -91,6 +91,8 @@ OrdMap.deserialize = function (x) {
 	return result;
 };
 
+OrdMap.fromJSON = OrdMap.deserialize;
+
 // #get {{{2
 
 /**
