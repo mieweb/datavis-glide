@@ -2,6 +2,8 @@
 
 ## Managing Branches
 
+DataVis has (mainly) two branches: `stable` and `master`.  In general, `stable` is what's out there in the wild, and `master` is what's next.  There are also feature branches when necessary, like if it's a really big change or will take a while to finish.
+
 * For bug fixes, commit into the `stable` branch and merge to `master`.
 * For minor new features and refactoring, commit into `master` and merge into `stable` when they're well tested.
 * For major new features, commit to a feature branch, merging from `master` to keep up-to-date.  When done, merge info `master` and delete the feature branch.  Merge from `master` to `stable` when you're ready.
@@ -39,26 +41,29 @@ The number one convention is to avoid making unnecessary diffs.  Follow the styl
 
 ## Pre-Requisites
 
-The DataVis support tooling is written in both JavaScript and Python.  For the latter, I recommend setting up a virtualenv first.  Then you can run the following to get all the required packages.
+The DataVis support tooling is written in both JavaScript and Python.  For the latter, I recommend setting up a virtualenv using the latest stable Python 3 release first.  Then you can run the following to get all the required packages.
 
 ```
+$ git submodule update --init
 $ npm install
 $ pip install -r requirements.txt
-$ git submodule update --init
 ```
 
 ## Compiling
 
 After installing the [Pre-Requisites](#pre-requisites), run `make` to build the JS and CSS files for DataVis.  You can also run `make tests` to (1) build and copy the JS and CSS files to `tests/pages`, and (2) generate the data files needed for testing.  See [Building Test Data](#building-test-data) below.
 
-## Running Local Server
+## Running the Local Server
 
-By running the local HTTP server, you can easily get to the documentation and test pages as you work on the code.  It runs on port 5000 and can be started with `npm run http-server`.  Here are some links for useful stuff, once you get it running:
+By running the local HTTP server, you can easily get to the documentation and test pages as you work on the code.  It runs on port 5000 and can be started with `make serve`.  Here are some links for useful stuff, once you get it running:
 
 - [DataVis JS API Docs](http://localhost:5000/jsdoc/index.html)
 - [DataVis Manual](http://localhost:5000/doc/html/index.html)
 - [Testing Library JS API Docs](http://localhost:5000/tests/jsdoc/index.html)
 - [Grid Test Pages](http://localhost:5000/tests/pages/grid/)
+
+!!! note
+    By default, the local HTTP server uses port 5000 but your computer may already be using that port for something else.  In that case, you'll see a warning in the console, along with what port it used instead; adjust the previously listed URLs accordingly.
 
 ## Testing
 
@@ -78,7 +83,15 @@ In general, the approach for each test suite (i.e. file) is to define a data str
 
 ### Running Tests
 
-Build everything needed for testing with `make tests` (test pages are great examples), and run the automated tests using `make test`.
+Build everything needed for manual testing with `make tests` (the test pages make great examples), and run all automated tests using `make test`.
+
+You can also run individual test files using Mocha directly:
+
+```
+[wcdatavis] $ ./node_modules/mocha/bin/mocha -t 10000 tests/selenium/sort.js
+```
+
+If every test causes a window to pop up and immediately close, resulting in a failed test, then it's likely that your locally installed version of Chrome is out of sync with the `chromedriver` NPM package.  This happens all the time.  Open Chrome and check the version.  If that's more recent than the version of `chromedriver` specified in DataVis' `package.json` then update it to whatever the matching release is from the [chromedriver NPM page](https://www.npmjs.com/package/chromedriver).  Then run `npm install` to get the new `chromedriver` package and try running tests again.
 
 ## Building Documentation
 
