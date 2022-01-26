@@ -459,8 +459,15 @@ jQuery.fn.extend({
 			// | Edge    | None (file always accepted) |
 			// +---------+-----------------------------+
 
-			evt.dataTransfer.dropEffect =
-				getProp(evt.dataTransfer, 'items', 0, 'type') === 'text/csv' ? 'copy' : 'none';
+			switch (getProp(evt.dataTransfer, 'items', 0, 'type')) {
+			case 'text/csv':
+			case 'application/csv':
+			case 'application/vnd.ms-excel':
+				evt.dataTransfer.dropEffect = 'copy';
+				break;
+			default:
+				evt.dataTransfer.dropEffect = 'none';
+			}
 		}
 
 		this.get(0).addEventListener('dragover', handleDragOver, false);
