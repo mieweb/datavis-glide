@@ -5,9 +5,28 @@ EXAMPLE_FILES=$(patsubst dist/%,examples/%,$(DIST_FILES))
 DOC_PUB_PATH=zeus.med-web.com:~/public_html/datavis
 
 .PHONY:	all doc doc-publish doc-clean doc-serve jsdoc mkdocs serve tests test examples clean tags
+.PHONY:	setup teardown npm-setup npm-teardown python-setup python-teardown
 .DEFAULT:	all
 
 all:	$(DIST_FILES)
+
+npm-setup:
+	npm install
+
+npm-teardown:
+	rm -rf node_modules
+
+python-setup:
+	pyenv virtualenv datavis
+	pyenv local datavis
+	pip install -r requirements.txt
+
+python-teardown:
+	-pyenv virtualenv-delete -f datavis
+	-pyenv local --unset
+
+setup:	npm-setup python-setup
+teardown:	npm-teardown python-teardown
 
 dist/wcdatavis.js:	rollup.config.js datavis.js $(SOURCE)
 	npm run rollup
