@@ -37,7 +37,7 @@ describe('Sort', function() {
 			//   * opts: Additional options for comparison.
 			//     - delta: Triggers approximate equality checks using specified allowable delta.
 
-			['string1', 'Erotes', 'zigzagged', 'random dictionary word'],
+			['string1', 'abidal', 'zigzagged', 'random dictionary word'],
 			['int1', '18', '9882', 'integer (number → number)'],
 			['int2', '18', '9882', 'integer (string → number)'],
 			['int3', '18', '9882', 'integer (string → numeral)'],

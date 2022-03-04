@@ -202,16 +202,26 @@ export var getComparisonFn = (function () {
 			: 0;
 	};
 
-	// Strings, numbers, and currency are stored as JavaScript primitives, so using the builtin
-	// operators to compare them is OK.
+	if (Intl && Intl.Collator) {
+		var collator = Intl.Collator(undefined, { usage: 'sort', sensitivity: 'base' });
 
-	cmpFn.string = function (a, b) {
-		if (a == null || b == null) {
-			return a == b ? 0 : a == null ? -1 : 1;
-		}
+		cmpFn.string = function (a, b) {
+			if (a == null || b == null) {
+				return a == b ? 0 : a == null ? -1 : 1;
+			}
 
-		return a < b ? -1 : a > b ? 1 : 0;
-	};
+			return collator.compare(a, b);
+		};
+	}
+	else {
+		cmpFn.string = function (a, b) {
+			if (a == null || b == null) {
+				return a == b ? 0 : a == null ? -1 : 1;
+			}
+
+			return a < b ? -1 : a > b ? 1 : 0;
+		};
+	}
 
 	cmpFn.number = function (a, b) {
 		// We *should* only be comparing numbers with the same representation, but just to be safe we
