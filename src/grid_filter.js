@@ -196,11 +196,13 @@ GridFilter.prototype.getValue = function () {
 GridFilter.prototype.setValue = function (val) {
 	var self = this;
 
-	if (numeral && numeral.isNumeral(val)) {
-		self.input.val(val._value);
-	}
-	else {
-		self.input.val(val);
+	if (['$exists', '$notexists'].indexOf(self.getOperator()) < 0) {
+		if (numeral && numeral.isNumeral(val)) {
+			self.input.val(val._value);
+		}
+		else {
+			self.input.val(val);
+		}
 	}
 };
 
@@ -219,6 +221,7 @@ GridFilter.prototype.setOperator = function (op) {
 
 	if (self.operatorDrop) {
 		self.operatorDrop.val(op);
+		self.operatorDrop.change();
 	}
 };
 
@@ -243,7 +246,20 @@ GridFilter.prototype.makeOperatorDrop = function (include) {
 
 	// These are all the operators that are possible.
 
-	var operators = [['$contains', '∈'], ['$notcontains', '∉'], ['$eq', '='], ['$ne', '≠'], ['$gt', '>'], ['$gte', '≥'], ['$lt', '<'], ['$lte', '≤'], ['$in', 'in'], ['$nin', 'not in']];
+	var operators = [
+		['$contains', '∈'],
+		['$notcontains', '∉'],
+		['$eq', '='],
+		['$ne', '≠'],
+		['$gt', '>'],
+		['$gte', '≥'],
+		['$lt', '<'],
+		['$lte', '≤'],
+		['$in', 'in'],
+		['$nin', 'not in'],
+		['$exists', 'not blank'],
+		['$notexists', 'blank']
+	];
 
 	// Remove anything that user didn't ask for.
 
@@ -268,8 +284,18 @@ GridFilter.prototype.makeOperatorDrop = function (include) {
 	// Hook up the event to update the filter when the operator is changed.
 
 	operatorDrop.on('change', function () {
-		if (self.getValue() !== '') {
-			self.gridFilterSet.update(false);
+		// Hide the input when selecting either the "blank" or "not blank" operator.
+		// Show the input when selecting any other operator.
+
+		if (self.input) {
+			['$exists', '$notexists'].indexOf(self.getOperator()) >= 0
+				? self.input.hide()
+				: self.input.show();
+		}
+
+		// For non-blank operators, only update the filter spec when the input has something in it.
+		if (['$exists', '$notexists'].indexOf(self.getOperator()) >= 0 || self.getValue() !== '') {
+			self.gridFilterSet.update();
 		}
 	});
 
@@ -597,7 +623,7 @@ var NumberTextboxGridFilter = makeSubclass('NumberTextboxGridFilter', GridFilter
 		self.gridFilterSet.update(false);
 	});
 
-	self.operatorDrop = self.makeOperatorDrop(['$eq', '$ne', '$lt', '$lte', '$gt', '$gte']);
+	self.operatorDrop = self.makeOperatorDrop(['$eq', '$ne', '$lt', '$lte', '$gt', '$gte', '$exists', '$notexists']);
 
 	self.div.append(self.operatorDrop);
 	self.div.append(self.input);
@@ -1286,9 +1312,10 @@ GridFilterSet.prototype.update = function () {
 
 	_.each(self.filters.byCol, function (filterList, field) {
 		_.each(filterList, function (filter) {
+			var operator = filter.getOperator();
 			var value = filter.getValue();
 
-			if (value === undefined) {
+			if (value === undefined && ['$exists', '$notexists'].indexOf(operator) < 0) {
 				return;
 			}
 
@@ -1301,9 +1328,13 @@ GridFilterSet.prototype.update = function () {
 				spec[field]['$lte'] = value.end;
 			}
 			else {
-				var operator = filter.getOperator();
-
-				if (spec[field][operator] === undefined) {
+				if (operator === '$exists') {
+					spec[field]['$exists'] = true;
+				}
+				else if (operator === '$notexists') {
+					spec[field]['$notexists'] = true;
+				}
+				else if (spec[field][operator] === undefined) {
 					spec[field][operator] = value;
 				}
 				else if (_.isArray(spec[field][operator])) {

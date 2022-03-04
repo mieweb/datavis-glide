@@ -27,6 +27,7 @@ LIPSUM = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmo
 RANDOMS = {}
 RANDOM_SEED = { 'seed': None }
 LAST = {}
+BLANK_CHANCE = { 'chance': 0 }
 
 def init_random(name=None):
     if name == None:
@@ -142,7 +143,12 @@ def state(name='state'):
     return ret
 
 def random_seed(n):
+    # print('Setting random seed: {}'.format(n), file=sys.stderr)
     RANDOM_SEED['seed'] = n
+
+def blank_chance(c):
+    # print('Setting blank chance: {}'.format(c), file=sys.stderr)
+    BLANK_CHANCE['chance'] = c
 
 def repeat(times, val):
     if isinstance(times, str):
@@ -204,12 +210,15 @@ def process(node):
             'sequence': sequence,
             'lipsum': lipsum,
             'last': last,
-            'RANDOM_SEED': RANDOM_SEED }
+            'RANDOM_SEED': RANDOM_SEED,
+            'BLANK_CHANCE': BLANK_CHANCE }
     r = re.compile(r'\$<\s*(.*?)\s*>\$')
     def recur(node):
         if type(node) is dict:
             for key, val in node.items():
                 if val == None:
+                    # The JSON value is null, so this key is evaluated for side effects.  This is
+                    # used e.g. for random_seed() and blank_chance().
                     match = r.fullmatch(key)
                     if match:
                         eval(match.group(1))
@@ -228,7 +237,12 @@ def process(node):
         elif type(node) is str:
             match = r.fullmatch(node)
             if match:
-                return eval(match.group(1), env)
+                val = eval(match.group(1), env)
+                if BLANK_CHANCE['chance'] > 0:
+                    init_random('__BLANK_CHANCE')
+                    if random_float('__BLANK_CHANCE') < BLANK_CHANCE['chance']:
+                        return None
+                return val
         return node
     return recur(node)
 

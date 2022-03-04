@@ -1945,6 +1945,18 @@ ComputedView.prototype.filter = function (cont) {
 			return pred['$lt'](operand) || pred['$eq'](operand);
 		};
 
+		pred['$exists'] = function (operand) {
+			return operand ? (
+				datum != null && ( isString ? datum !== '' : true )
+			) : (
+				datum == null || ( isString ? datum === '' : false )
+			);
+		};
+
+		pred['$notexists'] = function (operand) {
+			return !pred['$exists'](operand);
+		};
+
 		if (_.isArray(fltr)) {
 			fltr = { '$in': fltr };
 		}
