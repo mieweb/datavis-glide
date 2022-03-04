@@ -35,7 +35,7 @@ describe('Sort', function() {
 			//   * max: Maximum value in that field.
 			//   * info: What the field represents, used for test messages.
 
-			['string1', 'Erotes', 'zigzagged', 'random dictionary word'],
+			['string1', 'abidal', 'zigzagged', 'random dictionary word'],
 			['int1', '18', '9882', 'integer (number → number)'],
 			['int2', '18', '9882', 'integer (string → number)'],
 			['int3', '18', '9882', 'integer (string → numeral)'],

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8"/>
+		<script src="../jquery-latest.js"></script>
+		<script src="../jquery-ui.js"></script>
+		<script src="../blockUI.js"></script>
+		<script src="../contextMenu.js"></script>
+		<script src="../sumoselect.js"></script>
+		<script src="../flatpickr.js"></script>
+		<script src="../wcdatavis.js"></script>
+		<link rel="stylesheet" href="../font-awesome.css"/>
+		<link rel="stylesheet" href="../jquery-ui.css"/>
+		<link rel="stylesheet" href="../contextMenu.css"/>
+		<link rel="stylesheet" href="../sumoselect.css"/>
+		<link rel="stylesheet" href="../flatpickr.css"/>
+		<link rel="stylesheet" href="../base.css"/>
+		<link rel="stylesheet" href="../wcdatavis.css"/>
+		<script>
+$(document).ready(function () {
+	MIE.DEBUGGING = true;
+
+	var source = new MIE.WC_DataVis.Source({
+		type: 'http',
+		url: '../case-insensitive.json'
+	});
+	var computedView = new MIE.WC_DataVis.ComputedView(source);
+	new MIE.WC_DataVis.Grid({
+		id: 'grid',
+		computedView: computedView,
+	}, {
+		title: 'Test - Grid - Case-Insensitive Sorting',
+		showControls: true
+	});
+});
+		</script>
+	</head>
+	<body>
+		<div id="grid"></div>
+	</body>
+</html>

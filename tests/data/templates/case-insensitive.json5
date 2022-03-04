@@ -1,0 +1,15 @@
+{
+  data: [
+    ['aaaa'],
+    ['AAAA'],
+    ['bbbb'],
+    ['BBBB'],
+    ['CCCC'],
+    ['cccc'],
+    ['DDDD'],
+    ['dddd'],
+  ],
+  typeInfo: [
+    { field: 'string', type: 'string' },
+  ]
+}
