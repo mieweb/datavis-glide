@@ -205,7 +205,7 @@ describe('Aggregate', function() {
 		}, {
 			fun: 'min',
 			tests: [
-				{ fields: ['string1'], results: ['Hasinai', 'apiarists', 'Erotes', 'Karlsbad', 'Hydrachna', 'U', 'Leontina', 'biali', 'malpighian'] },
+				{ fields: ['string1'], results: ['Hasinai', 'apiarists', 'embracer', 'backtracker', 'bordrag', 'agitated', 'abidal', 'biali', 'malpighian'] },
 				{ fields: ['int1'], results: intMins, resultType: 'number' },
 				{ fields: ['int2'], results: intMins, resultType: 'number' },
 				{ fields: ['int3'], results: intMins, resultType: 'number' },
@@ -231,7 +231,7 @@ describe('Aggregate', function() {
 		}, {
 			fun: 'max',
 			tests: [
-				{ fields: ['string1'], results: ['well-enacted', 'zigzagged', 'uneligibility', 'wegotism', 'yellow-tailed', 'unwarier', 'solifidian', 'wolfskin', 'malpighian'] },
+				{ fields: ['string1'], results: ['well-enacted', 'zigzagged', 'Wilsall', 'wegotism', 'yellow-tailed', 'unwarier', 'solifidian', 'wolfskin', 'malpighian'] },
 				{ fields: ['int1'], results: intMaxs, resultType: 'number' },
 				{ fields: ['int2'], results: intMaxs, resultType: 'number' },
 				{ fields: ['int3'], results: intMaxs, resultType: 'number' },
