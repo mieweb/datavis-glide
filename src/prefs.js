@@ -752,7 +752,6 @@ Prefs.prototype.addPerspective = function (id, name, config, perspectiveOpts, co
 		self.save();
 		if (config == null) {
 			config = deepCopy(self.currentPerspective.config);
-			needToLoad = false; // Don't need to load, because this is the current config.
 		}
 		return addPerspective();
 	}
