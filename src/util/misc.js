@@ -3918,24 +3918,27 @@ export function validateColConfig(colConfig, data) {
 		throw new Error('Call Error: `colConfig` must be an OrdMap instance');
 	}
 
-	if (data != null) {
-		if ((data.isPivot && (data.data.length === 0 || data.data[0].length === 0 || data.data[0][0].length === 0))
-			|| (!data.isPivot && data.isGroup && (data.data.length === 0 || data.data[0].length === 0))
-			|| (data.isPlain && (data.data.length === 0))) {
-			log.warn('Unable to check column configuration using data with no rows');
+	if (data == null) {
+		log.warn('Unable to validate column configuration without data');
+		return false;
+	}
+
+	if (!data.isPlain) {
+		log.info('Can only validate column config for plain output');
+		return false;
+	}
+
+	if (data.data.length === 0) {
+		log.info('Unable to validate column configuration using data with no rows');
+		return false;
+	}
+
+	colConfig.each(function (fcc, field) {
+		if (data.data[0].rowData[field] === undefined) {
+			log.warn('Column configuration refers to field "' + field + '" which does not exist in the data');
 			return false;
 		}
-		else {
-			colConfig.each(function (fcc, field) {
-				if ((data.isPivot && data.data[0][0][0].rowData[field] === undefined)
-						|| (!data.isPivot && data.isGroup && data.data[0][0].rowData[field] === undefined)
-						|| (data.isPlain && data.data[0].rowData[field] === undefined)) {
-					log.warn('Column configuration refers to field "' + field + '" which does not exist in the data');
-					return false;
-				}
-			});
-		}
-	}
+	});
 
 	return true;
 }
