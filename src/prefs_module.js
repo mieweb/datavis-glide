@@ -146,53 +146,48 @@ PrefsModuleComputedView.prototype.load = function (config) {
 		return;
 	}
 
-	if (config.filter == null) {
-		self.target.clearFilter({
-			updateData: false,
-			savePrefs: false
-		});
-	}
-	else {
+	if (config.filter != null) {
 		self.target.setFilter(config.filter, null, {
 			updateData: false,
 			savePrefs: false
 		});
 	}
 
-	if (config.sort == null) {
-		self.target.clearSort({
-			updateData: false,
-			savePrefs: false
-		});
-	}
-	else {
-		self.target.setSort(config.sort, {
-			updateData: false,
-			savePrefs: false
-		});
-	}
-
-	if (config.group == null) {
-		self.target.clearGroup({
-			updateData: false,
-			savePrefs: false
-		});
-	}
-	else {
+	if (config.group != null) {
 		self.target.setGroup(config.group, {
 			updateData: false,
 			savePrefs: false
 		});
 	}
 
-	if (config.pivot == null) {
-		self.target.clearPivot({
+	if (config.pivot != null) {
+		self.target.setPivot(config.pivot, {
 			updateData: false,
 			savePrefs: false
 		});
 	}
-	else {
-		self.target.setPivot(config.pivot, {
+
+	if (config.aggregate != null) {
+		self.target.setAggregate(config.aggregate, {
+			updateData: false,
+			savePrefs: false
+		});
+	}
+
+	if (config.sort != null) {
+		self.target.setSort(config.sort, {
+			updateData: false,
+			savePrefs: false
+		});
+	}
+
+	// For clearing items, go in reverse order.  This is because some of these validate their
+	// configuration based on pre-requisites.  For example: you're not allowed to pivot without
+	// grouping, so if you are loading a perspective that clears both, you need to clear the pivot
+	// before clearing the group, or you'll trigger the "pivot w/o group" warning.
+
+	if (config.sort == null) {
+		self.target.clearSort({
 			updateData: false,
 			savePrefs: false
 		});
@@ -204,8 +199,23 @@ PrefsModuleComputedView.prototype.load = function (config) {
 			savePrefs: false
 		});
 	}
-	else {
-		self.target.setAggregate(config.aggregate, {
+
+	if (config.pivot == null) {
+		self.target.clearPivot({
+			updateData: false,
+			savePrefs: false
+		});
+	}
+
+	if (config.group == null) {
+		self.target.clearGroup({
+			updateData: false,
+			savePrefs: false
+		});
+	}
+
+	if (config.filter == null) {
+		self.target.clearFilter({
 			updateData: false,
 			savePrefs: false
 		});
