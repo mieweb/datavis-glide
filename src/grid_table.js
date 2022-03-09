@@ -1292,6 +1292,8 @@ GridTable.prototype.draw = function (root, opts, cont) {
 			return cont();
 		}
 
+		self.timing.start(['Grid Table', 'Draw']);
+
 		// Configuration for floating header feature.
 
 		if (!self.features.floatingHeader || self.defn.table.floatingHeader.method !== 'tabletool') {
