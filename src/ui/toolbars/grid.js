@@ -59,6 +59,15 @@ var PlainToolbar = makeSubclass('PlainToolbar', ToolbarSection, function (grid) 
 		.appendTo(grid.ui.limit_div)
 	;
 
+	jQuery('<button>', {'type': 'button'})
+		.on('click', function (evt) {
+			grid.view.unlimit();
+			grid.refresh();
+		})
+		.text('Fetch All Results')
+		.appendTo(grid.ui.root)
+	;
+
 	self.ui.columnConfig = jQuery('<button>', {
 		'type': 'button'
 	})

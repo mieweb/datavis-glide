@@ -70,6 +70,16 @@ var LocalSource = makeSubclass('LocalSource', Object, function (spec) {
 	}
 });
 
+// #unlimit {{{2
+
+Source.prototype.unlimit = function () {
+	var self = this;
+
+	if (typeof self.origin.unlimit === 'function') {
+		return self.origin.unlimit();
+	}
+};
+
 // #getData {{{2
 
 LocalSource.prototype.getData = function (params, cont) {

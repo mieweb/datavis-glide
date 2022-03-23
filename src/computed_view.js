@@ -778,6 +778,13 @@ mixinNameSetting(ComputedView);
  * @event ComputedView#invalidAggregate
  */
 
+// #unlimit {{{2
+
+ComputedView.prototype.unlimit = function () {
+	var self = this;
+	this.source.unlimit();
+};
+
 // #toString {{{2
 
 ComputedView.prototype.toString = function () {
