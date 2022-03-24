@@ -3004,23 +3004,12 @@ GridTablePlain.prototype.makeRowReorderBtn = function () {
 
 GridTablePlain.prototype.updateFeatures = function (f) {
 	var self = this;
-	var getTheData = false;
 
 	_.each(f, function (v, k) {
-		if (k == "nolimitfetch" && !self.features[k] && v) {
-			getTheData = true;
-		}
 		self.features[k] = v;
 	});
 
-	if (getTheData) {
-		self.view.getData(undefined, function() {
-			self.draw(self.root);
-		});
-	}
-	else {
-		self.draw(self.root);
-	}
+	self.draw(self.root);
 };
 
 // #addWorkHandler {{{2
