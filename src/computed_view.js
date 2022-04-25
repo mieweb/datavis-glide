@@ -1273,7 +1273,7 @@ ComputedView.prototype.sort = function (cont) {
 		var rvi, cvi, gfi;
 
 		if (spec == null) {
-			return next(false);
+			return next(true);
 		}
 
 		spec = deepCopy(spec);
@@ -1678,25 +1678,36 @@ ComputedView.prototype.sort = function (cont) {
 
 
 
-	self.fire('sortBegin');
-	self.timing.start(timingEvt);
+	var start = function () {
+		self.fire('sortBegin');
+		self.timing.start(timingEvt);
 
-	if (self.sortProgress
-			&& typeof self.sortProgress.begin === 'function') {
-		self.sortProgress.begin();
-	}
+		if (self.sortProgress
+				&& typeof self.sortProgress.begin === 'function') {
+			self.sortProgress.begin();
+		}
+	};
 
+	var end = function (ok) {
+		if (self.sortProgress
+				&& typeof self.sortProgress.end === 'function') {
+			self.sortProgress.end();
+		}
+
+		self.timing.stop(timingEvt);
+		self.fire('sortEnd');
+
+		return cont(ok);
+	};
+
+	start();
 	performSort('horizontal', function (didHorizontal) {
+		if (!didHorizontal) {
+			return end(false);
+		}
+
 		performSort('vertical', function (didVertical) {
-			if (self.sortProgress
-					&& typeof self.sortProgress.end === 'function') {
-				self.sortProgress.end();
-			}
-
-			self.timing.stop(timingEvt);
-			self.fire('sortEnd');
-
-			return cont(didHorizontal || didVertical);
+			return end(didVertical);
 		});
 	});
 };
