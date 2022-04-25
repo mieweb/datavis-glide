@@ -2572,8 +2572,26 @@ View.prototype.setPivot = function (spec, opts) {
 		}, spec);
 	}
 
-	if (isDifferent && self.prefs != null && opts.savePrefs) {
-		self.prefs.save();
+	if (isDifferent) {
+		// If we've removed the pivot completely, make sure that we also get rid of any horizontal
+		// sorting, since that can't be done without pivotting.
+
+		if (self.pivotSpec == null || self.pivotSpec.fieldNames.length === 0) {
+			var sortSpec = self.getSort();
+			if (sortSpec.horizontal != null) {
+				delete sortSpec.horizontal;
+
+				// Don't update data when removing the horizontal sort because we're already in the middle
+				// of a possibly-data-updating operation.
+
+				log.warn('VIEW (' + self.name + ') // SET PIVOT', 'Removing horizontal sort configuration since pivot was cleared');
+				self.setSort(sortSpec, { updateData: false });
+			}
+		}
+
+		if (self.prefs != null && opts.savePrefs) {
+			self.prefs.save();
+		}
 	}
 
 	self.clearCache();
