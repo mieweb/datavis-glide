@@ -660,7 +660,7 @@ ValuesAggregate.prototype.calculateDone = function (acc) {
 			// FIXME: Subsequent calls to #calculate() from a different instance of ValuesAggregate can
 			// change the elements of acc and therefore wrapper.  I cannot figure out why, so cloning the
 			// element will have to do for now.
-			wrapper.append(isElement(elt) ? elt.clone() : elt);
+			wrapper.append(isElement(elt) ? jQuery(elt).clone() : elt);
 		});
 		return wrapper;
 	}

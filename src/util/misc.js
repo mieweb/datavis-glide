@@ -4,6 +4,7 @@ import moment from 'moment';
 import _ from 'underscore';
 import sprintf from 'sprintf-js';
 import jQuery from 'jquery';
+import JSONFormatter from 'json-formatter-js';
 
 import OrdMap from './ordmap.js';
 import Lock from './lock.js';
@@ -541,6 +542,12 @@ export var stringValueType = (function () {
 		}
 		else if (re_datetime.test(s)) {
 			return 'datetime';
+		}
+		else if (s.startsWith('{') && s.endsWith('}')) {
+			return 'json';
+		}
+		else if (s.startsWith('[') && s.endsWith(']')) {
+			return 'json';
 		}
 		else if (typeof s === 'string' && s.charAt(0) === '$') {
 			guess = p(s.substring(1));
@@ -3004,6 +3011,19 @@ export function convert(cell, fti) {
 			return error('unsupported value type');
 		}
 		break;
+	case 'json':
+		if (typeof cell.value === 'string') {
+			try {
+				cell.value = JSON.parse(cell.value);
+			}
+			catch (e) {
+				// Do nothing - leave `cell.value` the way it was.
+			}
+		}
+		else {
+			return error('unsupported value type');
+		}
+		break;
 	case 'string':
 		if (typeof cell.value === 'string') {
 			// Nothing to do.
@@ -3437,6 +3457,14 @@ export function format(fcc, fti, cell, opts) {
 				result = (t === 'currency' ? format.currencySymbol : '') + result;
 			}
 
+			break;
+		case 'json':
+			if (typeof cell.value === 'string') {
+				result = cell.value;
+			}
+			else {
+				result = new JSONFormatter(cell.value, 0).render();
+			}
 			break;
 		case 'string':
 			result = cell.value;
@@ -4177,6 +4205,28 @@ if (!String.prototype.repeat) {
     str += str.substring(0, str.length * count - str.length);
     return str;
   }
+}
+
+// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/startsWith
+
+if (!String.prototype.startsWith) {
+    Object.defineProperty(String.prototype, 'startsWith', {
+        value: function(search, rawPos) {
+            var pos = rawPos > 0 ? rawPos|0 : 0;
+            return this.substring(pos, pos + search.length) === search;
+        }
+    });
+}
+
+// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/endsWith
+
+if (!String.prototype.endsWith) {
+  String.prototype.endsWith = function(search, this_len) {
+    if (this_len === undefined || this_len > this.length) {
+      this_len = this.length;
+    }
+    return this.substring(this_len - search.length, this_len) === search;
+  };
 }
 
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/isNaN

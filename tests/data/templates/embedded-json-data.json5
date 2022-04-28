@@ -1,0 +1,37 @@
+{
+  "data": [{
+		"Valid JSON (Explicit)"    : "{\u0022first_name\u0022: \u0022Taylor\u0022, \u0022last_name\u0022: \u0022Venable\u0022, \u0022email\u0022: \u0022tvenable@mieweb.com\u0022}",
+		"Valid JSON (Guessed)"     : "{\u0022first_name\u0022: \u0022Taylor\u0022, \u0022last_name\u0022: \u0022Venable\u0022, \u0022email\u0022: \u0022tvenable@mieweb.com\u0022}",
+		"Invalid Object (Explicit)": "{invalid}",
+		"Invalid Object (Guessed)" : "{invalid}",
+		"Invalid Array (Explicit)" : "[invalid]",
+		"Invalid Array (Guessed)"  : "[invalid]",
+		"Empty Object (Explicit)"  : "{}",
+		"Empty Object (Guessed)"   : "{}",
+		"Empty Array (Explicit)"   : "[]",
+		"Empty Array (Guessed)"    : "[]"
+	}, {
+		"Valid JSON (Explicit)"    : "{\u0022first_name\u0022: \u0022Aaron\u0022, \u0022last_name\u0022: \u0022Diers\u0022, \u0022email\u0022: \u0022adiers@mieweb.com\u0022}",
+		"Valid JSON (Guessed)"     : "{\u0022first_name\u0022: \u0022Aaron\u0022, \u0022last_name\u0022: \u0022Diers\u0022, \u0022email\u0022: \u0022adiers@mieweb.com\u0022}",
+		"Invalid Object (Explicit)": "{invalid}",
+		"Invalid Object (Guessed)" : "{invalid}",
+		"Invalid Array (Explicit)" : "[invalid]",
+		"Invalid Array (Guessed)"  : "[invalid]",
+		"Empty Object (Explicit)"  : "{}",
+		"Empty Object (Guessed)"   : "{}",
+		"Empty Array (Explicit)"   : "[]",
+		"Empty Array (Guessed)"    : "[]"
+	}],
+  "typeInfo": [
+		{ "field": "Valid JSON (Explicit)"     , "type": "json"   },
+		{ "field": "Valid JSON (Guessed)"      , "type": "string" },
+		{ "field": "Invalid Object (Explicit)" , "type": "json"   },
+		{ "field": "Invalid Object (Guessed)"  , "type": "string" },
+		{ "field": "Invalid Array (Explicit)"  , "type": "json"   },
+		{ "field": "Invalid Array (Guessed)"   , "type": "string" },
+		{ "field": "Empty Object (Explicit)"   , "type": "json"   },
+		{ "field": "Empty Object (Guessed)"    , "type": "string" },
+		{ "field": "Empty Array (Explicit)"    , "type": "json"   },
+		{ "field": "Empty Array (Guessed)"     , "type": "string" }
+  ]
+}
