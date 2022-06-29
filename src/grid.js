@@ -1317,7 +1317,7 @@ Grid.prototype._updateRowCount = function (info, ops) {
 
 	self.ui.rowCount.text(text.join(', '));
 
-	if (self.view.source.origin.isLimited && !document.getElementById(self.id + '_isLimitedNotice')) {
+	if (self.view.source.origin.isLimited && !document.getElementById(self.id + '_isLimitedNotice') && info.numRows == self.view.source.origin.opts.autoLimit) {
 		jQuery('<span>', {
 			'id': self.id + '_isLimitedNotice',
 			'style': 'color:red; font-weight:bold; margin-left:50px',
