@@ -1426,7 +1426,8 @@ Grid.prototype._updateRowCount = function (info, ops) {
 
 	self.ui.rowCount.text(text.join(', '));
 
-	if (self.view.source.origin.isLimited && !document.getElementById(self.id + '_isLimitedNotice')) {
+	if (self.view.source.origin.isLimited && !document.getElementById(self.id + '_isLimitedNotice') && info.numRows == self.view.source.origin.opts.autoLimit) {
+		self.ui.groupControl.hide();
 		jQuery('<span>', {
 			'id': self.id + '_isLimitedNotice',
 			'style': 'color:red; font-weight:bold; margin-left:50px',
@@ -1435,6 +1436,7 @@ Grid.prototype._updateRowCount = function (info, ops) {
 		.on('click', function () {
 			self.view.unlimit();
 			self.refresh();
+			self.ui.groupControl.show();
 		})
 		.appendTo(self.ui.rowCount);
 	}

@@ -715,7 +715,7 @@ Source.prototype.getData = function (cont) {
 
 	self.locks.getData.lock();
 	self.fire('fetchDataBegin', {async: true});
-	return self.origin.getData(self.createParams(), function (ok, data, partial_result) {
+	return self.origin.getData(self.createParams(), function (ok, data) {
 		if (!ok) {
 			self.locks.getData.unlock();
 			self.fire('fetchDataEnd', {async: true});
