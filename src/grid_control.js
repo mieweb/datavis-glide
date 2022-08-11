@@ -1190,7 +1190,7 @@ GroupControl.prototype.draw = function (parent) {
 
 	self.addViewConfigChangeHandler('groupSet', function () {
 		var spec = self.view.getGroup();
-		var fields = (spec && spec.fieldNames) || [];
+		var fields = (!self.view.source.origin.isLimited && spec && spec.fieldNames) || [];
 		self.clear({ updateView: false });
 		debug.info('GRID // GROUP CONTROL',
 			'View set group fields to: ' + JSON.stringify(fields));
@@ -1364,7 +1364,7 @@ PivotControl.prototype.draw = function (parent) {
 
 	self.addViewConfigChangeHandler('pivotSet', function (spec) {
 		spec = self.view.getPivot();
-		var fields = (spec && spec.fieldNames) || [];
+		var fields = (!self.view.source.origin.isLimited && spec && spec.fieldNames) || [];
 		self.clear({ updateView: false });
 		debug.info('GRID // PIVOT CONTROL',
 			'View set pivot fields to: ' + JSON.stringify(fields));
