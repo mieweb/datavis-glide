@@ -2771,7 +2771,7 @@ ComputedView.prototype.setPivot = function (spec, opts) {
 
 		if (self.pivotSpec == null || self.pivotSpec.fieldNames.length === 0) {
 			var sortSpec = self.getSort();
-			if (sortSpec.horizontal != null) {
+			if (sortSpec != null && sortSpec.horizontal != null) {
 				delete sortSpec.horizontal;
 
 				// Don't update data when removing the horizontal sort because we're already in the middle
