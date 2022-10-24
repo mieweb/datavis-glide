@@ -400,6 +400,91 @@ FileSource.prototype.getTypeInfo = function (cont) {
 	return cont(true, self.cache.typeInfo);
 };
 
+// TableSource {{{1
+
+// Constructor {{{2
+
+var TableSource = makeSubclass('TableSource', Object, function (spec, userTypeInfo, source) {
+	var self = this;
+
+	self.spec = spec;
+	self.userTypeInfo = userTypeInfo;
+	self.source = source;
+
+	self.cache = {};
+});
+
+// #getData {{{2
+
+TableSource.prototype.getData = function (params, cont) {
+	var self = this;
+
+	if (self.cache.data != null) {
+		return self.cache.data;
+	}
+
+	var getText = function (selector) {
+		return jQuery(selector).map(function (i, x) {
+			return jQuery(x).text();
+		});
+	};
+
+	var tableSelector = self.spec.tableSelector || ''
+		, columnSelector = self.spec.columnSelector || 'div[id="lv_' + self.source.table.id + '_span"] table tbody:eq(0) tr th a font'
+		, dataSelector = self.spec.dataSelector || 'div[id="lv_' + self.source.table.id + '_span"] table tbody:eq(1) tr td font'
+		, columns = getText(columnSelector)
+		, data = getText(dataSelector)
+		, row
+		, col
+		, newData = []
+		, newObj;
+
+	// The data we got from the table is in this format: [1A, 1B, 1C, 2A, 2B, 2C ...]
+	// We want it to be in this format: [{1A, 1B, 1C}, {2A, 2B, 2C}, ...]
+	// The following code does that conversion.
+	for (row = 0; row < data.length / columns.length; row += 1) {
+		newObj = {};
+		for (col = 0; col < columns.length; col += 1) {
+			newObj[columns[col]] = data[row * columns.length + col];
+		}
+		newData.push(newObj);
+	}
+
+	self.cache.data = newData;
+
+	return cont(true, self.cache.data);
+}
+
+// #getTypeInfo {{{2
+
+TableSource.prototype.getTypeInfo = function (cont) {
+	var self = this;
+
+	if (self.cache.typeInfo != null) {
+		return self.cache.typeInfo;
+	}
+
+	var getText = function (selector) {
+		return jQuery(selector).map(function (i, x) {
+			return jQuery(x).text();
+		});
+	};
+
+	var columnSelector = self.spec.columnSelector || 'div[id="lv_' + self.source.table.id + '_span"] table tbody:eq(0) tr th a font'
+		, columns = getText(columnSelector)
+		, newTypeInfo = new OrdMap();
+
+	_.each(columns, function (field) {
+		newTypeInfo.set(field, {
+			'type': 'string'
+		});
+	});
+
+	self.cache.typeInfo = newTypeInfo;
+
+	return cont(true, self.cache.typeInfo);
+}
+
 // Source {{{1
 
 // JSDoc Typedefs {{{2
@@ -663,7 +748,8 @@ mixinNameSetting(Source);
 Source.sources = {
 	local: LocalSource,
 	http: HttpSource,
-	file: FileSource
+	file: FileSource,
+	table: TableSource
 };
 
 // .converters {{{2
