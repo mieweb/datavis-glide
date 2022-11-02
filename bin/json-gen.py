@@ -226,14 +226,21 @@ def process(node):
                         return recur(node)
                 node[key] = recur(val)
         elif type(node) is list:
-            if len(node) == 2 and type(node[0]) is str:
-                match = r.fullmatch(node[0])
-                if match:
-                    env['ARGS'] = args.args
-                    env['VALUE'] = node[1]
-                    return eval(match.group(1), env)
-            for index, elt in enumerate(node):
-                node[index] = recur(elt)
+            index = 0
+            while index < len(node):
+                if index+1 < len(node) and type(node[index]) is str and type(node[index+1]) is dict:
+                    # We're probably looking at:
+                    #   [ "$< repeat(X, Y) >$", { ... }, ... ]
+                    match = r.fullmatch(node[index])
+                    if match:
+                        env['ARGS'] = args.args
+                        env['VALUE'] = node[index+1]
+                        node[index:index+2] = eval(match.group(1), env)
+                    else:
+                        node[index] = recur(node[index])
+                else:
+                    node[index] = recur(node[index])
+                index += 1
         elif type(node) is str:
             match = r.fullmatch(node)
             if match:
