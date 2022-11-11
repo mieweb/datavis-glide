@@ -27,6 +27,8 @@ python-teardown:
 	-pyenv local --unset
 
 setup:	npm-setup python-setup
+	git submodule update --init
+
 teardown:	npm-teardown python-teardown
 
 dist/wcdatavis.js:	rollup.config.js datavis.js third-party/json-formatter.esm.js $(SOURCE)
