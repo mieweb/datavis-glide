@@ -897,16 +897,28 @@ DateRangeGridFilter.prototype.getValue = function () {
 		};
 
 		if (self.typeInfo.internalType === 'string') {
-			result = _.mapObject(result, function (m) {
-				return m.format('YYYY-MM-DD HH:mm:ss')
-			});
+			if (self.typeInfo.type === 'date') {
+				result = _.mapObject(result, function (m) {
+					return m.format('YYYY-MM-DD')
+				});
+			}
+			else if (self.typeInfo.type === 'datetime') {
+				result = _.mapObject(result, function (m) {
+					return m.format('YYYY-MM-DD HH:mm:ss')
+				});
+			}
 		}
 	}
 	else {
 		result = moment(self.selectedDates[0]);
 
 		if (self.typeInfo.internalType === 'string') {
-			result = result.format('YYYY-MM-DD HH:mm:ss');
+			if (self.typeInfo.type === 'date') {
+				result = result.format('YYYY-MM-DD');
+			}
+			else if (self.typeInfo.type === 'datetime') {
+				result = result.format('YYYY-MM-DD HH:mm:ss');
+			}
 		}
 	}
 
