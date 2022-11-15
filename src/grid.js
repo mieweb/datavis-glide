@@ -41,6 +41,7 @@ import { GridRenderer } from './grid_renderer.js';
 import './grid_table.js';
 import './renderers/grid/handlebars.js';
 import { ColConfigWin } from './ui/windows/col_config.js';
+import { DebugWin } from './ui/windows/debug.js';
 import { HandlebarsEditor } from './ui/handlebars.js';
 import {
 	ComputedViewToolbar,
@@ -449,6 +450,7 @@ var Grid = makeSubclass('Grid', Object, function (defn, opts, cb) {
 	self.timing = new Timing();
 
 	self.colConfigWin = new ColConfigWin(self);
+	self.debugWin = new DebugWin();
 
 	self.defn = self._normalize(defn); // Definition used to retrieve data and output grid.
 	self.opts = opts; // Other tag options, not related to the grid.
@@ -1075,6 +1077,23 @@ Grid.prototype._addTitleWidgets = function (titlebar, doingServerFilter, runImme
 	self.ui.titlebar_controls = jQuery('<div>')
 		.addClass('wcdv_titlebar_controls pull-right')
 		.appendTo(titlebar);
+
+	// Create the Debug Info button.
+
+	if (window.MIE && window.MIE.DEBUGGING) {
+		jQuery('<button>', {
+			'type': 'button',
+			'style': 'font-size: 18px',
+			'class': 'wcdv_icon_button wcdv_text-primary'
+		})
+			.attr('title', trans('SHOW_DEBUG'))
+			.click(function (evt) {
+				evt.stopPropagation();
+				self.debugWin.show(self, self.view, self.view.source);
+			})
+			.append(fontAwesome('fa-bug'))
+			.appendTo(self.ui.titlebar_controls);
+	}
 
 	// Create the Export button
 

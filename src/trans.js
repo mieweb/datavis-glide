@@ -1,6 +1,7 @@
 var transTbl = {
 	'en-US': {
 		'SHOWHIDE': 'Show/Hide',
+		'SHOW_DEBUG': 'Show Debug Info',
 		'SHOWHIDEOPTS': 'Show/Hide Options'
 	}
 };
