@@ -1,3 +1,7 @@
+import _ from 'underscore';
+import jQuery from 'jquery';
+import JSONFormatter from '../../third-party/json-formatter.esm.js';
+
 import { deepCopy } from './misc.js';
 
 // OrdMap {{{1
@@ -257,6 +261,25 @@ OrdMap.prototype.toString = function () {
 
 OrdMap.prototype.asMap = function () {
 	return this._map;
+};
+
+// #asHtmlDefnList {{{2
+
+OrdMap.prototype.asHtmlDefnList = function () {
+	var dl = jQuery('<dl>');
+	this.each(function (v, k) {
+		dl.append(jQuery('<dt>').text(k));
+		if (v instanceof jQuery || v instanceof Element) {
+			dl.append(jQuery('<dd>').append(v));
+		}
+		else if (_.isObject(v)) {
+			dl.append(jQuery('<dd>').append(new JSONFormatter(v, 0).render()));
+		}
+		else {
+			dl.append(jQuery('<dd>').text(v));
+		}
+	});
+	return dl;
 };
 
 // #serialize / #toJSON {{{2
