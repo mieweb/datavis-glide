@@ -1758,6 +1758,7 @@ var FilterControl = makeSubclass('FilterControl', GridControl, function () {
 	});
 }, {
 	isReorderable: false,
+	disableUsedItems: true,
 	controlFieldCtor: FilterControlField,
 	controlType: 'Filter'
 });
