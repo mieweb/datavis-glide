@@ -16,7 +16,7 @@ pages:
 	cp data/*.xml pages
 	cp data/third-party/*.csv pages
 
-doc:
+jsdoc:
 	$(JSDOC) -p -c jsdoc_conf.json lib
 	@printf '\033[32;1mRun `make doc-publish` to publish documentation to $(PUB_PATH)\033[0m\n'
 

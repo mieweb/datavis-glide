@@ -5,7 +5,9 @@ EXAMPLE_FILES=$(patsubst dist/%,examples/%,$(DIST_FILES))
 PUB_PATH=zeus.med-web.com:~/public_html/datavis
 
 .PHONY:	all doc doc-publish doc-clean doc-serve jsdoc mkdocs serve tests test examples dist-clean clean tags
-.PHONY:	setup teardown npm-setup npm-teardown python-setup python-teardown publish tests-publish
+.PHONY:	setup teardown npm-setup npm-teardown python-setup python-teardown jsdoc-setup jsdoc-teardown
+.PHONY: publish tests-publish
+
 .DEFAULT:	all
 
 all:	$(DIST_FILES)

@@ -1,6 +1,5 @@
 /**
  * Contains classes and methods for directly interacting with a DataVis grid on a page.
- * @module grid
  */
 
 const _ = require('lodash');
@@ -258,6 +257,17 @@ class Grid {
 
 	// Sorting {{{2
 
+	/**
+	 * Sort by a column.
+	 *
+	 * @param {string} column
+	 * Name of the column to sort by.
+	 *
+	 * @param {string} ordering
+	 * The item in the sort menu to click.  For example, when sorting by "Grade" you can say `Grade,
+	 * Ascending` because that's the menu item you'd click.
+	 */
+
 	async sortBy(column, ordering) {
 		const start = new Date();
 		const header = await this.driver.findElement(By.xpath(`//span[@data-wcdv-field="${column}"]/../div`)).click();
@@ -294,6 +304,12 @@ class Grid {
 
 	// #getGroup {{{3
 
+	/**
+	 * Get the current group configuration.
+	 *
+	 * @returns {string[]} List of columns that we've grouped by.
+	 */
+
 	async getGroup() {
 		const li = await this.driver.findElements(By.css('div.wcdv_group_control > div > ul > li[data-wcdv-field] > div.wcdv_field > span:first-of-type'));
 		return Promise.all(_.map(li, (elt) => elt.getText()));
@@ -305,6 +321,19 @@ class Grid {
 	}
 
 	// #addGroup {{{3
+
+	/**
+	 * Add a grouping.
+	 *
+	 * @param {string} field
+	 * The field (not column!) to add grouping by.
+	 *
+	 * @param {string} [groupFun]
+	 * Name of the group function to apply.  Using this means waiting for the group function jQuery UI
+	 * window to pop up, then selecting it.  You have to know whether or not the window will pop up
+	 * when adding the group: if it does, you must provide a value for this, otherwise you must not.
+	 * In short, if you're grouping by a date/time, provide a value for this parameter.
+	 */
 
 	async addGroup(field, groupFun) {
 		const control = this.driver.findElement(By.css('div.wcdv_group_control'));
@@ -332,8 +361,15 @@ class Grid {
 
 	// #removeGroup {{{3
 
-	async removeGroup(field) {
-		const groupFields = asyncFilter(this.driver.findElements(By.css('div.wcdv_group_control > div > ul > li[data-wcdv-field]')), async (li) => await li.getText() === field);
+	/**
+	 * Remove a grouping.
+	 *
+	 * @param {string} column
+	 * Name of the column to remove.
+	 */
+
+	async removeGroup(column) {
+		const groupFields = asyncFilter(this.driver.findElements(By.css('div.wcdv_group_control > div > ul > li[data-wcdv-field]')), async (li) => await li.getText() === column);
 
 		if (groupFields.length !== 1) {
 			throw new Error('grr');
@@ -344,11 +380,25 @@ class Grid {
 
 	// #clearGroup {{{3
 
+	/**
+	 * Clear all grouping.
+	 */
+
 	async clearGroup() {
 		return this.driver.findElement(By.css('div.wcdv_group_control .wcdv_control_clear_button')).click();
 	}
 
 	// #setGroupFun {{{3
+
+	/**
+	 * Set the group function on a field that's part of a group.
+	 *
+	 * @param {string} field
+	 * Name of the field to set the group function on.
+	 *
+	 * @param {string} groupFunName
+	 * The group function to set.
+	 */
 
 	async setGroupFun(field, groupFunName) {
 		const groupField = this.driver.findElement(By.css(`div.wcdv_group_control > div > ul > li[data-wcdv-field="${field}"]`));
@@ -424,6 +474,17 @@ class Grid {
 	}
 
 	// #expandGroup {{{3
+
+	/**
+	 * Expand the grouping given by the specified path.
+	 *
+	 * @param {string[]} path
+	 * The path to expand.  Example: when grouping by "Country" then "Fruit", use:
+	 *
+	 * ```
+	 * grid.expandGroup("England", "Strawberry")
+	 * ```
+	 */
 	
 	async expandGroup(...path) {
 		return this.forEachGroup(async (elt) => {
