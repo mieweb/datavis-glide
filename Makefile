@@ -41,15 +41,11 @@ setup:	npm-setup python-setup
 
 teardown:	npm-teardown python-teardown jsdoc-teardown
 
-dist/wcdatavis.js:	rollup.config.js datavis.js third-party/json-formatter.esm.js $(SOURCE)
+dist/wcdatavis.js:	rollup.config.js datavis.js $(SOURCE)
 	npm run rollup
 
 dist/wcdatavis.min.js:	dist/wcdatavis.js
 	npm run uglify
-
-third-party/json-formatter.esm.js:
-	cd third-party/json-formatter-js && npm i && npm run build
-	cp third-party/json-formatter-js/dist/$(notdir $@) $@
 
 doc:	jsdoc mkdocs
 	$(MAKE) -C tests $@

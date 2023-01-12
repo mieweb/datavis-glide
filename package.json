@@ -36,6 +36,7 @@
     "jquery": "=3.6.1",
     "jquery-contextmenu": "=2.9.2",
     "jquery-ui": "=1.13.2",
+    "json-formatter-js": "git+ssh://git@github.mieweb.com/datavis/json-formatter-js.git",
     "moment": "=2.29.4",
     "numeral": "=2.0.6",
     "papaparse": "=5.3.2",

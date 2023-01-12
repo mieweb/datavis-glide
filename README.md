@@ -55,4 +55,3 @@ We use GNU Make to provide a simple interface to the various tools to build and 
 ### Submodules
 
 * `jaguarjs-jsdoc` — JSDoc template used to build documentation.
-* `json-formatter-js` — A library to render JSON objects in a tree view.

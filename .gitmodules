@@ -1,6 +1,3 @@
 [submodule "third-party/jaguarjs-jsdoc"]
 	path = third-party/jaguarjs-jsdoc
 	url = git@github.mieweb.com:datavis/jaguarjs-jsdoc.git
-[submodule "third-party/json-formatter-js"]
-	path = third-party/json-formatter-js
-	url = git@github.mieweb.com:datavis/json-formatter-js.git
