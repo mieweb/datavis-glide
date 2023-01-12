@@ -2,7 +2,6 @@
 
 import _ from 'underscore';
 import Handlebars from 'handlebars';
-import jQuery from 'jquery';
 
 import {
 	debug,
@@ -85,7 +84,7 @@ function addHelpers(env, data) {
 	});
 
 	// aggregate {{{2
-	
+
 	env.registerHelper('aggregate', function (type, aggNum) {
 		var ctx = this;
 

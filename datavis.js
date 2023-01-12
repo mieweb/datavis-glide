@@ -1,3 +1,9 @@
+import 'block-ui';
+import 'flatpickr';
+import 'jquery-ui/dist/jquery-ui.min.js';
+import 'jquery-contextmenu';
+import 'sumoselect';
+
 import * as Util from './src/util/misc.js';
 import OrdMap from './src/util/ordmap.js';
 import Lock from './src/util/lock.js';

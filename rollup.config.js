@@ -6,11 +6,7 @@ import commonjs from '@rollup/plugin-commonjs';
 export default {
 	input: 'datavis.js',
 	external: [
-		'jquery',
-		'jquery-ui',
-		'jquery-contextmenu',
-		'sumoselect',
-		'flatpickr',
+		'jquery'
 	],
 	output: {
 		file: 'dist/wcdatavis.js',
