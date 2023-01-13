@@ -3,6 +3,7 @@ SOURCE=$(shell find src -type f -name '*.js')
 DIST_FILES=$(addprefix dist/,wcdatavis.js wcdatavis.min.js wcdatavis.css)
 EXAMPLE_FILES=$(patsubst dist/%,examples/%,$(DIST_FILES))
 PUB_PATH=zeus.med-web.com:~/public_html/datavis
+PYTHON_VERSION:=$(shell pyenv versions --bare --skip-aliases | grep '^[[:digit:]]\+\.[[:digit:]]\+\.[[:digit:]]\+' | sort -Vr | head -n 1)
 
 .PHONY:	all doc doc-publish doc-clean doc-serve jsdoc mkdocs serve tests test examples dist-clean clean tags
 .PHONY:	setup teardown npm-setup npm-teardown python-setup python-teardown jsdoc-setup jsdoc-teardown
@@ -21,7 +22,11 @@ npm-teardown:
 	rm -rf node_modules
 
 python-setup:
-	pyenv virtualenv datavis
+ifndef PYTHON_VERSION
+	$(error No suitable Python version found, please install: Python, pyenv, pyenv-virtualenv)
+endif
+	@printf '\033[33;1mUsing Python $(PYTHON_VERSION); if an error occurs, try updating it.\033[0m\n'
+	pyenv virtualenv -f $(PYTHON_VERSION) datavis
 	pyenv local datavis
 	pip install -r requirements.txt
 
