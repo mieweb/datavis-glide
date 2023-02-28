@@ -1,45 +1,55 @@
-JSDOC=./node_modules/.bin/jsdoc
-SOURCE=$(shell find src -type f -name '*.js')
-DIST_FILES=$(addprefix dist/,wcdatavis.js wcdatavis.min.js wcdatavis.css)
-EXAMPLE_FILES=$(patsubst dist/%,examples/%,$(DIST_FILES))
-PUB_PATH=zeus.med-web.com:~/public_html/datavis
+JSDOC := ./node_modules/.bin/jsdoc
+SOURCE := $(shell find src -type f -name '*.js')
+DIST_FILES := $(addprefix dist/,wcdatavis.js wcdatavis.min.js wcdatavis.css)
+EXAMPLE_FILES := $(patsubst dist/%,examples/%,$(DIST_FILES))
+PUB_PATH := zeus.med-web.com:~/public_html/datavis
+.DEFAULT_GOAL := help
 
-.PHONY:	all doc doc-publish doc-clean doc-serve jsdoc mkdocs serve tests test examples dist-clean clean tags
-.PHONY:	setup teardown npm-setup npm-teardown python-setup python-teardown jsdoc-setup jsdoc-teardown
-.PHONY: publish tests-publish
+.PHONY:	datavis
+datavis:	$(DIST_FILES)
 
-.DEFAULT:	all
+# Setup/teardown of dependencies {{{1
 
-all:	$(DIST_FILES)
-
+.PHONY:	npm-setup
 npm-setup:
-	@if [ -f .nvmrc ] ; then printf '\033[34;1mPlease run `nvm use` to ensure the right version of Node is used.\033[0m\n' ; fi
+	@if [ -f .nvmrc ] ; then \
+		printf '\033[34;1mPlease run `nvm use` to ensure the right version of Node is used.\033[0m\n' ; \
+	fi
 	npm install
 	./bin/update-deps.sh
 
+.PHONY:	npm-teardown
 npm-teardown:
 	rm -rf node_modules
 
+.PHONY:	python-setup
 python-setup:
 	pyenv virtualenv datavis
 	pyenv local datavis
 	pip install -r requirements.txt
 
+.PHONY:	python-teardown
 python-teardown:
 	-pyenv virtualenv-delete -f datavis
 	-pyenv local --unset
 
+.PHONY:	jsdoc-setup
 jsdoc-setup:
 	cd third-party/jaguarjs-jsdoc && npm i
 
+.PHONY:	jsdoc-teardown
 jsdoc-teardown:
 	cd third-party/jaguarjs-jsdoc && rm -rf node_modules
 
+.PHONY:	setup
 setup:	npm-setup python-setup
 	git submodule update --init
 	$(MAKE) jsdoc-setup
 
+.PHONY:	teardown
 teardown:	npm-teardown python-teardown jsdoc-teardown
+
+# Building DataVis {{{1
 
 dist/wcdatavis.js:	rollup.config.js datavis.js third-party/json-formatter.esm.js $(SOURCE)
 	npm run rollup
@@ -51,41 +61,55 @@ third-party/json-formatter.esm.js:
 	cd third-party/json-formatter-js && npm i && npm run build
 	cp third-party/json-formatter-js/dist/$(notdir $@) $@
 
+# Documentation {{{1
+
+.PHONY:	doc
 doc:	jsdoc mkdocs
 	$(MAKE) -C tests $@
 	@printf '\033[32;1mRun `make doc-publish` to publish documentation to $(PUB_PATH)\033[0m\n'
 
+.PHONY:	doc-publish
 doc-publish:	doc
 	rsync -a --delete doc/html/ $(PUB_PATH)/manual/
 	rsync -a --delete jsdoc/ $(PUB_PATH)/jsdoc/
 	$(MAKE) -C tests $@
 
+.PHONY:	doc-clean
 doc-clean:
 	rm -rf doc/html
 	rm -rf jsdoc
 	$(MAKE) -C tests $@
 
+.PHONY:	doc-serve
 doc-serve:
 	mkdocs serve
 
+.PHONY:	jsdoc
 jsdoc:
 	$(JSDOC) -p -c jsdoc_conf.json src
 	$(MAKE) -C tests $@
 
+.PHONY:	mkdocs
 mkdocs:
 	mkdocs build
 
+.PHONY:	publish
 publish:	doc-publish tests-publish
 
+# Testing {{{1
+
+.PHONY:	serve
 serve:
 	python bin/data-server.py
 
 tests:	$(DIST_FILES)
 	$(MAKE) -C tests
 
+.PHONY:	tests-publish
 tests-publish:	tests
 	rsync -av --delete tests/pages/ $(PUB_PATH)/examples/
 
+.PHONY:	test
 test:	tests
 	npm run test
 
@@ -95,13 +119,36 @@ examples:	tests $(EXAMPLE_FILES)
 $(EXAMPLE_FILES):examples/%:	dist/%
 	cp $^ $@
 
+# Cleanup {{{1
+
+.PHONY:	dist-clean
 dist-clean:
 	rm -f dist/wcdatavis.js dist/wcdatavis.min.js
 	rm -f $(EXAMPLE_FILES)
 	rm -f examples/test/*.json
 
+.PHONY:	clean
 clean:	doc-clean dist-clean
 	$(MAKE) -C tests $@
 
+# Miscellaneous {{{1
+
+.PHONY:	tags
 tags:
 	ctags -R -f TAGS --languages=JavaScript --sort=foldcase src
+
+# Help {{{1
+
+.PHONY:	help
+help:
+	@printf -- '\033[36;1mImportant targets:\033[0m\n'
+	@printf -- '\n'
+	@printf -- '- \033[1mmake setup\033[0m — Installs all dependencies.\n'
+	@printf -- '- \033[1mmake datavis\033[0m — Build the compressed DataVis JS and CSS files.\n'
+	@printf -- '- \033[1mmake tests\033[0m — Same as \033[1mmake datavis\033[0m, then copy to tests directory, and build test data.\n'
+	@printf -- '  - \033[1mmake \033[34mDICT_FILE=[path]\033[37m tests\033[0m — To set the dictionary file path when generating test data.\n'
+	@printf -- '- \033[1mmake serve\033[0m — Start local server for interactive testing.\n'
+	@printf -- '- \033[1mmake test\033[0m — Same as \033[1mmake tests\033[0m, then run automated tests using Mocha & Selenium.\n'
+	@printf -- '- \033[1mmake doc\033[0m — Build all documentation.\n'
+	@printf -- '  - \033[1mmake jsdoc\033[0m — Build JS API documentation from comments in the source.\n'
+	@printf -- '  - \033[1mmake mkdocs\033[0m — Build the Manual from Markdown files.\n'
