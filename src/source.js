@@ -538,6 +538,17 @@ TableSource.prototype.getTypeInfo = function (cont) {
  *
  * @property {string} format For a type of date or datetime, a formatting string for Moment which
  * will decode the input.  Note that decoding comes *after* any conversion functions are executed.
+ *
+ * @property {string} internalType For a type of date, datetime, number, or currency, how that value
+ * should be represented internally.  Supported values are:
+ *
+ *   - date or datetime
+ *       - **string**: fastest but requires the date to be in a format like `YYYY-MM-DD`
+ *       - **moment**: more flexible but slower
+ *   - number or currency
+ *       - **primitive**: uses the browser's native number representation; fast but imprecise
+ *       - **numeral**: a library specifically for formatting numbers
+ *       - **bignumber**: a library for arbitrary fixed-precision arithmetic
  */
 
 /**
@@ -572,11 +583,12 @@ TableSource.prototype.getTypeInfo = function (cont) {
  *
  * @param {object} params
  *
- * @param {object} userTypeInfo Provided by the user to override the type information that comes
- * from the origin.  For example, you might be using an origin backed by MySQL, which reports a
- * column type as being a string... but we want to treat it as a date.  You would override that
- * field's type information to indicate it should be parsed as a date instead of a string.  Another
- * possibility is to discard time information from a datetime, treating it as a date instead.
+ * @param {Object.<string, Source~FieldTypeInfo>|Array.<Source~FieldTypeInfo>} userTypeInfo Provided
+ * by the user to override the type information that comes from the origin.  For example, you might
+ * be using an origin backed by MySQL, which reports a column type as being a string... but we want
+ * to treat it as a date.  You would override that field's type information to indicate it should be
+ * parsed as a date instead of a string.  Another possibility is to discard time information from a
+ * datetime, treating it as a date instead.
  *
  * ```
  * {
