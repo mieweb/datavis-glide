@@ -47,7 +47,7 @@ GRID_TOOLBAR.PREFS.RESET.CONFIRM	Are you sure you want to reset all configuratio
 GRID_TOOLBAR.PREFS.NEW_PERSPECTIVE	New Perspective...
 GRID_TOOLBAR.PREFS.NEW_PERSPECTIVE.PROMPT	Enter new perspective name
 GRID_TOOLBAR.PREFS.DELETE_PERSPECTIVE.CONFIRM	Are you sure you want to delete this perspective?
-GRID_TOOLBAR.PREFS.RENAME_PERSPECTIVE.PROMPT	"Rename perspective ""%s"" to what?"
+GRID_TOOLBAR.PREFS.RENAME_PERSPECTIVE.PROMPT	Rename perspective "%s" to what?
 	
 GRID_TOOLBAR.PREFS.BACKEND_DOES_NOT_SAVE	The preferences system is not configured to permanently save perspectives.
 GRID_TOOLBAR.PREFS.SAVE.HELP	Click to save the current configuration.  The next time this grid is visited, the previously saved configuration will automatically be used.
@@ -78,7 +78,7 @@ GRID.COLCONFIG_WIN.TBL.DISPLAY	Display
 GRID.COLCONFIG_WIN.TBL.OPTIONS	Options
 GRID.COLCONFIG_WIN.REORDER_COLS	Click and drag to reorder columns
 GRID.COLCONFIG_WIN.RENAME_COL	Rename column in table.
-GRID.COLCONFIG_WIN.RENAME_COL.PROMPT	"Rename field ""%s"" to what?"
+GRID.COLCONFIG_WIN.RENAME_COL.PROMPT	Rename field "%s" to what?
 GRID.COLCONFIG_WIN.PIN_COL	Pin column to left side of table?
 GRID.COLCONFIG_WIN.HIDE_COL	Hide column?
 GRID.COLCONFIG_WIN.ALLOW_HTML	Allow HTML to be rendered?
@@ -121,4 +121,11 @@ AGGREGATE.NAME.COUNT_OVER_COUNT	Count/Count
 AGGREGATE.FIELD.NUMERATOR	Num
 AGGREGATE.FIELD.DENOMINATOR	Denom
 	
+// Grid Table Output	
 	
+GRID.TABLE.SORT_MENU.ASCENDING	%s, Ascending
+GRID.TABLE.SORT_MENU.DESCENDING	%s, Descending
+GRID.TABLE.SORT_MENU.RESET	Reset Sort
+	
+GRID.TABLE.DRAGGABLE_FIELD_HELP	You can drag & drop this field into the grid controls above to filter, group or pivot.
+GRID.TABLE.ADD_FILTER_HELP	Click to add a filter for "%s"

@@ -1,5 +1,6 @@
 import jQuery from 'jquery';
 
+import { trans } from '../trans.js';
 import {
 	deepDefaults,
 	fontAwesome,
@@ -274,7 +275,7 @@ jQuery.fn.extend({
 		this.attr('title', 'XXX'); // FIXME Without this, the 'content' property below does nothing!
 		var tooltipContent = jQuery('<div>')
 			.append(fontAwesome('fa-info-circle').css('padding-right', '0.25em').addClass('wcdv_text-primary'))
-			.append('You can drag & drop this field into the grid controls above to filter, group or pivot.');
+			.append(trans('GRID.TABLE.DRAGGABLE_FIELD_HELP'));
 		this.tooltip({
 			classes: {
 				'ui-tooltip': 'ui-corner-all ui-widget-shadow wcdv_info_tooltip wcdv_border-primary'

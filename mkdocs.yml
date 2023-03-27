@@ -37,6 +37,7 @@ nav:
   - Preferences: prefs.md
   - Performance: performance.md
   - Errors & Debugging: debugging.md
+  - Localization: localization.md
   - Development:
       - Overview: development/index.md
       - Generating Data: development/json_gen.md

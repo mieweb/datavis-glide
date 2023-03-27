@@ -134,7 +134,7 @@ clean:	doc-clean dist-clean
 # Translations {{{1
 
 src/lang/en.js:	en.tsv trans.tsv
-	gawk -f ./bin/make-lang-packs.awk $^
+	-gawk -f ./bin/make-lang-packs.awk $^
 
 # Miscellaneous {{{1
 

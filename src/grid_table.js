@@ -4,6 +4,7 @@ import _ from 'underscore';
 import sprintf from 'sprintf-js';
 import jQuery from 'jquery';
 
+import { trans } from './trans.js';
 import {
 	debug,
 	deepCopy,
@@ -817,14 +818,14 @@ GridTable.prototype._addSortingToHeader = function (data, orientation, spec, con
 		;
 
 		sortIcon_menu_items[gensym()] = {
-			name: name + ', Ascending',
+			name: trans('GRID.TABLE.SORT_MENU.ASCENDING', name),
 			icon: 'fa-sort-amount-asc',
 			callback: function () {
 				setSort('asc')
 			}
 		};
 		sortIcon_menu_items[gensym()] = {
-			name: name + ', Descending',
+			name: trans('GRID.TABLE.SORT_MENU.DESCENDING', name),
 			icon: 'fa-sort-amount-desc',
 			callback: function () {
 				setSort('desc')
@@ -843,14 +844,14 @@ GridTable.prototype._addSortingToHeader = function (data, orientation, spec, con
 
 			//var aggType = aggInfo.instance.getType();
 			sortIcon_menu_items[gensym()] = {
-				name: aggInfo.instance.getFullName() + ', Ascending',
+				name: trans('GRID.TABLE.SORT_MENU.ASCENDING', aggInfo.instance.getFullName()),
 				icon: 'fa-sort-amount-asc',
 				callback: function () {
 					setSort('asc', aggNum)
 				}
 			};
 			sortIcon_menu_items[gensym()] = {
-				name: aggInfo.instance.getFullName() + ', Descending',
+				name: trans('GRID.TABLE.SORT_MENU.DESCENDING', aggInfo.instance.getFullName()),
 				icon: 'fa-sort-amount-desc',
 				callback: function () {
 					setSort('desc', aggNum)
@@ -864,7 +865,7 @@ GridTable.prototype._addSortingToHeader = function (data, orientation, spec, con
 	// two-entry menu as anything else.
 
 	sortIcon_menu_items.reset = {
-		name: 'Reset Sort',
+		name: trans('GRID.TABLE.SORT_MENU.RESET_SORT'),
 		icon: 'fa-ban',
 		callback: function () {
 			self.view.clearSort();
@@ -937,7 +938,7 @@ GridTable.prototype._addFilterToHeader = function (container, field, displayText
 		return;
 	}
 
-	jQuery(fontAwesome('fa-filter', 'wcdv_filter_icon', 'Click to add a filter for "' + field + '"'))
+	jQuery(fontAwesome('fa-filter', 'wcdv_filter_icon', trans('GRID.TABLE.ADD_FILTER_HELP', field)))
 		.on('click', function () {
 			self.grid.filterControl.addField(field, displayText, {
 				openControls: true
