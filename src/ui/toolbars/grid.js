@@ -397,7 +397,7 @@ var PrefsToolbar = makeSubclass('PrefsToolbar', ToolbarSection, function (grid) 
 	// many different perspectives set, but I feel better having it as a safety in case your prefs
 	// somehow get really messed up and don't work at all anymore.  This button is always shown.
 
-	var resetBtn = jQuery('<button>', {'type': 'button', 'title': 'Reset'})
+	var resetBtn = jQuery('<button>', {'type': 'button', 'title': trans('GRID_TOOLBAR.PREFS.RESET.TOOLTIP')})
 		.addClass('wcdv_icon_button wcdv_text-primary')
 		.append(fontAwesome('fa-undo'))
 		.on('click', function () {
@@ -410,7 +410,7 @@ var PrefsToolbar = makeSubclass('PrefsToolbar', ToolbarSection, function (grid) 
 
 	var backBtn = jQuery('<button>', {'type': 'button'})
 		.append(fontAwesome('fa-chevron-circle-left'))
-		.attr('title', 'Back')
+		.attr('title', trans('GRID_TOOLBAR.PREFS.BACK.TOOLTIP'))
 		.attr('disabled', true)
 		.addClass('wcdv_icon_button wcdv_text-primary')
 		.on('click', function () {
@@ -421,7 +421,7 @@ var PrefsToolbar = makeSubclass('PrefsToolbar', ToolbarSection, function (grid) 
 
 	var forwardBtn = jQuery('<button>', {'type': 'button'})
 		.append(fontAwesome('fa-chevron-circle-right'))
-		.attr('title', 'Forward')
+		.attr('title', trans('GRID_TOOLBAR.PREFS.FORWARD.TOOLTIP'))
 		.attr('disabled', true)
 		.addClass('wcdv_icon_button wcdv_text-primary')
 		.on('click', function () {
@@ -472,7 +472,7 @@ var PrefsToolbar = makeSubclass('PrefsToolbar', ToolbarSection, function (grid) 
 		.append(warnMsgText);
 
 	var warnMsg = fontAwesome('fa-info-circle', 'wcdv_info_icon')
-		.attr({'title': 'Info'})
+		.attr({'title': trans('GRID_TOOLBAR.PREFS.INFO.TOOLTIP')})
 		.hide()
 		.tooltip({
 			classes: {
@@ -493,9 +493,9 @@ var PrefsToolbar = makeSubclass('PrefsToolbar', ToolbarSection, function (grid) 
 
 	var saveAsBtnTooltipContent = jQuery('<div>')
 		.append(fontAwesome('fa-info-circle').css('padding-right', '0.25em').addClass('wcdv_text-primary'))
-		.append(trans('GRID_TOOLBAR.PREFS.SAVE_AS.TOOLTIP'));
+		.append(trans('GRID_TOOLBAR.PREFS.SAVE_AS.HELP'));
 
-	var saveAsBtn = jQuery('<button>', {'type': 'button', 'title': 'Save As...'})
+	var saveAsBtn = jQuery('<button>', {'type': 'button', 'title': trans('GRID_TOOLBAR.PREFS.SAVE_AS.TOOLTIP')})
 		.append(fontAwesome('fa-save'))
 		.addClass('wcdv_icon_button wcdv_text-primary')
 		.tooltip({
@@ -515,9 +515,9 @@ var PrefsToolbar = makeSubclass('PrefsToolbar', ToolbarSection, function (grid) 
 
 	var saveBtnTooltipContent = jQuery('<div>')
 		.append(fontAwesome('fa-info-circle').css('padding-right', '0.25em').addClass('wcdv_text-primary'))
-		.append(trans('GRID_TOOLBAR.PREFS.SAVE.TOOLTIP'));
+		.append(trans('GRID_TOOLBAR.PREFS.SAVE.HELP'));
 
-	var saveBtn = jQuery('<button>', {'type': 'button', 'title': 'Save'})
+	var saveBtn = jQuery('<button>', {'type': 'button', 'title': trans('GRID_TOOLBAR.PREFS.SAVE.TOOLTIP')})
 		.append(fontAwesome('fa-save'))
 		.addClass('wcdv_icon_button wcdv_text-primary')
 		.hide()
@@ -544,7 +544,7 @@ var PrefsToolbar = makeSubclass('PrefsToolbar', ToolbarSection, function (grid) 
 	// XXX: What if the user types in "Main Perspective" ?
 	// XXX: What if the user types in "NEW" ?
 
-	var renameBtn = jQuery('<button>', {'type': 'button', 'title': 'Rename'})
+	var renameBtn = jQuery('<button>', {'type': 'button', 'title': trans('GRID_TOOLBAR.PREFS.RENAME.TOOLTIP')})
 		.addClass('wcdv_icon_button wcdv_text-primary')
 		.append(fontAwesome('fa-pencil'))
 		.on('click', function () {
@@ -570,7 +570,7 @@ var PrefsToolbar = makeSubclass('PrefsToolbar', ToolbarSection, function (grid) 
 	// Perspective".  It is only shown when the currently selected perspective is not "Main
 	// Perspective" as it cannot be deleted.
 
-	var deleteBtn = jQuery('<button>', {'type': 'button', 'title': 'Delete'})
+	var deleteBtn = jQuery('<button>', {'type': 'button', 'title': trans('GRID_TOOLBAR.PREFS.DELETE.TOOLTIP')})
 		.addClass('wcdv_icon_button wcdv_text-primary')
 		.append(fontAwesome('fa-trash'))
 		.on('click', function () {
@@ -700,7 +700,7 @@ var RendererToolbar = makeSubclass('RendererToolbar', ToolbarSection, function (
 		.appendTo(self.ui.root)
 	;
 
-	var configBtn = jQuery('<button>', {'type': 'button', 'title': 'Display Options'})
+	var configBtn = jQuery('<button>', {'type': 'button', 'title': trans('GRID_TOOLBAR.RENDERER.DISPLAY_OPTIONS')})
 		.append(fontAwesome('fa-table'))
 		.append(trans('GRID_TOOLBAR.RENDERER.DISPLAY_OPTIONS'))
 		.on('click', function () {
@@ -747,7 +747,7 @@ var ComputedViewToolbar = makeSubclass('ComputedViewToolbar', ToolbarSection, fu
 	// This button creates a MirageView from the current view, and switches my grid's view to the new
 	// MirageView.  If an error occurs, it should abort and leave things the way they are.
 
-	jQuery('<button>', {'type': 'button', 'title': 'Store Displayed Data'})
+	jQuery('<button>', {'type': 'button', 'title': trans('GRID_TOOLBAR.MIRAGE.STORE_DISPLAYED_DATA')})
 		.append(fontAwesome('fa-save'))
 		.append(trans('GRID_TOOLBAR.MIRAGE.STORE_DISPLAYED_DATA'))
 		.on('click', function () {

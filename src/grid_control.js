@@ -126,7 +126,7 @@ GridControlField.prototype.draw = function () {
 
 	self.ui.removeButton = jQuery('<button>', {'type': 'button'})
 		.append(fontAwesome('F146'))
-		.attr('title', 'Remove')
+		.attr('title', trans('GRID_CONTROL.FIELD.REMOVE'))
 		.addClass('wcdv_icon_button wcdv_remove wcdv_text-primary')
 		.on('click', function () {
 			self.control.removeField(self);
@@ -254,7 +254,7 @@ FunGridControlField.prototype.draw = function () {
 		self.ui.groupFunWinBtn = jQuery('<button>', {
 			'type': 'button',
 			'data-wcdv-role': 'set-group-fun',
-			title: 'Show functions available for this field'
+			title: trans('GRID_CONTROL.FIELD.SHOW_FUNCTIONS')
 		})
 			.addClass('wcdv_icon_button wcdv_button_left wcdv_text-primary')
 			.on('click', function () {
@@ -450,7 +450,7 @@ AggregateControlField.prototype.draw = function () {
 	if (aggDefn.prototype.options != null) {
 		jQuery('<button>', {
 			'type': 'button',
-			title: 'Edit Options'
+			title: trans('GRID_CONTROL.AGGREGATE.EDIT_OPTIONS')
 		})
 			.addClass('wcdv_icon_button wcdv_button_left wcdv_text-primary')
 			.on('click', function () {
@@ -552,7 +552,7 @@ AggregateControlField.prototype._makeOptionsDialog = function (aggDefn) {
 	self.ui.optionsDialog = self.ui.optionsDiv.dialog({
 		autoOpen: false,
 		modal: true,
-		title: aggDefn.prototype.name + ' — Options',
+		title: trans('GRID_CONTROL.AGGREGATE.OPTIONS_DIALOG.TITLE', aggDefn.prototype.name),
 		minHeight: 0
 	});
 };

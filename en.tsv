@@ -10,7 +10,7 @@ GRAPH.TITLEBAR.SHOW_HIDE_CONTROLS	Show/Hide Graph Controls
 	
 GRID.TITLEBAR.CANCEL	Cancel
 GRID.TITLEBAR.LOADING	Loading...
-GRID.TITLEBAR.WOARKING	Working...
+GRID.TITLEBAR.WORKING	Working...
 GRID.TITLEBAR.LOADED	Loaded
 GRID.TITLEBAR.NOT_LOADED	Not Loaded
 GRID.TITLEBAR.RECORD_COUNT_SINGULAR	%d record
@@ -50,8 +50,16 @@ GRID_TOOLBAR.PREFS.DELETE_PERSPECTIVE.CONFIRM	Are you sure you want to delete th
 GRID_TOOLBAR.PREFS.RENAME_PERSPECTIVE.PROMPT	"Rename perspective ""%s"" to what?"
 	
 GRID_TOOLBAR.PREFS.BACKEND_DOES_NOT_SAVE	The preferences system is not configured to permanently save perspectives.
-GRID_TOOLBAR.PREFS.SAVE.TOOLTIP	Click to save the current configuration.  The next time this grid is visited, the previously saved configuration will automatically be used.
-GRID_TOOLBAR.PREFS.SAVE_AS.TOOLTIP	This pre-defined perspective cannot be saved with this name.  Click to save with a new name.  After that, any changes will be saved under the new name.
+GRID_TOOLBAR.PREFS.SAVE.HELP	Click to save the current configuration.  The next time this grid is visited, the previously saved configuration will automatically be used.
+GRID_TOOLBAR.PREFS.SAVE_AS.HELP	This pre-defined perspective cannot be saved with this name.  Click to save with a new name.  After that, any changes will be saved under the new name.
+GRID_TOOLBAR.PREFS.RESET.TOOLTIP	Reset
+GRID_TOOLBAR.PREFS.BACK.TOOLTIP	Back
+GRID_TOOLBAR.PREFS.FORWARD.TOOLTIP	Forward
+GRID_TOOLBAR.PREFS.RENAME.TOOLTIP	Rename
+GRID_TOOLBAR.PREFS.DELETE.TOOLTIP	Delete
+GRID_TOOLBAR.PREFS.INFO.TOOLTIP	Info
+GRID_TOOLBAR.PREFS.SAVE.TOOLTIP	Save
+GRID_TOOLBAR.PREFS.SAVE_AS.TOOLTIP	Save As...
 	
 GRID_TOOLBAR.RENDERER.DISPLAY_OPTIONS	Display Options
 	
@@ -88,6 +96,10 @@ GRID_CONTROL.FILTER.TITLE	Filters
 GRID_CONTROL.GROUP.TITLE	Group Fields
 GRID_CONTROL.PIVOT.TITLE	Pivot Fields
 GRID_CONTROL.AGGREGATE.TITLE	Aggregate
+GRID_CONTROL.FIELD.REMOVE	Remove
+GRID_CONTROL.FIELD.SHOW_FUNCTIONS	Show functions available for this field
+GRID_CONTROL.AGGREGATE.EDIT_OPTIONS	Edit options
+GRID_CONTROL.AGGREGATE.OPTIONS_DIALOG.TITLE	Options for %s
 	
 // Aggregate function names	
 	
