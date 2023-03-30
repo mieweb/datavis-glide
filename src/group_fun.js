@@ -6,6 +6,7 @@ import numeral from 'numeral';
 import moment from 'moment';
 import jQuery from 'jquery';
 
+import { trans } from './trans.js';
 import {
 	arrayCompare,
 	arrayEqual,
@@ -153,7 +154,7 @@ var GROUP_FUNCTION_REGISTRY = new OrdMap();
 
 GROUP_FUNCTION_REGISTRY.set('year', new GroupFunction({
 	category: 'date',
-	displayName: 'Year',
+	displayName: trans('GRID.GROUP_FUN.DATE.YEAR'),
 	allowedTypes: ['date', 'datetime'],
 	valueFun: function (d) {
 		if (typeof d === 'string') {
@@ -176,7 +177,7 @@ GROUP_FUNCTION_REGISTRY.set('year', new GroupFunction({
 
 GROUP_FUNCTION_REGISTRY.set('quarter', new GroupFunction({
 	category: 'repeating',
-	displayName: 'Quarter',
+	displayName: trans('GRID.GROUP_FUN.REPEATING.QUARTER'),
 	allowedTypes: ['date', 'datetime'],
 	valueFun: function (d) {
 		if (typeof d === 'string') {
@@ -196,7 +197,7 @@ GROUP_FUNCTION_REGISTRY.set('quarter', new GroupFunction({
 
 GROUP_FUNCTION_REGISTRY.set('month', new GroupFunction({
 	category: 'repeating',
-	displayName: 'Month',
+	displayName: trans('GRID.GROUP_FUN.REPEATING.MONTH'),
 	allowedTypes: ['date', 'datetime'],
 	valueFun: function (d) {
 		if (typeof d === 'string') {
@@ -217,7 +218,7 @@ GROUP_FUNCTION_REGISTRY.set('month', new GroupFunction({
 
 GROUP_FUNCTION_REGISTRY.set('week_iso', new GroupFunction({
 	category: 'repeating',
-	displayName: 'Week (ISO)',
+	displayName: trans('GRID.GROUP_FUN.REPEATING.WEEK'),
 	allowedTypes: ['date', 'datetime'],
 	valueFun: function (d) {
 		if (typeof d === 'string') {
@@ -237,7 +238,7 @@ GROUP_FUNCTION_REGISTRY.set('week_iso', new GroupFunction({
 
 GROUP_FUNCTION_REGISTRY.set('day_of_week', new GroupFunction({
 	category: 'repeating',
-	displayName: 'Day of Week',
+	displayName: trans('GRID.GROUP_FUN.REPEATING.DAY_OF_WEEK'),
 	allowedTypes: ['date', 'datetime'],
 	valueFun: function (d) {
 		if (typeof d === 'string') {
@@ -258,7 +259,7 @@ GROUP_FUNCTION_REGISTRY.set('day_of_week', new GroupFunction({
 
 GROUP_FUNCTION_REGISTRY.set('year_and_quarter', new GroupFunction({
 	category: 'date',
-	displayName: 'Year & Quarter',
+	displayName: trans('GRID.GROUP_FUN.DATE.YEAR_AND_QUARTER'),
 	allowedTypes: ['date', 'datetime'],
 	valueFun: function (d) {
 		if (typeof d === 'string') {
@@ -281,7 +282,7 @@ GROUP_FUNCTION_REGISTRY.set('year_and_quarter', new GroupFunction({
 
 GROUP_FUNCTION_REGISTRY.set('year_and_month', new GroupFunction({
 	category: 'date',
-	displayName: 'Year & Month',
+	displayName: trans('GRID.GROUP_FUN.DATE.YEAR_AND_MONTH'),
 	allowedTypes: ['date', 'datetime'],
 	valueFun: function (d) {
 		if (typeof d === 'string') {
@@ -305,7 +306,7 @@ GROUP_FUNCTION_REGISTRY.set('year_and_month', new GroupFunction({
 
 GROUP_FUNCTION_REGISTRY.set('year_and_week_iso', new GroupFunction({
 	category: 'date',
-	displayName: 'Year & Week (ISO)',
+	displayName: trans('GRID.GROUP_FUN.DATE.YEAR_AND_WEEK'),
 	allowedTypes: ['date', 'datetime'],
 	valueFun: function (d) {
 		if (typeof d === 'string') {
@@ -328,7 +329,7 @@ GROUP_FUNCTION_REGISTRY.set('year_and_week_iso', new GroupFunction({
 
 GROUP_FUNCTION_REGISTRY.set('day', new GroupFunction({
 	category: 'date',
-	displayName: 'Full Date (No Time)',
+	displayName: trans('GRID.GROUP_FUN.DATE.FULL_DATE'),
 	allowedTypes: ['datetime'],
 	valueFun: function (d) {
 		if (typeof d === 'string') {
@@ -352,7 +353,7 @@ GROUP_FUNCTION_REGISTRY.set('day', new GroupFunction({
 
 GROUP_FUNCTION_REGISTRY.set('day_and_time_1hr', new GroupFunction({
 	category: 'datetime',
-	displayName: 'Date & Time: 1 hr slices',
+	displayName: trans('GRID.GROUP_FUN.DATE_TIME.SLICE.1HR'),
 	allowedTypes: ['datetime'],
 	valueFun: function (d) {
 		if (typeof d === 'string') {
@@ -376,7 +377,7 @@ GROUP_FUNCTION_REGISTRY.set('day_and_time_1hr', new GroupFunction({
 
 GROUP_FUNCTION_REGISTRY.set('day_and_time_15min', new GroupFunction({
 	category: 'datetime',
-	displayName: 'Date & Time: 15 min slices',
+	displayName: trans('GRID.GROUP_FUN.DATE_TIME.SLICE.15MIN'),
 	allowedTypes: ['datetime'],
 	valueFun: function (d) {
 		if (typeof d === 'string') {
@@ -406,7 +407,7 @@ GROUP_FUNCTION_REGISTRY.set('day_and_time_15min', new GroupFunction({
 
 GROUP_FUNCTION_REGISTRY.set('time_1hr', new GroupFunction({
 	category: 'time',
-	displayName: 'Time: 1 hr slices',
+	displayName: trans('GRID.GROUP_FUN.TIME.SLICE.1HR'),
 	allowedTypes: ['time'],
 	valueFun: function (d, fti) {
 		if (typeof d === 'string') {
@@ -430,7 +431,7 @@ GROUP_FUNCTION_REGISTRY.set('time_1hr', new GroupFunction({
 
 GROUP_FUNCTION_REGISTRY.set('time_15min', new GroupFunction({
 	category: 'time',
-	displayName: 'Time: 15 min slices',
+	displayName: trans('GRID.GROUP_FUN.TIME.SLICE.15MIN'),
 	allowedTypes: ['time'],
 	valueFun: function (d, fti) {
 		if (typeof d === 'string') {

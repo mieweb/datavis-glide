@@ -3,6 +3,7 @@ import jQuery from 'jquery';
 
 import OrdMap from './util/ordmap.js';
 
+import { trans } from './trans.js';
 import {
 	makeSubclass,
 } from './util/misc.js';
@@ -49,11 +50,11 @@ var GroupFunWin = makeSubclass('GroupFunWin', Object, function (title, groupFuns
 	// These are the columns that contain related group function buttons.
 
 	var categories = new OrdMap();
-	categories.set('repeating', { display: 'Repeating' });
-	categories.set('date', { display: 'Date' });
-	categories.set('datetime', { display: 'Date & Time' });
-	categories.set('time', { display: 'Time' });
-	categories.set('other', { display: 'Other' });
+	categories.set('repeating', { display: trans('GRID.GROUP_FUN.DIALOG.REPEATING') });
+	categories.set('date', { display: trans('GRID.GROUP_FUN.DIALOG.DATE') });
+	categories.set('datetime', { display: trans('GRID.GROUP_FUN.DIALOG.DATE_TIME') });
+	categories.set('time', { display: trans('GRID.GROUP_FUN.DIALOG.TIME') });
+	categories.set('other', { display: trans('GRID.GROUP_FUN.DIALOG.OTHER') });
 
 	// Create the UI for each category.
 
@@ -102,9 +103,9 @@ var GroupFunWin = makeSubclass('GroupFunWin', Object, function (title, groupFuns
 		'type': 'button',
 		'class': 'wcdv_option',
 		'data-wcdv-groupfunname': 'none',
-		'title': 'None'
+		'title': trans('GRID.GROUP_FUN.NONE')
 	})
-		.text('None')
+		.text(trans('GRID.GROUP_FUN.NONE'))
 		.on('click', function () {
 			selected = 'none';
 			self.win.dialog('close');

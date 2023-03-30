@@ -249,7 +249,7 @@ FunGridControlField.prototype.draw = function () {
 		// When there are some group functions for the type of this field, we need to create a window to
 		// choose between them, plus a button to show the window.
 
-		self.ui.groupFunWin = new GroupFunWin('Apply Function to ' + self.field.field, applicableGroupFuns);
+		self.ui.groupFunWin = new GroupFunWin(trans('GRID.GROUP_FUN.DIALOG.TITLE', self.field.field), applicableGroupFuns);
 
 		self.ui.groupFunWinBtn = jQuery('<button>', {
 			'type': 'button',
