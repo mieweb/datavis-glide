@@ -281,7 +281,7 @@ ColConfigWin.prototype.show = function (posElt, onSave) {
 			'title': trans('GRID.COLCONFIG_WIN.RESET_COL_ORDER')
 		})
 			.append(fontAwesome('fa-undo'))
-			.append('Reset Column Order')
+			.append(trans('GRID.COLCONFIG_WIN.RESET_COL_ORDER'))
 			.on('click', function (evt) {
 				keys = self.initColConfig.keys();
 				_.each(keys, function (k) {
