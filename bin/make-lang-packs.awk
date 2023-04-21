@@ -35,10 +35,10 @@ lang == "en" {
     trans["en"][$1] = $2
 }
 
-# Translation file format: language | context | label | text
+# Translation file format: language | label | english | translated
 
-lang != "en" && $3 in english {
-    trans[$1][$3] = $4
+lang != "en" && $2 in english {
+    trans[$1][$2] = $4
 }
 
 END {
