@@ -3390,6 +3390,9 @@ export function format(fcc, fti, cell, opts) {
 				convert(cell, fti);
 			}
 
+			// Bail for invalid, blank, or NaN values.  Unfortunately you need to use different methods to
+			// determine this based on the internal representation.
+
 			if (cell.value == null
 					|| (fti.internalType === 'primitive' && Number.isNaN(cell.value))
 					|| (fti.internalType === 'numeral' && (Number.isNaN(cell.value) || cell.value.value() === null))
@@ -3440,7 +3443,8 @@ export function format(fcc, fti, cell, opts) {
 					newVal = cell.value;
 				}
 
-				result = formatPrimitiveNumber(newVal, format, 'bignumber');
+				var formatMethod = window.Intl != null && window.Intl.NumberFormat != null ? 'intl' : 'bignumber';
+				result = formatPrimitiveNumber(newVal, format, formatMethod);
 			}
 
 			if (isNegative) {
