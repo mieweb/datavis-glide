@@ -3199,18 +3199,9 @@ export function format(fcc, fti, cell, opts) {
 	};
 
 	var formatPrimitiveNumber = function (x, fmt, method) {
-		var language;
-
 		switch (method) {
 		case 'intl':
 			if (window.Intl != null && window.Intl.NumberFormat != null) {
-				if (window.navigator.languages) {
-					language = window.navigator.languages[0];
-				}
-				else {
-					language = window.navigator.userLanguage || window.navigator.language;
-				}
-
 				var config = {
 					useGrouping: fmt.integerPart.grouping
 				};
@@ -3220,9 +3211,7 @@ export function format(fcc, fti, cell, opts) {
 					config.maximumFractionDigits = fmt.decimalPlaces;
 				}
 
-				var intlNumFmt = new Intl.NumberFormat(language, config);
-				console.log(intlNumFmt.resolvedOptions());
-				return intlNumFmt.format(x);
+				return Intl.NumberFormat(window.DATAVIS_LANG, config).format(x);
 			}
 			else {
 				return '' + x;
@@ -3279,6 +3268,22 @@ export function format(fcc, fti, cell, opts) {
 		negativeFormat: 'minus',
 		roundingMethod: 'half_up',
 	};
+
+	if (window.Intl != null && window.Intl.NumberFormat != null) {
+		// You can't extract information about how to format a number from Intl.NumberFormat, but you
+		// can have it format a number and then "parse" the result to figure out e.g. what the grouping
+		// and radix point characters are.
+
+		_.each(Intl.NumberFormat(window.DATAVIS_LANG).formatToParts('1234.5'), function (o) {
+			switch (o.type) {
+			case 'group':
+				defaultNumberFormat.integerPart.groupSeparator = o.value;
+				break;
+			case 'decimal':
+				defaultNumberFormat.radixPoint = o.value;
+			}
+		});
+	}
 
 	var defaultCurrencyFormat = deepDefaults({
 		integerPart: {
