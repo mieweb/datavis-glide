@@ -1444,7 +1444,7 @@ Grid.prototype._updateRowCount = function (info, ops) {
 
 	self.ui.rowCount.text(text.join(', '));
 
-	if (self.view.source.origin.isLimited && !document.getElementById(self.id + '_isLimitedNotice') && info.numRows == self.view.source.origin.opts.autoLimit) {
+	if (self.view.source.origin.isLimited && !document.getElementById(self.id + '_isLimitedNotice') && (info.totalRows || info.numRows) == self.view.source.origin.opts.autoLimit) {
 		self.ui.groupControl.hide();
 		jQuery('<span>', {
 			'id': self.id + '_isLimitedNotice',
