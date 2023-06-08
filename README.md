@@ -2,6 +2,8 @@
 
 DataVis is a tool for exploring, manipulating, and visualizing data. It can import data over HTTP (XML, JSON, CSV) or from a file (CSV), or it can use data already in JavaScript on the page. It can automatically parse different types of data including dates and times, numbers (including arbitrarily large integers), and currency. It allows interactive filtering, grouping, pivotting, and aggregation with support for custom aggregate functions. For grouped data, it supports "drilling down" to the underlying population. It can store the current configuration as a "perspective" you can immediately return to later. You can export what's shown on screen to CSV, or display it in a graph.
 
+[Enjoy this video overview.](https://drive.google.com/file/d/1w1VGRYZbJ0Qyn8tUjQB9181lKfbeveQw/view)
+
 ## How to Use
 
 ### Traditional Website
