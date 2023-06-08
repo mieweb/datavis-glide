@@ -2,22 +2,14 @@
 
 ## Building
 
-This project can be built using NPM and Make.
+This project can be built using Make.
 
 ```
-$ npm install
-$ make
+$ make setup
+$ make datavis
 ```
 
-You can also do it all with NPM.
-
-```
-$ npm install
-$ npm run rollup
-$ npm run uglify
-```
-
-Using Make is recommended in case the build process changes in the future.  Make is also used to generate documentation, build & run tests, and other stuff.
+Make is also used to generate documentation, build & run tests, and other stuff.
 
 ## Installation
 
@@ -61,10 +53,7 @@ Here's some HTML you can adapt to get the external dependencies.
 
 ## Basic Usage
 
-At the bare minimum, you need to create two objects: an instance of
-`MIE.DataSource` and an instance of `MIE.Grid` — the
-<span role="doc">data\_source</span> handles data input, the
-<span role="doc">grid</span> handles data output.
+At the bare minimum, you need to create two objects: an instance of `MIE.WC_DataVis.Source` and an instance of `MIE.WC_DataVis.Grid` — the source handles data input, the grid handles data output.
 
 ## Dependency Rationale
 

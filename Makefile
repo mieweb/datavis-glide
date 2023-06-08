@@ -137,6 +137,9 @@ clean:	doc-clean dist-clean
 src/lang/en.js:	en.tsv trans.tsv
 	-gawk -f ./bin/make-lang-packs.awk $^
 
+trans.tsv:
+	touch $@
+
 # Miscellaneous {{{1
 
 .PHONY:	tags

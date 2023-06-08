@@ -7,7 +7,7 @@ DataVis is a tool for exploring, manipulating, and visualizing data. It can impo
 ### Traditional Website
 
 1. Run `make setup` to get dependencies.
-2. Run `make` to build the JS file.
+2. Run `make datavis` to build the JS file.
 3. Copy `dist/wcdatavis.js` and `dist/wcdatavis.css` to your server.
 4. Include them like any other JS and CSS files.
 
@@ -20,7 +20,7 @@ See the [Development section of the Manual](doc/md/development/index.md) for a f
 We use GNU Make to provide a simple interface to the various tools to build and test DataVis.
 
 * `make setup` — Installs all dependencies.
-* `make` — Build the compressed DataVis JS and CSS files.
+* `make datavis` — Build the compressed DataVis JS and CSS files.
 * `make tests` — Same as `make`, then copy to tests directory, and build test data.
   * `make DICT_FILE=[path] tests` — To set the dictionary file path when generating test data.
 * `make serve` — Start local server for interactive testing.

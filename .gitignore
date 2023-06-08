@@ -6,6 +6,8 @@
 TAGS
 jsdoc
 node_modules
+package-lock.json
+trans.tsv
 doc/_build
 doc/.python-version
 doc/html
