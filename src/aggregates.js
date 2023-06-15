@@ -488,12 +488,11 @@ Aggregate.prototype.getFullName = function () {
 		return self.opts.name;
 	}
 	else if (self.fieldCount > 0 && _.isArray(self.opts.fields) && self.opts.fields.length > 0) {
-		return self.name + ' of ' + (
+		return trans('AGGREGATE.HEADER_DISPLAY', self.name, (
 			_.map(self.opts.fields, function (field, fieldIdx) {
 				var fcc = getPropDef({}, self.opts, 'colConfig', fieldIdx);
 				return fcc.displayText || field;
-			})
-		).join(', ');
+			}).join(', ')));
 	}
 	else {
 		return self.name;

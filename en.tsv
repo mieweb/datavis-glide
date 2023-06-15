@@ -2,15 +2,15 @@ Translation Label	English Text	Translator Notes
 // Generic dialog options		
 		
 DIALOG.OK	OK	
-DIALOG.CANCEL	Cancel
-	
-// Grid titlebar	
-	
-GRAPH.TITLEBAR.SHOW_HIDE	Show/Hide Graph
-GRAPH.TITLEBAR.SHOW_HIDE_CONTROLS	Show/Hide Graph Controls
-	
-GRID.TITLEBAR.CANCEL	Cancel
-GRID.TITLEBAR.LOADING	Loading...
+DIALOG.CANCEL	Cancel	
+		
+// Grid titlebar		
+		
+GRAPH.TITLEBAR.SHOW_HIDE	Show/Hide Graph	
+GRAPH.TITLEBAR.SHOW_HIDE_CONTROLS	Show/Hide Graph Controls	
+		
+GRID.TITLEBAR.CANCEL	Cancel	
+GRID.TITLEBAR.LOADING	Loading...	
 GRID.TITLEBAR.WORKING	Working...	
 GRID.TITLEBAR.LOADED	Loaded	
 GRID.TITLEBAR.NOT_LOADED	Not Loaded	
@@ -18,20 +18,20 @@ GRID.TITLEBAR.RECORD_COUNT_SINGULAR	%d record	"Record" as in a row from a databa
 GRID.TITLEBAR.RECORD_COUNT_PLURAL	%d records	
 GRID.TITLEBAR.GROUP_COUNT_SINGULAR	%d group	
 GRID.TITLEBAR.GROUP_COUNT_PLURAL	%d groups	
-GRID.TITLEBAR.SELECTED_COUNT_SINGULAR	%d record selected
-GRID.TITLEBAR.SELECTED_COUNT_PLURAL	%d records selected
-GRID.TITLEBAR.CLEAR_FILTER	clear filter
-GRID.TITLEBAR.DATA_LIMITED_WARNING	You are not looking at all of the records. Click to fetch the rest (this may take a while).
-	
-GRID.TITLEBAR.GENERATE_CSV	Generate CSV
-GRID.TITLEBAR.DOWNLOAD_CSV	Download CSV
-GRID.TITLEBAR.REFRESH	Refresh
-GRID.TITLEBAR.SHOW_HIDE	Show/Hide Grid
-GRID.TITLEBAR.SHOW_HIDE_CONTROLS	Show/Hide Grid Controls
-GRID.TITLEBAR.SHOW_DEBUG_INFO	Show Grid Debug Info
-	
-// Grid toolbar	
-	
+GRID.TITLEBAR.SELECTED_COUNT_SINGULAR	%d record selected	
+GRID.TITLEBAR.SELECTED_COUNT_PLURAL	%d records selected	
+GRID.TITLEBAR.CLEAR_FILTER	clear filter	
+GRID.TITLEBAR.DATA_LIMITED_WARNING	You are not looking at all of the records. Click to fetch the rest (this may take a while).	
+		
+GRID.TITLEBAR.GENERATE_CSV	Generate CSV	
+GRID.TITLEBAR.DOWNLOAD_CSV	Download CSV	
+GRID.TITLEBAR.REFRESH	Refresh	
+GRID.TITLEBAR.SHOW_HIDE	Show/Hide Grid	
+GRID.TITLEBAR.SHOW_HIDE_CONTROLS	Show/Hide Grid Controls	
+GRID.TITLEBAR.SHOW_DEBUG_INFO	Show Grid Debug Info	
+		
+// Grid toolbar		
+		
 GRID_TOOLBAR.PLAIN.SHOW_MORE_ON_SCROLL	Show More on Scroll	
 GRID_TOOLBAR.PLAIN.SHOW_ALL_ROWS	Show All Rows	
 GRID_TOOLBAR.PLAIN.COLUMNS	Columns	
@@ -44,14 +44,14 @@ GRID_TOOLBAR.GROUP.PIN_GROUPS	Pin Groups	To "pin" is to force the group header t
 		
 GRID_TOOLBAR.PIVOT.TOTAL_ROW_COLUMN	Total Row/Column	
 GRID_TOOLBAR.PIVOT.HIDE_ZERO_VALUES	Hide Zero Values	
-	
-GRID_TOOLBAR.PREFS.RESET.CONFIRM	Are you sure you want to reset all configuration, delete all perspectives, and start over?
-GRID_TOOLBAR.PREFS.NEW_PERSPECTIVE	New Perspective...
-GRID_TOOLBAR.PREFS.NEW_PERSPECTIVE.PROMPT	Enter new perspective name
-GRID_TOOLBAR.PREFS.DELETE_PERSPECTIVE.CONFIRM	Are you sure you want to delete this perspective?
-GRID_TOOLBAR.PREFS.RENAME_PERSPECTIVE.PROMPT	Rename perspective "%s" to what?
-	
-GRID_TOOLBAR.PREFS.BACKEND_DOES_NOT_SAVE	The preferences system is not configured to permanently save perspectives.
+		
+GRID_TOOLBAR.PREFS.RESET.CONFIRM	Are you sure you want to reset all configuration, delete all perspectives, and start over?	
+GRID_TOOLBAR.PREFS.NEW_PERSPECTIVE	New Perspective...	
+GRID_TOOLBAR.PREFS.NEW_PERSPECTIVE.PROMPT	Enter new perspective name	
+GRID_TOOLBAR.PREFS.DELETE_PERSPECTIVE.CONFIRM	Are you sure you want to delete this perspective?	
+GRID_TOOLBAR.PREFS.RENAME_PERSPECTIVE.PROMPT	Rename perspective "%s" to what?	
+		
+GRID_TOOLBAR.PREFS.BACKEND_DOES_NOT_SAVE	The preferences system is not configured to permanently save perspectives.	
 GRID_TOOLBAR.PREFS.SAVE.HELP	Click to save the current configuration.  The next time this grid is visited, the previously saved configuration will automatically be used.	
 GRID_TOOLBAR.PREFS.SAVE_AS.HELP	This pre-defined perspective cannot be saved with this name.  Click to save with a new name.  After that, any changes will be saved under the new name.	
 GRID_TOOLBAR.PREFS.RESET.TOOLTIP	Reset	
@@ -60,34 +60,34 @@ GRID_TOOLBAR.PREFS.FORWARD.TOOLTIP	Forward	"Forward" as in to go forwards throug
 GRID_TOOLBAR.PREFS.RENAME.TOOLTIP	Rename	
 GRID_TOOLBAR.PREFS.DELETE.TOOLTIP	Delete	
 GRID_TOOLBAR.PREFS.INFO.TOOLTIP	Info	
-GRID_TOOLBAR.PREFS.SAVE.TOOLTIP	Save
-GRID_TOOLBAR.PREFS.SAVE_AS.TOOLTIP	Save As...
-	
-GRID_TOOLBAR.RENDERER.DISPLAY_OPTIONS	Display Options
-	
-GRID_TOOLBAR.MIRAGE.STORE_DISPLAYED_DATA	Store Displayed Data
-	
-// Perspective window	
-	
-GRID.PERSPECTIVE_WIN.TITLE	Perspective
-GRID.PERSPECTIVE_WIN.TEMP_PERSPECTIVE_WARNING	This perspective is temporary; the configuration below does not reflect the current state of any bound prefs modules.
-	
-// Column configuration	
-	
-GRID.COLCONFIG_WIN.TITLE	Columns
-GRID.COLCONFIG_WIN.TBL.FIELD	Field
-GRID.COLCONFIG_WIN.TBL.DISPLAY	Display
-GRID.COLCONFIG_WIN.TBL.OPTIONS	Options
-GRID.COLCONFIG_WIN.REORDER_COLS	Click and drag to reorder columns
-GRID.COLCONFIG_WIN.RENAME_COL	Rename column in table.
-GRID.COLCONFIG_WIN.RENAME_COL.PROMPT	Rename field "%s" to what?
-GRID.COLCONFIG_WIN.PIN_COL	Pin column to left side of table?
-GRID.COLCONFIG_WIN.HIDE_COL	Hide column?
-GRID.COLCONFIG_WIN.ALLOW_HTML	Allow HTML to be rendered?
-GRID.COLCONFIG_WIN.MOVE_COL_TO_TOP	Move to top of column list
-GRID.COLCONFIG_WIN.MOVE_COL_TO_BOTTOM	Move to bottom of column list
-GRID.COLCONFIG_WIN.PINNED_COL_WARNING	Pinned columns always appear before any others in plain (non-grouped) output, in the relative order shown above.
-GRID.COLCONFIG_WIN.RESET_COL_ORDER	Reset Column Order
+GRID_TOOLBAR.PREFS.SAVE.TOOLTIP	Save	
+GRID_TOOLBAR.PREFS.SAVE_AS.TOOLTIP	Save As...	
+		
+GRID_TOOLBAR.RENDERER.DISPLAY_OPTIONS	Display Options	
+		
+GRID_TOOLBAR.MIRAGE.STORE_DISPLAYED_DATA	Store Displayed Data	
+		
+// Perspective window		
+		
+GRID.PERSPECTIVE_WIN.TITLE	Perspective	
+GRID.PERSPECTIVE_WIN.TEMP_PERSPECTIVE_WARNING	This perspective is temporary; the configuration below does not reflect the current state of any bound prefs modules.	
+		
+// Column configuration		
+		
+GRID.COLCONFIG_WIN.TITLE	Columns	
+GRID.COLCONFIG_WIN.TBL.FIELD	Field	
+GRID.COLCONFIG_WIN.TBL.DISPLAY	Display	
+GRID.COLCONFIG_WIN.TBL.OPTIONS	Options	
+GRID.COLCONFIG_WIN.REORDER_COLS	Click and drag to reorder columns	
+GRID.COLCONFIG_WIN.RENAME_COL	Rename column in table.	
+GRID.COLCONFIG_WIN.RENAME_COL.PROMPT	Rename field "%s" to what?	
+GRID.COLCONFIG_WIN.PIN_COL	Pin column to left side of table?	
+GRID.COLCONFIG_WIN.HIDE_COL	Hide column?	
+GRID.COLCONFIG_WIN.ALLOW_HTML	Allow HTML to be rendered?	
+GRID.COLCONFIG_WIN.MOVE_COL_TO_TOP	Move to top of column list	
+GRID.COLCONFIG_WIN.MOVE_COL_TO_BOTTOM	Move to bottom of column list	
+GRID.COLCONFIG_WIN.PINNED_COL_WARNING	Pinned columns always appear before any others in plain (non-grouped) output, in the relative order shown above.	
+GRID.COLCONFIG_WIN.RESET_COL_ORDER	Reset Column Order	
 		
 // Grid controls		
 		
@@ -95,43 +95,45 @@ GRID_CONTROL.FIELD	Field	"Field" as in a property of a data object, not like a g
 GRID_CONTROL.SELECT_FIELD	Select Field	
 GRID_CONTROL.SELECT_AGGREGATE	Select Aggregate	
 GRID_CONTROL.FILTER.TITLE	Filters	
-GRID_CONTROL.GROUP.TITLE	Group Fields
-GRID_CONTROL.PIVOT.TITLE	Pivot Fields
-GRID_CONTROL.AGGREGATE.TITLE	Aggregate
-GRID_CONTROL.FIELD.REMOVE	Remove
-GRID_CONTROL.FIELD.SHOW_FUNCTIONS	Show functions available for this field
-GRID_CONTROL.AGGREGATE.EDIT_OPTIONS	Edit options
-GRID_CONTROL.AGGREGATE.OPTIONS_DIALOG.TITLE	Options for %s
-	
-// Aggregate function names	
-	
-AGGREGATE.NAME.COUNT	Count
-AGGREGATE.NAME.COUNT_DISTINCT	Count Distinct
-AGGREGATE.NAME.VALUES	Values
-AGGREGATE.NAME.VALUES_WITH_COUNTS	Values w/ Counts
-AGGREGATE.NAME.DISTINCT_VALUES	Distinct Values
-AGGREGATE.NAME.SUM	Sum
-AGGREGATE.NAME.AVERAGE	Average
-AGGREGATE.NAME.MIN	Min
-AGGREGATE.NAME.MAX	Max
-AGGREGATE.NAME.FIRST	First
-AGGREGATE.NAME.LAST	Last
-AGGREGATE.NAME.NTH	Nth
-AGGREGATE.NAME.SUM_OVER_SUM	Sum/Sum
-AGGREGATE.NAME.COUNT_OVER_COUNT	Count/Count
-	
-AGGREGATE.FIELD.NUMERATOR	Num
-AGGREGATE.FIELD.DENOMINATOR	Denom
-	
-// Grid Table Output	
-	
-GRID.TABLE.SORT_MENU.ASCENDING	%s, Ascending
-GRID.TABLE.SORT_MENU.DESCENDING	%s, Descending
-GRID.TABLE.SORT_MENU.RESET_SORT	Reset Sort
-	
-GRID.TABLE.DRAGGABLE_FIELD_HELP	You can drag & drop this field into the grid controls above to filter, group or pivot.
-GRID.TABLE.ADD_FILTER_HELP	Click to add a filter for "%s"
-	
+GRID_CONTROL.GROUP.TITLE	Group Fields	
+GRID_CONTROL.PIVOT.TITLE	Pivot Fields	
+GRID_CONTROL.AGGREGATE.TITLE	Aggregate	
+GRID_CONTROL.FIELD.REMOVE	Remove	
+GRID_CONTROL.FIELD.SHOW_FUNCTIONS	Show functions available for this field	
+GRID_CONTROL.AGGREGATE.EDIT_OPTIONS	Edit options	
+GRID_CONTROL.AGGREGATE.OPTIONS_DIALOG.TITLE	Options for %s	
+		
+// Aggregate function names		
+		
+AGGREGATE.NAME.COUNT	Count	
+AGGREGATE.NAME.COUNT_DISTINCT	Count Distinct	
+AGGREGATE.NAME.VALUES	Values	
+AGGREGATE.NAME.VALUES_WITH_COUNTS	Values w/ Counts	
+AGGREGATE.NAME.DISTINCT_VALUES	Distinct Values	
+AGGREGATE.NAME.SUM	Sum	
+AGGREGATE.NAME.AVERAGE	Average	
+AGGREGATE.NAME.MIN	Min	
+AGGREGATE.NAME.MAX	Max	
+AGGREGATE.NAME.FIRST	First	
+AGGREGATE.NAME.LAST	Last	
+AGGREGATE.NAME.NTH	Nth	
+AGGREGATE.NAME.SUM_OVER_SUM	Sum/Sum	
+AGGREGATE.NAME.COUNT_OVER_COUNT	Count/Count	
+		
+AGGREGATE.FIELD.NUMERATOR	Num	
+AGGREGATE.FIELD.DENOMINATOR	Denom	
+		
+AGGREGATE.HEADER_DISPLAY	%s of %s	Used to display the header item for an aggregate function with the fields it is applied to, e.g. "Count Distinct of Country"
+		
+// Grid Table Output		
+		
+GRID.TABLE.SORT_MENU.ASCENDING	%s, Ascending	
+GRID.TABLE.SORT_MENU.DESCENDING	%s, Descending	
+GRID.TABLE.SORT_MENU.RESET_SORT	Reset Sort	
+		
+GRID.TABLE.DRAGGABLE_FIELD_HELP	You can drag & drop this field into the grid controls above to filter, group or pivot.	
+GRID.TABLE.ADD_FILTER_HELP	Click to add a filter for "%s"	
+		
 // Group Functions		
 		
 GRID.GROUP_FUN.DIALOG.TITLE	Apply Function to %s	
@@ -139,19 +141,19 @@ GRID.GROUP_FUN.DIALOG.REPEATING	Repeating	A header for slicing the data set acco
 GRID.GROUP_FUN.DIALOG.DATE	Date	
 GRID.GROUP_FUN.DIALOG.DATE_TIME	Date & Time	
 GRID.GROUP_FUN.DIALOG.TIME	Time	
-GRID.GROUP_FUN.DIALOG.OTHER	Other
-	
-GRID.GROUP_FUN.NONE	None
-GRID.GROUP_FUN.REPEATING.QUARTER	Quarter
-GRID.GROUP_FUN.REPEATING.MONTH	Month
-GRID.GROUP_FUN.REPEATING.WEEK	Week (ISO)
-GRID.GROUP_FUN.REPEATING.DAY_OF_WEEK	Day of Week
-GRID.GROUP_FUN.DATE.YEAR	Year
-GRID.GROUP_FUN.DATE.YEAR_AND_QUARTER	Year & Quarter
-GRID.GROUP_FUN.DATE.YEAR_AND_MONTH	Year & Month
-GRID.GROUP_FUN.DATE.YEAR_AND_WEEK	Year & Week (ISO)
-GRID.GROUP_FUN.DATE.FULL_DATE	Full Date (No Time)
-GRID.GROUP_FUN.DATE_TIME.SLICE.1HR	Date & Time: 1 hr slices
-GRID.GROUP_FUN.DATE_TIME.SLICE.15MIN	Date & Time: 15 min slices
-GRID.GROUP_FUN.TIME.SLICE.1HR	Time: 1 hr slices
-GRID.GROUP_FUN.TIME.SLICE.15MIN	Time: 15 min slices
+GRID.GROUP_FUN.DIALOG.OTHER	Other	
+		
+GRID.GROUP_FUN.NONE	None	
+GRID.GROUP_FUN.REPEATING.QUARTER	Quarter	
+GRID.GROUP_FUN.REPEATING.MONTH	Month	
+GRID.GROUP_FUN.REPEATING.WEEK	Week (ISO)	
+GRID.GROUP_FUN.REPEATING.DAY_OF_WEEK	Day of Week	
+GRID.GROUP_FUN.DATE.YEAR	Year	
+GRID.GROUP_FUN.DATE.YEAR_AND_QUARTER	Year & Quarter	
+GRID.GROUP_FUN.DATE.YEAR_AND_MONTH	Year & Month	
+GRID.GROUP_FUN.DATE.YEAR_AND_WEEK	Year & Week (ISO)	
+GRID.GROUP_FUN.DATE.FULL_DATE	Full Date (No Time)	
+GRID.GROUP_FUN.DATE_TIME.SLICE.1HR	Date & Time: 1 hr slices	
+GRID.GROUP_FUN.DATE_TIME.SLICE.15MIN	Date & Time: 15 min slices	
+GRID.GROUP_FUN.TIME.SLICE.1HR	Time: 1 hr slices	
+GRID.GROUP_FUN.TIME.SLICE.15MIN	Time: 15 min slices	
