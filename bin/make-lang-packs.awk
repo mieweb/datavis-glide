@@ -25,10 +25,11 @@ BEGINFILE {
     lang = l[length(l)-1]
 }
 
+NR < 2 { next }
 /^[[:space:]]*\/\// { next }
 /^[[:space:]]*$/ { next }
 
-# English file format: label | text
+# English file format: label | text | comment
 
 lang == "en" {
     english[$1] = $2
