@@ -112,6 +112,4 @@ describe('Number Formatting', function() {
 		assert.equal(await grid.getCell('currency-bignumber-5', 0), '$8,443.4');
 		assert.equal(await grid.getCell('currency-bignumber-6', 0), '$8,443.37');
 	});
-
-	after(() => driver.quit());
 });

@@ -67,17 +67,23 @@ describe('Preferences (w/o Auto Save)', function() {
 		await grid.addGroup('country');
 		await grid.waitForIdle();
 		assert.deepEqual(await grid.getGroup(), ['country']);
+		assert.equal(await grid.getPerspective(), '[*] Main Perspective');
 
 		// Save the perspective.
 
 		await grid.savePrefs();
 
+		// Make sure the perspective dropdown shows it was saved.
+
+		await grid.waitForIdle();
+		assert.equal(await grid.getPerspective(), 'Main Perspective');
+
 		// Make sure the grouping stuck.
 
 		await driver.navigate().refresh();
 		await grid.waitForIdle();
-		assert.equal(await grid.getPerspective(), 'Main Perspective');
 		assert.deepEqual(await grid.getGroup(), ['country']);
+		assert.equal(await grid.getPerspective(), 'Main Perspective');
 	});
 
 	it('test 3', async function () {
@@ -89,23 +95,30 @@ describe('Preferences (w/o Auto Save)', function() {
 		await grid.addGroup('country');
 		await grid.waitForIdle();
 		assert.deepEqual(await grid.getGroup(), ['country']);
+		assert.equal(await grid.getPerspective(), '[*] Main Perspective');
 
 		// Save the perspective.
 
 		await grid.savePrefs();
+
+		// Make sure the perspective dropdown shows it was saved.
+
+		await grid.waitForIdle();
+		assert.equal(await grid.getPerspective(), 'Main Perspective');
 
 		// Pivot by something.
 
 		await grid.addPivot('fruit');
 		await grid.waitForIdle();
 		assert.deepEqual(await grid.getPivot(), ['fruit']);
+		assert.equal(await grid.getPerspective(), '[*] Main Perspective');
 
 		// Make sure the grouping stuck, but not the pivotting.
 
 		await driver.navigate().refresh();
 		await grid.waitForIdle();
-		assert.equal(await grid.getPerspective(), 'Main Perspective');
 		assert.deepEqual(await grid.getGroup(), ['country']);
 		assert.deepEqual(await grid.getPivot(), []);
+		assert.equal(await grid.getPerspective(), 'Main Perspective');
 	});
 });

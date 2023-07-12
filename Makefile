@@ -22,6 +22,7 @@ npm-setup:
 .PHONY:	npm-teardown
 npm-teardown:
 	rm -rf node_modules
+	rm -rf package-lock.json
 
 .PHONY:	python-setup
 python-setup:

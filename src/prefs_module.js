@@ -83,6 +83,9 @@ import { Graph } from './graph.js';
  *
  * @property {object} target
  * What bound object to interact with.
+ *
+ * @property {object} [defaultConfig]
+ * If set, this is the default configuration to use in the `load` method if none is provided.
  */
 
 var PrefsModule = makeSubclass('PrefsModule', Object, function (prefs, target) {
@@ -136,16 +139,14 @@ var PrefsModuleComputedView = makeSubclass('PrefsModuleComputedView', PrefsModul
 	if (!(self.target instanceof ComputedView)) {
 		throw new Error('Call Error: `target` must be an instance of ComputedView');
 	}
+}, {
+	defaultConfig: {}
 });
 
 // #load {{{2
 
 PrefsModuleComputedView.prototype.load = function (config) {
 	var self = this;
-
-	if (config == null) {
-		return;
-	}
 
 	if (config.filter != null) {
 		self.target.setFilter(config.filter, null, {
@@ -303,16 +304,14 @@ var PrefsModuleMirageView = makeSubclass('PrefsModuleMirageView', PrefsModule, f
 	if (!(self.target instanceof MirageView)) {
 		throw new Error('Call Error: `target` must be an instance of MirageView');
 	}
+}, {
+	defaultConfig: {}
 });
 
 // #load {{{2
 
 PrefsModuleMirageView.prototype.load = function (config) {
 	var self = this;
-
-	if (config == null) {
-		return;
-	}
 
 	if (config.filter == null) {
 		self.target.clearFilter({

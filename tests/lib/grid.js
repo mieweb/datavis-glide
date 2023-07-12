@@ -734,11 +734,15 @@ class Grid {
 	}
 
 	async deletePerspective() {
-		return this.ui.prefsDeleteBtn.click();
+		await this.ui.prefsDeleteBtn.click();
+		let a = await this.driver.wait(until.alertIsPresent());
+		return a.accept();
 	}
 
 	async resetPrefs() {
-		return this.ui.prefsResetBtn.click();
+		await this.ui.prefsResetBtn.click();
+		let a = await this.driver.wait(until.alertIsPresent());
+		return a.accept();
 	}
 
 	async prevPerspective() {

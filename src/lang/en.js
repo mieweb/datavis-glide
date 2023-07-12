@@ -1,6 +1,7 @@
 export default {
   'AGGREGATE.FIELD.DENOMINATOR': 'Denom',
   'AGGREGATE.FIELD.NUMERATOR': 'Num',
+  'AGGREGATE.HEADER_DISPLAY': '%s of %s',
   'AGGREGATE.NAME.AVERAGE': 'Average',
   'AGGREGATE.NAME.COUNT': 'Count',
   'AGGREGATE.NAME.COUNT_DISTINCT': 'Count Distinct',

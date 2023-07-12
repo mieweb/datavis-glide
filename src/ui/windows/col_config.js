@@ -124,7 +124,7 @@ ColConfigWin.prototype.show = function (posElt, onSave) {
 			.addClass('wcdv_icon_button')
 			.append(fontAwesome('fa-pencil'))
 			.on('click', function () {
-				var newName = prompt(trans('GRID.COLCONFIG_WIN.RENAME_COL.PROMPT'));
+				var newName = prompt(trans('GRID.COLCONFIG_WIN.RENAME_COL.PROMPT', field));
 
 				if (newName) {
 					colConfig.displayText = newName;

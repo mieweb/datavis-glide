@@ -3354,14 +3354,6 @@ View.prototype.reset = function (opts) {
 	self.getData();
 };
 
-// #getUniqueVals {{{2
-
-View.prototype.getUniqueVals = function (cont) {
-	var self = this;
-
-	return self.source.getUniqueVals(cont);
-};
-
 // #getLastOps {{{2
 
 View.prototype.getLastOps = function () {

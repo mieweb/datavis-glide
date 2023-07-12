@@ -207,6 +207,8 @@ describe('Preferences', function() {
 			await grid.newPerspective('Test');
 			await grid.waitForIdle();
 			assert.equal(await grid.getPerspective(), 'Test');
+			assert.equal(await grid.ui.prefsBackBtn.isEnabled(), true, 'Expected back button to be enabled');
+			assert.equal(await grid.ui.prefsForwardBtn.isEnabled(), false, 'Expected forward button to be disabled');
 
 			// Group by something.
 
@@ -220,6 +222,8 @@ describe('Preferences', function() {
 			await grid.waitForIdle();
 			assert.equal(await grid.getPerspective(), 'Main Perspective');
 			assert.deepEqual(await grid.getGroup(), [], 'Expected no groups to be set');
+			assert.equal(await grid.ui.prefsBackBtn.isEnabled(), false, 'Expected back button to be disabled');
+			assert.equal(await grid.ui.prefsForwardBtn.isEnabled(), true, 'Expected forward button to be enabled');
 
 			// Switch to next perspective.
 
@@ -227,6 +231,8 @@ describe('Preferences', function() {
 			await grid.waitForIdle();
 			assert.equal(await grid.getPerspective(), 'Test');
 			assert.deepEqual(await grid.getGroup(), ['country']);
+			assert.equal(await grid.ui.prefsBackBtn.isEnabled(), true, 'Expected back button to be enabled');
+			assert.equal(await grid.ui.prefsForwardBtn.isEnabled(), false, 'Expected forward button to be disabled');
 
 			// Delete new perspective.
 
@@ -234,10 +240,8 @@ describe('Preferences', function() {
 			await grid.waitForIdle();
 			assert.equal(await grid.getPerspective(), 'Main Perspective');
 			assert.deepEqual(await grid.getGroup(), [], 'Expected no groups to be set');
-
-			// Should not be able to go back.
-
-			assert.equal(await grid.ui.prefsBackBtn.isEnabled, false, 'Expected back button to be disabled');
+			assert.equal(await grid.ui.prefsBackBtn.isEnabled(), false, 'Expected back button to be disabled');
+			assert.equal(await grid.ui.prefsForwardBtn.isEnabled(), false, 'Expected forward button to be disabled');
 		});
 	});
 });

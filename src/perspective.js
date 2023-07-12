@@ -174,7 +174,7 @@ mixinLogging(Perspective);
  * @param {function} [cont]
  */
 
-Perspective.prototype.load = function (modules, cont) {
+Perspective.prototype.load = function (moduleNames, cont) {
 	var self = this;
 
 	if (cont != null && typeof cont !== 'function') {
@@ -183,17 +183,23 @@ Perspective.prototype.load = function (modules, cont) {
 
 	cont = cont || I;
 
-	if (modules == null) {
-		modules = _.keys(self.modules);
+	if (moduleNames == null) {
+		moduleNames = _.keys(self.modules);
 	}
 
-	self.debug(null, 'Loading perspective using these modules: %s', JSON.stringify(modules));
+	self.debug(null, 'Loading perspective using these modules: %s', JSON.stringify(moduleNames));
 
 	// Go through every module that we have preferences for and load them into the bound components.
 
-	_.each(modules, function (moduleName) {
-		self.debug(null, 'Loading module: moduleName = %s ; config = %O', moduleName, self.config[moduleName]);
-		self.modules[moduleName].load(self.config[moduleName]);
+	_.each(moduleNames, function (moduleName) {
+		var m = self.modules[moduleName];
+		var c = self.config[moduleName];
+		if (c == null && m.defaultConfig != null) {
+			self.debug(null, 'Using default config for module: moduleName = %s ; config = %O', moduleName, m.defaultConfig);
+			c = m.defaultConfig;
+		}
+		self.debug(null, 'Loading module: moduleName = %s ; config = %O', moduleName, c);
+		m.load(c);
 	});
 
 	return cont(true);

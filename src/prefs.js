@@ -514,7 +514,7 @@ Prefs.prototype._resetHistory = function (p) {
 	//         ^ (history index)
 	//
 	// AFTER -----------------------------
-	//   [ X C D E ]
+	//   [ P C D E ]
 	//     ^ (history index)
 
 	self.history.splice(0, self.historyIndex);
@@ -845,20 +845,49 @@ Prefs.prototype.deletePerspective = function (id, cont, opts) {
 		// When we've deleted all the perspectives, we need to make a new one.
 
 		if (self.availablePerspectives.length === 0) {
+			// We just deleted the last perspective, so reset the history stack.
+			self.historyIndex = self.history.length;
+			self._resetHistory();
+
 			self.currentPerspective = null;
 			return self.addMainPerspective(cont);
 		}
 
 		if (self.currentPerspective.id === id) {
-			// Go back in history until we've found a different perspective.
+			// CURRENT STATE ---------------------
+			//   [ A B X B X A ]
+			//         ^ (history index - deleted perspective)
 
-			while (self.historyIndex < self.history.length && self.history[self.historyIndex].id === id) {
-				self.historyIndex += 1;
+			// Go forward in history until we find a perspective that isn't the one we just deleted.
+			while (self.historyIndex > 0 && self.history[self.historyIndex].id === id) {
+				self.historyIndex -= 1;
 			}
 
-			// Reset history until that point, erasing everything after it.
+			// CURRENT STATE ---------------------
+			//   [ A B X B X A ]
+			//       ^ (history index - deleted perspective)
 
-			self._resetHistory();
+			// Now delete all references to the deleted perspective from the history stack.
+			self.history = _.reject(self.history, function (p) {
+				return p.id === id;
+			});
+
+			// CURRENT STATE ---------------------
+			//   [ A B B A ]
+			//       ^ (history index - deleted perspective)
+
+			// Now delete all continuous sequences of the new current perspective.
+			var newCurId = self.history[self.historyIndex].id;
+			for (var i = self.historyIndex + 1; i < self.history.length && self.history[i].id !== newCurId; i += 1) {
+				self.history[i] = null;
+			}
+			self.history = _.without(self.history, null);
+
+			// CURRENT STATE ---------------------
+			//   [ A B A ]
+			//       ^ (history index)
+
+			self._firePrefsHistoryStatus();
 
 			if (self.history.length > 0) {
 

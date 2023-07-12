@@ -2091,7 +2091,8 @@ Grid.prototype.colConfigFromTypeInfo = function (typeInfo, opts) {
 	var self = this;
 
 	opts = deepDefaults(opts, {
-		from: 'typeInfo'
+		from: 'typeInfo',
+		savePrefs: false
 	});
 
 	if (!(typeInfo instanceof OrdMap)) {
