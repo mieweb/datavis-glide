@@ -16,7 +16,7 @@ main() {
 	files+=(jquery-contextmenu/dist/jquery.contextMenu.min.{js,css})
 	files+=(sumoselect/jquery.sumoselect.min.js sumoselect/sumoselect.min.css)
 	files+=(flatpickr/dist/flatpickr.min.{js,css})
-	cp -v "${files[@]/#/$src\/}" $dest
+	cp -v "${files[@]/#/$src/}" $dest
 	rsync -av $src/jquery-ui/themes/base/images/ $dest/images/
 }
 
