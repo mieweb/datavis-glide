@@ -3210,6 +3210,9 @@ export function format(fcc, fti, cell, opts) {
 					config.minimumFractionDigits = fmt.decimalPlaces;
 					config.maximumFractionDigits = fmt.decimalPlaces;
 				}
+				else {
+					config.maximumFractionDigits = 20; // for some reason, the default is 3
+				}
 
 				return Intl.NumberFormat(window.DATAVIS_LANG, config).format(x);
 			}
