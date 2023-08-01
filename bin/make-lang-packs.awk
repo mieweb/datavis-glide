@@ -31,14 +31,14 @@ NR < 2 { next }
 
 # English file format: label | text | comment
 
-lang == "en" {
+lang == "en-US" {
     english[$1] = $2
-    trans["en"][$1] = $2
+    trans["en-US"][$1] = $2
 }
 
 # Translation file format: language | label | english | translated
 
-lang != "en" && $2 in english {
+lang != "en-US" && $2 in english {
     trans[$1][$2] = $4
 }
 
@@ -50,6 +50,9 @@ END {
         for (label in english) {
             if (label in trans[lang]) {
                 print("  '" label "': '" trans[lang][label] "',") > fh
+            }
+            else {
+                print("  - Missing translation for: " label)
             }
         }
         print("};") > fh
