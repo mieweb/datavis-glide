@@ -1,6 +1,6 @@
 JSDOC := ./node_modules/.bin/jsdoc
 SOURCE := $(shell find src -type f -name '*.js')
-LANG_PACKS := src/lang/en.js src/lang/es.js
+LANG_PACKS := src/lang/en-US.js src/lang/es-MX.js src/lang/pt-BR.js
 DIST_FILES := $(addprefix dist/,wcdatavis.js wcdatavis.min.js wcdatavis.css)
 EXAMPLE_FILES := $(patsubst dist/%,examples/%,$(DIST_FILES))
 PUB_PATH := zeus.med-web.com:~/public_html/datavis
@@ -135,7 +135,7 @@ clean:	doc-clean dist-clean
 
 # Translations {{{1
 
-src/lang/en.js:	en.tsv trans.tsv
+src/lang/en-US.js:	en-US.tsv trans.tsv
 	-gawk -f ./bin/make-lang-packs.awk $^
 
 trans.tsv:

@@ -1,13 +1,20 @@
 import {sprintf} from 'sprintf-js';
 import OrdMap from './util/ordmap.js';
 
-import trans_en from './lang/en.js';
-import trans_es from './lang/es.js';
+import trans_enUs from './lang/en-US.js';
+import trans_esMx from './lang/es-MX.js';
+import trans_ptBr from './lang/pt-BR.js';
 
 var TRANSLATION_REGISTRY = new OrdMap();
 
-TRANSLATION_REGISTRY.set('en', trans_en);
-TRANSLATION_REGISTRY.set('es', trans_es);
+TRANSLATION_REGISTRY.set('en', trans_enUs);
+TRANSLATION_REGISTRY.set('en-US', trans_enUs);
+
+TRANSLATION_REGISTRY.set('es', trans_esMx);
+TRANSLATION_REGISTRY.set('es-MX', trans_esMx);
+
+TRANSLATION_REGISTRY.set('pt', trans_ptBr);
+TRANSLATION_REGISTRY.set('pt-BR', trans_ptBr);
 
 var trans = (function () {
 	var alreadyWarnedAboutLang = {};
@@ -22,7 +29,13 @@ var trans = (function () {
 		//}
 
 		if (lang == null) {
-			lang = navigator.language.split('-')[0];
+			// Check for the region-specific language first.
+			if (TRANSLATION_REGISTRY.isSet(navigator.language)) {
+				lang = navigator.language;
+			}
+			else {
+				lang = navigator.language.split('-')[0];
+			}
 		}
 
 		if (!TRANSLATION_REGISTRY.isSet(lang)) {
