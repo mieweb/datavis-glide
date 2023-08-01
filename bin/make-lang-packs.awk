@@ -51,6 +51,9 @@ END {
             if (label in trans[lang]) {
                 print("  '" label "': '" trans[lang][label] "',") > fh
             }
+            else {
+                print("  - Missing translation for: " label)
+            }
         }
         print("};") > fh
     }
