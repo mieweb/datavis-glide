@@ -24,10 +24,10 @@ $(document).ready(function () {
 		type: 'http',
 		url: '../../fuel-economy.csv'
 	});
-
-	var view = new MIE.WC_DataVis.View(source, 'view');
-	new MIE.WC_DataVis.Grid('grid', view, {
+	var computedView = new MIE.WC_DataVis.ComputedView(source);
+	new MIE.WC_DataVis.Grid({
 		id: 'grid',
+		computedView: computedView,
 		renderer: 'handlebars',
 		rendererOpts: {
 			whenPlain: {

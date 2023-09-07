@@ -652,7 +652,7 @@ Graph.prototype.checkGraphConfig = function () {
 				throw new Error('Graph config error: data format "' + dataFormat + '": `graphType` must be a string');
 			}
 
-			if (['area', 'bar', 'column', 'pie'].indexOf(config.graphType) === -1) {
+			if (['area', 'bar', 'column', 'line', 'pie'].indexOf(config.graphType) === -1) {
 				throw new Error('Graph config error: data format "' + dataFormat + '": invalid `graphType`: ' + config.graphType);
 			}
 		}
@@ -661,6 +661,7 @@ Graph.prototype.checkGraphConfig = function () {
 		case 'area':
 		case 'bar':
 		case 'column':
+		case 'line':
 		case 'pie':
 			if (config.valueField != null && config.valueFields != null) {
 				throw new Error('Graph config error: data format "' + dataFormat + '": can\'t define both `valueField` and `valueFields`');
@@ -971,6 +972,11 @@ GraphControl.prototype.draw = function () {
 var GRAPH_TYPES = OrdMap.fromArray([{
 	value: 'area',
 	name: 'Area Chart',
+	modes: ['plain'],
+	renderers: [GraphRendererGoogle],
+}, {
+	value: 'line',
+	name: 'Line Chart',
 	modes: ['plain'],
 	renderers: [GraphRendererGoogle],
 }, {

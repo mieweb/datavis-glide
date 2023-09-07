@@ -501,6 +501,7 @@ GraphRendererGoogle.prototype._draw = function (devConfig, userConfig) {
 					area: 'AreaChart',
 					bar: 'BarChart',
 					column: 'ColumnChart',
+					line: 'LineChart',
 					pie: 'PieChart',
 					gantt: 'Gantt'
 				};
@@ -598,7 +599,8 @@ GraphRendererJit.prototype.draw = function () {
 		self.view.getTypeInfo(function () {
 			var ctor = {
 				area: 'AreaChart',
-				bar: 'BarChart'
+				bar: 'BarChart',
+				line: 'LineChart'
 			};
 
 			var json = {

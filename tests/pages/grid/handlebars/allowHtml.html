@@ -61,11 +61,12 @@ $(document).ready(function () {
 		url: '../../allowHtml.json',
 		conversion: {'link3': ['link3'], 'link4': ['link4'], 'date': ['date']}
 	});
-	var view = new MIE.WC_DataVis.View(source, 'view', {
+	var computedView = new MIE.WC_DataVis.ComputedView(source, {
 		prefs: prefs
 	});
-	new MIE.WC_DataVis.Grid('grid', view, {
+	new MIE.WC_DataVis.Grid({
 		id: 'grid',
+		computedView: computedView,
 		renderer: 'handlebars',
 		rendererOpts: {
 			whenPlain: {
