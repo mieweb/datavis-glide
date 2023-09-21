@@ -19,10 +19,9 @@ import OrdMap from './util/ordmap.js';
 
 import {ComputedView} from './computed_view.js';
 import {Prefs} from './prefs.js';
-import {
-	GraphRendererGoogle,
-} from './graph_renderer.js';
 import {trans} from './trans.js';
+
+import GRAPH_RENDERER_REGISTRY from './reg/graph_renderer.js';
 
 // Graph {{{1
 
@@ -716,7 +715,10 @@ Graph.prototype.redraw = function () {
 
 	self.prefs.prime(function () {
 		self.checkGraphConfig();
-		self.renderer = new GraphRendererGoogle(self, self.ui.graph, self.view, self.opts);
+		var ctor = getProp(self.opts, 'renderer') && GRAPH_RENDERER_REGISTRY.isSet(self.opts.renderer)
+			? GRAPH_RENDERER_REGISTRY.get(self.opts.renderer)
+			: GRAPH_RENDERER_REGISTRY.get('google');
+		self.renderer = new ctor(self, self.ui.graph, self.view, self.opts);
 		self.drawFromConfig();
 	}, {
 		who: self
@@ -973,32 +975,32 @@ var GRAPH_TYPES = OrdMap.fromArray([{
 	value: 'area',
 	name: 'Area Chart',
 	modes: ['plain'],
-	renderers: [GraphRendererGoogle],
+	renderers: [GRAPH_RENDERER_REGISTRY.get('google')],
 }, {
 	value: 'line',
 	name: 'Line Chart',
 	modes: ['plain'],
-	renderers: [GraphRendererGoogle],
+	renderers: [GRAPH_RENDERER_REGISTRY.get('google')],
 }, {
 	value: 'bar',
 	name: 'Bar Chart',
 	modes: ['plain', 'group', 'pivot'],
-	renderers: [GraphRendererGoogle],
+	renderers: [GRAPH_RENDERER_REGISTRY.get('google')],
 }, {
 	value: 'column',
 	name: 'Column Chart',
 	modes: ['plain', 'group', 'pivot'],
-	renderers: [GraphRendererGoogle],
+	renderers: [GRAPH_RENDERER_REGISTRY.get('google')],
 }, {
 	value: 'pie',
 	name: 'Pie Chart',
 	modes: ['plain', 'group', 'pivot'],
-	renderers: [GraphRendererGoogle],
+	renderers: [GRAPH_RENDERER_REGISTRY.get('google')],
 }, {
 	value: 'gantt',
 	name: 'Gantt Chart',
 	modes: ['plain'],
-	renderers: [GraphRendererGoogle],
+	renderers: [GRAPH_RENDERER_REGISTRY.get('google')],
 }], 'value');
 
 // Exports {{{1
