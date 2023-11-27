@@ -821,14 +821,18 @@ GridTable.prototype._addSortingToHeader = function (data, orientation, spec, con
 			name: trans('GRID.TABLE.SORT_MENU.ASCENDING', name),
 			icon: 'fa-sort-amount-asc',
 			callback: function () {
-				setSort('asc')
+				window.setTimeout(function () {
+					setSort('asc');
+				});
 			}
 		};
 		sortIcon_menu_items[gensym()] = {
 			name: trans('GRID.TABLE.SORT_MENU.DESCENDING', name),
 			icon: 'fa-sort-amount-desc',
 			callback: function () {
-				setSort('desc')
+				window.setTimeout(function () {
+					setSort('desc');
+				});
 			}
 		};
 		sortIcon_menu_items[gensym()] = '----';
@@ -847,14 +851,18 @@ GridTable.prototype._addSortingToHeader = function (data, orientation, spec, con
 				name: trans('GRID.TABLE.SORT_MENU.ASCENDING', aggInfo.instance.getFullName()),
 				icon: 'fa-sort-amount-asc',
 				callback: function () {
-					setSort('asc', aggNum)
+					window.setTimeout(function () {
+						setSort('asc', aggNum);
+					});
 				}
 			};
 			sortIcon_menu_items[gensym()] = {
 				name: trans('GRID.TABLE.SORT_MENU.DESCENDING', aggInfo.instance.getFullName()),
 				icon: 'fa-sort-amount-desc',
 				callback: function () {
-					setSort('desc', aggNum)
+					window.setTimeout(function () {
+						setSort('desc', aggNum);
+					});
 				}
 			};
 			sortIcon_menu_items[gensym()] = '----';
@@ -868,7 +876,9 @@ GridTable.prototype._addSortingToHeader = function (data, orientation, spec, con
 		name: trans('GRID.TABLE.SORT_MENU.RESET_SORT'),
 		icon: 'fa-ban',
 		callback: function () {
-			self.view.clearSort();
+			window.setTimeout(function () {
+				self.view.clearSort();
+			});
 		}
 	};
 
@@ -885,6 +895,8 @@ GridTable.prototype._addSortingToHeader = function (data, orientation, spec, con
 		appendTo: self.ui.contextMenus,
 		trigger: 'left',
 		callback: function (itemKey, opt) {
+			// This should never be called, it's only for items that don't specify their own callback,
+			// which they all should be doing.
 			console.log(itemKey);
 		},
 		items: sortIcon_menu_items
