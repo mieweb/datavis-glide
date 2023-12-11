@@ -36,37 +36,35 @@ $(document).ready(function () {
 			}
 		},
 		operations: {
-			single: {
-				row: [{
-					icon: 'fa-plus',
-					tooltip: 'Add',
-					callback: function (row) {
-						console.info('Performing "add" operation on row: %O', row);
+			row: [{
+				icon: 'fa-plus',
+				tooltip: 'Add',
+				callback: function (row) {
+					console.info('Performing "add" operation on row: %O', row);
+				}
+			}, {
+				icon: 'fa-trash',
+				tooltip: 'Delete',
+				callback: function (row) {
+					console.info('Performing "delete" operation on row: %O', row);
+				}
+			}],
+			cell: {
+				'string1': [{
+					icon: 'fa-heart',
+					tooltip: 'Like',
+					callback: function (val, row) {
+						alert('Hey I heard you like the word "' + val + '" — me too.');
 					}
 				}, {
-					icon: 'fa-trash',
-					tooltip: 'Delete',
-					callback: function (row) {
-						console.info('Performing "delete" operation on row: %O', row);
+					icon: 'fa-book',
+					tooltip: 'Look Up',
+					callback: function (val, row) {
+						window.open('https://www.thefreedictionary.com/' + encodeURI(val), '_blank');
 					}
-				}],
-				field: {
-					'string1': [{
-						icon: 'fa-heart',
-						tooltip: 'Like',
-						callback: function (val, row) {
-							alert('Hey I heard you like the word "' + val + '" — me too.');
-						}
-					}, {
-						icon: 'fa-book',
-						tooltip: 'Look Up',
-						callback: function (val, row) {
-							window.open('https://www.thefreedictionary.com/' + encodeURI(val), '_blank');
-						}
-					}]
-				}
+				}]
 			},
-			multiple: [{
+			all: [{
 				icon: 'fa-flask',
 				tooltip: 'Take Ye Flask',
 				callback: function (sel) {

@@ -1336,15 +1336,15 @@ GridTable.prototype.draw = function (root, opts, cont) {
 				switch (opType) {
 				case 'multiple':
 					break;
-				case 'single_row':
+				case 'row':
 					rowNum = +(jQuery(btn).parents('tr').attr('data-row-num'));
-					op = self.defn.operations.single.row[opIndex];
+					op = self.defn.operations.row[opIndex];
 					op.callback(self.data.data[rowNum]);
 					break;
-				case 'single_field':
+				case 'cell':
 					field = jQuery(btn).parents('td').attr('data-wcdv-field');
 					rowNum = +(jQuery(btn).parents('tr').attr('data-row-num'));
-					op = self.defn.operations.single.field[field][opIndex];
+					op = self.defn.operations.cell[field][opIndex];
 					op.callback(self.data.data[rowNum].rowData[field].value, self.data.data[rowNum]);
 					break;
 				}
@@ -1549,7 +1549,7 @@ GridTable.prototype.draw = function (root, opts, cont) {
 							pinnedColumns += 1;
 						}
 						// Figure out if there's a column for row-based operations.
-						if (self.hasOperations('single_row')) {
+						if (self.hasOperations('row')) {
 							pinnedColumns += 1;
 						}
 						self.ui.tbl.attr('data-tttype', 'sidescroll');
@@ -2333,7 +2333,7 @@ GridTablePlain.prototype.drawHeader = function (columns, data, typeInfo, opts) {
 
 	// Create the column for row-based operations.
 
-	if (self.hasOperations('single_row')) {
+	if (self.hasOperations('row')) {
 		headingTh = jQuery('<th>', {
 			'class': 'wcdv_group_col_spacer'
 		});
@@ -2363,7 +2363,7 @@ GridTablePlain.prototype.drawHeader = function (columns, data, typeInfo, opts) {
 			colIndex += 1; // Add a column for the row selection checkbox.
 		}
 
-		if (self.hasOperations('single_row')) {
+		if (self.hasOperations('row')) {
 			colIndex += 1; // Add a column for row-based operations.
 		}
 
@@ -2555,14 +2555,14 @@ GridTablePlain.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 
 		// Create the cell that contains row-based operations.
 
-		if (self.hasOperations('single_row')) {
+		if (self.hasOperations('row')) {
 			td = document.createElement('td');
 			td.classList.add('wcdv_group_col_spacer');
 			td.classList.add('wcdv_pivot_colval_boundary');
 			td.classList.add('wcdv_nowrap');
 
-			_.each(self.defn.operations.single.row, function (op, index) {
-				td.appendChild(makeOperationButton('single_row', op, index));
+			_.each(self.defn.operations.row, function (op, index) {
+				td.appendChild(makeOperationButton('row', op, index));
 			});
 
 			tr.appendChild(td);
@@ -2581,7 +2581,7 @@ GridTablePlain.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 				field: field,
 				colConfig: self.colConfig,
 				typeInfo: typeInfo,
-				operations: getProp(self.defn, 'operations', 'single', 'field', field)
+				operations: getProp(self.defn, 'operations', 'cell', field)
 			});
 
 			// Buttons within cells share a common 'onClick' handler, e.g. all "show full value" buttons
@@ -2594,7 +2594,7 @@ GridTablePlain.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 			//   1. When `maxHeight` is set on the field (the "show full value" button).
 			//   2. When there are operations on the field.
 
-			if (fcc.maxHeight != null || self.hasOperations('single_field', field)) {
+			if (fcc.maxHeight != null || self.hasOperations('cell', field)) {
 				td.setAttribute('data-wcdv-field', field);
 			}
 
@@ -2645,7 +2645,7 @@ GridTablePlain.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 
 		var colSpan = columns.length
 			+ (self.features.rowSelect ? 1 : 0)
-			+ (self.hasOperations('single_row') ? 1 : 0)
+			+ (self.hasOperations('row') ? 1 : 0)
 			+ (getPropDef(0, self.opts, 'addCols', 'length'))
 			+ (self.features.rowReorder ? 1 : 0);
 

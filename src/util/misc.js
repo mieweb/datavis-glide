@@ -2546,7 +2546,7 @@ export function setTableCell(cell, value, opts) {
 		operationDiv.style.float = 'right';
 
 		_.each(ops, function (op, index) {
-			operationDiv.appendChild(makeOperationButton('single_field', op, index, {inCell: true}));
+			operationDiv.appendChild(makeOperationButton('cell', op, index, {inCell: true}));
 		});
 
 		container = document.createElement('div');
@@ -2573,7 +2573,7 @@ export function setTableCell(cell, value, opts) {
 		operationDiv.style.float = 'right';
 
 		_.each(ops, function (op, index) {
-			operationDiv.appendChild(makeOperationButton('single_field', op, index, {inCell: true}));
+			operationDiv.appendChild(makeOperationButton('cell', op, index, {inCell: true}));
 		});
 
 		container = document.createElement('div');

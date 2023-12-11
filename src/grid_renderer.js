@@ -200,14 +200,14 @@ GridRenderer.prototype._validateFeatures = function () {
  * Indicates if there are operations registered for the requested situation.
  *
  * @param {string} type
- * What type of operations we're checking for: `multiple`, `single_row`, or `single_field`.
+ * What type of operations we're checking for: "cell", "row", "all", "group", or "pivot".
  *
  * @param {string} [field]
- * When `type` is `single_field`, this is the field we want to know about.
+ * When `type` is "cell", this is the field we want to know about.
  *
  * @example
- * hasOperations('multiple')
- * hasOperations('single_field', 'Employee')
+ * hasOperations('all')
+ * hasOperations('cell', 'Employee')
  */
 
 GridRenderer.prototype.hasOperations = function (type, field) {
@@ -218,12 +218,12 @@ GridRenderer.prototype.hasOperations = function (type, field) {
 	}
 
 	switch (type) {
-	case 'multiple':
-		return getPropDef(0, self.defn, 'operations', 'multiple', 'length') > 0
-	case 'single_row':
-		return getPropDef(0, self.defn, 'operations', 'single', 'row', 'length') > 0
-	case 'single_field':
-		return getPropDef(0, self.defn, 'operations', 'single', 'field', field, 'length') > 0
+	case 'all':
+		return getPropDef(0, self.defn, 'operations', 'all', 'length') > 0
+	case 'row':
+		return getPropDef(0, self.defn, 'operations', 'row', 'length') > 0
+	case 'cell':
+		return getPropDef(0, self.defn, 'operations', 'cell', field, 'length') > 0
 	default:
 		return false;
 	}
