@@ -110,8 +110,13 @@ OperationsPalette.prototype.drawPalette = function () {
 OperationsPalette.prototype.destroy = function () {
 	var self = this;
 
-	self.ui.palette.off('click.wcdv_operation');
-	self.ui.root.remove();
+	if (self.ui.palette) {
+		self.ui.palette.off('click.wcdv_operation');
+	}
+
+	if (self.ui.root) {
+		self.ui.root.remove();
+	}
 };
 
 // #setOperations {{{2

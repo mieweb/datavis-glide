@@ -2132,9 +2132,24 @@ Grid.prototype.colConfigFromTypeInfo = function (typeInfo, opts) {
 Grid.prototype.setOperations = function (ops) {
 	var self = this;
 
-	if (self.operationsPalette) {
-		self.operationsPalette.setOperations(ops);
+	if (ops == null) {
+		return;
 	}
+
+	self.defn.operations = ops;
+
+	if (ops.all != null && ops.all.length > 0) {
+		if (self.operationsPalette) {
+			self.operationsPalette.setOperations(ops);
+			if (self.ui.operationsPalette != null) {
+				self.operationsPalette.destroy();
+				self.operationsPalette.draw(self.ui.operationsPalette);
+				self.ui.operationsPalette.show();
+			}
+		}
+	}
+
+	self.redraw();
 };
 
 // Exports {{{1
