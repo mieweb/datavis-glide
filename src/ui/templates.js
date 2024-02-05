@@ -9,12 +9,12 @@ import {
 	moveArrayElement,
 	setProp,
 } from '../util/misc.js';
-
+import { trans } from '../trans.js';
 import OrdMap from '../util/ordmap.js';
 
 // TemplatesEditor {{{1
 
-var TemplatesEditor = makeSubclass('TemplatesEditor', Object, function (grid, onSave) {
+var TemplatesEditor = makeSubclass('TemplatesEditor', Object, function (grid, onSave, onCancel) {
 	var self = this;
 
 	var winEffect = {
@@ -23,7 +23,7 @@ var TemplatesEditor = makeSubclass('TemplatesEditor', Object, function (grid, on
 	};
 
 	self.grid = grid;
-	self.win = jQuery('<div>', { title: 'Template Configuration' }).dialog({
+	self.win = jQuery('<div>', { title: trans('GRID.TEMPLATE_EDITOR.TITLE') }).dialog({
 		autoOpen: false,
 		modal: true,
 		width: 'auto',
@@ -37,7 +37,7 @@ var TemplatesEditor = makeSubclass('TemplatesEditor', Object, function (grid, on
 			"ui-dialog-titlebar": "ui-corner-all",
 		},
 		buttons: [{
-			text: 'OK',
+			text: trans('DIALOG.OK'),
 			icon: 'ui-icon-check',
 			click: function () {
 				// Update the configuration of the grid.
@@ -56,7 +56,7 @@ var TemplatesEditor = makeSubclass('TemplatesEditor', Object, function (grid, on
 				}
 			}
 		}, {
-			text: 'Cancel',
+			text: trans('DIALOG.CANCEL'),
 			icon: 'ui-icon-cancel',
 			click: function () {
 				self.win.dialog('close');
@@ -79,12 +79,12 @@ var TemplatesEditor = makeSubclass('TemplatesEditor', Object, function (grid, on
 		var div = jQuery('<div>', {id: 'wcdv_hbe_' + name});
 
 		_.each([
-			{id: 'empty', label: 'Empty', rows: 2},
-			{id: 'before', label: 'Before', rows: 2},
-			{id: 'beforeGroup', label: 'Before Group', rows: 2, modes: ['whenPivot']},
-			{id: 'item', label: 'Item', rows: name === 'whenPlain' ? 8 : 4 },
-			{id: 'afterGroup', label: 'After Group', rows: 2, modes: ['whenPivot']},
-			{id: 'after', label: 'After', rows: 2},
+			{id: 'empty', label: trans('GRID.TEMPLATE_EDITOR.CONFIG.EMPTY'), rows: 2},
+			{id: 'before', label: trans('GRID.TEMPLATE_EDITOR.CONFIG.BEFORE'), rows: 2},
+			{id: 'beforeGroup', label: trans('GRID.TEMPLATE_EDITOR.CONFIG.BEFORE_GROUP'), rows: 2, modes: ['whenPivot']},
+			{id: 'item', label: trans('GRID.TEMPLATE_EDITOR.CONFIG.ITEM'), rows: name === 'whenPlain' ? 8 : 4 },
+			{id: 'afterGroup', label: trans('GRID.TEMPLATE_EDITOR.CONFIG.AFTER_GROUP'), rows: 2, modes: ['whenPivot']},
+			{id: 'after', label: trans('GRID.TEMPLATE_EDITOR.CONFIG.AFTER'), rows: 2},
 		], function (x) {
 			if (x.modes != null && x.modes.indexOf(name) < 0) {
 				return;
@@ -108,9 +108,9 @@ var TemplatesEditor = makeSubclass('TemplatesEditor', Object, function (grid, on
 	};
 
 	self.tabData = new OrdMap();
-	self.tabData.set('whenPlain', makeTab('whenPlain', 'Plain'));
-	self.tabData.set('whenGroup', makeTab('whenGroup', 'Grouped'));
-	self.tabData.set('whenPivot', makeTab('whenPivot', 'Pivotted'));
+	self.tabData.set('whenPlain', makeTab('whenPlain', trans('GRID.TEMPLATE_EDITOR.PLAIN')));
+	self.tabData.set('whenGroup', makeTab('whenGroup', trans('GRID.TEMPLATE_EDITOR.GROUPED')));
+	self.tabData.set('whenPivot', makeTab('whenPivot', trans('GRID.TEMPLATE_EDITOR.PIVOTTED')));
 
 	var tabs = jQuery('<div>').appendTo(self.win);
 	var ul = jQuery('<ul>').appendTo(tabs);
