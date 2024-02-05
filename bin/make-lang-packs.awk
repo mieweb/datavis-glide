@@ -33,6 +33,7 @@ NR < 2 { next }
 
 lang == "en-US" {
     english[$1] = $2
+    notes[$1] = $3
     trans["en-US"][$1] = $2
 }
 
@@ -44,17 +45,25 @@ lang != "en-US" && $2 in english {
 
 END {
     for (lang in trans) {
-        fh = "./src/lang/" lang ".js"
-        print("Writing " fh "...")
-        print("export default {") > fh
+        jsFile = "./src/lang/" lang ".js"
+        print("Writing " jsFile "...")
+        print("export default {") > jsFile
         for (label in english) {
             if (label in trans[lang]) {
-                print("  '" label "': '" trans[lang][label] "',") > fh
+                print("  '" label "': '" trans[lang][label] "',") > jsFile
             }
             else {
+                missing[lang][label] = 1
                 print("  - Missing translation for: " label)
             }
         }
-        print("};") > fh
+        print("};") > jsFile
+        if (length(missing[lang]) > 0) {
+            missingFile = "./trans-missing/" lang ".tsv"
+            print("Label\tEnglish\tNotes") > missingFile
+            for (label in missing[lang]) {
+                print(label "\t" english[label] "\t" notes[label]) > missingFile
+            }
+        }
     }
 }
