@@ -76,13 +76,13 @@ var PlainToolbar = makeSubclass('PlainToolbar', ToolbarSection, function (grid) 
 		.appendTo(self.ui.root)
 	;
 
-	self.ui.handlebarsEditor = jQuery('<button>', {
+	self.ui.TemplatesEditor = jQuery('<button>', {
 		'type': 'button'
 	})
 		.append(fontAwesome('fa-pencil'))
-		.append(trans('GRID_TOOLBAR.PLAIN.HANDLEBARS_EDITOR'))
+		.append(trans('GRID_TOOLBAR.PLAIN.TEMPLATES_EDITOR'))
 		.on('click', function (evt) {
-			grid.handlebarsEditor.show();
+			grid.TemplatesEditor.show();
 		})
 		.appendTo(self.ui.root)
 	;
@@ -105,11 +105,11 @@ PlainToolbar.prototype.update = function () {
 	switch (self.grid.rendererName) {
 	case 'table':
 		self.ui.columnConfig.show();
-		self.ui.handlebarsEditor.hide();
+		self.ui.TemplatesEditor.hide();
 		break;
 	case 'handlebars':
 		self.ui.columnConfig.hide();
-		self.ui.handlebarsEditor.show();
+		self.ui.TemplatesEditor.show();
 		break;
 	}
 };
@@ -212,13 +212,13 @@ var GroupToolbar = makeSubclass('GroupToolbar', ToolbarSection, function (grid) 
 		.appendTo(self.ui.root)
 	;
 
-	self.ui.handlebarsEditor = jQuery('<button>', {
+	self.ui.TemplatesEditor = jQuery('<button>', {
 		'type': 'button'
 	})
 		.append(fontAwesome('fa-pencil'))
-		.append(trans('GRID_TOOLBAR.PLAIN.HANDLEBARS_EDITOR'))
+		.append(trans('GRID_TOOLBAR.PLAIN.TEMPLATES_EDITOR'))
 		.on('click', function (evt) {
-			grid.handlebarsEditor.show();
+			grid.TemplatesEditor.show();
 		})
 		.appendTo(self.ui.root)
 	;
@@ -237,14 +237,14 @@ GroupToolbar.prototype.update = function () {
 		self.ui.showTotalRow.show();
 		self.ui.pinRowVals.show();
 		self.ui.columnConfig.show();
-		self.ui.handlebarsEditor.hide();
+		self.ui.TemplatesEditor.hide();
 		break;
 	case 'handlebars':
 		self.ui.groupMode.hide();
 		self.ui.showTotalRow.hide();
 		self.ui.pinRowVals.hide();
 		self.ui.columnConfig.hide();
-		self.ui.handlebarsEditor.show();
+		self.ui.TemplatesEditor.show();
 		break;
 	}
 };
@@ -314,13 +314,13 @@ var PivotToolbar = makeSubclass('PivotToolbar', ToolbarSection, function (grid) 
 		}
 	);
 
-	self.ui.handlebarsEditor = jQuery('<button>', {
+	self.ui.TemplatesEditor = jQuery('<button>', {
 		'type': 'button'
 	})
 		.append(fontAwesome('fa-pencil'))
-		.append(trans('GRID_TOOLBAR.PLAIN.HANDLEBARS_EDITOR'))
+		.append(trans('GRID_TOOLBAR.PLAIN.TEMPLATES_EDITOR'))
 		.on('click', function (evt) {
-			grid.handlebarsEditor.show();
+			grid.TemplatesEditor.show();
 		})
 		.appendTo(self.ui.root)
 	;
@@ -335,12 +335,12 @@ PivotToolbar.prototype.update = function () {
 	case 'table':
 		self.ui.showTotals.show();
 		self.ui.pinRowVals.show();
-		self.ui.handlebarsEditor.hide();
+		self.ui.TemplatesEditor.hide();
 		break;
 	case 'handlebars':
 		self.ui.showTotals.hide();
 		self.ui.pinRowVals.hide();
-		self.ui.handlebarsEditor.show();
+		self.ui.TemplatesEditor.show();
 		break;
 	}
 };

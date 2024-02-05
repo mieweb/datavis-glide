@@ -43,7 +43,7 @@ import './renderers/grid/handlebars.js';
 import './renderers/grid/squirrelly.js';
 import { ColConfigWin } from './ui/windows/col_config.js';
 import { DebugWin } from './ui/windows/debug.js';
-import { HandlebarsEditor } from './ui/handlebars.js';
+import { TemplatesEditor } from './ui/templates.js';
 import {
 	ComputedViewToolbar,
 	PlainToolbar,
@@ -515,7 +515,7 @@ var Grid = makeSubclass('Grid', Object, function (defn, opts, cb) {
 
 	self.defn.grid = self;
 
-	self.handlebarsEditor = new HandlebarsEditor(self, function () {
+	self.TemplatesEditor = new TemplatesEditor(self, function () {
 		self.redraw();
 	});
 

@@ -12,9 +12,9 @@ import {
 
 import OrdMap from '../util/ordmap.js';
 
-// HandlebarsEditor {{{1
+// TemplatesEditor {{{1
 
-var HandlebarsEditor = makeSubclass('HandlebarsEditor', Object, function (grid, onSave) {
+var TemplatesEditor = makeSubclass('TemplatesEditor', Object, function (grid, onSave) {
 	var self = this;
 
 	var winEffect = {
@@ -23,7 +23,7 @@ var HandlebarsEditor = makeSubclass('HandlebarsEditor', Object, function (grid, 
 	};
 
 	self.grid = grid;
-	self.win = jQuery('<div>', { title: 'Handlebars Configuration' }).dialog({
+	self.win = jQuery('<div>', { title: 'Template Configuration' }).dialog({
 		autoOpen: false,
 		modal: true,
 		width: 'auto',
@@ -43,8 +43,10 @@ var HandlebarsEditor = makeSubclass('HandlebarsEditor', Object, function (grid, 
 				// Update the configuration of the grid.
 
 				self.tabData.each(function (v, k) {
-					_.each(['empty', 'before', 'item', 'after'], function (t) {
-						setProp(v.inputs[t].val(), self.grid.defn, 'rendererOpts', k, t);
+					_.each(['empty', 'before', 'beforeGroup', 'item', 'afterGroup', 'after'], function (t) {
+						if (v.inputs[t] != null) {
+							setProp(v.inputs[t].val(), self.grid.defn, 'rendererOpts', k, t);
+						}
 					});
 				});
 
@@ -77,11 +79,16 @@ var HandlebarsEditor = makeSubclass('HandlebarsEditor', Object, function (grid, 
 		var div = jQuery('<div>', {id: 'wcdv_hbe_' + name});
 
 		_.each([
-			{id: 'empty', label: 'Empty', rows: 4},
-			{id: 'before', label: 'Before', rows: 4},
-			{id: 'item', label: 'Item', rows: 8},
-			{id: 'after', label: 'After', rows: 4}
+			{id: 'empty', label: 'Empty', rows: 2},
+			{id: 'before', label: 'Before', rows: 2},
+			{id: 'beforeGroup', label: 'Before Group', rows: 2, modes: ['whenPivot']},
+			{id: 'item', label: 'Item', rows: name === 'whenPlain' ? 8 : 4 },
+			{id: 'afterGroup', label: 'After Group', rows: 2, modes: ['whenPivot']},
+			{id: 'after', label: 'After', rows: 2},
 		], function (x) {
+			if (x.modes != null && x.modes.indexOf(name) < 0) {
+				return;
+			}
 			labels[x.id] = jQuery('<label>', {
 				for: 'wcdv_hbe_' + name + '_' + x.id
 			})
@@ -116,7 +123,7 @@ var HandlebarsEditor = makeSubclass('HandlebarsEditor', Object, function (grid, 
 
 // #show {{{2
 
-HandlebarsEditor.prototype.show = function () {
+TemplatesEditor.prototype.show = function () {
 	var self = this;
 
 	// Setup the values of each textarea.
@@ -124,8 +131,10 @@ HandlebarsEditor.prototype.show = function () {
 	self.tabData.each(function (v, k) {
 		var config = getProp(self.grid.defn, 'rendererOpts', k);
 		if (config != null) {
-			_.each(['empty', 'before', 'item', 'after'], function (t) {
-				v.inputs[t].val(config[t]);
+			_.each(['empty', 'before', 'beforeGroup', 'item', 'afterGroup', 'after'], function (t) {
+				if (v.inputs[t] && config[t]) {
+					v.inputs[t].val(config[t]);
+				}
 			});
 		}
 	});
@@ -134,5 +143,5 @@ HandlebarsEditor.prototype.show = function () {
 };
 
 export {
-	HandlebarsEditor
+	TemplatesEditor
 };
