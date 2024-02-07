@@ -136,6 +136,8 @@ clean:	doc-clean dist-clean
 # Translations {{{1
 
 src/lang/en-US.js:	en-US.tsv trans.tsv
+	rm -rf trans-missing
+	mkdir -p trans-missing
 	-gawk -f ./bin/make-lang-packs.awk $^
 
 trans.tsv:

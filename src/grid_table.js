@@ -821,14 +821,18 @@ GridTable.prototype._addSortingToHeader = function (data, orientation, spec, con
 			name: trans('GRID.TABLE.SORT_MENU.ASCENDING', name),
 			icon: 'fa-sort-amount-asc',
 			callback: function () {
-				setSort('asc')
+				window.setTimeout(function () {
+					setSort('asc');
+				});
 			}
 		};
 		sortIcon_menu_items[gensym()] = {
 			name: trans('GRID.TABLE.SORT_MENU.DESCENDING', name),
 			icon: 'fa-sort-amount-desc',
 			callback: function () {
-				setSort('desc')
+				window.setTimeout(function () {
+					setSort('desc');
+				});
 			}
 		};
 		sortIcon_menu_items[gensym()] = '----';
@@ -847,14 +851,18 @@ GridTable.prototype._addSortingToHeader = function (data, orientation, spec, con
 				name: trans('GRID.TABLE.SORT_MENU.ASCENDING', aggInfo.instance.getFullName()),
 				icon: 'fa-sort-amount-asc',
 				callback: function () {
-					setSort('asc', aggNum)
+					window.setTimeout(function () {
+						setSort('asc', aggNum);
+					});
 				}
 			};
 			sortIcon_menu_items[gensym()] = {
 				name: trans('GRID.TABLE.SORT_MENU.DESCENDING', aggInfo.instance.getFullName()),
 				icon: 'fa-sort-amount-desc',
 				callback: function () {
-					setSort('desc', aggNum)
+					window.setTimeout(function () {
+						setSort('desc', aggNum);
+					});
 				}
 			};
 			sortIcon_menu_items[gensym()] = '----';
@@ -868,7 +876,9 @@ GridTable.prototype._addSortingToHeader = function (data, orientation, spec, con
 		name: trans('GRID.TABLE.SORT_MENU.RESET_SORT'),
 		icon: 'fa-ban',
 		callback: function () {
-			self.view.clearSort();
+			window.setTimeout(function () {
+				self.view.clearSort();
+			});
 		}
 	};
 
@@ -885,6 +895,8 @@ GridTable.prototype._addSortingToHeader = function (data, orientation, spec, con
 		appendTo: self.ui.contextMenus,
 		trigger: 'left',
 		callback: function (itemKey, opt) {
+			// This should never be called, it's only for items that don't specify their own callback,
+			// which they all should be doing.
 			console.log(itemKey);
 		},
 		items: sortIcon_menu_items
@@ -1319,21 +1331,34 @@ GridTable.prototype.draw = function (root, opts, cont) {
 				var btn = this;
 				var opType = btn.getAttribute('data-operation-type');
 				var opIndex = btn.getAttribute('data-operation-index');
-				var sel, rowNum, field, op;
+				var sel, cellElt, rowElt, rowNum, field, op;
 
 				switch (opType) {
-				case 'multiple':
+				case 'row':
+					rowElt = jQuery(btn).parents('tr');
+					rowNum = +(rowElt.attr('data-row-num'));
+					op = self.defn.operations.row[opIndex];
+					op.callback({
+						rowId: rowNum,
+						rowElt: rowElt,
+						row: self.data.dataByRowId[rowNum],
+						opBtn: jQuery(btn)
+					});
 					break;
-				case 'single_row':
-					rowNum = +(jQuery(btn).parents('tr').attr('data-row-num'));
-					op = self.defn.operations.single.row[opIndex];
-					op.callback(self.data.data[rowNum]);
-					break;
-				case 'single_field':
+				case 'cell':
+					cellElt = jQuery(btn).parents('td');
 					field = jQuery(btn).parents('td').attr('data-wcdv-field');
+					rowElt = jQuery(btn).parents('tr');
 					rowNum = +(jQuery(btn).parents('tr').attr('data-row-num'));
-					op = self.defn.operations.single.field[field][opIndex];
-					op.callback(self.data.data[rowNum].rowData[field].value, self.data.data[rowNum]);
+					op = self.defn.operations.cell[field][opIndex];
+					op.callback({
+						rowId: rowNum,
+						rowElt: rowElt,
+						row: self.data.dataByRowId[rowNum],
+						cellElt: cellElt,
+						cell: self.data.dataByRowId[rowNum][field].value,
+						opBtn: jQuery(btn)
+					});
 					break;
 				}
 			});
@@ -1537,7 +1562,7 @@ GridTable.prototype.draw = function (root, opts, cont) {
 							pinnedColumns += 1;
 						}
 						// Figure out if there's a column for row-based operations.
-						if (self.hasOperations('single_row')) {
+						if (self.hasOperations('row')) {
 							pinnedColumns += 1;
 						}
 						self.ui.tbl.attr('data-tttype', 'sidescroll');
@@ -2321,7 +2346,7 @@ GridTablePlain.prototype.drawHeader = function (columns, data, typeInfo, opts) {
 
 	// Create the column for row-based operations.
 
-	if (self.hasOperations('single_row')) {
+	if (self.hasOperations('row')) {
 		headingTh = jQuery('<th>', {
 			'class': 'wcdv_group_col_spacer'
 		});
@@ -2351,7 +2376,7 @@ GridTablePlain.prototype.drawHeader = function (columns, data, typeInfo, opts) {
 			colIndex += 1; // Add a column for the row selection checkbox.
 		}
 
-		if (self.hasOperations('single_row')) {
+		if (self.hasOperations('row')) {
 			colIndex += 1; // Add a column for row-based operations.
 		}
 
@@ -2543,14 +2568,15 @@ GridTablePlain.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 
 		// Create the cell that contains row-based operations.
 
-		if (self.hasOperations('single_row')) {
+		if (self.hasOperations('row')) {
 			td = document.createElement('td');
 			td.classList.add('wcdv_group_col_spacer');
 			td.classList.add('wcdv_pivot_colval_boundary');
 			td.classList.add('wcdv_nowrap');
+			td.classList.add('wcdv_row_operations');
 
-			_.each(self.defn.operations.single.row, function (op, index) {
-				td.appendChild(makeOperationButton('single_row', op, index));
+			_.each(self.defn.operations.row, function (op, index) {
+				td.appendChild(makeOperationButton('row', op, index));
 			});
 
 			tr.appendChild(td);
@@ -2569,7 +2595,7 @@ GridTablePlain.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 				field: field,
 				colConfig: self.colConfig,
 				typeInfo: typeInfo,
-				operations: getProp(self.defn, 'operations', 'single', 'field', field)
+				operations: getProp(self.defn, 'operations', 'cell', field)
 			});
 
 			// Buttons within cells share a common 'onClick' handler, e.g. all "show full value" buttons
@@ -2582,7 +2608,7 @@ GridTablePlain.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 			//   1. When `maxHeight` is set on the field (the "show full value" button).
 			//   2. When there are operations on the field.
 
-			if (fcc.maxHeight != null || self.hasOperations('single_field', field)) {
+			if (fcc.maxHeight != null || self.hasOperations('cell', field)) {
 				td.setAttribute('data-wcdv-field', field);
 			}
 
@@ -2633,7 +2659,7 @@ GridTablePlain.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 
 		var colSpan = columns.length
 			+ (self.features.rowSelect ? 1 : 0)
-			+ (self.hasOperations('single_row') ? 1 : 0)
+			+ (self.hasOperations('row') ? 1 : 0)
 			+ (getPropDef(0, self.opts, 'addCols', 'length'))
 			+ (self.features.rowReorder ? 1 : 0);
 

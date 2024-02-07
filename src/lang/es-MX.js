@@ -1,7 +1,6 @@
 export default {
   'AGGREGATE.FIELD.DENOMINATOR': 'Denominación',
   'AGGREGATE.FIELD.NUMERATOR': 'Número',
-  'AGGREGATE.HEADER_DISPLAY': '%s de %s',
   'AGGREGATE.NAME.AVERAGE': 'Promedio',
   'AGGREGATE.NAME.COUNT': 'Contar',
   'AGGREGATE.NAME.COUNT_DISTINCT': 'Cuenta distinta',
@@ -62,7 +61,6 @@ export default {
   'GRID.TABLE.SORT_MENU.DESCENDING': '%s, descendente',
   'GRID.TABLE.SORT_MENU.RESET_SORT': 'Restablecer clasificación',
   'GRID.TITLEBAR.CANCEL': 'Cancelar',
-  'GRID.TITLEBAR.CLEAR_FILTER': 'borrar filtro',
   'GRID.TITLEBAR.DATA_LIMITED_WARNING': 'Usted no tiene visibilidad de todos los registros. Haga clic para obtener el resto (esto puede tomar un tiempo).',
   'GRID.TITLEBAR.DOWNLOAD_CSV': 'Descargar CSV',
   'GRID.TITLEBAR.GENERATE_CSV': 'Generar CSV',
@@ -99,7 +97,6 @@ export default {
   'GRID_TOOLBAR.PIVOT.HIDE_ZERO_VALUES': 'Ocultar valores cero',
   'GRID_TOOLBAR.PIVOT.TOTAL_ROW_COLUMN': 'Fila/columna total',
   'GRID_TOOLBAR.PLAIN.COLUMNS': 'Columnas',
-  'GRID_TOOLBAR.PLAIN.HANDLEBARS_EDITOR': 'Editor de Handlebars',
   'GRID_TOOLBAR.PLAIN.SHOW_ALL_ROWS': 'Mostrar todas las filas',
   'GRID_TOOLBAR.PLAIN.SHOW_MORE_ON_SCROLL': 'Mostrar más en desplazamiento',
   'GRID_TOOLBAR.PREFS.BACK.TOOLTIP': 'Atrás',

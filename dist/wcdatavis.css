@@ -522,6 +522,41 @@ ul.wcdv_aggregate_control_fieldlist > li > label {
 	padding-right: 0.5em;
 }
 
+/* OPERATIONS PALETTE */
+
+div.wcdv_operations_category {
+	display: inline-block;
+	border: solid 1px #c7c7c7;
+	border-radius: 4px;
+	padding: 6px;
+	margin-top: 8px;
+	margin-left: 0.5em;
+}
+
+div.wcdv_operations_category:first-child {
+	margin-left: 0;
+}
+
+div.wcdv_operations_category > button.wcdv_operation {
+	margin-left: 0.5em;
+}
+
+div.wcdv_operations_category > button.wcdv_operation:first-child {
+	margin-left: 0;
+}
+
+button.wcdv_operation.no_label > span.fa {
+	margin-right: 0;
+}
+
+td.wcdv_row_operations > button.wcdv_operation {
+	margin-left: 0.25em;
+}
+
+td.wcdv_row_operations > button.wcdv_operation:first-child {
+	margin-left: 0;
+}
+
 /******************************************************************************/
 
 .wcdv_grid_table,

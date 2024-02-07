@@ -1,6 +1,6 @@
 import _ from 'underscore';
-import Handlebars from 'handlebars';
 import jQuery from 'jquery';
+import * as Sqrl from 'squirrelly/dist/browser/squirrelly.min.js';
 
 import {
 	debug,
@@ -10,23 +10,24 @@ import {
 	outerHtml,
 } from '../../util/misc.js';
 
-import hbUtil from '../../util/handlebars.js';
+import sqUtil from '../../util/squirrelly.js';
 
 import {GridRenderer} from '../../grid_renderer.js';
 
-// GridRendererHandlebars {{{1
+// GridRendererSquirrelly {{{1
 
-var GridRendererHandlebars = makeSubclass('GridRendererHandlebars', GridRenderer, function () {
+var GridRendererSquirrelly = makeSubclass('GridRendererSquirrelly', GridRenderer, function () {
 	var self = this;
 
 	self.super.ctor.apply(self, arguments);
 
-	self.hbEnv = hbUtil.makeEnv();
+	self.config = deepCopy(Sqrl.defaultConfig);
+	self.config.useWith = true;
 });
 
 // #_validateFeatures {{{2
 
-GridRendererHandlebars.prototype._validateFeatures = function () {
+GridRendererSquirrelly.prototype._validateFeatures = function () {
 	var self = this;
 	self.features.limit = false;
 };
@@ -34,24 +35,24 @@ GridRendererHandlebars.prototype._validateFeatures = function () {
 
 // #canRender {{{2
 
-GridRendererHandlebars.prototype.canRender = function (what) {
+GridRendererSquirrelly.prototype.canRender = function (what) {
 	return true;
 };
 
 // #_draw_plain {{{2
 
-GridRendererHandlebars.prototype._draw_plain = function (root, data, typeInfo, opts) {
+GridRendererSquirrelly.prototype._draw_plain = function (root, data, typeInfo, opts) {
 	var self = this;
 	var html = '';
 
 	if (data.data.length === 0) {
 		if (self.empty != null) {
-			html += self.empty();
+			html += self.empty({}, self.config);
 		}
 	}
 	else {
 		if (self.before != null) {
-			html += self.before();
+			html += self.before({}, self.config);
 		}
 
 		if (self.item != null) {
@@ -65,12 +66,12 @@ GridRendererHandlebars.prototype._draw_plain = function (root, data, typeInfo, o
 					}
 					context[field] = value;
 				});
-				html += self.item(context);
+				html += self.item(context, self.config);
 			});
 		}
 
 		if (self.after != null) {
-			html += self.after();
+			html += self.after({}, self.config);
 		}
 	}
 
@@ -79,7 +80,7 @@ GridRendererHandlebars.prototype._draw_plain = function (root, data, typeInfo, o
 
 // #_draw_group {{{2
 
-GridRendererHandlebars.prototype._draw_group = function (root, data, typeInfo, opts) {
+GridRendererSquirrelly.prototype._draw_group = function (root, data, typeInfo, opts) {
 	var self = this;
 	var html = '';
 
@@ -98,7 +99,7 @@ GridRendererHandlebars.prototype._draw_group = function (root, data, typeInfo, o
 				var context = {
 					rowValIdx: rowValIdx
 				};
-				html += self.item(context);
+				html += self.item(context, self.config);
 			});
 		}
 
@@ -112,7 +113,7 @@ GridRendererHandlebars.prototype._draw_group = function (root, data, typeInfo, o
 
 // #_draw_pivot {{{2
 
-GridRendererHandlebars.prototype._draw_pivot = function (root, data, typeInfo, opts) {
+GridRendererSquirrelly.prototype._draw_pivot = function (root, data, typeInfo, opts) {
 	var self = this;
 	var html = '';
 
@@ -128,14 +129,20 @@ GridRendererHandlebars.prototype._draw_pivot = function (root, data, typeInfo, o
 
 		if (self.item != null) {
 			_.each(data.data, function (group, rowValIdx) {
+				if (self.beforeGroup != null) {
+					html += self.beforeGroup();
+				}
 				_.each(group, function (pivot, colValIdx) {
 					var div = jQuery('<div>').appendTo(root);
 					var context = {
 						rowValIdx: rowValIdx,
 						colValIdx: colValIdx
 					};
-					html += self.item(context);
+					html += self.item(context, self.config);
 				});
+				if (self.afterGroup != null) {
+					html += self.afterGroup();
+				}
 			});
 		}
 
@@ -149,7 +156,7 @@ GridRendererHandlebars.prototype._draw_pivot = function (root, data, typeInfo, o
 
 // #draw {{{2
 
-GridRendererHandlebars.prototype.draw = function (root, cont, opts) {
+GridRendererSquirrelly.prototype.draw = function (root, cont, opts) {
 	var self = this;
 
 	if (cont != null && typeof cont !== 'function') {
@@ -161,7 +168,7 @@ GridRendererHandlebars.prototype.draw = function (root, cont, opts) {
 			return cont();
 		}
 
-		hbUtil.addHelpers(self.hbEnv, data);
+		sqUtil.addHelpers(Sqrl.helpers, data);
 
 		var k1 = data.isPlain ? 'plain'
 			: data.isGroup ? 'group'
@@ -175,21 +182,11 @@ GridRendererHandlebars.prototype.draw = function (root, cont, opts) {
 
 		var config = self.opts[configKey] || {};
 
-		if (config.empty != null) {
-			self.empty = self.hbEnv.compile(config.empty);
-		}
-
-		if (config.before != null) {
-			self.before = self.hbEnv.compile(config.before);
-		}
-
-		if (config.item != null) {
-			self.item = self.hbEnv.compile(config.item);
-		}
-
-		if (config.after != null) {
-			self.after = self.hbEnv.compile(config.after);
-		}
+		_.each(['empty', 'before', 'beforeGroup', 'item', 'afterGroup', 'after'], function (x) {
+			if (config[x] != null) {
+				self[x] = Sqrl.compile(config[x], self.config);
+			}
+		});
 
 		self['_draw_' + k1](root, data, typeInfo, opts);
 
@@ -206,7 +203,7 @@ GridRendererHandlebars.prototype.draw = function (root, cont, opts) {
 
 // #addWorkHandler {{{2
 
-GridRendererHandlebars.prototype.addWorkHandler = function () {
+GridRendererSquirrelly.prototype.addWorkHandler = function () {
 	var self = this;
 
 	self.view.on('workEnd', function (info, ops) {
@@ -214,6 +211,6 @@ GridRendererHandlebars.prototype.addWorkHandler = function () {
 	}, { who: self, limit: 1 });
 };
 
-// Registry
+// Registry {{{1
 
-GridRenderer.registry.set('handlebars', GridRendererHandlebars);
+GridRenderer.registry.set('squirrelly', GridRendererSquirrelly);

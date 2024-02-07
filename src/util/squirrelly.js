@@ -11,12 +11,6 @@ import {
 	objFromArray,
 } from './misc.js';
 
-// makeEnv {{{1
-
-function makeEnv() {
-	return Handlebars.create();
-}
-
 // addHelpers {{{1
 
 function addHelpers(env, data) {
@@ -32,7 +26,9 @@ function addHelpers(env, data) {
 
 	// rowval {{{2
 
-	env.registerHelper('rowval', function (groupField) {
+	env.define('rowval', function (content) {
+		var [ctx, groupField] = content.params;
+
 		if (['number', 'string'].indexOf(typeof groupField) < 0) {
 			throw new Error('In Handlebars "rowval" helper, `groupField` must be a number or string');
 		}
@@ -54,12 +50,14 @@ function addHelpers(env, data) {
 			}
 		}
 
-		return data.rowVals[this.rowValIdx][gfi];
+		return data.rowVals[ctx.rowValIdx][gfi];
 	});
 
 	// colval {{{2
 
-	env.registerHelper('colval', function (pivotField) {
+	env.define('colval', function (content) {
+		let [ctx, pivotField] = content.params;
+
 		if (['number', 'string'].indexOf(typeof pivotField) < 0) {
 			throw new Error('In Handlebars "rowval" helper, `pivotField` must be a number or string');
 		}
@@ -81,13 +79,13 @@ function addHelpers(env, data) {
 			}
 		}
 
-		return data.colVals[this.colValIdx][pivotFieldIndex];
+		return data.colVals[ctx.colValIdx][pivotFieldIndex];
 	});
 
 	// aggregate {{{2
 	
-	env.registerHelper('aggregate', function (type, aggNum) {
-		var ctx = this;
+	env.define('aggregate', function (content) {
+		let [ctx, type, aggNum] = content.params;
 
 		if (data.isPlain) {
 			throw new Error('In Handlebars "aggregate" helper, data must be grouped to use this helper');
@@ -152,7 +150,8 @@ function addHelpers(env, data) {
 	});
 }
 
+// Exports {{{1
+
 export default {
-	makeEnv: makeEnv,
 	addHelpers: addHelpers,
 };

@@ -7,14 +7,14 @@ import trans_ptBr from './lang/pt-BR.js';
 
 var TRANSLATION_REGISTRY = new OrdMap();
 
-TRANSLATION_REGISTRY.set('en', trans_enUs);
-TRANSLATION_REGISTRY.set('en-US', trans_enUs);
+TRANSLATION_REGISTRY.set('EN', trans_enUs);
+TRANSLATION_REGISTRY.set('EN-US', trans_enUs);
 
-TRANSLATION_REGISTRY.set('es', trans_esMx);
-TRANSLATION_REGISTRY.set('es-MX', trans_esMx);
+TRANSLATION_REGISTRY.set('ES', trans_esMx);
+TRANSLATION_REGISTRY.set('ES-MX', trans_esMx);
 
-TRANSLATION_REGISTRY.set('pt', trans_ptBr);
-TRANSLATION_REGISTRY.set('pt-BR', trans_ptBr);
+TRANSLATION_REGISTRY.set('PT', trans_ptBr);
+TRANSLATION_REGISTRY.set('PT-BR', trans_ptBr);
 
 var trans = (function () {
 	var alreadyWarnedAboutLang = {};
@@ -30,7 +30,7 @@ var trans = (function () {
 
 		if (lang == null) {
 			// Check for the region-specific language first.
-			if (TRANSLATION_REGISTRY.isSet(navigator.language)) {
+			if (TRANSLATION_REGISTRY.isSet(navigator.language.toUpperCase())) {
 				lang = navigator.language;
 			}
 			else {
@@ -38,18 +38,18 @@ var trans = (function () {
 			}
 		}
 
-		if (!TRANSLATION_REGISTRY.isSet(lang)) {
+		if (!TRANSLATION_REGISTRY.isSet(lang.toUpperCase())) {
 			if (!alreadyWarnedAboutLang[lang]) {
 				console.error('Missing DataVis translation info for language "' + lang + '"');
 				alreadyWarnedAboutLang[lang] = true;
 			}
 		}
-		else if (TRANSLATION_REGISTRY.get(lang)[k] == null) {
+		else if (TRANSLATION_REGISTRY.get(lang.toUpperCase())[k] == null) {
 			console.error('Missing DataVis translation for key "' + k + '" in locale "' + lang + '"');
 		}
 
-		var s = (TRANSLATION_REGISTRY.get(lang) || {})[k]
-			|| (TRANSLATION_REGISTRY.get('en') || {})[k]
+		var s = (TRANSLATION_REGISTRY.get(lang.toUpperCase()) || {})[k]
+			|| (TRANSLATION_REGISTRY.get('EN') || {})[k]
 			|| k;
 
 		if (args.length > 0) {

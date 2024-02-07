@@ -18,6 +18,7 @@ examples/wcdatavis.min.js
 examples/wcdatavis.css
 examples/wcdatavis-extra.css
 examples/test/*.json
+trans-missing/*.tsv
 tests/data/*.csv
 tests/data/*.json
 tests/data/*.xml
