@@ -1,0 +1,12 @@
+{
+  data: [
+    { val: "0" },
+    { val: "" },
+    { val: "backslash\\ space" },
+    { val: "embedded ' apostrophe" },
+    { val: 'embedded " quote' },
+  ],
+  typeInfo: [
+    { field: 'val', type: 'string' },
+  ]
+}
