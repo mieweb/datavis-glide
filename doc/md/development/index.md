@@ -67,6 +67,8 @@ The DataVis support tooling is written in both JavaScript and Python.  For the l
 brew install pyenv pyenv-virtualenv node
 xcode-select --install
 ```
+Note: dont forget to run ```echo -e 'if command -v pyenv 1>/dev/null 2>&1; then\n  eval "$(pyenv init -)"\nfi' >> ~/.bash_profile```
+
 
 ### After installing packages
 
