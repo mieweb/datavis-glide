@@ -39,7 +39,8 @@ nav:
   - Errors & Debugging: debugging.md
   - Localization: localization.md
   - Development:
-      - Overview: development/index.md
+      - Getting Started: development/index.md
+      - Best Practices: development/standards.md
       - Generating Data: development/json_gen.md
       - Testing: development/testing.md
       - Documentation: development/docs.md
