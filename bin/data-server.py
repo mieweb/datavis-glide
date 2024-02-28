@@ -72,5 +72,9 @@ if __name__ == "__main__":
         # (r"/(tests/.*)", StaticHandler, {"path": os.getcwd()}),
         ], debug=True)
     server = tornado.httpserver.HTTPServer(app)
-    server.listen(5000)
+    port = 5000
+    if "PORT" in os.environ:
+        port = os.environ["PORT"]
+    print("Listening for requests on http://localhost:%u" % (port))
+    server.listen(port)
     tornado.ioloop.IOLoop.current().start()

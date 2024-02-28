@@ -42,4 +42,4 @@ By running the local HTTP server, you can easily get to the documentation and te
 - [Grid Test Pages](http://localhost:5000/tests/pages/grid/)
 
 !!! note
-    By default, the local HTTP server uses port 5000 but your computer may already be using that port for something else.  In that case, you'll see a warning in the console, along with what port it used instead; adjust the previously listed URLs accordingly.
+    By default, the local HTTP server uses port 5000 but your computer may already be using that port for something else.  In that case, you'll see an error in the console; you can use a variable for make to change the port, like so: `make PORT=5001 serve`.  If you change the port, adjust those previous URLs appropriately.

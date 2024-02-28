@@ -111,7 +111,11 @@ publish:	doc-publish tests-publish
 
 .PHONY:	serve
 serve:
+ifdef PORT
+	/usr/bin/env PORT=$(PORT) python bin/data-server.py
+else
 	python bin/data-server.py
+endif
 
 tests:	$(DIST_FILES)
 	$(MAKE) -C tests
