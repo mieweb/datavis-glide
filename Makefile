@@ -4,6 +4,7 @@ LANG_PACKS := src/lang/en-US.js src/lang/es-MX.js src/lang/pt-BR.js
 DIST_FILES := $(addprefix dist/,wcdatavis.js wcdatavis.min.js wcdatavis.css)
 EXAMPLE_FILES := $(patsubst dist/%,examples/%,$(DIST_FILES))
 PUB_PATH := zeus.med-web.com:~/public_html/datavis
+PYTHON_VER ?= $(shell pyenv versions --bare --skip-aliases --skip-envs | sort -r -V | head -n 1)
 .DEFAULT_GOAL := help
 
 .PHONY:	datavis
@@ -13,7 +14,7 @@ datavis:	$(DIST_FILES)
 
 .PHONY:	npm-setup
 npm-setup:
-	@if [ -f .nvmrc ] ; then \
+	@if [[ -f .nvmrc ]] ; then \
 		printf '\033[34;1mPlease run `nvm use` to ensure the right version of Node is used.\033[0m\n' ; \
 	fi
 	npm install
@@ -26,7 +27,16 @@ npm-teardown:
 
 .PHONY:	python-setup
 python-setup:
-	pyenv virtualenv datavis
+	@if [[ -z "$(PYTHON_VER)" ]] ; then \
+		printf '\033[31;1mUnable to find Python versions installed via pyenv.\033[0m\n' ; \
+		exit 1 ; \
+	fi
+	@if pyenv versions --bare | grep '^datavis$$' ; then \
+		printf '\033[34;1mRemoving existing "datavis" virtualenv first.\033[0m\n' ; \
+		pyenv virtualenv-delete -f datavis ; \
+	fi
+	@printf '\033[32;1mCreating new "datavis" virtualenv based on Python $(PYTHON_VER).\033[0m\n'
+	pyenv virtualenv "$(PYTHON_VER)" datavis
 	pyenv local datavis
 	pip install -r requirements.txt
 
