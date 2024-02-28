@@ -7,9 +7,12 @@ This project can be built using Make.
 ```
 $ make setup
 $ make datavis
+
+$ make tests
+$ make serve
 ```
 
-Make is also used to generate documentation, build & run tests, and other stuff.
+Make is also used to generate documentation, build & run tests, and other stuff.  See the [Development section](development/index.md) for lots more information about pre-requisites, building DataVis, and running the local data server.
 
 ## Installation
 

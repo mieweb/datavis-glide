@@ -2,27 +2,29 @@
 
 ## Pre-Requisites
 
-The DataVis support tooling is written in both JavaScript and Python: you will need to have them both installed.  Using `pyenv` is required for managing Python versions, as we will create a virtualenv to install the packages that DataVis needs.
+The DataVis support tooling is written in both JavaScript and Python: you will need to have them both installed.  Using `pyenv` is required for managing Python versions, as we will create a virtualenv to install the packages that DataVis needs.  You'll also need some other command line tools: GNU Make, and GNU Awk.
 
-!!! help "Installing Node with `nvm`"
+??? help "Installing Node with `nvm`"
 
     See instructions [on the NVM GitHub repository](https://github.com/nvm-sh/nvm#installing-and-updating).
 
-!!! help "Installing Python with `pyenv`"
+??? help "Installing Python with `pyenv`"
 
     1. [install pyenv](https://github.com/pyenv/pyenv#installation)
     2. [install the virtualenv plugin](https://github.com/pyenv/pyenv-virtualenv#installation)
     3. Use `pyenv` to install an appropriate version of Python.
 
-    Example on MacOS:
+!!! example "Full example on MacOS"
+
+    The following should get you everything you need on MacOS, ready for the "setup" step below.
 
     ```
-    $ brew install pyenv pyenv-virtualenv
+    $ brew install make gawk node pyenv pyenv-virtualenv
     $ eval "$(pyenv init -)"
     $ pyenv install 3.12.2
     ```
 
-Then you can run the following to get all the required Node and Python packages.  By default, a virtualenv will be created using the most recent version of Python installed via `pyenv`, but you can override that using the `PYTHON_VER` variable.
+After getting all that installed, you can run the following to get all the required Node and Python packages.  By default, a virtualenv will be created using the most recent version of Python installed via `pyenv`, but you can override that using the `PYTHON_VER` variable.
 
 ```
 $ make [PYTHON_VER=...] setup
@@ -30,7 +32,7 @@ $ make [PYTHON_VER=...] setup
 
 ## Compiling
 
-After installing the [Pre-Requisites](#pre-requisites), run `make datavis` to build the JS and CSS files for DataVis.  You can also run `make tests` to (1) build and copy the JS and CSS files to `tests/pages`, and (2) generate the data files needed for testing.
+After installing the [Pre-Requisites](#pre-requisites), run `make datavis` to build the JS and CSS files for DataVis.  You can also run `make tests` to (1) build and copy the JS and CSS files to `tests/pages`, and (2) generate the data files needed for testing.  See [Generating Data](json_gen.md) for more information about how test data is created.
 
 ## Running the Local Server
 
