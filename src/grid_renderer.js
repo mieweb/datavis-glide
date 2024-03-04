@@ -184,7 +184,7 @@ GridRenderer.prototype.destroy = function () {
 GridRenderer.prototype.toString = function () {
 	var self = this;
 
-	return '#<GridRenderer ' + self.UNIQUE_ID + '>';
+	return 'GridRenderer(' + self.UNIQUE_ID + ')';
 };
 
 // #_validateFeatures {{{2

@@ -38,7 +38,6 @@ import { Prefs } from './prefs.js';
 import { ComputedView } from './computed_view.js';
 import { MirageView } from './mirage_view.js';
 import { GridRenderer } from './grid_renderer.js';
-import './grid_table.js';
 import './renderers/grid/handlebars.js';
 import './renderers/grid/squirrelly.js';
 import { ColConfigWin } from './ui/windows/col_config.js';
@@ -55,6 +54,11 @@ import {
 import { OperationsPalette } from './operations_palette.js';
 import { FileSource } from './source.js';
 import { trans } from './trans.js';
+import {GridTablePlain} from './renderers/grid/table/plain.js';
+import {GridTableGroupDetail} from './renderers/grid/table/group_detail.js';
+import {GridTableGroupSummary} from './renderers/grid/table/group_summary.js';
+import {GridTablePivot} from './renderers/grid/table/pivot.js';
+
 
 // Server-Side Filter/Sort {{{1
 
@@ -908,7 +912,7 @@ mixinNameSetting(Grid);
 
 Grid.prototype.toString = function () {
 	var self = this;
-	return 'Grid (' + self.id + ')';
+	return 'Grid(' + self.id + ')';
 };
 
 // #getDebugTag {{{2

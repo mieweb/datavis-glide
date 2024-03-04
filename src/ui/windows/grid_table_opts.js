@@ -9,7 +9,7 @@ import {
 	getPropDef,
 } from '../../util/misc.js';
 
-import {GridTable} from '../../grid_table.js';
+import GridTable from '../../renderers/grid/table.js';
 
 // GridTableOptsWin {{{1
 
