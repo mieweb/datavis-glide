@@ -1,9 +1,4 @@
 import _ from 'underscore';
-import {
-	I,
-  mixinDebugging,
-	NOP,
-} from './misc.js';
 
 // Lock {{{1
 // Constructor {{{2
@@ -16,26 +11,12 @@ import {
 export var Lock = function (name, opts) {
 	var self = this;
 
-	self._opts = opts || {};
-
-	if (self._opts.debug == null) {
-		self._opts.debug = true;
-	}
-
 	self._name = name || '#' + (Lock._id++);
 	self._lockCount = 0;
 	self._onUnlock = [];
-
-	if (!self._opts.debug) {
-		self.debug = NOP;
-	}
 };
 
 Lock._id = 1;
-
-mixinDebugging(Lock, function () {
-	return 'LOCK - ' + this._name + ' (level ' + this._lockCount + ')';
-});
 
 // #lock {{{2
 
@@ -57,7 +38,7 @@ Lock.prototype.lock = function (why) {
 		msg += ' - ' + why;
 	}
 
-	self.debug(null, msg);
+	console.debug('[DataVis // Lock(%s)] %s', self._name, msg);
 };
 
 // #unlock {{{2
@@ -73,7 +54,7 @@ Lock.prototype.unlock = function () {
 	var self = this;
 
 	self._lockCount -= 1;
-	self.debug(null, 'Unlocking to level: ' + self._lockCount);
+	console.debug('[DataVis // Lock(%s)] Unlocking to level: %s', self._name, self._lockCount);
 
 	// If we're completely unlocked, start going through the functions that were registered to be run.
 	// The only problem is that these functions can cause us to be locked again.  If that happens, we
@@ -86,7 +67,8 @@ Lock.prototype.unlock = function () {
 	while (self._onUnlock.length > 0 && !self.isLocked()) {
 		i += 1;
 		var onUnlock = self._onUnlock.shift();
-		self.debug(null, 'Running onUnlock function (%d of %d) - %s', i, onUnlockLen, onUnlock.info || '[NO INFO]');
+		console.debug('[DataVis // Lock(%s)] Running onUnlock function (%d of %d) - %s',
+			self._name, i, onUnlockLen, onUnlock.info || '[NO INFO]');
 		onUnlock.f();
 	}
 };
@@ -143,7 +125,8 @@ Lock.prototype.onUnlock = function (f, info) {
 		info: info
 	});
 
-	self.debug(null, 'Saved onUnlock function (#%d) - %s', self._onUnlock.length, info || '[NO INFO]');
+	console.debug('[DataVis // Lock(%s)] Saved onUnlock function (#%d) - %s',
+		self._name, self._onUnlock.length, info || '[NO INFO]');
 };
 
 // #flushUnlockQueue
@@ -155,7 +138,8 @@ Lock.prototype.flushUnlockQueue = function () {
 		var info = _.map(_.pluck(self._onUnlock, 'info'), function (i) {
 			return i || '[NO INFO]';
 		});
-		self.debug(null, 'Flushing ' + count + ' onUnlock functions: %O', info);
+		console.debug('[DataVis // Lock(%s)] Flushing %d onUnlock functions: %O',
+			self._name, count, info);
 		self._onUnlock = [];
 	}
 };

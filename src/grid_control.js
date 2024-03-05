@@ -959,7 +959,7 @@ GridControl.prototype.clear = function (opts) {
 GridControl.prototype.destroy = function () {
 	var self = this;
 
-	debug.info('GRID // CONTROL', 'Good-bye, cruel world!');
+	console.debug('[DataVis // GridControl] Good-bye, cruel world!');
 
 	self.view.off('*', self);
 	self.grid.off('*', self);
@@ -1005,7 +1005,7 @@ GridControl.prototype.addViewConfigChangeHandler = function (event, sync) {
 	//    does this synchronization.
 
 	var sync_colConfig = function (colConfig) {
-		debug.info('GRID (' + self.grid.id + ') // ' + self.controlType.toUpperCase() + ' CONTROL', 'Synchronizing column configuration with grid');
+		console.debug('[DataVis // %s // %s Control] Synchronizing column configuration with grid', self.grid.toString(), self.controlType.toUpperCase());
 		self.colConfig = colConfig;
 		if (self.showColumns) {
 			clearDropdown();
@@ -1016,7 +1016,7 @@ GridControl.prototype.addViewConfigChangeHandler = function (event, sync) {
 	};
 
 	var sync_view = function () {
-		debug.info('GRID (' + self.grid.id + ') // ' + self.controlType.toUpperCase() + ' CONTROL', 'Synchronizing user interface with view');
+		console.debug('[DataVis // %s // %s Control] Synchronizing user interface with view', self.grid.toString(), self.controlType.toUpperCase());
 		sync();
 	};
 
@@ -1195,8 +1195,7 @@ GroupControl.prototype.draw = function (parent) {
 		var spec = self.view.getGroup();
 		var fields = (!self.view.source.origin.isLimited && spec && spec.fieldNames) || [];
 		self.clear({ updateView: false });
-		debug.info('GRID // GROUP CONTROL',
-			'ComputedView set group fields to: ' + JSON.stringify(fields));
+		console.debug('[DataVis // %s // Group Control] View set group fields to: %s', self.grid.toString(), JSON.stringify(fields));
 		_.each(fields, function (field) {
 			self.addField(field, getProp(self.colConfig.get(field), 'displayText'), { updateView: false });
 		});
@@ -1369,8 +1368,7 @@ PivotControl.prototype.draw = function (parent) {
 		spec = self.view.getPivot();
 		var fields = (!self.view.source.origin.isLimited && spec && spec.fieldNames) || [];
 		self.clear({ updateView: false });
-		debug.info('GRID // PIVOT CONTROL',
-			'ComputedView set pivot fields to: ' + JSON.stringify(fields));
+		console.debug('[DataVis // %s // Pivot Control] View set pivot fields to: %s', self.grid.toString(), JSON.stringify(fields));
 		_.each(fields, function (field) {
 			self.addField(field, getProp(self.colConfig.get(field), 'displayText'), { updateView: false });
 		});
@@ -1585,8 +1583,7 @@ AggregateControl.prototype.draw = function (parent) {
 		var spec = self.view.getAggregate();
 		self.clear({ updateView: false });
 		if (spec != null) {
-			debug.info('GRID // AGGREGATE CONTROL',
-				'ComputedView set aggregate to: ' + JSON.stringify(spec.all));
+			console.debug('[DataVis // %s // Aggregate Control] View set aggregate to: %s', self.grid.toString(), JSON.stringify(spec.all));
 
 			_.each(spec.all, function (agg) {
 				self.addField(agg.fun, AGGREGATE_REGISTRY.get(agg.fun).prototype.name, { updateView: false }, {
@@ -1682,7 +1679,8 @@ AggregateControl.prototype.showHideFields = function (agg) {
 AggregateControl.prototype.addFieldDropdowns = function (agg) {
 	var self = this;
 
-	debug.info('GRID // AGGREGATE CONTROL', 'Adding ' + (agg.prototype.fieldCount - self.ui.fields.length) + ' extra field dropdowns for the ' + agg.prototype.name + ' aggregate function');
+	console.debug('[DataVis // %s // Aggregate Control] Adding %s extra field dropdowns for the %s aggregate function',
+		self.grid.toString(), agg.prototype.fieldCount - self.ui.fields.length, agg.prototype.name);
 
 	// Create the extra dropdowns that we need to get all the fields required by the aggregate
 	// function selected.
@@ -1820,7 +1818,7 @@ FilterControl.prototype.draw = function (parent) {
 
 	self.addViewConfigChangeHandler('filterSet', function () {
 		var spec = self.view.getFilter();
-		debug.info('GRID // FILTER CONTROL', 'ComputedView set filter to: %O', spec);
+		console.debug('[DataVis // %s // Filter Control] View set filter to: %s', self.grid.toString(), JSON.stringify(spec));
 		self.clear({ updateView: false });
 		_.each(spec, function (fieldSpec, field) {
 			self.addField(field, getProp(self.colConfig.get(field), 'displayText'), { updateView: false });

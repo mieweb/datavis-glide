@@ -423,7 +423,7 @@ export function makeArray() {
 export function trulyYours(cont, spec, thisArg, acc) {
 	acc = acc || {};
 	return (spec.length === 0) ? cont(acc) : (function () {
-		console.debug('[Truly Yours] Calling #%s() to set property .%s', spec[0].fn, spec[0].prop);
+		console.debug('[DataVis // Truly Yours] Calling #%s() to set property .%s', spec[0].fn, spec[0].prop);
 		return (thisArg[spec[0].fn].bind(thisArg))(function (y) {
 			acc[spec[0].prop] = (spec[0].conv || I)(y);
 			return trulyYours(cont, spec.slice(1), thisArg, acc);
@@ -871,7 +871,6 @@ export var deepCopy = function (x0) {
 
 	function recursive(x, depth) {
 		if (depth > depthLimit) {
-			log.error('deepCopy: path = %O', path);
 			throw new Error('deepCopy: Maximum recursion depth exceeded');
 		}
 
@@ -1876,7 +1875,7 @@ export var mixinEventHandling = (function () {
 				if (opts.who != null) {
 					msg += ' from ' + opts.who;
 				}
-				console.debug('[%s // On] %s',
+				console.debug('[DataVis // %s // On] %s',
 					getTag(self), msg);
 			});
 
@@ -1923,7 +1922,7 @@ export var mixinEventHandling = (function () {
 			});
 
 			if (!opts.silent) {
-				console.debug('[%s // Off] Removed %s handlers from %s on "%s" event',
+				console.debug('[DataVis // %s // Off] Removed %s handlers from %s on "%s" event',
 					getTag(self), self.eventHandlers[evt].length - newHandlers.length, who, evt);
 			}
 
@@ -1992,7 +1991,7 @@ export var mixinEventHandling = (function () {
 			// spamming millions of messages, which slows down the console).
 
 			if (!opts.silent) {
-				console.debug('[%s // Fire] Triggering %d handlers for "%s" event on %s: %O',
+				console.debug('[DataVis // %s // Fire] Triggering %d handlers for "%s" event on %s: %O',
 					getTag(self), handlers.length, evt, getName(self), args);
 			}
 
@@ -2008,12 +2007,12 @@ export var mixinEventHandling = (function () {
 				}
 
 				if (h.handler.info != null) {
-					console.debug('[%s // Fire] Executing "%s" handler (%d of %d) on %s: %s',
-						getTag(self), evt, i+1, handlers.length, getName(self), h.handler.info);
+					console.debug('[DataVis // %s // Fire] Executing "%s" handler %O (%d of %d) on %s: %s',
+						getTag(self), evt, h.handler.cb, i+1, handlers.length, getName(self), h.handler.info);
 				}
 				else {
-					console.debug('[%s // Fire] Executing "%s" handler (%d of %d) on %s',
-						getTag(self), evt, i+1, handlers.length, getName(self));
+					console.debug('[DataVis // %s // Fire] Executing "%s" handler %O (%d of %d) on %s',
+						getTag(self), evt, h.handler.cb, i+1, handlers.length, getName(self));
 				}
 				h.handler.cb.apply(null, args);
 
@@ -2023,7 +2022,7 @@ export var mixinEventHandling = (function () {
 				if (h.handler.limit) {
 					h.handler.limit -= 1;
 					if (h.handler.limit <= 0) {
-						console.debug('[%s // Fire] Removing "%s" handler #%d from %s after reaching invocation limit',
+						console.debug('[DataVis // %s // Fire] Removing "%s" handler #%d from %s after reaching invocation limit',
 							getTag(self), evt, i+1, getName(self));
 						self.eventHandlers[evt][h.index] = null;
 					}
@@ -2032,7 +2031,7 @@ export var mixinEventHandling = (function () {
 				return opts.async ? window.setTimeout(next) : next();
 			}, function () {
 				if (!opts.silent) {
-					console.debug('[%s // Fire] Done triggering handlers for "%s" event on %s',
+					console.debug('[DataVis // %s // Fire] Done triggering handlers for "%s" event on %s',
 						getTag(self), evt, getName(self));
 				}
 
@@ -2453,10 +2452,10 @@ export var loadScript = (function () {
 		var makeCb = function (isAlreadyLoaded) {
 			var showLoadMsg = function () {
 				if (isAlreadyLoaded) {
-					console.debug('[Load Script] [url = %s] Already loaded', url);
+					console.debug('[DataVis // Load Script] [url = %s] Already loaded', url);
 				}
 				else {
-					console.debug('[Load Script] [url = %s] Finished executing loaded script', url);
+					console.debug('[DataVis // Load Script] [url = %s] Finished executing loaded script', url);
 				}
 			};
 
@@ -2464,7 +2463,7 @@ export var loadScript = (function () {
 				return function () {
 					showLoadMsg();
 					callback(isAlreadyLoaded, function () {
-						console.debug('[Load Script] [url = %s] Exiting control of the script loader', url);
+						console.debug('[DataVis // Load Script] [url = %s] Exiting control of the script loader', url);
 						if (!isAlreadyLoaded) {
 							alreadyLoaded[url] = true;
 							lock.unlock();
@@ -2475,7 +2474,7 @@ export var loadScript = (function () {
 			else {
 				return function () {
 					showLoadMsg();
-					debug.info('Load Script] [url = %s] Exiting control of the script loader', url);
+					console.debug('[DataVis // Load Script] [url = %s] Exiting control of the script loader', url);
 					if (!isAlreadyLoaded) {
 						alreadyLoaded[url] = true;
 						lock.unlock();
@@ -2704,7 +2703,7 @@ export function makeToggleCheckbox(rootObj, path, startChecked, text, parent, af
 	return makeCheckbox(rootObj != null ? getProp(rootObj, path) : startChecked, function () {
 		var isChecked = jQuery(this).prop('checked');
 		if (rootObj != null) {
-			console.debug('[Grid // Toolbar] Setting `' + path.join('.') + '` to ' + isChecked);
+			console.debug('[DataVis // Grid // Toolbar] Setting `' + path.join('.') + '` to ' + isChecked);
 			setProp(isChecked, rootObj, path);
 		}
 		if (typeof after === 'function') {
@@ -2763,7 +2762,7 @@ export function makeRadioButtons(rootObj, path, def, label, name, values, conv, 
 		if (typeof conv === 'function') {
 			selected = conv(selected);
 		}
-		console.debug('[Grid // Toolbar] Setting `' + path.join('.') + '` to ' + selected);
+		console.debug('[DataVis // Grid // Toolbar] Setting `' + path.join('.') + '` to ' + selected);
 		setProp(selected, rootObj, path);
 		if (typeof onChange === 'function') {
 			onChange(selected);
@@ -3103,7 +3102,7 @@ export function format(fcc, fti, cell, opts) {
 	});
 
 	if (opts.debug) {
-		console.debug('[Format] typeInfo = %O ; colConfig = %O ; cell = %O ; opts = %O', fti, fcc, cell, opts);
+		console.debug('[DataVis // Format] typeInfo = %O ; colConfig = %O ; cell = %O ; opts = %O', fti, fcc, cell, opts);
 	}
 
 	// Convert from a number format string to a number format object.  Originally, there was only one
@@ -3730,7 +3729,7 @@ export function blockGrid(defn, fn, info) {
 
 	defn.table.blockCount += 1;
 
-	console.debug('[Blocking // Push] COUNT =', defn.table.blockCount, '> INFO =', info);
+	console.debug('[DataVis // Blocking // Push] COUNT =', defn.table.blockCount, '> INFO =', info);
 
 	if (defn.table.blockCount === 1) {
 		output = getProp(defn, 'table', 'output', 'method');
@@ -3788,7 +3787,7 @@ export function unblockGrid(defn, info) {
 
 	if (defn.table.blockCount > 0) {
 		defn.table.blockCount -= 1;
-		console.debug('[Blocking // Pop] COUNT =', defn.table.blockCount, '> INFO =', info);
+		console.debug('[DataVis // Blocking // Pop] COUNT =', defn.table.blockCount, '> INFO =', info);
 		if (defn.table.blockCount === 0) {
 			output = getProp(defn, 'table', 'output', 'method');
 
@@ -3881,7 +3880,7 @@ Timing.prototype.start = function (what) {
 
 	self.events[subject].push(event);
 
-	console.debug('[Timing] Received <START> event for [' + subject + ' ] ' + event);
+	console.debug('[DataVis // Timing] Received <START> event for [' + subject + ' ] ' + event);
 
 	setProp(Date.now(), self.data, subject, event, 'start');
 };
@@ -3899,7 +3898,7 @@ Timing.prototype.stop = function (what) {
 		event += ' (#' + self.eventCount[subject][event] + ')';
 	}
 
-	console.debug('[Timing] Received <STOP> event for [' + subject + ' ] ' + event);
+	console.debug('[DataVis // Timing] Received <STOP> event for [' + subject + ' ] ' + event);
 
 	if (getProp(self.data, subject, event, 'start') === undefined) {
 		log.warn('Received <STOP> event for [' + subject + ' : ' + event + '] with no <START> event');
@@ -4076,7 +4075,7 @@ export function determineColumns(colConfig, data, typeInfo) {
 		}
 	}
 
-	console.debug('[Determine Columns] Columns = %O', columns);
+	console.debug('[DataVis // Determine Columns] Columns = %O', columns);
 
 	return columns;
 }
