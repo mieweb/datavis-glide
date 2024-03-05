@@ -313,14 +313,7 @@ mixinNameSetting(Prefs);
 
 Prefs.prototype.toString = function () {
 	var self = this;
-	return 'Prefs (' + self.name + ', ' + self.opts.backend.type + ')';
-};
-
-// #getDebugTag {{{2
-
-Prefs.prototype.getDebugTag = function () {
-	var self = this;
-	return 'PREFS {name="' + self.name + '", backend=' + self.opts.backend.type + '}';
+	return 'Prefs(' + self.name + ', ' + self.opts.backend.type + ')';
 };
 
 // #init {{{2

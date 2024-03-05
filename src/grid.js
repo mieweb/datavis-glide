@@ -902,13 +902,6 @@ Grid.prototype.toString = function () {
 	return 'Grid(' + self.id + ')';
 };
 
-// #getDebugTag {{{2
-
-Grid.prototype.getDebugTag = function () {
-	var self = this;
-	return 'GRID {id="' + self.id + '"}';
-};
-
 // #_validateFeatures {{{2
 
 Grid.prototype._validateFeatures = function () {

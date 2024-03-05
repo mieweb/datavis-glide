@@ -272,7 +272,7 @@ GridTablePlain.prototype.drawHeader = function (columns, data, typeInfo, opts) {
 
 							var trHeight = tr.innerHeight();
 
-							console.debug('DataVis // %s // Add Filter: Adjusting original table header height to ' + trHeight + 'px to match floating header height', self.toString());
+							console.debug('[DataVis // %s // Add Filter] Adjusting original table header height to ' + trHeight + 'px to match floating header height', self.toString());
 							filterTr.innerHeight(trHeight);
 						}
 					};
@@ -339,7 +339,7 @@ GridTablePlain.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 	var limitConfig = getPropDef({}, self.defn, 'table', 'limit');
 
 	if (self.features.limit && limitConfig && data.data.length > limitConfig.threshold) {
-		console.debug('DataVis // %s // Draw: Limiting output to first ' + limitConfig.threshold + ' rows', self.toString());
+		console.debug('[DataVis // %s // Draw] Limiting output to first ' + limitConfig.threshold + ' rows', self.toString());
 	}
 
 	if (self.opts.generateCsv) {
@@ -499,7 +499,7 @@ GridTablePlain.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 
 		self.moreVisibleHandler = onVisibilityChange(self.scrollEventElement, td, function(isVisible) {
 			if (isVisible && getProp(self.defn, 'table', 'limit', 'autoShowMore')) {
-				console.debug('DataVis // %s // More: "Show More Rows" button scrolled into view', self.toString());
+				console.debug('[DataVis // %s // More] "Show More Rows" button scrolled into view', self.toString());
 				showMore();
 			}
 		});
@@ -519,7 +519,7 @@ GridTablePlain.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 			howMany = data.data.length;
 		}
 
-		console.debug('DataVis // %s // Draw: Rendering rows '
+		console.debug('[DataVis // %s // Draw] Rendering rows '
 			+ startIndex
 			+ ' - '
 			+ Math.min(useLimit && startIndex === 0 ? limitConfig.threshold - 1 : Number.POSITIVE_INFINITY
@@ -704,11 +704,11 @@ GridTablePlain.prototype.drawFooter = function (columns, data, typeInfo) {
 					footerConfig.fields = [field];
 				}
 
-				console.debug('DataVis // %s // Footer(%s): Creating footer using config: %O', self.toString(), field, footerConfig);
+				console.debug('[DataVis // %s // Footer(%s)] Creating footer using config: %O', self.toString(), field, footerConfig);
 
 				var aggInfo = new AggregateInfo('all', footerConfig, 0, self.colConfig, typeInfo, function (tag, fti) {
 					if (fti.needsDecoding) {
-						console.debug('DataVis // %s // Footer(%s) // %s: Converting data: { field = "%s", type = "%s" }',
+						console.debug('[DataVis // %s // Footer(%s) // %s] Converting data: { field = "%s", type = "%s" }',
 							self.toString(), field, tag, fti.field, fti.type);
 
 						self.view.convertAll(data.dataByRowId, fti.field);
@@ -737,7 +737,7 @@ GridTablePlain.prototype.drawFooter = function (columns, data, typeInfo) {
 					}
 
 					if (aggInfo.debug) {
-						console.debug('DataVis // %s // Footer(%s): Aggregate result: %s',
+						console.debug('[DataVis // %s // Footer(%s)] Aggregate result: %s',
 							self.toString(), field, JSON.stringify(aggResult));
 					}
 
@@ -853,17 +853,17 @@ GridTablePlain.prototype.addWorkHandler = function () {
 	var self = this;
 
 	self.view.on(ComputedView.events.workEnd, function (info, ops) {
-		console.debug('DataVis // %s // Handler(ComputedView.workEnd): ComputedView has finished doing work',
+		console.debug('[DataVis // %s // Handler(ComputedView.workEnd)] ComputedView has finished doing work',
 			self.toString());
 
 		if (ops.group || ops.pivot) {
-			console.debug('DataVis // %s // Handler(ComputedView.workEnd): Unable to render this data: %O',
+			console.debug('[DataVis // %s // Handler(ComputedView.workEnd)] Unable to render this data: %O',
 				self.toString(), ops);
 			self.fire('unableToRender', null, ops);
 			return;
 		}
 
-		console.debug('DataVis // %s // Handler(ComputedView.workEnd): Redrawing because the view has done work',
+		console.debug('[DataVis // %s // Handler(ComputedView.workEnd)] Redrawing because the view has done work',
 			self.toString());
 		self.draw(self.root);
 	}, { who: self });
@@ -937,7 +937,7 @@ GridTablePlain.prototype.addDataToCsv = function (data) {
 	var self = this;
 	var columns = determineColumns(self.colConfig, data, self.typeInfo);
 
-	console.debug('DataVis // %s // Generate CSV: Started generating CSV file', self.toString());
+	console.debug('[DataVis // %s // Generate CSV] Started generating CSV file', self.toString());
 	self.fire('generateCsvProgress', null, 0);
 
 	self.csv.clear();
@@ -977,7 +977,7 @@ GridTablePlain.prototype.addDataToCsv = function (data) {
 		}
 
 		if (i === data.data.length) {
-			console.debug('DataVis // %s // Generate CSV: Finished generating CSV file', self.toString());
+			console.debug('[DataVis // %s // Generate CSV] Finished generating CSV file', self.toString());
 			self.fire('generateCsvProgress', null, 100);
 			self.fire('csvReady');
 		}

@@ -418,14 +418,14 @@ GridTableGroupDetail.prototype.drawBody = function (data, typeInfo, columns, con
 
 			var rowValIndex = self.data.groupMetadata.lookup.byId[metadataId].rowValIndex;
 
-			console.debug('DataVis // %s // Toggle: show = %s, id = %s, rowValIndex = %s',
+			console.debug('[DataVis // %s // Toggle] show = %s, id = %s, rowValIndex = %s',
 				self.toString(), show, metadataId, rowValIndex);
 
 			// Check if we're expanding a leaf, thus fully expanding an entire group, and see if we need
 			// to render table rows for all the records in that group.
 
 			if (show && !isRendered[metadataId]) {
-				console.debug('DataVis // %s // Toggle: Rendering: group metadata ID = %s',
+				console.debug('[DataVis // %s // Toggle] Rendering: group metadata ID = %s',
 					self.toString(), metadataId);
 				render(metadataId, 0, tr);
 			}
@@ -1000,12 +1000,12 @@ GridTableGroupDetail.prototype.drawFooter = function (columns, data, typeInfo) {
 					footerConfig.fields = [field];
 				}
 
-				console.debug('DataVis // %s // Footer(%s): Creating footer using config: %O',
+				console.debug('[DataVis // %s // Footer(%s)] Creating footer using config: %O',
 					self.toString(), field, footerConfig);
 
 				var aggInfo = new AggregateInfo('all', footerConfig, 0, self.colConfig, typeInfo, function (tag, fti) {
 					if (fti.needsDecoding) {
-						console.debug('DataVis // %s // Footer(%s) // %s: Converting data: { field = "%s", type = "%s" }',
+						console.debug('[DataVis // %s // Footer(%s) // %s] Converting data: { field = "%s", type = "%s" }',
 							self.toString(), field, tag, fti.field, fti.type);
 
 						self.view.convertAll(data.dataByRowId, fti.field);
@@ -1034,7 +1034,7 @@ GridTableGroupDetail.prototype.drawFooter = function (columns, data, typeInfo) {
 					}
 
 					if (aggInfo.debug) {
-						console.debug('DataVis // %s // Footer(%s): Aggregate result: %s',
+						console.debug('[DataVis // %s // Footer(%s)] Aggregate result: %s',
 							self.toString(), field, JSON.stringify(aggResult));
 					}
 
@@ -1327,7 +1327,7 @@ GridTableGroupDetail.prototype.addDataToCsv = function (data) {
 	var self = this;
 	var columns = determineColumns(self.colConfig, data, self.typeInfo);
 
-	console.debug('DataVis // ' + self.toString() + ' // GENERATE CSV', 'Started generating CSV file');
+	console.debug('[DataVis // %s // Generate CSV] Started generating CSV file', self.toString());
 	self.fire('generateCsvProgress', null, 0);
 
 	self.csv.clear();
@@ -1387,7 +1387,7 @@ GridTableGroupDetail.prototype.addDataToCsv = function (data) {
 
 	recur(0, data.groupMetadata);
 
-	console.debug('DataVis // ' + self.toString() + ' // GENERATE CSV', 'Finished generating CSV file');
+	console.debug('[DataVis // %s // Generate CSV] Finished generating CSV file', self.toString());
 	self.fire('generateCsvProgress', null, 100);
 	self.fire('csvReady');
 };

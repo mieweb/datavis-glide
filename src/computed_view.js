@@ -569,7 +569,7 @@ var ComputedView = makeSubclass('ComputedView', View, function (source, opts) {
 
 	self.timing = new Timing();
 
-	self.lock = new Lock(self.getDebugTag());
+	self.lock = new Lock(self.toString());
 
 	// Set the default configuration for a new ComputedView.  Setting explicit defaults is a good practice to
 	// maintain, but it also makes sure that when prefs are loaded later, any `null` values they set
@@ -789,14 +789,7 @@ ComputedView.prototype.unlimit = function () {
 
 ComputedView.prototype.toString = function () {
 	var self = this;
-	return 'ComputedView (' + self.name + ')';
-};
-
-// #getDebugTag {{{2
-
-ComputedView.prototype.getDebugTag = function () {
-	var self = this;
-	return 'VIEW {name="' + self.name + '"}';
+	return 'ComputedView(' + self.name + ')';
 };
 
 // #_maybeDecode {{{2

@@ -119,14 +119,7 @@ mixinNameSetting(MirageView);
 
 MirageView.prototype.toString = function () {
 	var self = this;
-	return 'MirageView (' + self.name + ')';
-};
-
-// #getDebugTag {{{2
-
-MirageView.prototype.getDebugTag = function () {
-	var self = this;
-	return 'MIRAGE VIEW {name="' + self.name + '"}';
+	return 'MirageView(' + self.name + ')';
 };
 
 // #prime {{{2

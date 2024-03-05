@@ -707,8 +707,8 @@ var Source = makeSubclass('Source', Object, function (spec, params, userTypeInfo
 
 	self.conversion = spec.conversion;
 
-	self.locks.getData = new Lock(self.getDebugTag() + ' // GET DATA');
-	self.locks.refresh = new Lock(self.getDebugTag() + ' // REFRESH');
+	self.locks.getData = new Lock(self.toString() + ' // GET DATA');
+	self.locks.refresh = new Lock(self.toString() + ' // REFRESH');
 });
 
 // Mixins {{{2
@@ -1415,14 +1415,7 @@ Source.prototype.cancel = function () {
 Source.prototype.toString = function () {
 	var self = this;
 
-	return 'Source <' + self.name + ', ' + self.type + '>';
-};
-
-// #getDebugTag {{{2
-
-Source.prototype.getDebugTag = function () {
-	var self = this;
-	return 'SOURCE {name="' + self.name + '", type=' + self.type + '}';
+	return 'Source(' + self.name + ', ' + self.type + ')';
 };
 
 // #setToolbar {{{2

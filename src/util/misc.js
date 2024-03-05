@@ -423,7 +423,7 @@ export function makeArray() {
 export function trulyYours(cont, spec, thisArg, acc) {
 	acc = acc || {};
 	return (spec.length === 0) ? cont(acc) : (function () {
-		debug.info('TRULY YOURS', 'Calling #%s() to set property .%s', spec[0].fn, spec[0].prop);
+		console.debug('[Truly Yours] Calling #%s() to set property .%s', spec[0].fn, spec[0].prop);
 		return (thisArg[spec[0].fn].bind(thisArg))(function (y) {
 			acc[spec[0].prop] = (spec[0].conv || I)(y);
 			return trulyYours(cont, spec.slice(1), thisArg, acc);
@@ -1876,7 +1876,8 @@ export var mixinEventHandling = (function () {
 				if (opts.who != null) {
 					msg += ' from ' + opts.who;
 				}
-				debug.info(getTag(self) + ' // ON', msg);
+				console.debug('[%s // On] %s',
+					getTag(self), msg);
 			});
 
 			return self;
@@ -1922,7 +1923,8 @@ export var mixinEventHandling = (function () {
 			});
 
 			if (!opts.silent) {
-				debug.info(getTag(self) + ' // OFF', 'Removed ' + (self.eventHandlers[evt].length - newHandlers.length) + ' handlers from ' + who + ' on "' + evt + '" event');
+				console.debug('[%s // Off] Removed %s handlers from %s on "%s" event',
+					getTag(self), self.eventHandlers[evt].length - newHandlers.length, who, evt);
 			}
 
 			self.eventHandlers[evt] = newHandlers;
@@ -1990,7 +1992,8 @@ export var mixinEventHandling = (function () {
 			// spamming millions of messages, which slows down the console).
 
 			if (!opts.silent) {
-				debug.info(getTag(self) + ' // FIRE', 'Triggering %d handlers for "%s" event on %s: %O', handlers.length, evt, getName(self), args);
+				console.debug('[%s // Fire] Triggering %d handlers for "%s" event on %s: %O',
+					getTag(self), handlers.length, evt, getName(self), args);
 			}
 
 			// Execute all matching handlers in the order they were registered.  A break is added between
@@ -2005,10 +2008,12 @@ export var mixinEventHandling = (function () {
 				}
 
 				if (h.handler.info != null) {
-					debug.info(getTag(self) + ' // FIRE', 'Executing "%s" handler (%d of %d) on %s: %s', evt, i+1, handlers.length, getName(self), h.handler.info);
+					console.debug('[%s // Fire] Executing "%s" handler (%d of %d) on %s: %s',
+						getTag(self), evt, i+1, handlers.length, getName(self), h.handler.info);
 				}
 				else {
-					debug.info(getTag(self) + ' // FIRE', 'Executing "%s" handler (%d of %d) on %s', evt, i+1, handlers.length, getName(self));
+					console.debug('[%s // Fire] Executing "%s" handler (%d of %d) on %s',
+						getTag(self), evt, i+1, handlers.length, getName(self));
 				}
 				h.handler.cb.apply(null, args);
 
@@ -2018,7 +2023,8 @@ export var mixinEventHandling = (function () {
 				if (h.handler.limit) {
 					h.handler.limit -= 1;
 					if (h.handler.limit <= 0) {
-						debug.info(getTag(self) + ' // FIRE', 'Removing "%s" handler #%d from %s after reaching invocation limit', evt, i+1, getName(self));
+						console.debug('[%s // Fire] Removing "%s" handler #%d from %s after reaching invocation limit',
+							getTag(self), evt, i+1, getName(self));
 						self.eventHandlers[evt][h.index] = null;
 					}
 				}
@@ -2026,7 +2032,8 @@ export var mixinEventHandling = (function () {
 				return opts.async ? window.setTimeout(next) : next();
 			}, function () {
 				if (!opts.silent) {
-					debug.info(getTag(self) + ' // FIRE', 'Done triggering handlers for "%s" event on %s', evt, getName(self));
+					console.debug('[%s // Fire] Done triggering handlers for "%s" event on %s',
+						getTag(self), evt, getName(self));
 				}
 
 				// Clean up handlers we removed (because they reached the limit).
@@ -2446,10 +2453,10 @@ export var loadScript = (function () {
 		var makeCb = function (isAlreadyLoaded) {
 			var showLoadMsg = function () {
 				if (isAlreadyLoaded) {
-					debug.info('UTIL // LOAD SCRIPT', '[url = %s] Already loaded', url);
+					console.debug('[Load Script] [url = %s] Already loaded', url);
 				}
 				else {
-					debug.info('UTIL // LOAD SCRIPT', '[url = %s] Finished executing loaded script', url);
+					console.debug('[Load Script] [url = %s] Finished executing loaded script', url);
 				}
 			};
 
@@ -2457,7 +2464,7 @@ export var loadScript = (function () {
 				return function () {
 					showLoadMsg();
 					callback(isAlreadyLoaded, function () {
-						debug.info('UTIL // LOAD SCRIPT', '[url = %s] Exiting control of the script loader', url);
+						console.debug('[Load Script] [url = %s] Exiting control of the script loader', url);
 						if (!isAlreadyLoaded) {
 							alreadyLoaded[url] = true;
 							lock.unlock();
@@ -2468,7 +2475,7 @@ export var loadScript = (function () {
 			else {
 				return function () {
 					showLoadMsg();
-					debug.info('UTIL // LOAD SCRIPT', '[url = %s] Exiting control of the script loader', url);
+					debug.info('Load Script] [url = %s] Exiting control of the script loader', url);
 					if (!isAlreadyLoaded) {
 						alreadyLoaded[url] = true;
 						lock.unlock();
@@ -2693,7 +2700,7 @@ export function makeToggleCheckbox(rootObj, path, startChecked, text, parent, af
 	return makeCheckbox(rootObj != null ? getProp(rootObj, path) : startChecked, function () {
 		var isChecked = jQuery(this).prop('checked');
 		if (rootObj != null) {
-			debug.info('GRID // TOOLBAR', 'Setting `' + path.join('.') + '` to ' + isChecked);
+			console.debug('[Grid // Toolbar] Setting `' + path.join('.') + '` to ' + isChecked);
 			setProp(isChecked, rootObj, path);
 		}
 		if (typeof after === 'function') {
@@ -2752,7 +2759,7 @@ export function makeRadioButtons(rootObj, path, def, label, name, values, conv, 
 		if (typeof conv === 'function') {
 			selected = conv(selected);
 		}
-		debug.info('GRID // TOOLBAR', 'Setting `' + path.join('.') + '` to ' + selected);
+		console.debug('[Grid // Toolbar] Setting `' + path.join('.') + '` to ' + selected);
 		setProp(selected, rootObj, path);
 		if (typeof onChange === 'function') {
 			onChange(selected);
@@ -3092,7 +3099,7 @@ export function format(fcc, fti, cell, opts) {
 	});
 
 	if (opts.debug) {
-		debug.info('FORMAT', 'typeInfo = %O ; colConfig = %O ; cell = %O ; opts = %O', fti, fcc, cell, opts);
+		console.debug('[Format] typeInfo = %O ; colConfig = %O ; cell = %O ; opts = %O', fti, fcc, cell, opts);
 	}
 
 	// Convert from a number format string to a number format object.  Originally, there was only one
@@ -3707,7 +3714,7 @@ export function blockGrid(defn, fn, info) {
 
 	defn.table.blockCount += 1;
 
-	debug.info('BLOCKING // PUSH', '> COUNT =', defn.table.blockCount, '> INFO =', info);
+	console.debug('[Blocking // Push] COUNT =', defn.table.blockCount, '> INFO =', info);
 
 	if (defn.table.blockCount === 1) {
 		output = getProp(defn, 'table', 'output', 'method');
@@ -3765,7 +3772,7 @@ export function unblockGrid(defn, info) {
 
 	if (defn.table.blockCount > 0) {
 		defn.table.blockCount -= 1;
-		debug.info('BLOCKING // POP', ' > COUNT =', defn.table.blockCount, '> INFO =', info);
+		console.debug('[Blocking // Pop] COUNT =', defn.table.blockCount, '> INFO =', info);
 		if (defn.table.blockCount === 0) {
 			output = getProp(defn, 'table', 'output', 'method');
 
@@ -3858,7 +3865,7 @@ Timing.prototype.start = function (what) {
 
 	self.events[subject].push(event);
 
-	debug.info('TIMING', 'Received <START> event for [' + subject + ' : ' + event + ']');
+	console.debug('[Timing] Received <START> event for [' + subject + ' ] ' + event);
 
 	setProp(Date.now(), self.data, subject, event, 'start');
 };
@@ -3876,7 +3883,7 @@ Timing.prototype.stop = function (what) {
 		event += ' (#' + self.eventCount[subject][event] + ')';
 	}
 
-	debug.info('TIMING', 'Received <STOP> event for [' + subject + ' : ' + event + ']');
+	console.debug('[Timing] Received <STOP> event for [' + subject + ' ] ' + event);
 
 	if (getProp(self.data, subject, event, 'start') === undefined) {
 		log.warn('Received <STOP> event for [' + subject + ' : ' + event + '] with no <START> event');
@@ -4053,7 +4060,7 @@ export function determineColumns(colConfig, data, typeInfo) {
 		}
 	}
 
-	debug.info('DETERMINE COLUMNS', 'Columns = %O', columns);
+	console.debug('[Determine Columns] Columns = %O', columns);
 
 	return columns;
 }

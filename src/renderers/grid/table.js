@@ -760,7 +760,7 @@ GridTable.prototype._addSortingToHeader = function (data, orientation, spec, con
 			delete spec_copy.aggNum;
 		}
 
-		console.debug('DataVis // %s // Add Sorting: orientation = %s ; spec = %O ; current = %O ; dir = %s',
+		console.debug('[DataVis // %s // Add Sorting] orientation = %s ; spec = %O ; current = %O ; dir = %s',
 			self.toString(), orientation, spec_copy, sortSpec_copy[orientation], currentDir);
 
 		if (_.isEqual(sortSpec_copy[orientation], spec_copy)) {
@@ -834,7 +834,7 @@ GridTable.prototype._addDrillDownHandler = function (tbl, data) {
 			});
 		}
 
-		console.debug('DataVis // %s // Drill Down: Creating new perspective: filter = %O', self.toString(), filter);
+		console.debug('[DataVis // %s // Drill Down] Creating new perspective: filter = %O', self.toString(), filter);
 
 		window.setTimeout(function () {
 			self.view.prefs.addPerspective(null, 'Drill Down', { view: { filter: filter } }, { isTemporary: true }, null, { onDuplicate: 'replace' });
@@ -869,7 +869,7 @@ GridTable.prototype.addSortHandler = function () {
 	if (self.features.sort) {
 //		if (self.features.limit) {
 			self.view.on('sortEnd', function () {
-				console.debug('DataVis // %s // Handler(ComputedView.sortEnd): Marking table to be redrawn', self.toString());
+				console.debug('[DataVis // %s // Handler(ComputedView.sortEnd)] Marking table to be redrawn', self.toString());
 				self.needsRedraw = true;
 			}, { who: self });
 //		}
@@ -911,7 +911,7 @@ GridTable.prototype.addFilterHandler = function () {
 
 //	if (self.features.limit || self.view.opts.saveViewConfig) {
 		self.view.on(ComputedView.events.filterEnd, function () {
-			console.debug('DataVis // %s // Handler(ComputedView.filterEnd): Marking table to be redrawn', self.toString());
+			console.debug('[DataVis // %s // Handler(ComputedView.filterEnd)] Marking table to be redrawn', self.toString());
 			self.needsRedraw = true;
 		}, { who: self });
 //	}
@@ -920,7 +920,7 @@ GridTable.prototype.addFilterHandler = function () {
 //
 //		self.view.on(ComputedView.events.filter, function (rowNum, hide) {
 //			if (isNothing(self.ui.tr[rowNum])) {
-//				console.debug('DataVis // ' + 'GRID TABLE // HANDLER (ComputedView.filter)', 'We were told to ' + (hide ? 'hide' : 'show') + ' row ' + rowNum + ', but it doesn\'t exist');
+//				console.debug('[DataVis // ' + 'GRID TABLE // HANDLER (ComputedView.filter)', 'We were told to ' + (hide ? 'hide' ] 'show') + ' row ' + rowNum + ', but it doesn\'t exist');
 //				return;
 //			}
 //
@@ -1228,7 +1228,7 @@ GridTable.prototype.draw = function (root, opts, cont) {
 
 		self.view.on(ComputedView.events.workBegin, function () {
 			if (self.features.block) {
-				console.debug('DataVis // %s // Handler(ComputedView.workBegin): Blocking table body', self.toString());
+				console.debug('[DataVis // %s // Handler(ComputedView.workBegin)] Blocking table body', self.toString());
 				if (getProp(self.defn, 'table', 'block', 'wholePage')) {
 					jQuery.blockUI(blockConfig);
 				}
@@ -1247,7 +1247,7 @@ GridTable.prototype.draw = function (root, opts, cont) {
 
 		self.view.on(ComputedView.events.workEnd, function () {
 			if (self.features.block) {
-				console.debug('DataVis // %s // Handler(ComputedView.workEnd): Unblocking table body', self.toString());
+				console.debug('[DataVis // %s // Handler(ComputedView.workEnd)] Unblocking table body', self.toString());
 				if (getProp(self.defn, 'table', 'block', 'wholePage')) {
 					jQuery.unblockUI();
 				}
@@ -1334,7 +1334,7 @@ GridTable.prototype.draw = function (root, opts, cont) {
 		// Activate TableTool using this attribute, if the user asked for it.
 
 		if (self.features.floatingHeader) {
-			console.debug('DataVis // %s // Draw: Enabling floating header using method "%s"',
+			console.debug('[DataVis // %s // Draw] Enabling floating header using method "%s"',
 				self.toString(), getProp(self.defn, 'table', 'floatingHeader', 'method'));
 			switch (getProp(self.defn, 'table', 'floatingHeader', 'method')) {
 			case 'floatThead':
@@ -1747,7 +1747,7 @@ GridTable.prototype.clear = function () {
 		self.ui.contextMenus.remove();
 	}
 
-	console.debug('DataVis // %s // Clear: Removing %d context menus', self.toString(), self.contextMenuSelectors.length);
+	console.debug('[DataVis // %s // Clear] Removing %d context menus', self.toString(), self.contextMenuSelectors.length);
 
 	_.each(self.contextMenuSelectors, function (sel) {
 		jQuery.contextMenu('destroy', sel);
@@ -1790,19 +1790,19 @@ GridTable.prototype.makeProgress = function (thing) {
 	if (getProp(self.defn, 'table', 'progress', 'method') === 'NProgress') {
 		return {
 			begin: function () {
-				console.debug('DataVis // %s // Progress(%s): Begin', self.toString(), thing);
+				console.debug('[DataVis // %s // Progress(%s)] Begin', self.toString(), thing);
 				if (window.NProgress !== undefined) {
 					window.NProgress.start();
 				}
 			},
 			update: function (amount, estTotal) {
-				console.debug('DataVis // %s // Progress(%s): %s', self.toString(), thing, sprintf.sprintf('Update: %d / %d = %.0f%%', amount, estTotal, (amount / estTotal) * 100));
+				console.debug('[DataVis // %s // Progress(%s)] %s', self.toString(), thing, sprintf.sprintf('Update: %d / %d = %.0f%%', amount, estTotal, (amount / estTotal) * 100));
 				if (window.NProgress !== undefined) {
 					window.NProgress.set(amount / estTotal);
 				}
 			},
 			end: function () {
-				console.debug('DataVis // %s // Progress(%s): End', self.toString(), thing);
+				console.debug('[DataVis // %s // Progress(%s)] End', self.toString(), thing);
 				if (window.NProgress !== undefined) {
 					window.NProgress.done();
 					jQuery('.nprogress-custom-parent').removeClass('nprogress-custom-parent');
@@ -1813,7 +1813,7 @@ GridTable.prototype.makeProgress = function (thing) {
 	else if (getProp(self.defn, 'table', 'progress', 'method') === 'jQueryUI') {
 		return {
 			begin: function () {
-				console.debug('DataVis // %s // Progress(%s): Begin', self.toString(), thing);
+				console.debug('[DataVis // %s // Progress(%s)] Begin', self.toString(), thing);
 				self.ui.progress.progressbar({
 					'classes': {
 						'ui-progressbar': 'wcdvgrid_progressbar',
@@ -1822,11 +1822,11 @@ GridTable.prototype.makeProgress = function (thing) {
 				});
 			},
 			update: function (amount, estTotal) {
-				console.debug('DataVis // %s // Progress(%s): %s', self.toString(), thing, sprintf.sprintf('Update: %d / %d = %.0f%%', amount, estTotal, (amount / estTotal) * 100));
+				console.debug('[DataVis // %s // Progress(%s)] %s', self.toString(), thing, sprintf.sprintf('Update: %d / %d = %.0f%%', amount, estTotal, (amount / estTotal) * 100));
 				self.ui.progress.progressbar('value', (amount / estTotal) * 100);
 			},
 			end: function () {
-				console.debug('DataVis // %s // Progress(%s): End', self.toString(), thing);
+				console.debug('[DataVis // %s // Progress(%s)] End', self.toString(), thing);
 				self.ui.progress.progressbar('destroy');
 			}
 		};
