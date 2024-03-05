@@ -61,10 +61,10 @@ var GridRenderer = (function () {
 		self.drawLock = new Lock('Draw');
 
 		self.grid.on('colConfigUpdate', function (newColConfig) {
-			debug.info('GRID RENDERER', 'Received new colConfig: %O', newColConfig);
+			console.debug('[DataVis // GridRenderer // Handler(colConfigUpdate)] Received new colConfig: %O', newColConfig);
 			self.colConfig = newColConfig;
 			if (self.hasRendered) {
-				debug.info('GRID RENDERER', 'Redrawing with new colConfig');
+				console.debug('[DataVis // GridRenderer // Handler(colConfigUpdate)] Redrawing with new colConfig');
 				self.draw(self.root, self.drawOpts);
 			}
 		}, { who: self });
@@ -101,7 +101,7 @@ GridRenderer.prototype.draw = function (root, opts, cont) {
 	var self = this;
 	var args = Array.prototype.slice.call(arguments);
 
-	debug.info('GRID RENDERER // DRAW', 'Beginning draw operation; opts = %O', opts);
+	console.debug('[DataVis // GridRenderer // Draw] Beginning draw operation; opts = %O', opts);
 
 	opts = opts || {};
 
@@ -123,7 +123,7 @@ GridRenderer.prototype.draw = function (root, opts, cont) {
 			return cont(false);
 		}
 
-		debug.info('GRID RENDERER // DRAW', 'Data = %O', data);
+		console.debug('[DataVis // GridRenderer // Draw] Data = %O', data);
 
 		return self.view.getTypeInfo(function (ok, typeInfo) {
 			if (!ok) {
@@ -135,13 +135,13 @@ GridRenderer.prototype.draw = function (root, opts, cont) {
 				return cont(false);
 			}
 
-			debug.info('GRID RENDERER // DRAW', 'TypeInfo = %O', typeInfo.asMap());
+			console.debug('[DataVis // GridRenderer // Draw] TypeInfo = %O', typeInfo.asMap());
 
 			if ((data.isPlain && !self.canRender('plain'))
 					|| (data.isGroup && !self.canRender('group'))
 					|| (data.isPivot && !self.canRender('pivot'))) {
 
-				debug.info('GRID RENDERER // DRAW', 'Unable to render data using current grid table: { isPlain = %s ; isGroup = %s ; isPivot = %s }', data.isPlain, data.isGroup, data.isPivot);
+				console.debug('[DataVis // GridRenderer // Draw] Unable to render data using current grid table: { isPlain = %s ; isGroup = %s ; isPivot = %s }', data.isPlain, data.isGroup, data.isPivot);
 
 				return self.fire('unableToRender');
 			}
