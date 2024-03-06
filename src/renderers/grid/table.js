@@ -29,6 +29,7 @@ import {
 	setElement,
 } from '../../util/misc.js';
 
+import Lock from '../../util/lock.js';
 import {AggregateInfo} from '../../aggregates.js';
 import {GridFilterSet} from '../../grid_filter.js';
 import {GridRenderer} from '../../grid_renderer.js';
@@ -37,7 +38,7 @@ import {GROUP_FUNCTION_REGISTRY} from '../../group_fun.js';
 
 import handlebarsUtil from '../../util/handlebars.js';
 
-import Csv from '../../util/csv.js';
+import {TableExport, Csv} from '../../util/csv.js';
 
 // GridTable {{{1
 // JSDoc Types {{{2
@@ -197,6 +198,7 @@ var GridTable = makeSubclass('GridTable', GridRenderer, function () {
 	self.selection = [];
 	self.needsRedraw = false;
 	self.contextMenuSelectors = [];
+	self.csvLock = new Lock('GridTable/csv');
 
 	_.defaults(self.opts, {
 		drawInternalBorders: true,
@@ -1125,9 +1127,27 @@ GridTable.prototype._setupFullValueWin = function (data) {
 // #draw {{{2
 
 GridTable.prototype.draw = function (root, opts, cont) {
-	var self = this;
+	var self = this
+		, args = Array.prototype.slice.call(arguments);
 
-	return self.super.draw(root, opts, function (ok, data, typeInfo) {
+	if (self.opts.generateCsv) {
+		if (self.csvLock.isLocked()) {
+			return self.csvLock.onUnlock(function () {
+				console.debug('[DataVis // %s // CSV] Retrying table draw due to CSV lock: %O %O', self.toString(), root, opts);
+				self.draw.apply(self, args);
+			});
+		}
+		else {
+			console.debug('[DataVis // %s // CSV] Creating new CSV buffer', self.toString());
+			self.csvLock.lock();
+			self.csv = new Csv();
+		}
+	}
+	else {
+		self.csv = new TableExport();
+	}
+
+	return self.super.draw(root, opts, function (ok, data, typeInfo, andThen) {
 		if (!ok) {
 			return cont();
 		}
@@ -1193,8 +1213,6 @@ GridTable.prototype.draw = function (root, opts, cont) {
 
 		var tr;
 		var srcIndex = 0;
-
-		self.csv = new Csv();
 
 		self.ui = {
 			tbl: jQuery('<table>'),
@@ -1315,10 +1333,6 @@ GridTable.prototype.draw = function (root, opts, cont) {
 
 		self.root.get(0).appendChild(self.ui.tbl.get(0));
 
-		/*
-		 * Draw the body.
-		 */
-
 		self.drawBody(data, typeInfo, columns, function () {
 			if (!self.features.incremental || getProp(self.defn, 'table', 'incremental', 'appendBodyLast')) {
 				self.ui.tbl.append(self.ui.tbody);
@@ -1328,104 +1342,98 @@ GridTable.prototype.draw = function (root, opts, cont) {
 				}
 			}
 
-			self.timing.stop(['Grid Table', 'Draw']);
-		}, opts);
+			// Activate TableTool using this attribute, if the user asked for it.
 
-		// Activate TableTool using this attribute, if the user asked for it.
-
-		if (self.features.floatingHeader) {
-			console.debug('[DataVis // %s // Draw] Enabling floating header using method "%s"',
-				self.toString(), getProp(self.defn, 'table', 'floatingHeader', 'method'));
-			switch (getProp(self.defn, 'table', 'floatingHeader', 'method')) {
-			case 'floatThead':
-				var floatTheadConfig = {
-					zIndex: 1
-				};
-
-				if (self.opts.fixedHeight) {
-					floatTheadConfig.position = 'fixed';
-					floatTheadConfig.scrollContainer = true;
-				}
-				else {
-					floatTheadConfig.responsiveContainer = function () {
-						return self.root;
+			if (self.features.floatingHeader) {
+				console.debug('[DataVis // %s // Draw] Enabling floating header using method "%s"',
+					self.toString(), getProp(self.defn, 'table', 'floatingHeader', 'method'));
+				switch (getProp(self.defn, 'table', 'floatingHeader', 'method')) {
+				case 'floatThead':
+					var floatTheadConfig = {
+						zIndex: 1
 					};
-				}
 
-				self.grid.on('showControls', function () {
-					self.ui.tbl.floatThead('reflow');
-				}, { who: self });
-				self.grid.on('hideControls', function () {
-					self.ui.tbl.floatThead('reflow');
-				}, { who: self });
-				self.grid.filterControl.on(['fieldAdded', 'fieldRemoved'], function () {
-					self.ui.tbl.floatThead('reflow');
-				}, { who: self });
-				self.grid.aggregateControl.on(['fieldAdded', 'fieldRemoved'], function () {
-					self.ui.tbl.floatThead('reflow');
-				}, { who: self });
-
-				self.ui.tbl.floatThead(floatTheadConfig);
-				break;
-			case 'tabletool':
-				if (self.opts.fixedHeight) {
-					self.ui.tbl.attr('data-tttype', 'fixed');
-					self.ui.tbl.attr('data-ttheight', self.grid.rootHeight);
-				}
-				else {
-					self.ui.tbl.attr('data-tttype', 'sticky');
-				}
-				if (data.isPlain) {
-					var pinnedColumns = 0;
-					_.each(columns, function (field) {
-						var fcc = self.colConfig.get(field);
-						if (fcc != null && fcc.isPinned) {
-							pinnedColumns += 1;
-						}
-					});
-					if (pinnedColumns > 0) {
-						// Figure out if there's a column for the row selection checkbox.
-						if (self.features.rowSelect) {
-							pinnedColumns += 1;
-						}
-						// Figure out if there's a column for row-based operations.
-						if (self.hasOperations('row')) {
-							pinnedColumns += 1;
-						}
-						self.ui.tbl.attr('data-tttype', 'sidescroll');
-						self.ui.tbl.attr('data-ttsidecells', pinnedColumns);
+					if (self.opts.fixedHeight) {
+						floatTheadConfig.position = 'fixed';
+						floatTheadConfig.scrollContainer = true;
 					}
+					else {
+						floatTheadConfig.responsiveContainer = function () {
+							return self.root;
+						};
+					}
+
+					self.grid.on('showControls', function () {
+						self.ui.tbl.floatThead('reflow');
+					}, { who: self });
+					self.grid.on('hideControls', function () {
+						self.ui.tbl.floatThead('reflow');
+					}, { who: self });
+					self.grid.filterControl.on(['fieldAdded', 'fieldRemoved'], function () {
+						self.ui.tbl.floatThead('reflow');
+					}, { who: self });
+					self.grid.aggregateControl.on(['fieldAdded', 'fieldRemoved'], function () {
+						self.ui.tbl.floatThead('reflow');
+					}, { who: self });
+
+					self.ui.tbl.floatThead(floatTheadConfig);
+					break;
+				case 'tabletool':
+					if (self.opts.fixedHeight) {
+						self.ui.tbl.attr('data-tttype', 'fixed');
+						self.ui.tbl.attr('data-ttheight', self.grid.rootHeight);
+					}
+					else {
+						self.ui.tbl.attr('data-tttype', 'sticky');
+					}
+					if (data.isPlain) {
+						var pinnedColumns = 0;
+						_.each(columns, function (field) {
+							var fcc = self.colConfig.get(field);
+							if (fcc != null && fcc.isPinned) {
+								pinnedColumns += 1;
+							}
+						});
+						if (pinnedColumns > 0) {
+							// Figure out if there's a column for the row selection checkbox.
+							if (self.features.rowSelect) {
+								pinnedColumns += 1;
+							}
+							// Figure out if there's a column for row-based operations.
+							if (self.hasOperations('row')) {
+								pinnedColumns += 1;
+							}
+							self.ui.tbl.attr('data-tttype', 'sidescroll');
+							self.ui.tbl.attr('data-ttsidecells', pinnedColumns);
+						}
+					}
+					else if ((data.isGroup || data.isPivot) && getProp(self.defn, 'table', 'whenGroup', 'pinRowvals')) {
+						self.ui.tbl.attr('data-tttype', 'sidescroll');
+						self.ui.tbl.attr('data-ttsidecells', data.groupFields.length);
+					}
+					break;
 				}
-				else if ((data.isGroup || data.isPivot) && getProp(self.defn, 'table', 'whenGroup', 'pinRowvals')) {
-					self.ui.tbl.attr('data-tttype', 'sidescroll');
-					self.ui.tbl.attr('data-ttsidecells', data.groupFields.length);
-				}
-				break;
 			}
-		}
 
-		// This isn't fast or reliable but it is one way to get rid of excess "show full value" buttons
-		// if the cell doesn't actually get cut off.  It's fine for small numbers of cells, but once you
-		// get over like 1000 cells it's going to take a while.  Plus, it technically needs to be rerun
-		// whenever the table size changes.  I just want to leave it here in case I need it later.
+			// This isn't fast or reliable but it is one way to get rid of excess "show full value" buttons
+			// if the cell doesn't actually get cut off.  It's fine for small numbers of cells, but once you
+			// get over like 1000 cells it's going to take a while.  Plus, it technically needs to be rerun
+			// whenever the table size changes.  I just want to leave it here in case I need it later.
 
-		// jQuery(self.ui.tbody).find('div.wcdv_maxheight_wrapper').each(function (i, elt) {
-		// 	var s = window.getComputedStyle(elt);
-		// 	var height = s.height.slice(0, -2);
-		// 	var maxHeight = s.maxHeight.slice(0, -2);
-		// 	if (+height < +maxHeight) {
-		// 		jQuery(elt).children('button.wcdv_show_full_value').hide();
-		// 	}
-		// });
+			// jQuery(self.ui.tbody).find('div.wcdv_maxheight_wrapper').each(function (i, elt) {
+			// 	var s = window.getComputedStyle(elt);
+			// 	var height = s.height.slice(0, -2);
+			// 	var maxHeight = s.maxHeight.slice(0, -2);
+			// 	if (+height < +maxHeight) {
+			// 		jQuery(elt).children('button.wcdv_show_full_value').hide();
+			// 	}
+			// });
 
-		self.addWorkHandler();
+			self.addWorkHandler();
 
-		self.fire('renderEnd');
-		self.drawLock.unlock();
-
-		if (typeof cont === 'function') {
-			return cont();
-		}
+			self.timing.stop(['Grid Table', 'Draw']);
+			andThen(cont);
+		}, opts);
 	});
 };
 

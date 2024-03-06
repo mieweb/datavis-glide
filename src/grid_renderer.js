@@ -57,7 +57,7 @@ var GridRenderer = (function () {
 
 		self._validateFeatures();
 
-		self.drawLock = new Lock('Draw');
+		self.drawLock = new Lock('GridRenderer/draw');
 
 		self.grid.on('colConfigUpdate', function (newColConfig) {
 			console.debug('[DataVis // GridRenderer // Handler(colConfigUpdate)] Received new colConfig: %O', newColConfig);
@@ -96,7 +96,7 @@ GridRenderer.prototype.canRender = function () {
 
 // #draw {{{2
 
-GridRenderer.prototype.draw = function (root, opts, cont) {
+GridRenderer.prototype.draw = function (root, opts, cont1) {
 	var self = this;
 	var args = Array.prototype.slice.call(arguments);
 
@@ -119,19 +119,19 @@ GridRenderer.prototype.draw = function (root, opts, cont) {
 
 	return self.view.getData(function (ok, data) {
 		if (!ok) {
-			return cont(false);
+			return cont1(false);
 		}
 
 		console.debug('[DataVis // GridRenderer // Draw] Data = %O', data);
 
 		return self.view.getTypeInfo(function (ok, typeInfo) {
 			if (!ok) {
-				return cont(false);
+				return cont1(false);
 			}
 
 			if (data == null || typeInfo == null) {
 				log.error('Provided data or typeInfo is null');
-				return cont(false);
+				return cont1(false);
 			}
 
 			console.debug('[DataVis // GridRenderer // Draw] TypeInfo = %O', typeInfo.asMap());
@@ -153,7 +153,14 @@ GridRenderer.prototype.draw = function (root, opts, cont) {
 
 			self.timing.start(['Grid Renderer', 'Draw']);
 
-			return cont(true, data, typeInfo);
+			return cont1(true, data, typeInfo, function (cont2) {
+				self.fire('renderEnd');
+				self.drawLock.unlock();
+
+				if (typeof cont2 === 'function') {
+					return cont2();
+				}
+			});
 		});
 	});
 };
