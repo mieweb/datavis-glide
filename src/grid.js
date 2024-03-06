@@ -1236,6 +1236,8 @@ Grid.prototype.redraw = function (contOk, contFail) {
 		var rendererCtor
 			, rendererCtorOpts;
 
+		self.colConfigLock.lock('redrawing grid; prevent colConfig changes from notifying existing renderer');
+
 		self.view.getData(function (ok, data) {
 			if (!ok) {
 				return contFail();
@@ -1340,7 +1342,7 @@ Grid.prototype.redraw = function (contOk, contFail) {
 			self.renderer.on('generateCsvProgress', function (progress) {
 				if (progress === 0) {
 					self.ui.exportBtn.children('span.fa').remove();
-					self.ui.exportBtn.append(fontAwesome('fa-spinner', 'fa-spin'));
+					self.ui.exportBtn.append(fontAwesome('fa-spinner', 'fa-pulse'));
 				}
 			});
 
@@ -1369,6 +1371,9 @@ Grid.prototype.redraw = function (contOk, contFail) {
 			}
 
 			self.renderer.draw(self.ui.grid, null, function () {
+				if (self.colConfigLock.isLocked()) {
+					self.colConfigLock.unlock('renderer finished drawing');
+				}
 				self.setSelection();
 				self.ui.exportBtn.attr('disabled', false);
 				self.tableDoneCont();
@@ -1882,6 +1887,14 @@ Grid.prototype.setColConfig = function (colConfig, opts) {
 		redraw: true,
 		savePrefs: true
 	});
+
+	// We use the colConfig lock so that we don't have a bunch of processes updating the colConfig
+	// when we're trying to redraw the grid. If we already have a renderer, it's going to be get
+	// replaced by `Grid#redraw()` so we shouldn't send an event to the renderer to have it redraw.
+
+	if (self.colConfigLock.isLocked() && self.renderer) {
+		opts.dontSendEventTo.push(self.renderer);
+	}
 
 	var setCurrent = function () {
 		self.debug('COLCONFIG', 'Setting from %s: %O', opts.from || '[unknown]', colConfig);
