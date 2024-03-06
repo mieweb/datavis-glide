@@ -62,12 +62,11 @@ GraphRenderer.prototype._validateConfig = function () {
 GraphRenderer.prototype.addRedrawHandlers = function (f) {
 	var self = this;
 
-	debug.info('GRAPH // RENDER (GOOGLE)', 'Adding redraw handlers');
+	console.debug('[DataVis // Graph(Google) // Render] Adding redraw handlers');
 
 	self.view.off('workEnd', self);
 	self.view.on('workEnd', function () {
-		debug.info('GRAPH RENDERER // HANDLER (View.dataUpdated)',
-			'Redrawing graph because the view has finished doing work');
+		console.debug('[DataVis // Graph(Google) // Handler(View.dataUpdated)] Redrawing graph because the view has finished doing work');
 		f();
 	}, { who: self });
 };
@@ -278,7 +277,7 @@ GraphRendererGoogle.prototype.draw_group = function (data, typeInfo, dt, config)
 				var aggResult = aggInfo.instance.calculate(_.flatten(data.data[rowValIdx]));
 				newRow.push(aggResult);
 				if (aggInfo.debug) {
-					debug.info('GRAPH // GROUP // AGGREGATE', 'Group aggregate (%s) : Group [%s] = %s',
+					console.debug('[DataVis // Graph // Group // Aggregate] Group aggregate (%s) : Group [%s] = %s',
 						aggInfo.instance.name + (aggInfo.name ? ' -> ' + aggInfo.name : ''),
 						rowVal.join(', '),
 						JSON.stringify(aggResult));
@@ -412,7 +411,7 @@ GraphRendererGoogle.prototype.draw_pivot = function (data, typeInfo, dt, config)
 					var aggResult = aggInfo.instance.calculate(data.data[rowValIndex][colValIndex]);
 					newRow.push(aggResult);
 					if (aggInfo.debug) {
-						debug.info('GRAPH // GROUP // AGGREGATE', 'Group aggregate (%s) : RowVal [%s] x ColVal [%s] = %s',
+						console.debug('[DataVis // Graph // Group // Aggregate] Group aggregate (%s) : RowVal [%s] x ColVal [%s] = %s',
 							aggInfo.instance.name + (aggInfo.name ? ' -> ' + aggInfo.name : ''),
 							rowVal.join(', '),
 							colVal.join(', '),
@@ -437,7 +436,7 @@ GraphRendererGoogle.prototype._ensureGoogleChartsLoaded = function (cont) {
 			cont();
 		};
 		if (!wasAlreadyLoaded) {
-			debug.info('GRAPH // GOOGLE // DRAW', 'Loading support for Google Charts');
+			console.debug('[DataVis // Graph(Google) // Draw] Loading support for Google Charts');
 			window.google.charts.load('current', {'packages': ['corechart', 'gantt']});
 			window.google.charts.setOnLoadCallback(cb);
 		}
@@ -544,7 +543,7 @@ GraphRendererGoogle.prototype._draw = function (devConfig, userConfig) {
 				google.visualization.events.addListener(chart, 'select', function () {
 					var sel = chart.getSelection();
 					_.each(sel, function (o) {
-						debug.info('GRAPH // DRILL DOWN', 'User selected element in graph: row = %s, column = %s, value = %s, formattedValue = %s', o.row, o.column, dt.getValue(o.row, o.column), dt.getFormattedValue(o.row, o.column));
+						console.debug('[DataVis // Graph // Drill Down] User selected element in graph: row = %s, column = %s, value = %s, formattedValue = %s', o.row, o.column, dt.getValue(o.row, o.column), dt.getFormattedValue(o.row, o.column));
 
 						var filter = deepCopy(self.view.getFilter());
 
@@ -567,8 +566,7 @@ GraphRendererGoogle.prototype._draw = function (devConfig, userConfig) {
 							});
 						}
 
-						debug.info('GRAPH // DRILL DOWN',
-							'Creating new perspective: filter = %O', filter);
+						console.debug('[DataVis // Graph // Drill Down] Creating new perspective: filter = %O', filter);
 
 						window.setTimeout(function () {
 							self.view.prefs.addPerspective(null, 'Drill Down', { view: { filter: filter } }, { isTemporary: true }, null, { onDuplicate: 'replace' });
@@ -576,7 +574,7 @@ GraphRendererGoogle.prototype._draw = function (devConfig, userConfig) {
 					});
 				});
 
-				debug.info('GRAPH // GOOGLE // DRAW', 'Starting draw: [config = %O ; options = %O]', config, options);
+				console.debug('[DataVis // Graph(Google) // Draw] Starting draw: [config = %O ; options = %O]', config, options);
 
 				chart.draw(dt, options);
 			});

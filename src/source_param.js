@@ -251,7 +251,7 @@ Filter.prototype.store = function (id) {
 		}
 	}
 
-	debug.info('FILTER // STORE', 'Input Type = %s, Input Name = %s, Param Name = %s, Value = %s', self.type, self.inputName, self.paramName, self.value);
+	console.debug('[DataVis // Filter // Store] Input Type = %s, Input Name = %s, Param Name = %s, Value = %s', self.type, self.inputName, self.paramName, self.value);
 
 	// if (self.required && (self.value === '' || self.value === [])) {
 	//	throw new MissingRequiredParameterError(self.paramName);

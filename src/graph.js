@@ -156,8 +156,7 @@ var Graph = makeSubclass('Graph', Object, function (id, view, devConfig, opts) {
 		}
 
 		if (config != null) {
-			debug.info('GRAPH // HANDLER (ComputedView.workEnd)',
-				'Matching configuration: %O', config);
+			console.debug('[DataVis // Graph // Handler(ComputedView.workEnd)] Matching configuration: %O', config);
 
 			var graphType = config.graphType;
 			var axis = graphType === 'bar' ? 'hAxis' : 'vAxis';
@@ -625,7 +624,7 @@ Graph.prototype.drawInteractive = function () {
 		self.prefs.save();
 	}
 
-	debug.info('GRAPH', 'Drawing graph based on interactive config [userConfig = %O]', self.userConfig);
+	console.debug('[DataVis // Graph] Drawing graph based on interactive config [userConfig = %O]', self.userConfig);
 
 	self.lastDrawnFrom = 'interactive';
 	self.renderer.draw(self.devConfig, self.userConfig);
@@ -735,8 +734,6 @@ Graph.prototype.redraw = function () {
 Graph.prototype.hide = function () {
 	var self = this;
 
-	debug.info('GRAPH', 'Hiding...');
-
 	self.ui.content.hide({
 		duration: 0,
 		done: function () {
@@ -765,8 +762,6 @@ Graph.prototype.show = function (opts) {
 	opts = deepDefaults(opts, {
 		redraw: true
 	});
-
-	debug.info('GRAPH', 'Showing...');
 
 	self.ui.content.show({
 		duration: 0,

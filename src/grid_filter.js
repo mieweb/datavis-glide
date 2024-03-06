@@ -360,22 +360,22 @@ GridFilter.prototype.adjustInputWidth = function (opts) {
 		input: self.input
 	});
 
-	debug.info('GRID FILTER // ADJUST INPUT WIDTH', '         Target: %O', opts.input);
+	console.debug('[DataVis // Grid Filter // Adjust Input Width] Target: %O', opts.input);
 
 	var targetWidth = opts.useSizingElement ? self.opts.sizingElement.width() : self.div.width();
-	debug.info('GRID FILTER // ADJUST INPUT WIDTH', 'Available Space: ' + targetWidth + 'px ' + (opts.useSizingElement ? '[sizing element]' : '[div]'));
+	console.debug('[DataVis // Grid Filter // Adjust Input Width] Available Space: ' + targetWidth + 'px ' + (opts.useSizingElement ? '[sizing element]' : '[div]'));
 
 	if (self.removeBtn) {
 		targetWidth -= self.removeBtn.outerWidth();
-		debug.info('GRID FILTER // ADJUST INPUT WIDTH', '  Remove Button: ' + self.removeBtn.outerWidth() + 'px');
+		console.debug('[DataVis // Grid Filter // Adjust Input Width] Remove Button: ' + self.removeBtn.outerWidth() + 'px');
 	}
 
 	if (self.operatorDrop !== undefined) {
 		targetWidth -= self.operatorDrop.outerWidth();
-		debug.info('GRID FILTER // ADJUST INPUT WIDTH', '  Operator Drop: ' + self.operatorDrop.outerWidth() + 'px');
+		console.debug('[DataVis // Grid Filter // Adjust Input Width] Operator Drop: ' + self.operatorDrop.outerWidth() + 'px');
 	}
 
-	debug.info('GRID FILTER' + (opts.fromColumnResize ? ' // HANDLER (columnResize)' : ''), 'Adjusting ' + self.field + ' filter widget width to ' + targetWidth + 'px to match column width');
+	console.debug('[DataVis // Grid Filter' + (opts.fromColumnResize ? ' // Handler(columnResize)' : '') + '] Adjusting ' + self.field + ' filter widget width to ' + targetWidth + 'px to match column width');
 
 	opts.input.outerWidth(targetWidth);
 
@@ -482,7 +482,7 @@ var StringDropdownGridFilterChosen = makeSubclass('StringDropdownGridFilterChose
 	if (self.gridFilterSet.gridTable) {
 		self.gridFilterSet.gridTable.on('columnResize', function () {
 			var targetWidth = self.opts.sizingElement.innerWidth() - self.removeBtn.outerWidth() - 14;
-			debug.info('GRID FILTER // HANDLER (GridTablePlain.columnResize)', 'Adjusting Chosen widget width to ' + targetWidth + 'px to match column width');
+			console.debug('[DataVis // Grid Filter // Handler(GridTablePlain.columnResize)] Adjusting Chosen widget width to ' + targetWidth + 'px to match column width');
 			self.chosen.innerWidth(targetWidth);
 		});
 	}
@@ -1231,7 +1231,7 @@ GridFilterSet.prototype.build = function (field, target, opts) {//filterType, fi
 		throw new Error('Invalid filter type "' + filterType + '" for type "' + colType + '" of column "' + field + '"');
 	}
 
-	debug.info('GRID FILTER', 'Creating new widget: column type = "' + colType + '" ; filter type = "' + filterType + '"');
+	console.debug('[DataVis // Grid Filter] Creating new widget: column type = "' + colType + '" ; filter type = "' + filterType + '"');
 
 	return new ctor(field, self, fti, opts);
 };
@@ -1393,7 +1393,7 @@ GridFilterSet.prototype.update = function () {
 		});
 	});
 
-	debug.info('GRID FILTER SET', 'Updating with ' + self.filters.all.length + ' filters: ', spec);
+	console.debug('[DataVis // Grid Filter Set] Updating with ' + self.filters.all.length + ' filters: ', spec);
 
 	self.view.setFilter(spec, self.progress, self.opts);
 };
@@ -1428,8 +1428,7 @@ GridFilterSet.prototype.set = function (field, fieldSpec, opts) {
 	}
 	else {
 		_.each(fieldSpec, function (val, op) {
-			debug.info('GRID FILTER SET',
-				'Setting filter: { field = %s ; operator = %s ; value = %s }',
+			console.debug('[DataVis // Grid Filter Set] Setting filter: { field = %s ; operator = %s ; value = %s }',
 				field, op, typeof val === 'object' ? JSON.stringify(val) : val);
 
 			widget.setOperator(op);
