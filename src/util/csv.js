@@ -37,6 +37,32 @@ import {GROUP_FUNCTION_REGISTRY} from '../group_fun.js';
 
 import handlebarsUtil from '../util/handlebars.js';
 
+// TableExport {{{1
+
+var TableExport = makeSubclass('TableExport', Object, function (opts) {
+	var self = this;
+});
+
+// #start {{{2
+
+TableExport.prototype.start = function () {
+};
+
+// #addRow {{{2
+
+TableExport.prototype.addRow = function () {
+};
+
+// #addCol {{{2
+
+TableExport.prototype.addCol = function () {
+};
+
+// #finish {{{2
+
+TableExport.prototype.finish = function () {
+};
+
 // Csv {{{1
 
 /**
@@ -68,7 +94,7 @@ import handlebarsUtil from '../util/handlebars.js';
  * Column separator used when serializing.
  */
 
-var Csv = makeSubclass('Csv', Object, function (opts) {
+var Csv = makeSubclass('Csv', TableExport, function (opts) {
 	var self = this;
 
 	self.lastRowId = -2;
@@ -78,8 +104,23 @@ var Csv = makeSubclass('Csv', Object, function (opts) {
 		separator: ','
 	});
 
-	self.clear();
+	self.start();
 });
+
+// #start {{{2
+
+/**
+ * Reset the CSV data buffer.
+ */
+
+Csv.prototype.start = function () {
+	var self = this;
+
+	self.lastRowId = -2;
+	self.data = [];
+	self.lastRow = null;
+	self.order = null;
+};
 
 // #addRow {{{2
 
@@ -141,21 +182,6 @@ Csv.prototype.addCol = function (x, opts) {
 	else {
 		self.lastRow.rowData.push(x);
 	}
-};
-
-// #clear {{{2
-
-/**
- * Reset the CSV data buffer.
- */
-
-Csv.prototype.clear = function () {
-	var self = this;
-
-	self.lastRowId = -2;
-	self.data = [];
-	self.lastRow = null;
-	self.order = null;
 };
 
 // #toString {{{2
@@ -220,4 +246,15 @@ Csv.prototype.setOrder = function (rowId, pos) {
 	self.order[pos] = rowId;
 };
 
-export default Csv;
+// #finish {{{2
+
+Csv.prototype.finish = function (cb) {
+	return cb();
+};
+
+// Exports {{{1
+
+export {
+	TableExport,
+	Csv,
+};
