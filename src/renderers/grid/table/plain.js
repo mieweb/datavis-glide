@@ -127,8 +127,6 @@ GridTablePlain.prototype.drawHeader = function (columns, data, typeInfo, opts) {
 		'class': 'wcdv_grid_filterrow'
 	});
 
-	self.csv.addRow();
-
 	/*
 	 * Create the checkbox that allows the user to select all rows.
 	 */
@@ -202,8 +200,6 @@ GridTablePlain.prototype.drawHeader = function (columns, data, typeInfo, opts) {
 		})
 			.text(headingText)
 			._makeDraggableField();
-
-		self.csv.addCol(headingText);
 
 		var headingThControls = jQuery('<div>');
 
@@ -940,8 +936,7 @@ GridTablePlain.prototype.addDataToCsv = function (data) {
 	console.debug('[DataVis // %s // Generate CSV] Started generating CSV file', self.toString());
 	self.fire('generateCsvProgress', null, 0);
 
-	self.csv.clear();
-
+	self.csv.start();
 	self.csv.addRow();
 	_.each(columns, function (field, colIndex) {
 		var fcc = self.colConfig.get(field) || {};
@@ -977,9 +972,12 @@ GridTablePlain.prototype.addDataToCsv = function (data) {
 		}
 
 		if (i === data.data.length) {
-			console.debug('[DataVis // %s // Generate CSV] Finished generating CSV file', self.toString());
-			self.fire('generateCsvProgress', null, 100);
-			self.fire('csvReady');
+			self.csv.finish(function () {
+				console.debug('[DataVis // %s // Generate CSV] Finished generating CSV file', self.toString());
+				self.csvLock.unlock();
+				self.fire('generateCsvProgress', null, 100);
+				self.fire('csvReady');
+			});
 		}
 		else {
 			self.fire('generateCsvProgress', null, Math.floor((i / data.data.length) * 100));

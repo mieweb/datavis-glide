@@ -1330,8 +1330,7 @@ GridTableGroupDetail.prototype.addDataToCsv = function (data) {
 	console.debug('[DataVis // %s // Generate CSV] Started generating CSV file', self.toString());
 	self.fire('generateCsvProgress', null, 0);
 
-	self.csv.clear();
-
+	self.csv.start();
 	self.csv.addRow();
 
 	_.each(data.groupFields, function (fieldName) {
@@ -1387,9 +1386,12 @@ GridTableGroupDetail.prototype.addDataToCsv = function (data) {
 
 	recur(0, data.groupMetadata);
 
-	console.debug('[DataVis // %s // Generate CSV] Finished generating CSV file', self.toString());
-	self.fire('generateCsvProgress', null, 100);
-	self.fire('csvReady');
+	self.csv.finish(function () {
+		console.debug('[DataVis // %s // Generate CSV] Finished generating CSV file', self.toString());
+		self.csvLock.unlock();
+		self.fire('generateCsvProgress', null, 100);
+		self.fire('csvReady');
+	});
 };
 
 // Registry {{{1

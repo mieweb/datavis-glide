@@ -311,7 +311,12 @@ GridTableGroupSummary.prototype.drawBody = function (data, typeInfo, columns, co
 		}
 	}
 
-	self.fire('csvReady');
+	self.csv.finish(function () {
+		console.debug('[DataVis // %s // Generate CSV] Finished generating CSV file', self.toString());
+		self.csvLock.unlock();
+		self.fire('generateCsvProgress', null, 100);
+		self.fire('csvReady');
+	});
 
 	if (typeof cont === 'function') {
 		return cont();
