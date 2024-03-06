@@ -50,11 +50,16 @@ Lock.prototype.lock = function (why) {
  * @method
  */
 
-Lock.prototype.unlock = function () {
+Lock.prototype.unlock = function (msg) {
 	var self = this;
 
 	self._lockCount -= 1;
-	console.debug('[DataVis // Lock(%s)] Unlocking to level: %s', self._name, self._lockCount);
+	if (msg != null) {
+		console.debug('[DataVis // Lock(%s)] Unlocking to level %s: %s', self._name, self._lockCount, msg);
+	}
+	else {
+		console.debug('[DataVis // Lock(%s)] Unlocking to level %s', self._name, self._lockCount);
+	}
 
 	// If we're completely unlocked, start going through the functions that were registered to be run.
 	// The only problem is that these functions can cause us to be locked again.  If that happens, we
