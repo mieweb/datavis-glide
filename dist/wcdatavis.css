@@ -281,11 +281,11 @@ hr.wcdv_hr_gradient {
 .wcdv_toolbar_section input[type="radio"] {
 	margin-top: -1px;
 }
-
+/*
 .wcdv_toolbar_view select{
 	margin-left: 0.5em;
 }
-
+*/
 .wcdv_toolbar_view .wcdv_icon_button span{
 	margin: 0 !important;
 	padding: 0;
@@ -967,7 +967,7 @@ html:not(.ie11) .wcdv_grid_table table th.wcdv_cell_empty div {
 /*
 * Various Overrides
 */
-
+/*
 .wcdv_grid select{
 	padding: 2px;
 	border-color: #c7c7c7;
@@ -976,7 +976,7 @@ html:not(.ie11) .wcdv_grid_table table th.wcdv_cell_empty div {
 .wcdv_grid select + .fa{
 	vertical-align: middle;
 }
-
+*/
 /*
 * Main Theme Colors
 */

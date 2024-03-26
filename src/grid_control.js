@@ -1183,7 +1183,7 @@ GroupControl.prototype.draw = function (parent) {
 		'class': self.isHorizontal ? 'wcdv_control_horizontal' : 'wcdv_control_vertical'
 	}).appendTo(self.ui.root);
 
-	var dropdownContainer = jQuery('<div>').appendTo(self.ui.root);
+	var dropdownContainer = jQuery('<div>', {'class': 'select is-small'}).appendTo(self.ui.root);
 	self.ui.dropdown = jQuery('<select>', { 'class': 'wcdv_control_addField' }).appendTo(dropdownContainer);
 	self.ui.dropdown.on('change', function () {
 		self.addField(self.ui.dropdown.val(), self.ui.dropdown.find('option:selected').text(), {
@@ -1356,7 +1356,7 @@ PivotControl.prototype.draw = function (parent) {
 		'class': self.isHorizontal ? 'wcdv_control_horizontal' : 'wcdv_control_vertical'
 	}).appendTo(self.ui.root);
 
-	var dropdownContainer = jQuery('<div>').appendTo(self.ui.root);
+	var dropdownContainer = jQuery('<div>', {'class': 'select is-small'}).appendTo(self.ui.root);
 	self.ui.dropdown = jQuery('<select>', { 'class': 'wcdv_control_addField' }).appendTo(dropdownContainer);
 	self.ui.dropdown.on('change', function () {
 		self.addField(self.ui.dropdown.val(), self.ui.dropdown.find('option:selected').text(), {
@@ -1508,7 +1508,7 @@ AggregateControl.prototype.draw = function (parent) {
 		id: gensym(),
 		'class': self.isHorizontal ? 'wcdv_control_horizontal' : 'wcdv_control_vertical'
 	}).appendTo(self.ui.root);
-	var dropdownContainer = jQuery('<div>').appendTo(self.ui.root);
+	var dropdownContainer = jQuery('<div>', {'class': 'select is-small'}).appendTo(self.ui.root);
 	self.ui.dropdown = jQuery('<select>', { 'class': 'wcdv_control_addField' }).appendTo(dropdownContainer);
 	self.ui.dropdown.on('change', function () {
 		self.addField(self.ui.dropdown.val(), self.ui.dropdown.find('option:selected').text());
@@ -1810,7 +1810,7 @@ FilterControl.prototype.draw = function (parent) {
 		'class': self.isHorizontal ? 'wcdv_control_horizontal' : 'wcdv_control_vertical'
 	}).appendTo(self.ui.root);
 
-	var dropdownContainer = jQuery('<div>').appendTo(self.ui.root);
+	var dropdownContainer = jQuery('<div>', {'class': 'select is-small'}).appendTo(self.ui.root);
 	self.ui.dropdown = jQuery('<select>', { 'class': 'wcdv_control_addField' }).appendTo(dropdownContainer);
 	self.ui.dropdown.on('change', function () {
 		self.addField(self.ui.dropdown.val(), self.ui.dropdown.find('option:selected').text());

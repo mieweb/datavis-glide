@@ -2685,10 +2685,10 @@ export function makeOperationButton(type, op, index, opts) {
 // makeCheckbox {{{2
 
 export function makeCheckbox(startChecked, onChange, text, parent) {
-	var label = jQuery('<label>');
-	var input = jQuery('<input>', { 'type': 'checkbox', 'checked': startChecked }).on('change', onChange);
+	var label = jQuery('<label>', {'class': 'checkbox'});
+	var input = jQuery('<input>', {'type': 'checkbox', 'checked': startChecked}).on('change', onChange);
 
-	label.append(input).append(text).appendTo(parent);
+	label.append(input).append(' ').append(text).appendTo(parent);
 
 	return input;
 }

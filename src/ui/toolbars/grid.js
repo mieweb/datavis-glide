@@ -49,7 +49,7 @@ var PlainToolbar = makeSubclass('PlainToolbar', ToolbarSection, function (grid) 
 	// re-enabled if we switch grid tables and come back - as "limit" feature will be reset to its
 	// default value).
 
-	jQuery('<button>', {'type': 'button'})
+	jQuery('<button>', {'type': 'button', 'class': 'button is-small'})
 		.on('click', function (evt) {
 			grid.renderer.updateFeatures({
 				'block': true,
@@ -61,9 +61,7 @@ var PlainToolbar = makeSubclass('PlainToolbar', ToolbarSection, function (grid) 
 		.appendTo(grid.ui.limit_div)
 	;
 
-	self.ui.columnConfig = jQuery('<button>', {
-		'type': 'button'
-	})
+	self.ui.columnConfig = jQuery('<button>', {'type': 'button', 'class': 'button is-small'})
 		.append(fontAwesome('fa-columns'))
 		.append(trans('GRID_TOOLBAR.PLAIN.COLUMNS'))
 		.on('click', function (evt) {
@@ -76,9 +74,7 @@ var PlainToolbar = makeSubclass('PlainToolbar', ToolbarSection, function (grid) 
 		.appendTo(self.ui.root)
 	;
 
-	self.ui.TemplatesEditor = jQuery('<button>', {
-		'type': 'button'
-	})
+	self.ui.TemplatesEditor = jQuery('<button>', {'type': 'button', 'class': 'button is-small'})
 		.append(fontAwesome('fa-pencil'))
 		.append(trans('GRID_TOOLBAR.PLAIN.TEMPLATES_EDITOR'))
 		.on('click', function (evt) {
@@ -197,9 +193,7 @@ var GroupToolbar = makeSubclass('GroupToolbar', ToolbarSection, function (grid) 
 		}
 	);
 
-	self.ui.columnConfig = jQuery('<button>', {
-		'type': 'button'
-	})
+	self.ui.columnConfig = jQuery('<button>', {'type': 'button', 'class': 'button is-small'})
 		.append(fontAwesome('fa-columns'))
 		.append(trans('GRID_TOOLBAR.PLAIN.COLUMNS'))
 		.on('click', function (evt) {
@@ -212,9 +206,7 @@ var GroupToolbar = makeSubclass('GroupToolbar', ToolbarSection, function (grid) 
 		.appendTo(self.ui.root)
 	;
 
-	self.ui.TemplatesEditor = jQuery('<button>', {
-		'type': 'button'
-	})
+	self.ui.TemplatesEditor = jQuery('<button>', {'type': 'button', 'class': 'button is-small'})
 		.append(fontAwesome('fa-pencil'))
 		.append(trans('GRID_TOOLBAR.PLAIN.TEMPLATES_EDITOR'))
 		.on('click', function (evt) {
@@ -314,9 +306,7 @@ var PivotToolbar = makeSubclass('PivotToolbar', ToolbarSection, function (grid) 
 		}
 	);
 
-	self.ui.TemplatesEditor = jQuery('<button>', {
-		'type': 'button'
-	})
+	self.ui.TemplatesEditor = jQuery('<button>', {'type': 'button', 'class': 'button is-small'})
 		.append(fontAwesome('fa-pencil'))
 		.append(trans('GRID_TOOLBAR.PLAIN.TEMPLATES_EDITOR'))
 		.on('click', function (evt) {
@@ -462,7 +452,7 @@ var PrefsToolbar = makeSubclass('PrefsToolbar', ToolbarSection, function (grid) 
 			grid.prefs.setCurrentPerspective(dropdown.val());
 			showHideBtns();
 		})
-		.appendTo(div)
+		.appendTo(jQuery('<div>', {'class': 'select is-small'}).appendTo(div))
 	;
 
 	var warnMsgText = jQuery('<span>');
@@ -700,7 +690,7 @@ var RendererToolbar = makeSubclass('RendererToolbar', ToolbarSection, function (
 		.appendTo(self.ui.root)
 	;
 
-	var configBtn = jQuery('<button>', {'type': 'button', 'title': trans('GRID_TOOLBAR.RENDERER.DISPLAY_OPTIONS')})
+	var configBtn = jQuery('<button>', {'type': 'button', 'class': 'button is-small', 'title': trans('GRID_TOOLBAR.RENDERER.DISPLAY_OPTIONS')})
 		.append(fontAwesome('fa-table'))
 		.append(trans('GRID_TOOLBAR.RENDERER.DISPLAY_OPTIONS'))
 		.on('click', function () {
@@ -747,7 +737,7 @@ var ComputedViewToolbar = makeSubclass('ComputedViewToolbar', ToolbarSection, fu
 	// This button creates a MirageView from the current view, and switches my grid's view to the new
 	// MirageView.  If an error occurs, it should abort and leave things the way they are.
 
-	jQuery('<button>', {'type': 'button', 'title': trans('GRID_TOOLBAR.MIRAGE.STORE_DISPLAYED_DATA')})
+	jQuery('<button>', {'type': 'button', 'class': 'button is-small', 'title': trans('GRID_TOOLBAR.MIRAGE.STORE_DISPLAYED_DATA')})
 		.append(fontAwesome('fa-save'))
 		.append(trans('GRID_TOOLBAR.MIRAGE.STORE_DISPLAYED_DATA'))
 		.on('click', function () {
