@@ -133,6 +133,37 @@ describe('Preferences', function() {
 		assert.deepEqual(await grid.getGroup(), [], 'Expected no groups to be set');
 	});
 
+	it('can delete perspective, after refreshing', async function () {
+		let grid = new Grid(driver);
+		await grid.waitForIdle();
+
+		// Create new perspective.
+
+		await grid.newPerspective('Test');
+		await grid.waitForIdle();
+		assert.equal(await grid.getPerspective(), 'Test');
+
+		// Group by something.
+
+		await grid.addGroup('country');
+		await grid.waitForIdle();
+		assert.deepEqual(await grid.getGroup(), ['country']);
+
+		// Refresh the page.
+
+		await driver.navigate().refresh();
+		await grid.waitForIdle();
+		assert.equal(await grid.getPerspective(), 'Test');
+		assert.deepEqual(await grid.getGroup(), ['country']);
+
+		// Delete it.
+
+		await grid.deletePerspective();
+		await grid.waitForIdle();
+		assert.equal(await grid.getPerspective(), 'Main Perspective');
+		assert.deepEqual(await grid.getGroup(), [], 'Expected no groups to be set');
+	});
+
 	describe('Perspective Switching', function () {
 		it('using dropdown', async function () {
 			let grid = new Grid(driver);

@@ -760,6 +760,13 @@ Prefs.prototype.addPerspective = function (id, name, config, perspectiveOpts, co
 Prefs.prototype.addMainPerspective = function (cont) {
 	var self = this;
 
+	for (var i = 0; i < self.availablePerspectives.length; i += 1) {
+		var id = self.availablePerspectives[i];
+		if (self.perspectives[id].name === Prefs.MAIN_PERSPECTIVE_NAME) {
+			return self.setCurrentPerspective(id, cont);
+		}
+	}
+
 	self.addPerspective(null, Prefs.MAIN_PERSPECTIVE_NAME, {}, null, cont);
 };
 
@@ -865,56 +872,68 @@ Prefs.prototype.deletePerspective = function (id, cont, opts) {
 				return p.id === id;
 			});
 
-			// CURRENT STATE ---------------------
-			//   [ A B B A ]
-			//       ^ (history index - deleted perspective)
+			if (self.history.length === 0) {
+				// CURRENT STATE ---------------------
+				//   [ ]
 
-			// Now delete all continuous sequences of the new current perspective.
-			var newCurId = self.history[self.historyIndex].id;
-			for (var i = self.historyIndex + 1; i < self.history.length && self.history[i].id !== newCurId; i += 1) {
-				self.history[i] = null;
-			}
-			self.history = _.without(self.history, null);
-
-			// CURRENT STATE ---------------------
-			//   [ A B A ]
-			//       ^ (history index)
-
-			self._firePrefsHistoryStatus();
-
-			if (self.history.length > 0) {
-
-				// We've stripped the future and all matching perspectives from history, so use the first
-				// element of the new history stack as the current perspective.  Don't reset history because
-				// we've already done that manually above.
-				//
-				// BEFORE -------------------------
-				//   [ A B B B C D ]
-				//       ^ (history index)
-				//
-				// AFTER --------------------------
-				//   [ C D ]
-				//     ^ (history index)
-
-				self.setCurrentPerspective(self.history[0].id, null, {
-					resetHistory: false
-				});
+				// There are no perspectives on the history stack, but also there is no current perspective.
+				// Pick a new perspective to be current.
+				self.currentPerspective = null;
+				return self.addMainPerspective(cont);
 			}
 			else {
 
-				// We've removed all items from history, so put something else back on the stack.  In this
-				// example, even though there are different things in the future, everything in the past is
-				// the same as what we're deleting, so you end up with empty history.
-				//
-				// BEFORE -------------------------
-				//   [ A B B B ]
-				//       ^ (history index)
-				//
-				// AFTER --------------------------
-				//   [ Something ]
-				//     ^ (history index)
+				// CURRENT STATE ---------------------
+				//   [ A B B A ]
+				//       ^ (history index - deleted perspective)
 
-				self.setCurrentPerspective(self.availablePerspectives[0]);
+				// Now delete all continuous sequences of the new current perspective.
+				var newCurId = self.history[self.historyIndex].id;
+				for (var i = self.historyIndex + 1; i < self.history.length && self.history[i].id !== newCurId; i += 1) {
+					self.history[i] = null;
+				}
+				self.history = _.without(self.history, null);
+
+				// CURRENT STATE ---------------------
+				//   [ A B A ]
+				//       ^ (history index)
+
+				self._firePrefsHistoryStatus();
+
+				if (self.history.length > 0) {
+
+					// We've stripped the future and all matching perspectives from history, so use the first
+					// element of the new history stack as the current perspective.  Don't reset history because
+					// we've already done that manually above.
+					//
+					// BEFORE -------------------------
+					//   [ A B B B C D ]
+					//       ^ (history index)
+					//
+					// AFTER --------------------------
+					//   [ C D ]
+					//     ^ (history index)
+
+					self.setCurrentPerspective(self.history[0].id, null, {
+						resetHistory: false
+					});
+				}
+				else {
+
+					// We've removed all items from history, so put something else back on the stack.  In this
+					// example, even though there are different things in the future, everything in the past is
+					// the same as what we're deleting, so you end up with empty history.
+					//
+					// BEFORE -------------------------
+					//   [ A B B B ]
+					//       ^ (history index)
+					//
+					// AFTER --------------------------
+					//   [ Something ]
+					//     ^ (history index)
+
+					self.setCurrentPerspective(self.availablePerspectives[0]);
+				}
 			}
 
 			//var currentIndex;
