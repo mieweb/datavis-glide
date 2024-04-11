@@ -3146,34 +3146,10 @@ export function format(fcc, fti, cell, opts) {
 				decode(cell, fti);
 			}
 
-			if (moment.isMoment(cell.value)) {
-				if (!cell.value.isValid()) {
-					break;
-				}
-
-				if (t === 'datetime' && fcc.hideMidnight && cell.value.hour() === 0 && cell.value.minute() === 0 && cell.value.second() === 0) {
-					result = cell.value.format(format_dateOnly);
-				}
-				else {
-					result = cell.value.format(format);
-				}
-			}
-			else {
-				// FIXME: Make this work without Moment.
-
-				var m = moment(cell.value, fti.format);
-
-				if (!m.isValid()) {
-					break;
-				}
-
-				if (t === 'datetime' && fcc.hideMidnight && m.hour() === 0 && m.minute() === 0 && m.second() === 0) {
-					result = m.format(format_dateOnly);
-				}
-				else {
-					result = m.format(format);
-				}
-			}
+			result = types.registry.get(t).format(cell.value, {
+				full: format,
+				abbrev: t === 'datetime' && fcc.hideMidnight ? format_dateOnly : null
+			});
 			break;
 		case 'number':
 		case 'currency':

@@ -691,12 +691,15 @@ types.universalCmp = function (a, b) {
 
 	// format {{{2
 
-	function format(val, opts) {
-		opts = deepDefaults(opts, {
-			format: 'LL'
-		});
+	function format(val, fmt) {
+		if (val == null) {
+			return '';
+		}
 
 		if (typeof val === 'string') {
+			if (['', '0000-00-00', '0000-00-00 00:00:00'].indexOf(val) >= 0) {
+				return '';
+			}
 			val = moment(val, 'YYYY-MM-DD');
 		}
 		else if (val instanceof Date) {
@@ -704,6 +707,7 @@ types.universalCmp = function (a, b) {
 		}
 
 		if (!moment.isMoment(val)) {
+			console.error('[DataVis // Type(Date) // Format] Unsupported value: %s', val);
 			return '';
 		}
 
@@ -711,7 +715,7 @@ types.universalCmp = function (a, b) {
 			return '';
 		}
 
-		return val.format(opts.format);
+		return val.format(fmt.full);
 	}
 
 	// natRep {{{2
@@ -803,12 +807,17 @@ types.universalCmp = function (a, b) {
 
 	// format {{{2
 
-	function format(val, opts) {
-		opts = deepDefaults(opts, {
-			format: 'LLL'
-		});
+	// format {{{2
+
+	function format(val, fmt) {
+		if (val == null) {
+			return '';
+		}
 
 		if (typeof val === 'string') {
+			if (['', '0000-00-00', '0000-00-00 00:00:00'].indexOf(val) >= 0) {
+				return '';
+			}
 			val = moment(val, 'YYYY-MM-DD HH:mm:ss');
 		}
 		else if (val instanceof Date) {
@@ -816,7 +825,7 @@ types.universalCmp = function (a, b) {
 		}
 
 		if (!moment.isMoment(val)) {
-			console.error('[DataVis // Type(Date) // Format] Call Error: `val` must be a string, Date, or Moment');
+			console.error('[DataVis // Type(Date) // Format] Unsupported value: %s', val);
 			return '';
 		}
 
@@ -824,7 +833,12 @@ types.universalCmp = function (a, b) {
 			return '';
 		}
 
-		return val.format(opts.format);
+		if (fmt.abbrev && val.hour() === 0 && val.minute() === 0 && val.second() === 0) {
+			return val.format(fmt.abbrev);
+		}
+		else {
+			return val.format(fmt.full);
+		}
 	}
 
 	// natRep {{{2
@@ -920,12 +934,15 @@ types.universalCmp = function (a, b) {
 
 	// format {{{2
 
-	function format(val, opts) {
-		opts = deepDefaults(opts, {
-			format: 'LTS'
-		});
+	function format(val, fmt) {
+		if (val == null) {
+			return '';
+		}
 
 		if (typeof val === 'string') {
+			if (['', '0000-00-00', '0000-00-00 00:00:00'].indexOf(val) >= 0) {
+				return '';
+			}
 			val = moment('2000-01-01 ' + val, 'YYYY-MM-DD HH:mm:ss');
 		}
 		else if (val instanceof Date) {
@@ -933,7 +950,7 @@ types.universalCmp = function (a, b) {
 		}
 
 		if (!moment.isMoment(val)) {
-			console.error('[DataVis // Type(Time) // Format] Call Error: `val` must be a string, Date, or Moment');
+			console.error('[DataVis // Type(Date) // Format] Unsupported value: %s', val);
 			return '';
 		}
 
@@ -941,7 +958,7 @@ types.universalCmp = function (a, b) {
 			return '';
 		}
 
-		return val.format(opts.format);
+		return val.format(fmt.full);
 	}
 
 	// natRep {{{2
