@@ -12,7 +12,13 @@ const _ = require('lodash');
 const reflectCgi = (req, res, u) => {
   let o = {
     data: _.map(Object.keys(u.query).sort(), (k) => {
-      return {name: k, value: u.query[k]};
+    	let x = u.query[k];
+      return {
+      	name: k,
+				value: typeof x === 'string' ? x
+					: Array.isArray(x) ? x.join(',')
+					: JSON.stringify(x)
+      };
     }),
     typeInfo: [{
       field: 'name',
