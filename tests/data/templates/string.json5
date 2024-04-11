@@ -6,11 +6,13 @@
         "country": "$< cycle('country', ['United States', 'Canada', 'Mexico', 'England', 'France', 'Germany', 'Switzerland', 'Japan', 'China', 'South Korea']) >$"
       , "fruit": "$< random_element('fruit', ['Apple', 'Banana', 'Blueberry', 'Cherry', 'Grape', 'Kiwi', 'Mango', 'Orange', 'Pineapple', 'Strawberry'], 'normal') >$"
       , "state": "$< state() >$"
+      , "string1": "$< word_dict() >$"
     }
   ],
   "typeInfo": [
       { "field": "country", "type": "string" }
     , { "field": "fruit", "type": "string" }
     , { "field": "state", "type": "string" }
+    , { "field": "string1", "type": "string" }
   ]
 }
