@@ -26,8 +26,7 @@ describe('Sort', function() {
 	});
 
 	const sortInfo = {
-		plain: [
-
+		plain: {
 			// DATA FORMAT: [field, min, max, info, opts]
 			//
 			//   * field: What field to sort by.
@@ -37,45 +36,59 @@ describe('Sort', function() {
 			//   * opts: Additional options for comparison.
 			//     - delta: Triggers approximate equality checks using specified allowable delta.
 
-			['string1', 'abidal', 'zigzagged', 'random dictionary word'],
-			['int1', '18', '9882', 'integer (number → number)'],
-			['int2', '18', '9882', 'integer (string → number)'],
-			['int3', '18', '9882', 'integer (string → numeral)'],
-			['int4', '18', '9882', 'integer (number → numeral)'],
-			['int5', '18', '9882', 'integer (string → numeral)'],
-			['int6', '18', '9882', 'integer (string → numeral)'],
-			['int7', '18', '9882', 'integer (number → bignumber)'],
-			['int8', '18', '9882', 'integer (string → bignumber)'],
-			['int9', '18', '9882', 'integer (string → bignumber)'],
-			['float1', '11.427050324968356', '9961.582135696373', 'float (number → number)'],
-			['float2', '11.427050324968356', '9961.582135696373', 'float (string → number)'],
-			['float3', '11.427', '9961.582', 'float (string w/ commas → number)'],
-			['float4', '11.427050324968356', '9961.582135696373', 'float (number → numeral)', {delta: 0.0000000001}],
-			['float5', '11.427050324968356', '9961.582135696373', 'float (string → numeral)', {delta: 0.0000000001}],
-			['float6', '11.427', '9961.582', 'float (string w/ commas → numeral)'],
-			['float7', '11.427050324968356', '9961.582135696373', 'float (number → bignumber)'],
-			['float8', '11.427050324968356', '9961.582135696373', 'float (string → bignumber)'],
-			['float9', '11.427', '9961.582', 'float (string w/ commas → bignumber)'],
-			['currency1', '$11.43', '$9,961.58', 'currency (number : currency → number)'],
-			['currency2', '$11.43', '$9,961.58', 'currency (string : currency → number)'],
-			['currency3', '$11.43', '$9,961.58', 'currency (string : currency → numeral)'],
-			['currency4', '$11.43', '$9,961.58', 'currency (string : string → numeral)'],
-			['date1', 'November 30, 1901', 'January 10, 2094', 'date (string → string)'],
-			['date2', 'November 30, 1901', 'January 10, 2094', 'date (string → moment)'],
-			['date3', 'November 30, 1901', 'January 10, 2094', 'date (string → moment)'],
-			['time1', '12:02:29 AM', '11:54:29 PM', 'time (string → string)'],
-			['time2', '12:02:29 AM', '11:54:29 PM', 'time (string → moment)'],
-			['time3', '12:02:29 AM', '11:54:29 PM', 'time (string → moment)'],
-			['time4', '12:02:00 AM', '11:54:00 PM', 'time (string → string)'],
-			['time5', '12:02:00 AM', '11:54:00 PM', 'time (string → moment)'],
-			['time6', '12:02:00 AM', '11:54:00 PM', 'time (string → moment)'],
-			['datetime1', 'November 30, 1901 12:24 AM', 'January 10, 2094 10:31 PM', 'datetime'],
-			['datetime2', 'November 30, 1901 12:24 AM', 'January 10, 2094 10:31 PM', 'datetime'],
-			['datetime3', 'November 30, 1901 12:24 AM', 'January 10, 2094 10:31 PM', 'datetime'],
-			['datetime16', 'January 1, 2010 10:39 AM', 'December 23, 2010 4:42 PM', 'datetime'],
-			['datetime17', 'January 1, 2010 10:39 AM', 'December 23, 2010 4:42 PM', 'datetime'],
-			['datetime18', 'January 1, 2010 10:39 AM', 'December 23, 2010 4:42 PM', 'datetime'],
-		],
+			'string': [
+				['string1', 'abidal', 'zigzagged', 'random dictionary word'],
+			],
+			'int': [
+				['int1', '18', '9882', 'integer (number → number)'],
+				['int2', '18', '9882', 'integer (string → number)'],
+				['int3', '18', '9882', 'integer (string → numeral)'],
+				['int4', '18', '9882', 'integer (number → numeral)'],
+				['int5', '18', '9882', 'integer (string → numeral)'],
+				['int6', '18', '9882', 'integer (string → numeral)'],
+				['int7', '18', '9882', 'integer (number → bignumber)'],
+				['int8', '18', '9882', 'integer (string → bignumber)'],
+				['int9', '18', '9882', 'integer (string → bignumber)'],
+			],
+			'float': [
+				['float1', '11.427050324968356', '9961.582135696373', 'float (number → number)'],
+				['float2', '11.427050324968356', '9961.582135696373', 'float (string → number)'],
+				['float3', '11.427', '9961.582', 'float (string w/ commas → number)'],
+				['float4', '11.427050324968356', '9961.582135696373', 'float (number → numeral)', {delta: 0.0000000001}],
+				['float5', '11.427050324968356', '9961.582135696373', 'float (string → numeral)', {delta: 0.0000000001}],
+				['float6', '11.427', '9961.582', 'float (string w/ commas → numeral)'],
+				['float7', '11.427050324968356', '9961.582135696373', 'float (number → bignumber)'],
+				['float8', '11.427050324968356', '9961.582135696373', 'float (string → bignumber)'],
+				['float9', '11.427', '9961.582', 'float (string w/ commas → bignumber)'],
+			],
+			'currency': [
+				['currency1', '$11.43', '$9,961.58', 'currency (number : currency → number)'],
+				['currency2', '$11.43', '$9,961.58', 'currency (string : currency → number)'],
+				['currency3', '$11.43', '$9,961.58', 'currency (string : currency → numeral)'],
+				['currency4', '$11.43', '$9,961.58', 'currency (string : string → numeral)'],
+			],
+			'date': [
+				['date1', 'November 30, 1901', 'January 10, 2094', 'date (string → string)'],
+				['date2', 'November 30, 1901', 'January 10, 2094', 'date (string → moment)'],
+				['date3', 'November 30, 1901', 'January 10, 2094', 'date (string → moment)'],
+			],
+			'time': [
+				['time1', '12:02:29 AM', '11:54:29 PM', 'time (string → string)'],
+				['time2', '12:02:29 AM', '11:54:29 PM', 'time (string → moment)'],
+				['time3', '12:02:29 AM', '11:54:29 PM', 'time (string → moment)'],
+				['time4', '12:02:00 AM', '11:54:00 PM', 'time (string → string)'],
+				['time5', '12:02:00 AM', '11:54:00 PM', 'time (string → moment)'],
+				['time6', '12:02:00 AM', '11:54:00 PM', 'time (string → moment)'],
+			],
+			'datetime': [
+				['datetime1', 'November 30, 1901 12:24 AM', 'January 10, 2094 10:31 PM', 'datetime'],
+				['datetime2', 'November 30, 1901 12:24 AM', 'January 10, 2094 10:31 PM', 'datetime'],
+				['datetime3', 'November 30, 1901 12:24 AM', 'January 10, 2094 10:31 PM', 'datetime'],
+				['datetime16', 'January 1, 2010 10:39 AM', 'December 23, 2010 4:42 PM', 'datetime'],
+				['datetime17', 'January 1, 2010 10:39 AM', 'December 23, 2010 4:42 PM', 'datetime'],
+				['datetime18', 'January 1, 2010 10:39 AM', 'December 23, 2010 4:42 PM', 'datetime'],
+			],
+		},
 		group: [{
 
 			// DATA FORMAT: {...}
@@ -130,42 +143,46 @@ describe('Sort', function() {
 	};
 
 	describe('plain output', function () {
-		before(async function () {
-			await driver.get('http://localhost:3000/grid/default.html');
-			grid = new Grid(driver);
-			await grid.waitForIdle();
-		});
+		_.each(sortInfo.plain, (tests, typeName) => {
+			describe(`${typeName} type`, function () {
+				before(async function () {
+					await driver.get(`http://localhost:3000/grid/types/${typeName}.html`);
+					grid = new Grid(driver, `test-grid-types-${typeName}`);
+					await grid.waitForIdle();
+				});
 
-		after(async function () {
-			await driver.executeScript('window.localStorage.clear()');
-		});
+				after(async function () {
+					await driver.executeScript('window.localStorage.clear()');
+				});
 
-		_.each(sortInfo.plain, async (si) => {
-			const [field, min, max, desc, opts] = si;
+				_.each(tests, (si) => {
+					const [field, min, max, desc, opts] = si;
 
-			it(`${field}, ${desc}`, async function () {
-				await grid.sortBy(field, `${field}, Ascending`);
-				await grid.waitForIdle();
-				if (opts != null && opts.delta != null) {
-					assert.approximately(+(await grid.getCell(field, 0)), +min, opts.delta);
-					assert.approximately(+(await grid.getCell(field, -1)), +max, opts.delta);
-				}
-				else {
-					assert.equal(await grid.getCell(field, 0), min);
-					assert.equal(await grid.getCell(field, -1), max);
-				}
+					it(`${field}, ${desc}`, async function () {
+						await grid.sortBy(field, `${field}, Ascending`);
+						await grid.waitForIdle();
+						if (opts != null && opts.delta != null) {
+							assert.approximately(+(await grid.getCell(field, 0)), +min, opts.delta);
+							assert.approximately(+(await grid.getCell(field, -1)), +max, opts.delta);
+						}
+						else {
+							assert.equal(await grid.getCell(field, 0), min);
+							assert.equal(await grid.getCell(field, -1), max);
+						}
 
-				await grid.sortBy(field, `${field}, Descending`);
-				await grid.waitForIdle();
+						await grid.sortBy(field, `${field}, Descending`);
+						await grid.waitForIdle();
 
-				if (opts != null && opts.delta != null) {
-					assert.approximately(+(await grid.getCell(field, 0)), +max, opts.delta);
-					assert.approximately(+(await grid.getCell(field, -1)), +min, opts.delta);
-				}
-				else {
-					assert.equal(await grid.getCell(field, 0), max);
-					assert.equal(await grid.getCell(field, -1), min);
-				}
+						if (opts != null && opts.delta != null) {
+							assert.approximately(+(await grid.getCell(field, 0)), +max, opts.delta);
+							assert.approximately(+(await grid.getCell(field, -1)), +min, opts.delta);
+						}
+						else {
+							assert.equal(await grid.getCell(field, 0), max);
+							assert.equal(await grid.getCell(field, -1), min);
+						}
+					});
+				});
 			});
 		});
 	});
