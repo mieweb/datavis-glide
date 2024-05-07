@@ -1,0 +1,77 @@
+{
+  data: [{
+    alpha: 1,
+    beta: {
+      id: 1,
+      name: "Ghee Buttersnaps",
+      car: {
+        make: "Pagani",
+        model: "Zonda R"
+      },
+      pencil: {
+        name: "Blackwing Vol. 2",
+        grade: "2x-firm"
+      },
+    }
+  }, {
+    alpha: 2,
+    beta: {
+      id: 2,
+      name: "Magic Head",
+      car: {
+        make: "Ferrari",
+        model: "F40"
+      },
+      pencil: {
+        name: "Blackwing Vol. 6",
+        grade: "extra-firm"
+      },
+    }
+  }, {
+    alpha: 3,
+    beta: {
+      id: 3,
+      name: "Ovaltine Jenkins",
+      car: {
+        make: "Citreon",
+        model: "C3"
+      },
+      pencil: {
+        name: "Dixon Metropolitan",
+        grade: "No. 2"
+      },
+    }
+  }, {
+    alpha: 4,
+    beta: {
+      id: 4,
+      name: "Mr. Vocab",
+      car: {
+        make: "Aston-Martin",
+        model: "DB9"
+      },
+      pencil: {
+        name: "Eagle Turquoise",
+        grade: "F"
+      },
+    }
+  }, {
+    alpha: 5,
+    beta: {
+      id: 5,
+      name: "Galileo Humpkins",
+      car: {
+        make: "Ford",
+        model: "Shelby GT500"
+      },
+      pencil: {
+        name: "Tombow 8900",
+        grade: "2B"
+      },
+    }
+  }],
+  "typeInfo": [
+      { "field": "alpha", "type": "number" }
+    , { "field": "beta", "type": "json" }
+  ]
+}
