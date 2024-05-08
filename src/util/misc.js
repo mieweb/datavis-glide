@@ -2991,7 +2991,8 @@ export function format(fcc, fti, cell, opts) {
 	// way of doing things, and apply them to all numbers regardless of representation.
 
 	var formatStrToObj = function (formatStr, base) {
-		var formatObj = deepCopy(base);
+		var formatObj = deepCopy(base)
+			, m;
 
 		if (formatStr[0] === '$') {
 			formatObj.currencySymbol = '$';
