@@ -156,7 +156,9 @@ GridRenderer.prototype.draw = function (root, opts, cont1) {
 
 			return cont1(true, data, typeInfo, function (cont2) {
 				self.fire('renderEnd');
-				self.drawLock.unlock();
+				if (self.drawLock._lockCount > 0) {
+					self.drawLock.unlock();
+				}
 
 				if (typeof cont2 === 'function') {
 					return cont2();
