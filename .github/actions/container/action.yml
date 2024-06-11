@@ -1,0 +1,11 @@
+name: 'DataVis Container'
+description: 'Perform DataVis build steps in a container'
+inputs:
+  task:
+    description: 'What task to perform'
+    required: true
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
+  args:
+    - ${{ inputs.task }}
