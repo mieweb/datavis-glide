@@ -1999,6 +1999,92 @@ ComputedView.prototype.filter = function (cont) {
 					}
 					break;
 
+				case '$every':
+					var days = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
+					var months = ['JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE', 'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER'];
+
+					if (fti.type !== 'date' && fti.type !== 'datetime') {
+						console.error('Invalid operator "$every" for field "' + field + '" of type "' + fti.type + '"');
+						return false;
+					}
+					var dayIdx = days.indexOf(operand);
+					var monthIdx = months.indexOf(operand);
+					var d = isString ? moment(datum) : isMoment ? datum : null;
+					if (d == null) {
+						console.error('Operator "$every" cannot be applied to data in field "' + field + '" of type "' + fti.type + '" and internal type "' + fti.internalType + '"');
+						return false;
+					}
+
+					if (dayIdx >= 0) {
+						return d.day() === dayIdx;
+					}
+					else if (monthIdx >= 0) {
+						return d.month() === monthIdx;
+					}
+					else {
+						console.error('Invalid "$every" operand "' + operand + '" for field "' + field + '"');
+						return false;
+					}
+					break;
+
+				case '$this':
+					if (fti.type !== 'date' && fti.type !== 'datetime') {
+						console.error('Invalid operator "$this" for field "' + field + '" of type "' + fti.type + '"');
+						return false;
+					}
+					var d = isString ? moment(datum) : isMoment ? datum : null;
+					if (d == null) {
+						console.error('Operator "$this" cannot be applied to data in field "' + field + '" of type "' + fti.type + '" and internal type "' + fti.internalType + '"');
+						return false;
+					}
+					switch (operand) {
+					case 'DAY':
+						return d.format('YYYY-MM-DD') === moment().format('YYYY-MM-DD');
+						break;
+					case 'WEEK':
+						return d.format('YYYY-WW') === moment().format('YYYY-WW');
+						break;
+					case 'MONTH':
+						return d.format('YYYY-MM') === moment().format('YYYY-MM');
+						break;
+					case 'YEAR':
+						return d.format('YYYY') === moment().format('YYYY');
+						break;
+					default:
+						console.error('Invalid "$this" operand "' + operand + '" for field "' + field + '"');
+						return false;
+					}
+					break;
+
+				case '$last':
+					if (fti.type !== 'date' && fti.type !== 'datetime') {
+						console.error('Invalid operator "$last" for field "' + field + '" of type "' + fti.type + '"');
+						return false;
+					}
+					var d = isString ? moment(datum) : isMoment ? datum : null;
+					if (d == null) {
+						console.error('Operator "$last" cannot be applied to data in field "' + field + '" of type "' + fti.type + '" and internal type "' + fti.internalType + '"');
+						return false;
+					}
+					switch (operand) {
+					case 'DAY':
+						return d.format('YYYY-MM-DD') === moment().subtract(1, 'days').format('YYYY-MM-DD');
+						break;
+					case 'WEEK':
+						return d.format('YYYY-WW') === moment().subtract(1, 'weeks').format('YYYY-WW');
+						break;
+					case 'MONTH':
+						return d.format('YYYY-MM') === moment().subtract(1, 'months').format('YYYY-MM');
+						break;
+					case 'YEAR':
+						return d.format('YYYY') === moment().subtract(1, 'years').format('YYYY');
+						break;
+					default:
+						console.error('Invalid "$last" operand "' + operand + '" for field "' + field + '"');
+						return false;
+					}
+					break;
+
 				default:
 					throw new Error('Invalid operator "' + operator + '" for column "' + field + '"');
 				}
