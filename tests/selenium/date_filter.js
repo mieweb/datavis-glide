@@ -54,6 +54,24 @@ describe('Date Filter', function() {
 				await grid.waitForIdle();
 			});
 
+			it('can filter exact date (op = $eq)', async function () {
+				await grid.setFilter(`date_${t}`, 'input', '$eq', '05152024');
+				await grid.waitForIdle();
+				assert.equal(await grid.getNumRows(), 1);
+			});
+
+			it('can filter before (op = $lte)', async function () {
+				await grid.setFilter(`date_${t}`, 'input', '$lte', '05152024');
+				await grid.waitForIdle();
+				assert.equal(await grid.getNumRows(), 3);
+			});
+
+			it('can filter after (op = $gte)', async function () {
+				await grid.setFilter(`date_${t}`, 'input', '$gte', '05152024');
+				await grid.waitForIdle();
+				assert.equal(await grid.getNumRows(), 4);
+			});
+
 			describe('current (op = $this)', function () {
 				it('can filter date', async function () {
 					await grid.setFilter(`date_${t}`, 'date', '$this', 'DATE');

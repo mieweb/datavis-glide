@@ -126,7 +126,7 @@ var DateFilter = makeSubclass('DateFilter', GridFilter, function () {
 	}
 });
 
-GridFilter.prototype.makeOperatorDrop = function () {
+DateFilter.prototype.makeOperatorDrop = function () {
 	var self = this;
 
 	var operators = [

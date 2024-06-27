@@ -692,7 +692,7 @@ class Grid {
 		case 'input': {
 			const input = await controlField[0].findElement(By.css('div.wcdv_filter_control_filter > input'));
 			await input.clear();
-			await input.sendKeys(value, Key.ENTER);
+			await input.sendKeys(value, Key.TAB);
 			break;
 		}
 		case 'date': {
