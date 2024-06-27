@@ -2039,7 +2039,7 @@ ComputedView.prototype.filter = function (cont) {
 						return false;
 					}
 					switch (operand) {
-					case 'DAY':
+					case 'DATE':
 						return d.format('YYYY-MM-DD') === now.format('YYYY-MM-DD');
 						break;
 					case 'WEEK':
@@ -2071,7 +2071,7 @@ ComputedView.prototype.filter = function (cont) {
 						return false;
 					}
 					switch (operand) {
-					case 'DAY':
+					case 'DATE':
 						return d.format('YYYY-MM-DD') === now.clone().subtract(1, 'days').format('YYYY-MM-DD');
 						break;
 					case 'WEEK':

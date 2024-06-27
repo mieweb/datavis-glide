@@ -42,7 +42,7 @@ var DateFilter = makeSubclass('DateFilter', GridFilter, function () {
 		]
 	};
 	var lastOpts = [
-			'DAY'
+			'DATE'
 		, 'WEEK'
 		, 'MONTH'
 		, 'QUARTER'

@@ -16,6 +16,7 @@ export default {
   'AGGREGATE.NAME.SUM_OVER_SUM': 'Sum/Sum',
   'AGGREGATE.NAME.VALUES': 'Values',
   'AGGREGATE.NAME.VALUES_WITH_COUNTS': 'Values w/ Counts',
+  'CALENDAR.DATE': 'date',
   'CALENDAR.DAY': 'day',
   'CALENDAR.DAY.FRIDAY': 'Friday',
   'CALENDAR.DAY.MONDAY': 'Monday',
