@@ -6,6 +6,7 @@ import {
 	debug,
 	delegate,
 	getProp,
+	getPropDef,
 	isEmpty,
 	makeSubclass,
 	setProp,
@@ -984,7 +985,21 @@ var ParamInput = function (sourceType, opts) {
 
 		break;
 	case 'json':
-		throw new ParamInputError('Parameter inputs not allowed for JSON API data.');
+	case 'json_api':
+		self.reportMethod = 'cgi';
+
+		filterOpts = {
+			type: self.inputType,
+			method: self.reportMethod,
+			inputName: self.inputName,
+		};
+
+		self.cgiName = getPropDef(self.inputName, opts, 'cgi', 'name');
+		self.cgiValue = getProp(opts, 'cgi', 'value');
+
+		filterOpts.paramName = self.cgiName; // TODO: Remove after self.filter is gone.
+		filterOpts.defaultValue = self.cgiValue;
+		break;
 	case 'local':
 		throw new ParamInputError('Parameter inputs not allowed for local data.');
 	default:
