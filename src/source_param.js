@@ -116,6 +116,9 @@ var FilterError = makeSubclass('FilterError', Error, function (msg) {
  *
  * @property {any} value The value that will be sent to the server.
  *
+ * @property {boolean} sendEmpty
+ * @property {string} emptyValue
+ *
  * @property {any} internalValue An internal representation of the value sent (e.g. an object
  * storing extra information).
  *
@@ -136,7 +139,9 @@ var Filter = function (config) {
 
 	_.defaults(config, {
 		required: false,
-		defaultValue: null
+		defaultValue: null,
+		sendEmpty: false,
+		emptyValue: ''
 	});
 
 	_.extend(self, config);
@@ -551,11 +556,15 @@ Filter.prototype.toParams = function (params) {
 	case 'cgi':
 		if (self.type === 'form') {
 			_.each(self.value, function (v, k) {
-				params[k] = v;
+				if (v != self.emptyValue || self.sendEmpty) {
+					params[k] = v;
+				}
 			});
 		}
 		else {
-			params[self.paramName] = self.value;
+			if (self.value != self.emptyValue || self.sendEmpty) {
+				params[self.paramName] = self.value;
+			}
 		}
 		break;
 	default:
