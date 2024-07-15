@@ -1833,7 +1833,8 @@ ComputedView.prototype.isFiltered = function () {
 
 ComputedView.prototype.filter = function (cont) {
 	var self = this
-		, timingEvt = ['Data Source "' + self.source.name + '" : ' + self.name, 'Filtering'];
+		, timingEvt = ['Data Source "' + self.source.name + '" : ' + self.name, 'Filtering']
+		, now = moment(getProp(window, 'MIE', 'WC_DataVis', 'CURRENT_DATE'));
 
 	if (self.filterSpec == null) {
 		if (!self.wasPreviouslyFiltered) {
@@ -1995,6 +1996,98 @@ ComputedView.prototype.filter = function (cont) {
 					}
 
 					if (_.map(operand, function (elt) { return elt.toString().toLowerCase(); }).indexOf(datum.toString().toLowerCase()) >= 0) {
+						return false;
+					}
+					break;
+
+				case '$every':
+					var days = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
+					var months = ['JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE', 'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER'];
+
+					if (fti.type !== 'date' && fti.type !== 'datetime') {
+						console.error('Invalid operator "$every" for field "' + field + '" of type "' + fti.type + '"');
+						return false;
+					}
+					var dayIdx = days.indexOf(operand);
+					var monthIdx = months.indexOf(operand);
+					var d = isString ? moment(datum) : isMoment ? datum : null;
+					if (d == null) {
+						console.error('Operator "$every" cannot be applied to data in field "' + field + '" of type "' + fti.type + '" and internal type "' + fti.internalType + '"');
+						return false;
+					}
+
+					if (dayIdx >= 0) {
+						return d.day() === dayIdx;
+					}
+					else if (monthIdx >= 0) {
+						return d.month() === monthIdx;
+					}
+					else {
+						console.error('Invalid "$every" operand "' + operand + '" for field "' + field + '"');
+						return false;
+					}
+					break;
+
+				case '$this':
+					if (fti.type !== 'date' && fti.type !== 'datetime') {
+						console.error('Invalid operator "$this" for field "' + field + '" of type "' + fti.type + '"');
+						return false;
+					}
+					var d = isString ? moment(datum) : isMoment ? datum : null;
+					if (d == null) {
+						console.error('Operator "$this" cannot be applied to data in field "' + field + '" of type "' + fti.type + '" and internal type "' + fti.internalType + '"');
+						return false;
+					}
+					switch (operand) {
+					case 'DATE':
+						return d.format('YYYY-MM-DD') === now.format('YYYY-MM-DD');
+						break;
+					case 'WEEK':
+						return d.format('YYYY-WW') === now.format('YYYY-WW');
+						break;
+					case 'MONTH':
+						return d.format('YYYY-MM') === now.format('YYYY-MM');
+						break;
+					case 'QUARTER':
+						return d.format('YYYY-Q') === now.format('YYYY-Q');
+						break;
+					case 'YEAR':
+						return d.format('YYYY') === now.format('YYYY');
+						break;
+					default:
+						console.error('Invalid "$this" operand "' + operand + '" for field "' + field + '"');
+						return false;
+					}
+					break;
+
+				case '$last':
+					if (fti.type !== 'date' && fti.type !== 'datetime') {
+						console.error('Invalid operator "$last" for field "' + field + '" of type "' + fti.type + '"');
+						return false;
+					}
+					var d = isString ? moment(datum) : isMoment ? datum : null;
+					if (d == null) {
+						console.error('Operator "$last" cannot be applied to data in field "' + field + '" of type "' + fti.type + '" and internal type "' + fti.internalType + '"');
+						return false;
+					}
+					switch (operand) {
+					case 'DATE':
+						return d.format('YYYY-MM-DD') === now.clone().subtract(1, 'days').format('YYYY-MM-DD');
+						break;
+					case 'WEEK':
+						return d.format('YYYY-WW') === now.clone().subtract(1, 'weeks').format('YYYY-WW');
+						break;
+					case 'MONTH':
+						return d.format('YYYY-MM') === now.clone().subtract(1, 'months').format('YYYY-MM');
+						break;
+					case 'QUARTER':
+						return d.format('YYYY-Q') === now.clone().subtract(1, 'quarters').format('YYYY-Q');
+						break;
+					case 'YEAR':
+						return d.format('YYYY') === now.clone().subtract(1, 'years').format('YYYY');
+						break;
+					default:
+						console.error('Invalid "$last" operand "' + operand + '" for field "' + field + '"');
 						return false;
 					}
 					break;

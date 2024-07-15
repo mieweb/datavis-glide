@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8"/>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js" integrity="sha512-WFN04846sdKMIP5LKNphMaWzU7YpMyCU245etK3g/2ARYbPK9Ub18eG+ljU96qKRCWh+quCY7yefSmlkQw1ANQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.30.1/moment-with-locales.min.js" integrity="sha512-4F1cxYdMiAW98oomSLaygEwmCnIP38pb4Kx70yQYqRwLVCs3DbRumfBq82T08g/4LJ/smbFGFpmeFlQgoDccgg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+		<script src="../../jquery.min.js"></script>
+		<script src="../../jquery-ui.min.js"></script>
+		<script src="../../jquery.blockUI.js"></script>
+		<script src="../../jquery.contextMenu.min.js"></script>
+		<script src="../../jquery.sumoselect.min.js"></script>
+		<script src="../../flatpickr.min.js"></script>
+		<script src="../../wcdatavis.js"></script>
+		<link rel="stylesheet" href="../../font-awesome.css"/>
+		<link rel="stylesheet" href="../../jquery-ui.min.css"/>
+		<link rel="stylesheet" href="../../jquery.contextMenu.min.css"/>
+		<link rel="stylesheet" href="../../sumoselect.min.css"/>
+		<link rel="stylesheet" href="../../flatpickr.min.css"/>
+		<link rel="stylesheet" href="../../base.css"/>
+		<link rel="stylesheet" href="../../wcdatavis.css"/>
+		<script>
+$(document).ready(function () {
+	MIE.DEBUGGING = true;
+
+	var data = [
+			'2024-06-27' // current date
+		, '2024-06-26' // current week & last date
+		, '2024-06-19' // current month & last week
+		, '2024-05-15' // current quarter & last month
+		, '2024-02-13' // current year & last quarter
+		, '2023-10-13' // last year
+	];
+	var finalData = _.map(data, d => ({
+		date_string: d,
+		date_moment: d,
+		date_native: d
+	}));
+
+	window.localData = {
+		data: finalData,
+		typeInfo: {
+			'date_string': { type: 'date', internalType: 'string' },
+			'date_moment': { type: 'date', internalType: 'moment' },
+			'date_native': { type: 'date', internalType: 'native' },
+		}
+	};
+
+	MIE.WC_DataVis.CURRENT_DATE = '2024-06-27';
+	var source = new MIE.WC_DataVis.Source({
+		type: 'local',
+		varName: 'localData'
+	});
+	var view = new MIE.WC_DataVis.ComputedView(source);
+	new MIE.WC_DataVis.Grid({
+		id: 'grid',
+		computedView: view,
+		source: source,
+	}, {
+		title: 'Test // Grid // Filters // Date',
+		showControls: true
+	});
+});
+		</script>
+	</head>
+	<body>
+		<div id="grid"></div>
+	</body>
+</html>
