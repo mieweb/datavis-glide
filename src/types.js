@@ -120,7 +120,7 @@ types.universalCmp = function (a, b) {
 
 	// Overwrite the defaults with locale-specific formatting options gleaned from Intl.
 
-	if (window.Intl != null && window.Intl.NumberFormat != null) {
+	if (window.Intl != null && window.Intl.NumberFormat != null && window.Intl.NumberFormat.prototype.formatToParts != null) {
 		// You can't extract information about how to format a number from Intl.NumberFormat, but you
 		// can have it format a number and then "parse" the result to figure out e.g. what the grouping
 		// and radix point characters are.
