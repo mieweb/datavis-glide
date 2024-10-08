@@ -22,3 +22,11 @@ Perspective
 
 Preferences System
 : The system which stores interactive configuration of different DataVis components. The preferences system manages a set of named configurations, each of which is called a Perspective.
+
+## Technical Terms
+
+`natRep` (“Native Representation”)
+: A representation of a value that is stored as a JS native value that (1) can be used as a key in an object, (2) sorts via the JS greater-than and less-than operators, and (3) has a one-to-one mapping back to the original value. For example, dates may be internally stored using Date objects, but the natrep is a string in ISO-8601 format.
+
+`rowVal` (“Row Value”)
+: A list of the values of all the fields that are part of the group. For example, grouping U.S. presidents by last name, first name — one rowval would be `["Obama", "Barack"]`. All data rows that are in the same group have the same rowval. Grouping presidents by last name only, the rowval `["Roosevelt"]` would have two rows associated with it.

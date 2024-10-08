@@ -79,17 +79,6 @@ aggregate function specs. Each spec looks like this:
     really common one is `separator`, which is used by functions that
     concatenate values.
 
-### Sort
-
-The configuration of the View’s sort behavior is different depending on
-whether the data has been grouped or pivotted.
-
-#### Plain
-
-#### Group
-
-#### Pivot
-
 ## Data Object
 
   - `isPlain`
@@ -159,10 +148,10 @@ whether the data has been grouped or pivotted.
 
     groupFields = ["A", "B"]
     rowVals = [[1, 1], [1, 2], [2, 1], [2, 2]]
-
+    
     pivotFields = ["C", "D"]
     colVals = [[3, 3], [3, 4], [4, 3], [4, 4]]
-
+    
     data = [
       [
           [row, row, ...] // each row has A = 1, B = 1, C = 3, D = 3
