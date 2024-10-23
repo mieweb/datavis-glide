@@ -1,6 +1,7 @@
 import jQuery from 'jquery';
 
 import { trans } from '../trans.js';
+
 import {
 	deepDefaults,
 	fontAwesome,

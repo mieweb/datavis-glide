@@ -1,5 +1,6 @@
 import _ from 'underscore';
 import jQuery from 'jquery';
+import Handlebars from 'handlebars';
 
 import {
 	debug,

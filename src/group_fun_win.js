@@ -1,5 +1,4 @@
 import _ from 'underscore';
-import jQuery from 'jquery';
 
 import OrdMap from './util/ordmap.js';
 

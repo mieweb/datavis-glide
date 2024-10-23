@@ -1,6 +1,5 @@
 import _ from 'underscore';
-import jQuery from 'jquery';
-import JSONFormatter from '../../third-party/json-formatter.esm.js';
+import JSONFormatter from 'json-formatter-js';
 
 import { deepCopy } from './misc.js';
 

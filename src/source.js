@@ -2,7 +2,6 @@
 
 import _ from 'underscore';
 import Papa from 'papaparse';
-import jQuery from 'jquery';
 
 import {
 	debug,

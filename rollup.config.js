@@ -7,11 +7,7 @@ import babel from '@rollup/plugin-babel';
 export default {
 	input: 'datavis.js',
 	external: [
-		'jquery',
-		'jquery-ui',
-		'jquery-contextmenu',
-		'sumoselect',
-		'flatpickr',
+		'jquery'
 	],
 	output: {
 		file: 'dist/wcdatavis.js',
