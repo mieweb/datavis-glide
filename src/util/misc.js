@@ -12,6 +12,8 @@ import EXPERIMENTAL_FEATURES from '../flags.js';
 
 import types from '../types.js';
 
+import { StringDropdownGridFilterSumo } from '../grid_filter.js'
+
 /**
  * @namespace util
  */
@@ -3903,12 +3905,12 @@ export var EagerPipeline = makeSubclass('EagerPipeline', Object, function (x) {
 	this.x = x;
 });
 
-export function setupCustomContextMenuType(gridFilter) {
-	$.contextMenu.types.filter = function(item, opt, root) {
-		$(gridFilter.div)
+export function setupCustomContextMenuType(field, gridFilter) {
+	var t = StringDropdownGridFilterSumo;
+	console.log(t);
+	$.contextMenu.types[field] = function(item, opt, root) {
+		$(gridFilter.div).clone(true, true)
 			.appendTo(this);
-	
-		this.addClass('labels');
 	};
 	
 }

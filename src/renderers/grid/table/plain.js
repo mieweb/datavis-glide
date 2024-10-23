@@ -27,6 +27,7 @@ import {
 	setPropDef,
 	setTableCell,
 	setElement,
+	setupCustomContextMenuType
 } from '../../../util/misc.js';
 
 import {AggregateInfo} from '../../../aggregates.js';
@@ -216,7 +217,6 @@ GridTablePlain.prototype.drawHeader = function (columns, data, typeInfo, opts) {
 		self._addSortingToHeader(data, 'vertical', {field: field}, headingThControls.get(0));
 
 		self._addFilterToHeader(headingThControls, field, headingText);
-
 
 		if (self.opts.drawInternalBorders) {
 			headingTh.addClass('wcdv_pivot_colval_boundary');

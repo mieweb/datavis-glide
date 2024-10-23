@@ -788,13 +788,16 @@ GridTable.prototype._addFilterToHeader = function (container, field, displayText
 	}
 
 	let filter_selector_class = gensym();
+
 	jQuery(fontAwesome('fa-filter', 'wcdv_filter_icon ' + filter_selector_class, trans('GRID.TABLE.ADD_FILTER_HELP', field)))
 		.on('click', function () {
 			self.grid.filterControl.addField(field, displayText, {
 				openControls: false
 			});
-			setupCustomContextMenuType(self.grid.filterControl.gfs.filters.byCol[field][0]);
+			setupCustomContextMenuType(field,self.grid.filterControl.gfs.filters.byCol[field][0]);
 
+			$('.data-title').attr('data-menutitle', 'Filter by ' + displayText);
+			self.contextMenuSelectors.push('.' + filter_selector_class);
 			var filterIcon_menu = jQuery.contextMenu({
 				selector: '.' + filter_selector_class,
 				className: 'data-title',
@@ -806,13 +809,10 @@ GridTable.prototype._addFilterToHeader = function (container, field, displayText
 					console.log(itemKey);
 				},
 				items: {
-					label: {type: "filter", customName: "Filter by " + displayText, callback: function(){ return false; }},
+					label: {type: field, customName: "Filter by " + displayText, callback: function(){ return true; }},
 				}
 			});
-			$('.data-title').attr('data-menutitle', 'Filter by ' + displayText);
-			self.contextMenuSelectors.push('.' + filter_selector_class);
-			console.log(self.ui.contextMenus);
-
+			
 		})
 		.tooltip({
 			classes: {
