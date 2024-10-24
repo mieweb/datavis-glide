@@ -71,15 +71,15 @@ teardown:	npm-teardown python-teardown jsdoc-teardown
 
 # Building DataVis {{{1
 
-dist/wcdatavis.js:	rollup.config.js datavis.js third-party/json-formatter.esm.js $(SOURCE) $(LANG_PACKS)
+dist/wcdatavis.js:	rollup.config.js datavis.js $(SOURCE) $(LANG_PACKS)
 	npm run rollup
 
 dist/wcdatavis.min.js:	dist/wcdatavis.js
 	npm run uglify
 
-third-party/json-formatter.esm.js:
-	cd third-party/json-formatter-js && npm i && npm run build
-	cp third-party/json-formatter-js/dist/$(notdir $@) $@
+# third-party/json-formatter.esm.js:
+# 	cd third-party/json-formatter-js && npm i && npm run build
+# 	cp third-party/json-formatter-js/dist/$(notdir $@) $@
 
 # Documentation {{{1
 
