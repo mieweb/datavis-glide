@@ -1,5 +1,5 @@
 import _ from 'underscore';
-import JSONFormatter from 'json-formatter-js';
+import JSONFormatter from '../../../third-party/json-formatter.esm.js';
 
 import OrdMap from '../../util/ordmap.js';
 
