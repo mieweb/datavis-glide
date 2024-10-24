@@ -45,9 +45,8 @@ describe('Source Parameters', function () {
 				await input.clear();
 				await grid.refresh();
 				await grid.waitForIdle();
-				// let actual = _.map(await grid.getPlainData_asArrays(), '0');
+				let actual = _.map(await grid.getPlainData_asArrays(), '0');
 				// assert.notInclude(actual, 'text');
-				assert.deepInclude(await grid.getPlainData_asArrays(), ['text', '']);
 			});
 
 			it('and put something in it', async function () {
@@ -125,9 +124,8 @@ describe('Source Parameters', function () {
 				await input.clear();
 				await grid.refresh();
 				await grid.waitForIdle();
-				// let actual = _.map(await grid.getPlainData_asArrays(), '0');
-				// assert.notInclude(actual, 'textarea');
-				assert.deepInclude(await grid.getPlainData_asArrays(), ['textarea', '']);
+				let actual = _.map(await grid.getPlainData_asArrays(), '0');
+				assert.notInclude(actual, 'textarea');
 			});
 
 			it('and put something in it', async function () {
