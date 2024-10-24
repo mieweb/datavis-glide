@@ -14,7 +14,8 @@
   "files": [
     "src/*.js",
     "src/**/*.js",
-    "dist/wcdatavis.css"
+    "dist/wcdatavis.css",
+    "third-party/jquery.sumoselect"
   ],
   "main": "index.js",
   "browser": "datavis.js",
@@ -27,7 +28,8 @@
     "lint": "eslint src",
     "test": "mocha -t 10000 tests/selenium/*.js",
     "rollup": "rollup --bundleConfigAsCjs -c rollup.config.js",
-    "uglify": "uglifyjs -c -o dist/wcdatavis.min.js dist/wcdatavis.js"
+    "uglify": "uglifyjs -c -o dist/wcdatavis.min.js dist/wcdatavis.js",
+    "prepare": "echo 'running prepare script'; git submodule update --init"
   },
   "dependencies": {
     "bignumber.js": "=9.1.2",
