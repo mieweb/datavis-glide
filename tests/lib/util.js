@@ -248,6 +248,10 @@ async function checkboxByValue(inputs, values) {
 	});
 }
 
+async function blur(driver) {
+	return driver.executeScript('!!document.activeElement ? document.activeElement.blur() : 0');
+}
+
 /**
  * Pauses execution.
  *
@@ -269,5 +273,6 @@ module.exports = {
 	selectByValue,
 	radioByValue,
 	checkboxByValue,
+	blur,
 	sleep,
 };

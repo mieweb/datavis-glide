@@ -6,7 +6,7 @@ const _ = require('lodash');
 const Promise = require("bluebird");
 const {By, Key} = require('selenium-webdriver');
 const until = require('selenium-webdriver/lib/until');
-const {asyncMap, asyncFilter, selectByText, selectByValue, sleep} = require('./util.js');
+const {asyncMap, asyncFilter, blur, selectByText, selectByValue, sleep} = require('./util.js');
 
 const {Type: LoggingType} = require('selenium-webdriver/lib/logging');
 
@@ -443,7 +443,7 @@ class Grid {
 	 * A rowVal representing the group to expand.  Example: `['Grape', 'South Korea']` when grouping
 	 * by "Fruit" and "Country."
 	 */
-	
+
 	async forEachGroup(eachFn, endFn, path) {
 		let groupId = 0;
 		let traversedPath = [];
@@ -485,7 +485,7 @@ class Grid {
 	 * grid.expandGroup("England", "Strawberry")
 	 * ```
 	 */
-	
+
 	async expandGroup(...path) {
 		return this.forEachGroup(async (elt) => {
 			await elt.findElement(By.css('button.wcdv_expand_button[data-wcdv-expanded="0"]')).click();
@@ -692,7 +692,8 @@ class Grid {
 		case 'input': {
 			const input = await controlField[0].findElement(By.css('div.wcdv_filter_control_filter > input'));
 			await input.clear();
-			await input.sendKeys(value, Key.TAB);
+			await input.sendKeys(value);
+			await blur(this.driver);
 			break;
 		}
 		case 'date': {
