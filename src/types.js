@@ -6,7 +6,7 @@ import BigNumber from 'bignumber.js/bignumber.js';
 import numeral from 'numeral';
 import moment from 'moment';
 
-import JSONFormatter from '../third-party/json-formatter.esm.js';
+import JSONFormatter from 'json-formatter-js';
 
 import OrdMap from './util/ordmap.js';
 import EXPERIMENTAL_FEATURES from './flags.js';

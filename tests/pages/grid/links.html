@@ -34,9 +34,10 @@ $(document).ready(function () {
 		url: '../random100.json',
 		conversion: ['link']
 	});
-	var view = new MIE.WC_DataVis.View(source, 'TEST:GRID:LINKS');
-	new MIE.WC_DataVis.Grid('grid', view, {
+	var computedView = new MIE.WC_DataVis.ComputedView(source);
+	new MIE.WC_DataVis.Grid({
 		id: 'grid',
+		computedView: computedView,
 		table: {
 			features: {
 				limit: false,

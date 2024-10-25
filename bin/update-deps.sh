@@ -15,6 +15,7 @@ copy_npm() {
 	files+=(jquery-ui/dist/jquery-ui.min.js jquery-ui/dist/themes/base/jquery-ui.min.css)
 	files+=(jquery-contextmenu/dist/jquery.contextMenu.min.{js,css})
 	files+=(flatpickr/dist/flatpickr.min.{js,css})
+	files+=(sumoselect/jquery.sumoselect.min.js sumoselect/sumoselect.min.css)
 	cp -v "${files[@]/#/$src/}" $dest
 	rsync -av $src/jquery-ui/themes/base/images/ $dest/images/
 }
@@ -29,7 +30,6 @@ copy_git() {
 
 main() {
 	copy_npm
-	copy_git
 }
 
 main "$@"
