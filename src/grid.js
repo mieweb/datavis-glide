@@ -1588,18 +1588,29 @@ Grid.prototype.hideControls = function () {
 		return;
 	}
 
+	// We need this to happen after both of the async functions (to hide the
+	// controls & toolbar) happen below.
+
+	var l = new Lock('Hide Controls', {start: 2});
+	l.onUnlock(function () {
+		if (window.Tabletool) {
+			window.Tabletool.update();
+		}
+	}, 'Update Tabletool');
+
 	self.ui.controls.hide({
 		duration: 0,
 		complete: function () {
 			self.fire(Grid.events.hideControls);
+			l.unlock();
 		}
 	});
 
-	//Hide the toolbar
 	self.ui.toolbar.hide({
 		duration: 0,
 		complete: function () {
 			//self.fire(Grid.events.hideToolbar);
+			l.unlock();
 		}
 	});
 };
@@ -1613,18 +1624,29 @@ Grid.prototype.showControls = function () {
 		return;
 	}
 
+	// We need this to happen after both of the async functions (to show the
+	// controls & toolbar) happen below.
+
+	var l = new Lock('Show Controls', {start: 2});
+	l.onUnlock(function () {
+		if (window.Tabletool) {
+			window.Tabletool.update();
+		}
+	}, 'Update Tabletool');
+
 	self.ui.controls.show({
 		duration: 0,
 		complete: function () {
 			self.fire(Grid.events.showControls);
+			l.unlock();
 		}
 	});
 
-	//Show the toolbar
 	self.ui.toolbar.show({
 		duration: 0,
 		complete: function () {
 			//self.fire(Grid.events.showToolbar);
+			l.unlock();
 		}
 	});
 };

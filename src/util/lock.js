@@ -11,8 +11,10 @@ import _ from 'underscore';
 export var Lock = function (name, opts) {
 	var self = this;
 
+	opts = opts || {};
+
 	self._name = name || '#' + (Lock._id++);
-	self._lockCount = 0;
+	self._lockCount = opts.start || 0;
 	self._onUnlock = [];
 };
 
