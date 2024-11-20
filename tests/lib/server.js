@@ -58,15 +58,27 @@ const autoLimit = (req, res, u) => {
  */
 
 const handler = (opts) => (req, res) => {
-  let u = url.parse(req.url, true);
-	switch (u.pathname) {
-	case '/reflect/cgi':
-    return reflectCgi(req, res, u);
-	case '/ds/autolimit':
-		return autoLimit(req, res, u);
-	default:
-    return serveHandler(req, res, opts);
-  }
+	try {
+		let u = url.parse(req.url, true);
+		switch (u.pathname) {
+		case '/reflect/cgi':
+			return reflectCgi(req, res, u);
+		case '/ds/autolimit':
+			return autoLimit(req, res, u);
+		default:
+			return serveHandler(req, res, opts);
+		}
+	}
+	catch (e) {
+		res.setHeader('Content-Type', 'text/plain');
+		res.statusCode = 500;
+		res.end(e.stack);
+		const u = url.parse(req.url, true);
+		console.error('METHOD:', req.method);
+		console.error('PATH:  ', u.pathname);
+		console.error('QUERY: ', u.query);
+		console.error(e);
+	}
 };
 
 module.exports = {

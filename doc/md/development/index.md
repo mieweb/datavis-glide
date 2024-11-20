@@ -17,7 +17,7 @@ The DataVis support tooling is written in both JavaScript and Python: you will n
 !!! example "Full example on MacOS"
 
     The following should get you everything you need on MacOS, ready for the "setup" step below.
-
+    
     ```
     $ brew install make gawk node pyenv pyenv-virtualenv
     $ eval "$(pyenv init -)"
@@ -36,12 +36,12 @@ After installing the [Pre-Requisites](#pre-requisites), run `make datavis` to bu
 
 ## Running the Local Server
 
-By running the local HTTP server, you can easily get to the documentation and test pages as you work on the code.  It runs on port 5000 and can be started with `make serve`.  Here are some links for useful stuff, once you get it running:
+By running the local HTTP server, you can easily get to the documentation and test pages as you work on the code.  It can be started with `make PORT=3000 serve`.  Here are some links for useful stuff, once you get it running:
 
-- [DataVis JS API Docs](http://localhost:5000/jsdoc/index.html)
-- [DataVis Manual](http://localhost:5000/doc/html/index.html)
-- [Testing Library JS API Docs](http://localhost:5000/tests/jsdoc/index.html)
-- [Grid Test Pages](http://localhost:5000/tests/pages/grid/)
+- [DataVis JS API Docs](http://localhost:3000/jsdoc/index.html)
+- [DataVis Manual](http://localhost:3000/doc/html/index.html)
+- [Testing Library JS API Docs](http://localhost:3000/tests/jsdoc/index.html)
+- [Grid Test Pages](http://localhost:3000/tests/pages/grid/)
 
-!!! note
-    By default, the local HTTP server uses port 5000 but your computer may already be using that port for something else.  In that case, you'll see an error in the console; you can use a variable for make to change the port, like so: `make PORT=5001 serve`.  If you change the port, adjust those previous URLs appropriately.
+!!! note "Specifying the Server’s Port"
+    By default, the local HTTP server uses whatever port is available, and prints the address when it starts.  For most use cases, this is enough; but if necessary, you can force the server to bind to a specific port using the `PORT` environment variable. Port 3000 is what’s used by the automated tests, so that’s what we use in this manual.

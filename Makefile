@@ -120,9 +120,9 @@ publish:	doc-publish tests-publish
 .PHONY:	serve
 serve:
 ifdef PORT
-	/usr/bin/env PORT=$(PORT) python bin/data-server.py
+	/usr/bin/env PORT=$(PORT) node ./bin/server.js
 else
-	python bin/data-server.py
+	node ./bin/server.js
 endif
 
 tests:	$(DIST_FILES)
