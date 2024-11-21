@@ -12,10 +12,11 @@
   "private": true,
   "author": "Taylor Venable <tvenable@mieweb.com>",
   "files": [
+    "index.js",
+    "global-jquery.js",
     "src/*.js",
     "src/**/*.js",
-    "dist/wcdatavis.css",
-    "third-party/jquery.sumoselect"
+    "dist/wcdatavis.css"
   ],
   "main": "index.js",
   "browser": "datavis.js",
