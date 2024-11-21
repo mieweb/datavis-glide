@@ -48,7 +48,6 @@ nav:
       - Documentation: development/docs.md
       - Making a Release: development/release.md
   - Utilization:
-      - NPM Dependency: npm.md
       - Known Issues: known_issues.md
   - Glossary: glossary.md
   - About DataVis: about.md

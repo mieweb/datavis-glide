@@ -20,29 +20,22 @@ Copy the JS and CSS files from the `dist` directory and include them in your pag
 
 ## Runtime Dependencies
 
-### Required Dependencies
+There are no JavaScript runtime dependencies. Everything is now bundled within the `wcdatavis.js` file. When using DataVis as a dependency from NPM, simply import it.
 
-The following libraries are required to use DataVis:
+### CSS Dependencies
 
-| Name         | Dependency Type |
-| ------------ | --------------- |
-| jQuery       | JS              |
-| jQuery UI    | JS, CSS         |
-| BlockUI      | JS              |
-| contextMenu  | JS, CSS         |
-| SumoSelect   | JS, CSS         |
-| FlatPickr    | JS, CSS         |
-| Font Awesome | CSS             |
+The following CSS files are still required to use DataVis:
+
+* jQuery UI
+* BlockUI
+* contextMenu
+* SumoSelect
+* FlatPickr
+* Font Awesome
 
 Here's some HTML you can adapt to get the external dependencies.
 
 ``` html
-<script src="jquery-latest.js"></script>
-<script src="jquery-ui.js"></script>
-<script src="blockUI.js"></script>
-<script src="contextMenu.js"></script>
-<script src="sumoselect.js"></script>
-<script src="flatpickr.js"></script>
 <script src="wcdatavis.js"></script>
 
 <link rel="stylesheet" href="font-awesome.css"/>
@@ -50,48 +43,143 @@ Here's some HTML you can adapt to get the external dependencies.
 <link rel="stylesheet" href="contextMenu.css"/>
 <link rel="stylesheet" href="sumoselect.css"/>
 <link rel="stylesheet" href="flatpickr.css"/>
-<link rel="stylesheet" href="base.css"/>
+
 <link rel="stylesheet" href="wcdatavis.css"/>
 ```
 
-## Basic Usage
+## Basic Concepts
 
-At the bare minimum, you need to create two objects: an instance of `MIE.WC_DataVis.Source` and an instance of `MIE.WC_DataVis.Grid` — the source handles data input, the grid handles data output.
+At the bare minimum, you need to create three objects:
 
-## Dependency Rationale
+- An instance of `Source` to retrieve data.
+- An instance of `View` to perform operations like group and sort.
+- An instance of `Grid` to display the results.
 
-### Multi-Select Dropdown
+## Direct Browser Usage
 
-Requirements:
+```html
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8"/>
+		<script src="../wcdatavis.js"></script>
+		<link rel="stylesheet" href="../font-awesome.css"/>
+		<link rel="stylesheet" href="../jquery-ui.min.css"/>
+		<link rel="stylesheet" href="../jquery.contextMenu.min.css"/>
+		<link rel="stylesheet" href="../sumoselect.min.css"/>
+		<link rel="stylesheet" href="../flatpickr.min.css"/>
+		<link rel="stylesheet" href="../wcdatavis.css"/>
+		<script>
+document.addEventListener('DOMContentLoaded', function () {
+	var source = new MIE.WC_DataVis.Source({
+		type: 'http',
+		url: '../random100.json'
+	});
+	var computedView = new MIE.WC_DataVis.ComputedView(source);
+	new MIE.WC_DataVis.Grid({
+		id: 'grid',
+		computedView: computedView
+	}, {title: 'Test Grid'});
+});
+		</script>
+	</head>
+	<body>
+		<div id="grid"></div>
+	</body>
+</html>
+```
 
-  - Allow user to see what they've selected.
-  - Allow user to search for items.
+## Node Project
 
-I considered select all / none, but that is easily handled by just
-removing the filter.
+### Package File
 
-Candidates:
+```javascript
+{
+  "name": "datavis-example",
+  "version": "1.0.0",
+  "description": "Example of how to use DataVis",
+  "license": "UNLICENSED",
+  "author": "Taylor Venable <tvenable@mieweb.com>",
+  "scripts": {
+    "rollup": "rollup --bundleConfigAsCjs -c rollup.config.js",
+  },
+  "dependencies": {
+    "wcdatavis": "git+ssh://git@github.mieweb.com:datavis/wcdatavis.git"
+  },
+  "devDependencies": {
+    "@babel/core": "=7.24.9",
+    "@babel/preset-env": "=7.24.8",
+    "@rollup/plugin-babel": "=6.0.4",
+    "@rollup/plugin-commonjs": "=25.0.7",
+    "@rollup/plugin-node-resolve": "=15.2.3",
+    "rollup": "=4.9.6"
+  }
+}
+```
 
-  - Chosen
+### Rollup Config
 
-### Date / Time Picker
+```javascript
+import resolve from '@rollup/plugin-node-resolve';
+import commonjs from '@rollup/plugin-commonjs';
+import babel from '@rollup/plugin-babel';
 
-Requirements:
+export default {
+	input: 'index.js',
+	output: {
+		file: 'dist/index.js',
+		format: 'iife',
+		globals: {
+			fs: 'undefined',
+			stream: 'undefined',
+		}
+	},
+	plugins: [resolve(), commonjs(), babel({ babelHelpers: 'bundled' })]
+};
+```
 
-  - Allow user to quickly change month and year.
-  - Allow user to select date ranges in a single widget.
+### JavaScript File
 
-Candidates:
+```javascript
+import {
+  Source,
+  ComputedView,
+  Grid,
+} from 'wcdatavis';
 
-  - Pikaday <https://github.com/dbushell/Pikaday>
-      - Pro: Looks pretty nice.
-      - Con: Doesn't handle ranges.
-  - Flatpickr <https://chmln.github.io/flatpickr/examples/>
-      - Pro: Allows you to input ranges natively.
-      - Con: Takes up a lot of space.
-  - XDSoft DateTimePicker <http://xdsoft.net/jqplugins/datetimepicker/>
-      - Con: Doesn't handle ranges.
-  - XDSoft PeriodPicker <http://xdsoft.net/jqplugins/periodpicker/>
-      - Pro: Really slick looking.
-      - Pro: Allows you to input ranges easily.
-      - Con: Costs money\!
+document.addEventListener('DOMContentLoaded', function () {
+  var source = new Source({
+    type: 'http',
+    url: 'fruit.csv'
+  });
+  var computedView = new ComputedView(source);
+  new Grid({
+    id: 'grid',
+    computedView: computedView
+  }, {title: 'DataVis NPM Example'});
+});
+
+```
+
+### HTML File
+
+```html
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>DataVis Example</title>
+		<meta charset="utf-8"/>
+		<script src="../dist/index.js"></script>
+		<link rel="stylesheet" href="../font-awesome.css"/>
+		<link rel="stylesheet" href="../jquery-ui.min.css"/>
+		<link rel="stylesheet" href="../jquery.contextMenu.min.css"/>
+		<link rel="stylesheet" href="../sumoselect.min.css"/>
+		<link rel="stylesheet" href="../flatpickr.min.css"/>
+		<link rel="stylesheet" href="../node_modules/wcdatavis/dist/wcdatavis.css"/>
+	</head>
+	<body>
+		<div id="grid"></div>
+	</body>
+</html>
+```
+
