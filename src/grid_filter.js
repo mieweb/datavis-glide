@@ -3,6 +3,8 @@ import moment from 'moment';
 import numeral from 'numeral';
 import BigNumber from 'bignumber.js/bignumber.js';
 
+import jQuery from 'jquery';
+
 import {
 	debug,
 	deepDefaults,

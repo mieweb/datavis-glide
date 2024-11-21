@@ -1,4 +1,5 @@
 import _ from 'underscore';
+import jQuery from 'jquery';
 
 import {
 	fontAwesome,

@@ -1,6 +1,8 @@
 import _ from 'underscore';
 import JSONFormatter from 'json-formatter-js';
 
+import jQuery from 'jquery';
+
 import { deepCopy } from './misc.js';
 
 // OrdMap {{{1

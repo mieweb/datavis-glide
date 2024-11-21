@@ -3,6 +3,8 @@ import sprintf from 'sprintf-js';
 import numeral from 'numeral';
 import BigNumber from 'bignumber.js/bignumber.js';
 
+import jQuery from 'jquery';
+
 import { trans } from './trans.js';
 import {
 	deepDefaults,

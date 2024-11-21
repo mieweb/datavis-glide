@@ -3,6 +3,8 @@ import JSONFormatter from 'json-formatter-js';
 
 import OrdMap from '../../util/ordmap.js';
 
+import jQuery from 'jquery';
+
 import {
 	fontAwesome,
 	getPropDef,
