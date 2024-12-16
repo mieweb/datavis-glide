@@ -1003,7 +1003,9 @@ ComputedView.prototype.sort = function (cont) {
 		// lot simpler (i.e. no need to compare a Moment object --- which has already been decoded ---
 		// with a string containing a date).
 
-		Source.decodeAll(self.data.dataByRowId, fti.field, self.typeInfo);
+		if (fti.field != null) {
+			Source.decodeAll(self.data.dataByRowId, fti.field, self.typeInfo);
+		}
 
 		return cmp;
 	};
