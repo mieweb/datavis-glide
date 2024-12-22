@@ -6,6 +6,7 @@ import jQuery from 'jquery';
 
 import { trans } from '../../trans.js';
 import {
+	asyncEach,
 	debug,
 	deepCopy,
 	determineColumns,
@@ -147,6 +148,24 @@ import {TableExport, Csv} from '../../util/csv.js';
  * **Internal** If true, configure the table to scroll within the parent element.
  */
 
+/**
+ * @typedef GridTable~ServerSideCell
+ *
+ * @property {Element} container
+ * An element where the server-side rendered result will be put.  The behavior is still dependent on
+ * whether the colconfig has `allowHtml` turned on or not.
+ *
+ * @property {string} field
+ * Name of the field.  Used for looking up column configuration.
+ *
+ * @property {any} value
+ * The formatted value, which will be sent back to the server for rendering.
+ *
+ * @property {Object} record
+ * The other data for the same record, which can be sent (as individual fields) to the server to aid
+ * rendering (e.g. in case the result depends on other parts of the same record).
+ */
+
 // Constructor {{{2
 
 /**
@@ -188,6 +207,9 @@ import {TableExport, Csv} from '../../util/csv.js';
  * If true, then the view has done something that requires us to be redrawn.
  *
  * @property {OrdMap} colConfig
+ *
+ * @property {Object} ssrCells
+ * @property {Array.<GridTable~ServerSideCell>} ssrCells.body
  */
 
 var GridTable = makeSubclass('GridTable', GridRenderer, function () {
@@ -199,6 +221,11 @@ var GridTable = makeSubclass('GridTable', GridRenderer, function () {
 	self.needsRedraw = false;
 	self.contextMenuSelectors = [];
 	self.csvLock = new Lock('GridTable/csv');
+	self.ssrCells = {
+		header: [],
+		footer: [],
+		body: []
+	};
 
 	_.defaults(self.opts, {
 		drawInternalBorders: true,
@@ -2073,6 +2100,119 @@ GridTable.prototype.isSelected = function (what) {
 
 GridTable.prototype._updateSelectionGui = function () {
 	log.error('GridTable#_updateSelectionGui(): Must be implemented by subclass');
-}
+};
+
+// #serverSideRender {{{2
+
+/**
+ * Executed deferred server-side rendering of cells in the header, body, and footer.
+ */
+
+GridTable.prototype.serverSideRender = function (cont) {
+	var self = this;
+
+	// urls : {
+	//   'header' | 'footer' | 'body' : {
+	//     url : [{
+	//       container : Element
+	//       field : string
+	//       params : {}
+	//     }]
+	//   }
+	// }
+
+	var urls = {
+		header: {},
+		footer: {},
+		body: {}
+	};
+
+	_.each(self.ssrCells.body, function (cell) {
+		var fcc = self.colConfig.get(cell.field);
+		if (fcc == null) {
+			// Tried to set up server-side rendering on a field that we don't have any colconfig on.
+			console.warn(cell.field, 'Attempted to perform server-side rendering on a cell in field "' + cell.field + '" but no colconfig exists.');
+			return;
+		}
+		if (getProp(false, fcc, 'serverRender', 'enable') === false) {
+			// Tried to set up server-side rendering on a field that has it turned off.
+			console.warn(cell.field, 'Attempted to perform server-side rendering on a cell in field "' + cell.field + '" but server-side rendering is disabled.');
+			return;
+		}
+		var url = getProp(fcc, 'serverRender', 'url');
+		if (url == null) {
+			// Tried to set up server-side rendering on a field that has no URL in the colconfig.
+			console.warn(cell.field, 'Attempted to perform server-side rendering on a cell in field "' + cell.field + '" but the colconfig does not indicate URL.');
+			return;
+		}
+
+		var obj = {
+			container: cell.container,
+			field: cell.field,
+			params: {}
+		};
+
+		obj.params[cell.field] = cell.value;
+
+		_.each(getPropDef({}, fcc, 'serverRender', 'params'), function (p) {
+			if (p.field != null) {
+				// {field: Color} sends the value of the "Color" field as the "Color" param
+				obj.params[p.field] = cell.record[p.field].value;
+			}
+			else if (p.cgiName != null && p.cgiValue != null) {
+				// {cgiName: "Foo", cgiValue: "Bar"} sends "Bar" as the "Foo" param
+				obj.params[p.cgiName] = p.cgiValue;
+			}
+		});
+
+		if (urls.body[url] == null) {
+			urls.body[url] = [];
+		}
+
+		urls.body[url].push(obj);
+	});
+
+	self.ssrCells.body = [];
+
+	// Server receives: [{k1: v1, k2: v2, k3: v3, ...}, ...]
+	// Server sends: ["<html>", "<html>"]
+
+	asyncEach(_.keys(urls.body), function (url, i, next) {
+		jQuery.ajax({
+			type: 'POST',
+			url: url,
+			data: JSON.stringify(_.map(urls.body[url], function (x) { return x.params; })),
+			contentType: 'application/json',
+			dataType: 'json',
+			success: function (data, status, xhr) {
+				_.each(data, function (d, j) {
+					var cell = urls.body[url][j];
+					var elt = cell.container;
+					if (elt instanceof jQuery) {
+						elt = elt.get(0);
+					}
+					if (self.colConfig.get(cell.field).allowHtml) {
+						elt.innerHTML = d;
+					}
+					else {
+						elt.innerText = d;
+					}
+				});
+				return next();
+			},
+			failure: function (xhr, status) {
+				self.warn('Request failed: ' + status);
+				next();
+			}
+		});
+	}, function () {
+		// TODO Do the same with header & footer URLs.
+		if (typeof cont === 'function') {
+			return cont();
+		}
+	});
+};
+
+// Exports {{{1
 
 export default GridTable;

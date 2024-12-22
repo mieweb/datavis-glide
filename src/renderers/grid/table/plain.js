@@ -402,6 +402,13 @@ GridTablePlain.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 				operations: getProp(self.defn, 'operations', 'cell', field)
 			});
 
+			self.ssrCells.body.push({
+				container: td,
+				field: field,
+				value: value,
+				record: row.rowData
+			});
+
 			// Buttons within cells share a common 'onClick' handler, e.g. all "show full value" buttons
 			// have the same callback.  In that handler, we need to be able to figure out what field we
 			// were called for.  So if we're going to render buttons within the data cell, we need to
@@ -569,25 +576,15 @@ GridTablePlain.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 
 			//self.ui.tbl.css({'table-layout': 'auto'}); // XXX - Does nothing?!
 
-			if (typeof cont === 'function') {
-				return cont();
-			}
-
-			// Nothing to do next, but we're done here.
-
-			return;
+			// Perform any server-side rendering needed.
+			return self.serverSideRender(cont);
 		}
 		else if (typeof nextChunk === 'function') {
 			return nextChunk(startIndex, howMany);
 		}
 
-		if (typeof cont === 'function') {
-			return cont();
-		}
-
-		// Nothing to do next, but we're done here.
-
-		return;
+		// Perform any server-side rendering needed.
+		return self.serverSideRender(cont);
 	};
 
 	var nextChunk;
