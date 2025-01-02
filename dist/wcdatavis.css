@@ -165,6 +165,7 @@ hr.wcdv_hr_gradient {
 	cursor: default;
 	font-size: 0.9em;
 	line-height: 30px;
+	padding-right: 8px;
 }
 
 .wcdv_grid_titlebar .headingInfo .auto_limit_warning {
@@ -232,39 +233,41 @@ hr.wcdv_hr_gradient {
 	padding: 0 8px;
 }
 
-.wcdv_grid_toolbar button,
-.wcdv_grid_toolbar label,
-.wcdv_grid_toolbar .wcdv_button,
-.wcdv_grid_toolbar input {
+.wcdv_grid_toolbar .wcdv_button.pull-right {
+	padding-right: 0.5em;
+}
+
+/******************************************************************************/
+
+.wcdv_toolbar_section button,
+.wcdv_toolbar_section label,
+.wcdv_toolbar_section .wcdv_button,
+.wcdv_toolbar_section input {
 	margin-left: 0.5em;
 }
 
-.wcdv_grid_toolbar button:first-child,
-.wcdv_grid_toolbar label:first-child,
-.wcdv_grid_toolbar .wcdv_button:first-child,
-.wcdv_grid_toolbar input:first-child {
+.wcdv_toolbar_section button:first-child,
+.wcdv_toolbar_section label:first-child,
+.wcdv_toolbar_section .wcdv_button:first-child,
+.wcdv_toolbar_section input:first-child {
 	margin-left: 0;
 }
 
-.wcdv_grid_toolbar > span.fa {
+.wcdv_toolbar_section > span.fa {
 	color: #888;
 	font-size: 18px;
 }
-.wcdv_grid_toolbar > span.fa:hover {
+.wcdv_toolbar_section > span.fa:hover {
 	color: #444;
 }
 
-.wcdv_grid_toolbar button .fa {
+.wcdv_toolbar_section button .fa {
 	font-size: 1.15em;
 	padding-right: 3px;
 }
-.wcdv_grid_toolbar button[disabled=disabled] .fa {
+.wcdv_toolbar_section button[disabled=disabled] .fa {
 	color: #c7c7c77a;
 	cursor: not-allowed;
-}
-
-.wcdv_grid_toolbar .wcdv_button.pull-right {
-	padding-right: 0.5em;
 }
 
 .wcdv_toolbar_section:first-child {

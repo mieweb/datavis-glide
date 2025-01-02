@@ -405,7 +405,8 @@ var PrefsToolbar = makeSubclass('PrefsToolbar', ToolbarSection, function (grid) 
 	var resetBtn = jQuery('<button>', {'type': 'button', 'title': trans('GRID_TOOLBAR.PREFS.RESET.TOOLTIP')})
 		.addClass('wcdv_icon_button wcdv_text-primary')
 		.append(fontAwesome('fa-undo'))
-		.on('click', function () {
+		.on('click', function (evt) {
+			evt.stopPropagation();
 			if (confirm(trans('GRID_TOOLBAR.PREFS.RESET.CONFIRM'))) {
 				grid.prefs.reset();
 			}
@@ -418,7 +419,8 @@ var PrefsToolbar = makeSubclass('PrefsToolbar', ToolbarSection, function (grid) 
 		.attr('title', trans('GRID_TOOLBAR.PREFS.BACK.TOOLTIP'))
 		.attr('disabled', true)
 		.addClass('wcdv_icon_button wcdv_text-primary')
-		.on('click', function () {
+		.on('click', function (evt) {
+			evt.stopPropagation();
 			grid.prefs.back();
 		})
 		.appendTo(div)
@@ -429,7 +431,8 @@ var PrefsToolbar = makeSubclass('PrefsToolbar', ToolbarSection, function (grid) 
 		.attr('title', trans('GRID_TOOLBAR.PREFS.FORWARD.TOOLTIP'))
 		.attr('disabled', true)
 		.addClass('wcdv_icon_button wcdv_text-primary')
-		.on('click', function () {
+		.on('click', function (evt) {
+			evt.stopPropagation();
 			grid.prefs.forward();
 		})
 		.appendTo(div)
@@ -449,7 +452,13 @@ var PrefsToolbar = makeSubclass('PrefsToolbar', ToolbarSection, function (grid) 
 
 	var dropdown = jQuery('<select>')
 		.append(jQuery('<option>', { value: 'NEW' }).text(trans('GRID_TOOLBAR.PREFS.NEW_PERSPECTIVE')))
-		.on('change', function (evt) {
+		.on('click', function (evt) {
+			// After moving the perspective toolbar section into the titlebar, clicking
+			// the dropdown was toggling the grid; we need to add a click event handler
+			// here so we can explicitly prevent that from happening.
+			evt.stopPropagation();
+		})
+		.on('change', function () {
 			if (dropdown.val() === 'NEW') {
 				var name = prompt(trans('GRID_TOOLBAR.PREFS.NEW_PERSPECTIVE.PROMPT'), grid.prefs.currentPerspective.name);
 				if (name) {
@@ -510,7 +519,8 @@ var PrefsToolbar = makeSubclass('PrefsToolbar', ToolbarSection, function (grid) 
 			show: { delay: 1000 },
 			content: saveAsBtnTooltipContent
 		})
-		.on('click', function () {
+		.on('click', function (evt) {
+			evt.stopPropagation();
 			grid.prefs.clonePerspective();
 		})
 		.appendTo(div)
@@ -533,7 +543,8 @@ var PrefsToolbar = makeSubclass('PrefsToolbar', ToolbarSection, function (grid) 
 		// 	show: { delay: 1000 },
 		// 	content: saveBtnTooltipContent
 		// })
-		.on('click', function () {
+		.on('click', function (evt) {
+			evt.stopPropagation();
 			grid.prefs.reallySave();
 		})
 		.appendTo(div)
@@ -552,7 +563,8 @@ var PrefsToolbar = makeSubclass('PrefsToolbar', ToolbarSection, function (grid) 
 	var renameBtn = jQuery('<button>', {'type': 'button', 'title': trans('GRID_TOOLBAR.PREFS.RENAME.TOOLTIP')})
 		.addClass('wcdv_icon_button wcdv_text-primary')
 		.append(fontAwesome('fa-pencil'))
-		.on('click', function () {
+		.on('click', function (evt) {
+			evt.stopPropagation();
 			var id = dropdown.val();
 			var p = grid.prefs.getPerspective({ id: id });
 
@@ -578,7 +590,8 @@ var PrefsToolbar = makeSubclass('PrefsToolbar', ToolbarSection, function (grid) 
 	var deleteBtn = jQuery('<button>', {'type': 'button', 'title': trans('GRID_TOOLBAR.PREFS.DELETE.TOOLTIP')})
 		.addClass('wcdv_icon_button wcdv_text-primary')
 		.append(fontAwesome('fa-trash'))
-		.on('click', function () {
+		.on('click', function (evt) {
+			evt.stopPropagation();
 			if (confirm(trans('GRID_TOOLBAR.PREFS.DELETE_PERSPECTIVE.CONFIRM'))) {
 				grid.prefs.deletePerspective(dropdown.val());
 			}

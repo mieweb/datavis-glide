@@ -594,13 +594,6 @@ var Grid = makeSubclass('Grid', Object, function (defn, opts, cb) {
 		.appendTo(self.ui.content)
 	;
 
-	self.ui.toolbar_prefs = new PrefsToolbar(self);
-	self.ui.toolbar_prefs.attach(self.ui.toolbar);
-
-	self.prefs.bind('grid', self, {
-		toolbar: self.ui.toolbar_prefs.ui.root
-	});
-
 	self.ui.toolbar_computedView = new ComputedViewToolbar(self);
 	self.ui.toolbar_computedView.attach(self.ui.toolbar);
 
@@ -1094,6 +1087,13 @@ Grid.prototype._addTitleWidgets = function (titlebar, doingServerFilter, id) {
 			})
 			.appendTo(notHeader);
 	}
+
+	self.ui.toolbar_prefs = new PrefsToolbar(self);
+	self.ui.toolbar_prefs.attach(titlebar);
+
+	self.prefs.bind('grid', self, {
+		toolbar: self.ui.toolbar_prefs.ui.root
+	});
 
 	// Create container to hold all the controls in the titlebar
 
