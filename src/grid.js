@@ -569,14 +569,24 @@ var Grid = makeSubclass('Grid', Object, function (defn, opts, cb) {
 
 				ui.draggable.draggable('option', 'refreshPositions', true);
 			}
-		})
-		.appendTo(self.ui.root);
+		});
 
 	self._addTitleWidgets(self.ui.titlebar, doingServerFilter, self.id);
 
+	self.ui.autoLimit = jQuery('<div>', {
+		'class': 'wcdv_warning_banner auto_limit_warning'
+	})
+	.text(trans('GRID.TITLEBAR.DATA_LIMITED_WARNING'))
+	.on('click', function () {
+		self.ui.autoLimit.hide();
+		self.view.unlimit();
+		self.refresh();
+	})
+	.hide();
+
 	self.ui.content = jQuery('<div>', {
 		'class': 'wcdv_grid_content'
-	}).appendTo(self.ui.root);
+	});
 
 	self.ui.toolbar = jQuery('<div>')
 		.addClass('wcdv_grid_toolbar')
@@ -590,9 +600,7 @@ var Grid = makeSubclass('Grid', Object, function (defn, opts, cb) {
 
 				ui.draggable.draggable('option', 'refreshPositions', true);
 			}
-		})
-		.appendTo(self.ui.content)
-	;
+		});
 
 	self.ui.toolbar_computedView = new ComputedViewToolbar(self);
 	self.ui.toolbar_computedView.attach(self.ui.toolbar);
@@ -722,6 +730,7 @@ var Grid = makeSubclass('Grid', Object, function (defn, opts, cb) {
 				.append(self.ui.pivotControl)
 				.append(self.ui.aggregateControl))
 			.append(self.ui.operationsPalette)
+			.append(self.ui.autoLimit)
 			.append(self.ui.grid)
 			.append(self.ui.footer))
 	;
@@ -1063,18 +1072,6 @@ Grid.prototype._addTitleWidgets = function (titlebar, doingServerFilter, id) {
 		.hide()
 		.appendTo(notHeader);
 
-	self.ui.autoLimit = jQuery('<span>', {
-		'class': 'auto_limit_warning'
-	})
-	.text(trans('GRID.TITLEBAR.DATA_LIMITED_WARNING'))
-	.on('click', function () {
-		self.ui.autoLimit.hide();
-		self.view.unlimit();
-		self.refresh();
-	})
-	.hide()
-	.appendTo(notHeader);
-
 	if (typeof self.opts.helpText === 'string' && self.opts.helpText !== '') {
 		notHeader.append(' ');
 		fontAwesome('F059')
@@ -1169,7 +1166,7 @@ Grid.prototype._addTitleWidgets = function (titlebar, doingServerFilter, id) {
 	});
 
 	var pWinWarning = jQuery('<div>')
-		.addClass('wcdv_warning_banner')
+		.addClass('wcdv_dlg_warning_banner')
 		.appendTo(pWin);
 
 	var pWinTextArea = jQuery('<textarea>', {'style': 'font-family: monospace; font-size: 10pt; width: 100%', 'rows': '20', 'readonly': true})

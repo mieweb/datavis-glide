@@ -159,7 +159,7 @@ class GridUi {
 	 */
 
 	get autoLimitWarning() {
-		return this.driver.findElement(By.css('.headingInfo .auto_limit_warning'))
+		return this.driver.findElement(By.css('.auto_limit_warning'))
 	}
 
 	get aggregateControl() {

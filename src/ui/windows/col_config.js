@@ -287,7 +287,7 @@ ColConfigWin.prototype.show = function (posElt, onSave) {
 	});
 
 	var pinnedMsg = jQuery('<div>')
-		.addClass('wcdv_info_banner')
+		.addClass('wcdv_dlg_info_banner')
 		.append(fontAwesome('fa-info-circle'))
 		.append(' ')
 		.append(trans('GRID.COLCONFIG_WIN.PINNED_COL_WARNING'))

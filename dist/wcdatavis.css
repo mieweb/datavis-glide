@@ -121,14 +121,14 @@ button.wcdv_expand_button > span.fa {
 	margin-top: 0;
 }
 
-.wcdv_warning_banner {
+.wcdv_dlg_warning_banner {
 	border-left: solid 8px #bf311a;
     padding: 4px;
     margin-bottom: 4px;
     background-color: #fadfdb;
 }
 
-.wcdv_info_banner {
+.wcdv_dlg_info_banner {
 	border: solid 2px #2196F3;
 	background-color: #E3F2FD;
 	color: #0D47A1;
@@ -166,12 +166,6 @@ hr.wcdv_hr_gradient {
 	font-size: 0.9em;
 	line-height: 30px;
 	padding-right: 8px;
-}
-
-.wcdv_grid_titlebar .headingInfo .auto_limit_warning {
-	color: red;
-	font-weight: bold;
-	margin-left: 2em;
 }
 
 .wcdv_grid_titlebar .wcdv_spinner{
@@ -303,6 +297,16 @@ hr.wcdv_hr_gradient {
 .wcdv_grid_toolbar span.fa.wcdv_info_icon {
 	color: #737373;
 	margin-left: 0.5em;
+}
+
+/******************************************************************************/
+
+.wcdv_warning_banner {
+	padding: 0.5em;
+	font-weight: bold;
+	background-color: #FFEB3B;
+	font-size: small;
+	cursor: pointer;
 }
 
 /******************************************************************************/

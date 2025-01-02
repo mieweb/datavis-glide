@@ -107,7 +107,7 @@ export default {
   'GRID.TEMPLATE_EDITOR.TITLE': 'Template Editor',
   'GRID.TITLEBAR.CANCEL': 'Cancel',
   'GRID.TITLEBAR.CLEAR_FILTER': 'clear filter',
-  'GRID.TITLEBAR.DATA_LIMITED_WARNING': 'You are not looking at all of the records. Click to fetch the rest (this may take a while).',
+  'GRID.TITLEBAR.DATA_LIMITED_WARNING': 'To save time, not all records were retrieved. As a result, some functionality is reduced. Click to fetch all data (this may take some time).',
   'GRID.TITLEBAR.DOWNLOAD_CSV': 'Download CSV',
   'GRID.TITLEBAR.GENERATE_CSV': 'Generate CSV',
   'GRID.TITLEBAR.GROUP_COUNT_PLURAL': '%d groups',
