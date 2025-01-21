@@ -7,7 +7,7 @@
       , "fruit": "$< random_element('fruit', ['Apple', 'Banana', 'Blueberry', 'Cherry', 'Grape', 'Kiwi', 'Mango', 'Orange', 'Pineapple', 'Strawberry'], 'normal') >$"
       , "state": "$< state() >$"
       , "duration1": "$< random_duration('duration1') >$"
-      , "duration2": "$< random_duration('duration2', min='0s', max='24h', format='{h:02}:{m:02}:{s:02}') >$"
+      , "duration2": "$< random_duration('duration2', format='{h:02}:{m:02}:{s:02}') >$"
       , "duration3": "$< random_element('duration3', ['00:15', '00:30', '00:45', '01:00']) >$"
     }
   ],

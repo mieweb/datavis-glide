@@ -83,6 +83,9 @@
       , "fixedPrecision3": "$0.70"
       , "boolean1": "$< cycle('boolean1', [0, 1]) >$"
       , "boolean2": "$< cycle('boolean2', [1, 0]) >$"
+      , "duration1": "$< random_duration('duration1') >$"
+      , "duration2": "$< random_duration('duration2', format='{h:02}:{m:02}:{s:02}') >$"
+      , "duration3": "$< random_element('duration3', ['00:15', '00:30', '00:45', '01:00']) >$"
     }
   ],
   "typeInfo": [
@@ -156,5 +159,8 @@
     , { "field": "fixedPrecision3", "type": "currency" }
     , { "field": "boolean1", "type": "number" }
     , { "field": "boolean2", "type": "number" }
+    , { "field": "duration1", "type": "duration" }
+    , { "field": "duration2", "type": "duration", "format": "%h:%m:%s" }
+    , { "field": "duration3", "type": "duration", "format": "%h:%m" }
   ]
 }

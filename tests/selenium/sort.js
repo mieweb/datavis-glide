@@ -87,6 +87,11 @@ describe('Sort', function() {
 				['datetime17', 'January 1, 2010 10:39 AM', 'December 23, 2010 4:42 PM', 'datetime'],
 				['datetime18', 'January 1, 2010 10:39 AM', 'December 23, 2010 4:42 PM', 'datetime'],
 			],
+			'duration': [
+				['duration1', '1y 304d 6h 44m 21s 163t 245u', '989y 29d 21h 10m 54s 165t 350u', 'duration'],
+				['duration2', '00:05:46', '23:26:53', 'duration'],
+				['duration3', '0 hours, 15 minutes', '1 hours, 0 minutes', 'duration']
+			]
 		},
 		group: [{
 

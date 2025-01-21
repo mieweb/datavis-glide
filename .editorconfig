@@ -12,9 +12,9 @@ indent_size = 8
 tab_width = 8
 trim_trailing_whitespace = false
 
-[*.{js,json}]
+[*.{js,json,json5}]
 indent_size = 2
 tab_width = 2
 
-[*.{md,py}]
+[*.{json5,md,py}]
 indent_style = space
