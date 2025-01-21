@@ -311,7 +311,7 @@ export var getComparisonFn = (function () {
 
 	return {
 		byType: (function (type) {
-			return cmpFn[type];
+			return cmpFn[type] || types.registry.get(type).compare;
 		}),
 		byValue: (function (val) {
 			if (typeof val === 'number' || numeral.isNumeral(val) || BigNumber.isBigNumber(val)) {
@@ -3037,7 +3037,8 @@ export function format(fcc, fti, cell, opts) {
 			|| numeral.isNumeral(cell)
 			|| BigNumber.isBigNumber(cell)
 			|| cell == null
-			|| typeof cell !== 'object') {
+			|| typeof cell !== 'object'
+			|| cell.value == null) {
 		cell = {
 			value: cell
 		};
@@ -3171,6 +3172,7 @@ export function format(fcc, fti, cell, opts) {
 			break;
 		case 'number':
 		case 'currency':
+		case 'duration':
 			if (opts.decode) {
 				decode(cell, fti);
 			}

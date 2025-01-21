@@ -75,8 +75,27 @@ types.universalCmp = function (a, b) {
 
 	// compare {{{2
 
-	function compare(a, b) {
-		return types.universalCmp(a, b);
+	var compare;
+
+	if (Intl && Intl.Collator) {
+		var collator = Intl.Collator(undefined, { usage: 'sort', sensitivity: 'base' });
+
+		compare = function (a, b) {
+			if (a == null || b == null) {
+				return a == b ? 0 : a == null ? -1 : 1;
+			}
+
+			return collator.compare(a, b);
+		};
+	}
+	else {
+		compare = function (a, b) {
+			if (a == null || b == null) {
+				return a == b ? 0 : a == null ? -1 : 1;
+			}
+
+			return a < b ? -1 : a > b ? 1 : 0;
+		};
 	}
 
 	// register {{{2
@@ -994,6 +1013,233 @@ types.universalCmp = function (a, b) {
 	});
 })();
 
+// Duration {{{1
+
+(function () {
+
+	var matchRegexp = /^(\d+y\s*)?(\d+d\s*)?(\d+h\s*)?(\d+m\s*)?(\d+s\s*)?(\d+t\s*)?(\d+u)?$/;
+
+	function maybeToInt(x) {
+		var r = parseInt(x, 10);
+		return isNaN(r) ? null : r;
+	}
+
+	function normalize(o) {
+		// Normalize, e.g. 28h 65s = 1d 4h 1m 5s
+
+		if (o.u >= 1000) { o.t += Math.floor(o.u / 1000); o.u = o.u % 1000; }
+		if (o.t >= 1000) { o.s += Math.floor(o.t / 1000); o.t = o.t % 1000; }
+		if (o.s >= 60)   { o.m += Math.floor(o.s / 60);   o.s = o.s % 60;   }
+		if (o.m >= 60)   { o.h += Math.floor(o.m / 60);   o.m = o.m % 60;   }
+		if (o.h >= 24)   { o.d += Math.floor(o.h / 24);   o.h = o.h % 24;   }
+		if (o.d >= 365)  { o.y += Math.floor(o.d / 365);  o.d = o.d % 365;  }
+	}
+
+	// matches {{{2
+
+	function matches(val) {
+		return typeof val === 'string' && val.matches(matchRegexp);
+	}
+
+	// parse {{{2
+
+	var parseRegexps = {};
+
+	function compileParseRegexp(fmt) {
+		var re = '';
+		var spec = [];
+		for (var i = 0; i < fmt.length; i += 1) {
+			if (fmt[i] === '%') {
+				spec.push(fmt[i+1]);
+				re += '(\\d+)';
+				i += 1;
+			}
+			else {
+				if (['\\', '*', '+', '?', '.', '[', ']', '{', '}', '(', ')'].indexOf(fmt[i])) {
+					// Escape regexp metacharacters
+					re += '\\';
+				}
+				re += fmt[i];
+			}
+		}
+		parseRegexps[fmt] = {
+			re: new RegExp('^' + re + '$'),
+			spec: spec
+		};
+	}
+
+	function parse(str, ir, fmt) {
+		var parsed;
+		var m, o;
+
+		ir = ir || 'object';
+
+		if (typeof str !== 'string') {
+			console.error('[DataVis // Type(Duration) // Parse] Call Error: `str` must be a string');
+			return null;
+		}
+
+		if (fmt != null) {
+			if (parseRegexps[fmt] == null) {
+				compileParseRegexp(fmt);
+			}
+
+			m = str.match(parseRegexps[fmt].re);
+			if (m == null) {
+				return null;
+			}
+			o = { y: 0, d: 0, h: 0, m: 0, s: 0, t: 0, u: 0 };
+			_.each(parseRegexps[fmt].spec, function (spec, i) {
+				if (m[i+1] != null) {
+					o[spec] = maybeToInt(m[i+1]) || 0;
+				}
+			});
+		}
+		else {
+			m = str.match(matchRegexp);
+			o = {
+				y: maybeToInt(m[1]) || 0,
+				d: maybeToInt(m[2]) || 0,
+				h: maybeToInt(m[3]) || 0,
+				m: maybeToInt(m[4]) || 0,
+				s: maybeToInt(m[5]) || 0,
+				t: maybeToInt(m[6]) || 0,
+				u: maybeToInt(m[7]) || 0
+			};
+		}
+
+		normalize(o);
+
+		switch (ir) {
+		case 'object':
+			return o;
+		default:
+			console.error('[DataVis // Type(Duration) // Parse] Error: unsupported internal representation: ' + ir);
+			return null;
+		}
+	}
+
+	// decode {{{2
+
+	function decode(val, ir, fmt) {
+		if (typeof val === 'string') {
+			return parse(val, ir, fmt);
+		}
+		else if (typeof val === 'object') {
+			return val;
+		}
+	}
+
+	// format {{{2
+
+	var formatFuns = {};
+
+	function compileFormatFun(fmt) {
+		var fields = [];
+		var s = '';
+		for (var i = 0; i < fmt.length; i += 1) {
+			if (fmt[i] === '%') {
+				if (fmt[i+1] === '%') {
+					s += '%';
+					i += 1;
+				}
+				else {
+					var m = fmt.substr(i+1).match(/^0?(\d*)([ydhmsu])/);
+					if (m == null) {
+						// Unrecognized format sequence.
+						continue;
+					}
+					s += '%';
+					if (m[0][0] === '0') {
+						s += '0';
+					}
+					if (m[1].length > 0) {
+						s += +m[1];
+					}
+					s += 'd';
+					fields.push(m[2]);
+					i += m[0].length;
+				}
+			}
+			else {
+				s += fmt[i];
+			}
+		}
+		formatFuns[fmt] = function (val) {
+			var args = [s];
+			_.each(fields, function (f) {
+				args.push(val[f]);
+			});
+			return sprintf.sprintf.apply(null, args);
+		};
+	}
+
+	function format(val, fmt) {
+		if (fmt != null) {
+			if (formatFuns[fmt] == null) {
+				compileFormatFun(fmt);
+			}
+
+			return formatFuns[fmt](val);
+		}
+		else {
+			return val.y + 'y ' + val.d + 'd ' + val.h + 'h ' + val.m + 'm ' + val.s + 's ' + val.t + 't ' + val.u + 'u';
+		}
+	}
+
+	// natRep {{{2
+
+	function natRep(val) {
+		return format(val);
+	}
+
+	// compare {{{2
+
+	function compare(a, b) {
+		if (typeof a === 'string') {
+			a = decode(a, 'object');
+		}
+		if (typeof b === 'string') {
+			b = decode(b, 'object');
+		}
+
+		if (a.y !== b.y) return a.y < b.y ? -1 : 1;
+		if (a.d !== b.d) return a.d < b.d ? -1 : 1;
+		if (a.h !== b.h) return a.h < b.h ? -1 : 1;
+		if (a.m !== b.m) return a.m < b.m ? -1 : 1;
+		if (a.s !== b.s) return a.s < b.s ? -1 : 1;
+		if (a.t !== b.t) return a.t < b.t ? -1 : 1;
+		if (a.u !== b.u) return a.u < b.u ? -1 : 1;
+	}
+
+	// add {{{2
+
+	function add(a, b) {
+		var r = { y: 0, d: 0, h: 0, m: 0, s: 0, t: 0, u: 0 };
+		r.u = a.u + b.u;
+		r.t = a.t + b.t;
+		r.s = a.s + b.s;
+		r.m = a.m + b.m;
+		r.h = a.h + b.h;
+		r.d = a.d + b.d;
+		r.y = a.y + b.y;
+		normalize(r);
+		return r;
+	}
+
+	// register {{{2
+
+	types.registry.set('duration', {
+		matches: matches,
+		parse: parse,
+		decode: decode,
+		format: format,
+		natRep: natRep,
+		compare: compare,
+		add: add
+	});
+})();
+
 // JSON {{{1
 
 (function () {
@@ -1067,5 +1313,7 @@ types.universalCmp = function (a, b) {
 		compare: null,
 	});
 })();
+
+// Exports {{{1
 
 export default types;

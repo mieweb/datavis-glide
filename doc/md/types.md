@@ -26,6 +26,7 @@ The following types are builtin to DataVis:
 - `currency` — Support for fixed-precision arithmetic and output.
 - `date` — Dates without times.
 - `datetime` — Dates with times.
+- `duration` — Lengths of time, ranging from microseconds to years.
 - `time` — Times without dates.
 - `json` — JSON objects, formatted and decorated so you can browse them interactively.
 
@@ -48,6 +49,40 @@ The date type supports the following internal representations:
 - `date` — Values are stored as Date instances. Time type values are stored with the date of January 1, 2000 and only the time component is formatted.
 - `moment` — Values are stored in Moment instances. Time type values are stored with the date of January 1, 2000 and only the time component is formatted.
 
+### Duration
+
+A duration represents a span of time, how long it takes something to happen.
+
+A parsing string may be provided as part of the type information for a field containing duration values. The parsing string consists of regular text, which must exist in the input string, combined with parsing placeholders consisting of `%` and a letter indicating what part of the duration to read. For example, the parsing string `%h:%m:%s` will parse the input string `03:08:45` into a duration value representing 3 hours, 8 minutes, and 45 seconds. The colons are required, since they are part of the parsing string. Leading zeroes in the parts are ignored, i.e. the input string `3:8:45` parses to the same duration value.
+
+A formatting string may be provided as part of the column configuration for a field containing duration values. This is very similar to the parsing string, with the addition that some printf-like formatting sequences are allowed. In particular, the sequence `%[0<WIDTH>]<PART>` will output the duration part indicated, optionally zero-padded to the specified width. For example, using that value we parsed above, and the formatting string `%h hours, %02m minutes` produces the output “3 hours, 08 minutes”.
+
+The following duration parts are supported for both parsing and formatting strings:
+
+| Flag | Meaning      |
+| ---- | ------------ |
+| `y`  | years        |
+| `d`  | days         |
+| `h`  | hours        |
+| `m`  | minutes      |
+| `s`  | seconds      |
+| `t`  | milliseconds |
+| `u`  | microseconds |
+
+The only supported internal representation of a duration is an object with fields for the years, days, hours, minutes, seconds, and milliseconds.
+
+There is currently no filter for durations.
+
+The following aggregate functions are supported for duration values:
+
+- Count Distinct
+- Values
+- Values w/ Counts
+- Distinct Values
+- Sum
+- Min / Max
+- First / Last / Nth
+
 ## Type Functions
 
 Every entry in the registry is an object defining the type’s behavior. The following properties are required to fully implement a new type. All of the functions can be performance bottlenecks if care is not taken.
@@ -61,6 +96,7 @@ Every entry in the registry is an object defining the type’s behavior. The fol
 - `format(val, fmt) : str | elt` — Formats a value so that it can be printed. Since a type can have multiple internal representations, the format function must handle them all; e.g. the number type handles values of primitive floats, BigNumber objects, and Numeral objects. Returns the empty string if the value cannot be formatted, or if the value is `null`, `undefined`, or `NaN`.
 - `natRep(val) : str` — Converts a value from its internal representation into a string that can be used as the key of a JavaScript object. This is mainly used for grouping functionality in the view. The mapping must be one-to-one, so that different values cannot produce the same “native representation.”
 - `compare(a, b) : {-1, 0, 1}` — Returns -1 if a < b, 0 if a = b, and 1 if a > b. Returns null if the values cannot be compared. This is used for sorting data.
+- `add(a, b) : any` — Add the two values of this type. This is used by the `sum` aggregate function, viz. to add numbers, currency, and durations.
 
 ### Parsing vs Decoding
 
@@ -85,6 +121,7 @@ import types from 'types.js';
   function format(val, fmt) { /* ... */ }
   function natRep(val) { /* ... */ }
   function compare(a, b) { /* ... */ }
+  function add(a, b) { /* ... */ }
   
   types.registry.set('custom', {
     matches: matches,
@@ -92,7 +129,8 @@ import types from 'types.js';
     decode: decode,
     format: format,
     natRep: natRep,
-    compare: compare
+    compare: compare,
+    add: add,
   });
 })();
 ```

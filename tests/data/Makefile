@@ -27,5 +27,5 @@ random1000.json:	$(JSON_GEN_INPUT)
 random10000.json:	$(JSON_GEN_INPUT)
 	$(JSON_GEN) -D COUNT=10000 < $^ > $@
 
-$(JSON_FILES):%.json:	templates/%.json5
-	$(JSON_GEN) -D COUNT=100 < $^ > $@
+$(JSON_FILES):%.json:	templates/%.json5 $(JSON_GEN)
+	$(JSON_GEN) -D COUNT=100 < $< > $@

@@ -842,13 +842,15 @@ GridFilterSet.prototype.build = function (field, target, opts) {//filterType, fi
 	// Make sure that we are able to get the column type.
 
 	if (colType == null) {
-		throw new Error('Unable to determine type of column "' + field + '"');
+		console.error('[DataVis // GridFilterSet // build] Unable to determine type of column "' + field + '"');
+		return null;
 	}
 
 	// Make sure that we know what kinds of filters are allowed for the column type.
 
 	if (GridFilter.widgets[colType] === undefined) {
-		throw new Error('Unknown type "' + colType + '" for column "' + field + '"');
+		console.error('[DataVis // GridFilterSet // build] Unknown type "' + colType + '" for column "' + field + '"');
+		return null;
 	}
 
 	// When the user didn't request a filter type, just use the first one in the allowed list.

@@ -22,6 +22,7 @@ import {
 	toInt,
 } from './util/misc.js';
 import OrdMap from './util/ordmap.js';
+import types from './types.js';
 
 // Utility Functions {{{1
 /* ===============================================================================================
@@ -428,6 +429,21 @@ Aggregate.prototype.getRealValue = function (cell) {
 	}
 };
 
+// #getNatRep {{{2
+
+Aggregate.prototype.getNatRep = function (val) {
+	var self = this;
+	var fcc = self.opts.colConfig ? self.opts.colConfig[0] : null;
+	var fti = self.opts.typeInfo ? self.opts.typeInfo[0] : null;
+
+	if (types.registry.isSet(fti.type)) {
+		return types.registry.get(fti.type).natRep(val);
+	}
+	else {
+		return getNatRep(val);
+	}
+};
+
 // #getFormattedValue {{{2
 
 Aggregate.prototype.getFormattedValue = function (cell) {
@@ -595,7 +611,7 @@ var CountDistinctAggregate = makeSubclass('CountDistinctAggregate', Aggregate, f
 CountDistinctAggregate.prototype.calculateStep = function (acc, next) {
 	var self = this;
 	var cell = next[self.opts.fields[0]];
-	var key = getNatRep(cell.value);
+	var key = self.getNatRep(cell.value);
 
 	if (key != null && key != '' && acc.set[key] == null) {
 		acc.set[key] = true;
@@ -692,7 +708,7 @@ var ValuesWithCountsAggregate = makeSubclass('ValuesWithCountsAggregate', Aggreg
 ValuesWithCountsAggregate.prototype.calculateStep = function (acc, next) {
 	var self = this;
 	var cell = next[self.opts.fields[0]];
-	var key = getNatRep(cell.value);
+	var key = self.getNatRep(cell.value);
 	var formatted = self.getFormattedValue(cell);
 
 	if (acc.map.isSet(key)) {
@@ -732,7 +748,7 @@ ValuesWithCountsAggregate.prototype.calculateDone = function (acc) {
 		var a = [];
 
 		acc.map.each(function (v, k) {
-			a.push(k + ' (' + v.count + ')');
+			a.push(v.formatted + ' (' + v.count + ')');
 		});
 
 		return a.join(self.opts.separator || ', ');
@@ -764,7 +780,7 @@ DistinctValuesAggregate.prototype.calculateDone = function (acc) {
 		var a = [];
 
 		acc.map.each(function (v, k) {
-			a.push(k);
+			a.push(v.formatted);
 		});
 
 		return a.join(self.opts.separator || ', ');
@@ -776,8 +792,8 @@ DistinctValuesAggregate.prototype.calculateDone = function (acc) {
 var SumAggregate = makeSubclass('SumAggregate', Aggregate, null, {
 	name: trans('AGGREGATE.NAME.SUM'),
 	fieldCount: 1,
-	type: 'number',
-	allowedTypes: ['number', 'currency'],
+	// type: 'number',
+	allowedTypes: ['number', 'currency', 'duration'],
 	inheritFormatting: true,
 	bottomValue: 0,
 	init: function () {
@@ -797,12 +813,19 @@ var SumAggregate = makeSubclass('SumAggregate', Aggregate, null, {
 SumAggregate.prototype.calculateStep = function (acc, next) {
 	var self = this;
 	var val = self.getRealValue(next[self.opts.fields[0]]);
+	var fcc = self.opts.colConfig ? self.opts.colConfig[0] : null;
+	var fti = self.opts.typeInfo ? self.opts.typeInfo[0] : null;
 
 	if (val == null) {
 		return acc;
 	}
 
-	switch (self.opts.typeInfo[0].internalType) {
+	if (types.registry.isSet(fti.type) && typeof types.registry.get(fti.type).add === 'function') {
+		self.numItems += 1;
+		return types.registry.get(fti.type).add(acc, val);
+	}
+
+	switch (fti.internalType) {
 	case 'primitive':
 		if (Number.isNaN(val)) {
 			return acc;
@@ -928,8 +951,13 @@ MinAggregate.prototype.checkOpts = function () {
 
 MinAggregate.prototype.calculateStep = function (acc, next) {
 	var self = this;
+	var fcc = self.opts.colConfig ? self.opts.colConfig[0] : null;
+	var fti = self.opts.typeInfo ? self.opts.typeInfo[0] : null;
 
 	var val = self.getRealValue(next[self.opts.fields[0]]);
+	if (types.registry.isSet(fti.type)) {
+		return types.registry.get(fti.type).compare(acc, val) < 0 ? acc : val;
+	}
 	return self.opts.compare(acc, val) < 0 ? acc : val;
 };
 
@@ -967,8 +995,13 @@ MaxAggregate.prototype.checkOpts = function () {
 
 MaxAggregate.prototype.calculateStep = function (acc, next) {
 	var self = this;
+	var fcc = self.opts.colConfig ? self.opts.colConfig[0] : null;
+	var fti = self.opts.typeInfo ? self.opts.typeInfo[0] : null;
 
 	var val = self.getRealValue(next[self.opts.fields[0]]);
+	if (types.registry.isSet(fti.type)) {
+		return types.registry.get(fti.type).compare(acc, val) < 0 ? val : acc;
+	}
 	return self.opts.compare(acc, val) < 0 ? val : acc;
 };
 

@@ -121,6 +121,20 @@ def random_datetime(name='random_datetime', min='1900-01-01 00:00:00', max='2099
     LAST[name] = ret
     return ret
 
+def random_duration(name='random_duration', format='{y}y {d}d {h}h {m}m {s}s {t}t {u}u', **opts):
+    global LAST
+    r = init_random(name)
+    o = { 'y': r.randint(0, 999),
+          'd': r.randint(0, 364),
+          'h': r.randint(0, 23),
+          'm': r.randint(0, 59),
+          's': r.randint(0, 59),
+          't': r.randint(0, 999),
+          'u': r.randint(0, 999) }
+    ret = format.format_map(o)
+    LAST[name] = ret
+    return ret
+
 def random_element(name, set, dist='uniform'):
     global LAST
     r = init_random(name)
@@ -213,6 +227,7 @@ def process(node):
             'random_date': random_date,
             'random_time': random_time,
             'random_datetime': random_datetime,
+            'random_duration': random_duration,
             'random_element': random_element,
             'repeat': repeat,
             'word_dict': word_dict,

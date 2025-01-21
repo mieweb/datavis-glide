@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8"/>
+		<script src="../../jquery.min.js"></script>
+		<script src="../../jquery-ui.min.js"></script>
+		<script src="../../jquery.blockUI.js"></script>
+		<script src="../../jquery.contextMenu.min.js"></script>
+		<script src="../../jquery.sumoselect.min.js"></script>
+		<script src="../../flatpickr.min.js"></script>
+		<script src="../../wcdatavis.js"></script>
+		<link rel="stylesheet" href="../../font-awesome.css"/>
+		<link rel="stylesheet" href="../../jquery-ui.min.css"/>
+		<link rel="stylesheet" href="../../jquery.contextMenu.min.css"/>
+		<link rel="stylesheet" href="../../sumoselect.min.css"/>
+		<link rel="stylesheet" href="../../flatpickr.min.css"/>
+		<link rel="stylesheet" href="../../base.css"/>
+		<link rel="stylesheet" href="../../wcdatavis.css"/>
+		<script>
+$(document).ready(function () {
+	MIE.DEBUGGING = true;
+
+	var source = new MIE.WC_DataVis.Source({
+		type: 'http',
+		url: '../../duration.json'
+	});
+	var computedView = new MIE.WC_DataVis.ComputedView(source);
+	new MIE.WC_DataVis.Grid({
+		id: 'test-grid-types-duration',
+		computedView: computedView,
+		table: {
+			features: {
+				limit: false,
+				rowSelect: true,
+			},
+			columns: ['country', 'state', 'fruit', 'duration1', {
+				field: 'duration2',
+				format: '%02h:%02m:%02s'
+			}, {
+				field: 'duration3',
+				format: '%h hours, %m minutes'
+			}]
+		}
+	}, {
+		title: 'Test // Grid // Types // Duration',
+		showControls: true
+	});
+});
+		</script>
+	</head>
+	<body>
+		<div id="test-grid-types-duration"></div>
+	</body>
+</html>

@@ -47,6 +47,7 @@ import {Prefs} from './prefs.js';
 import {AGGREGATE_REGISTRY, AggregateInfo} from './aggregates.js';
 import {View} from './view.js';
 import {GROUP_FUNCTION_REGISTRY} from './group_fun.js';
+import types from './types.js';
 
 // ComputedView {{{1
 // JSDoc Types {{{2
@@ -2504,17 +2505,21 @@ ComputedView.prototype.group = function () {
 			, value
 			, natRep
 			, groupFun
-			, groupFunResult;
+			, groupFunResult
+			, fti;
 
 		for (rowIndex = 0; rowIndex < self.data.data.length; rowIndex += 1) {
 			row = self.data.data[rowIndex];
 			rowVal = [];
 			for (groupFieldIndex = 0; groupFieldIndex < finalGroupSpec.length; groupFieldIndex += 1) {
 				groupSpecElt = finalGroupSpec[groupFieldIndex];
+				fti = self.typeInfo.get(groupSpecElt.field);
 				cell = row.rowData[groupSpecElt.field];
 				value = cell.value;
 				if (groupSpecElt.fun == null) {
-					natRep = getNatRep(value);
+					natRep = types.registry.isSet(fti.type) ?
+						types.registry.get(fti.type).natRep(value) :
+						getNatRep(value);
 					origKeys[groupFieldIndex][natRep] = value;
 				}
 				else {
@@ -2545,8 +2550,12 @@ ComputedView.prototype.group = function () {
 				}
 
 				for (groupFieldIndex = 0; groupFieldIndex < rowVal.length; groupFieldIndex += 1) {
+					groupSpecElt = finalGroupSpec[groupFieldIndex];
+					fti = self.typeInfo.get(groupSpecElt.field);
 					value = rowVal[groupFieldIndex];
-					natRep = getNatRep(value);
+					natRep = types.registry.isSet(fti.type) ?
+						types.registry.get(fti.type).natRep(value) :
+						getNatRep(value);
 					origKeys[groupFieldIndex][natRep] = value;
 					rowVal[groupFieldIndex] = natRep;
 				}
@@ -3017,8 +3026,11 @@ ComputedView.prototype.pivot_orig = function () {
 				_.each(groupedRows, function (row) {
 					if (_.every(colVal, function (colValElt, colValNum) {
 						var pivotField = pivotFields[colValNum];
+						var fti = self.typeInfo.get(pivotField);
 						var value = row.rowData[pivotField].value;
-						var natRep = getNatRep(value);
+						var natRep = types.registry.isSet(fti.type) ?
+							types.registry.get(fti.type).natRep(value) :
+							getNatRep(value);
 						return colValElt === natRep;
 					})) {
 						tmp.push(row);
@@ -3121,7 +3133,8 @@ ComputedView.prototype.pivot = function () {
 			, row
 			, rowIndex
 			, acvIndex
-			, colVals = [];
+			, colVals = []
+			, fti;
 
 		for (groupIndex = 0; groupIndex < self.data.data.length; groupIndex += 1) {
 			group = self.data.data[groupIndex];
@@ -3130,9 +3143,12 @@ ComputedView.prototype.pivot = function () {
 				colVal = [];
 				for (pivotFieldIndex = 0; pivotFieldIndex < finalPivotSpec.length; pivotFieldIndex += 1) {
 					pivotSpecElt = finalPivotSpec[pivotFieldIndex];
+					fti = self.typeInfo.get(pivotSpecElt.field);
 					value = row.rowData[pivotSpecElt.field].value;
 					if (pivotSpecElt.fun == null) {
-						natRep = getNatRep(value);
+						natRep = types.registry.isSet(fti.type) ?
+							types.registry.get(fti.type).natRep(value) :
+							getNatRep(value);
 						origKeys[pivotFieldIndex][natRep] = value;
 					}
 					else {
@@ -3162,8 +3178,12 @@ ComputedView.prototype.pivot = function () {
 				}
 
 				for (pivotFieldIndex = 0; pivotFieldIndex < colVal.length; pivotFieldIndex += 1) {
+					pivotSpecElt = finalPivotSpec[pivotFieldIndex];
+					fti = self.typeInfo.get(pivotSpecElt.field);
 					value = colVal[pivotFieldIndex];
-					natRep = getNatRep(value);
+					natRep = types.registry.isSet(fti.type) ?
+						types.registry.get(fti.type).natRep(value) :
+						getNatRep(value);
 					origKeys[pivotFieldIndex][natRep] = value;
 					colVal[pivotFieldIndex] = natRep;
 				}
