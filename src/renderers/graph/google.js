@@ -19,6 +19,7 @@ import {GROUP_FUNCTION_REGISTRY} from '../../group_fun.js';
 
 import OrdMap from '../../util/ordmap.js';
 import { GraphRenderer } from '../../graph_renderer.js';
+import { Source } from '../../source.js';
 
 // GraphRendererGoogle {{{1
 
@@ -113,7 +114,7 @@ GraphRendererGoogle.prototype.draw_plain = function (data, typeInfo, dt, config)
 
 		_.each(configOpts, function (opt) {
 			if (config[opt.name + 'Field'] != null) {
-				self.view.source.convertAll(data.dataByRowId, config[opt.name + 'Field']);
+				Source.decodeAll(data.dataByRowId, config[opt.name + 'Field'], typeInfo);
 			}
 		});
 
@@ -145,7 +146,7 @@ GraphRendererGoogle.prototype.draw_plain = function (data, typeInfo, dt, config)
 		});
 
 		_.each(config.valueFields, function (field) {
-			self.view.source.convertAll(data.dataByRowId, field);
+			Source.decodeAll(data.dataByRowId, field, typeInfo);
 		});
 
 		_.each(data.data, function (row) {
