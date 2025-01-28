@@ -1,0 +1,14 @@
+{
+	"extends": "@tsconfig/svelte/tsconfig.json",
+	"compilerOptions": {
+		"target": "esnext",
+		"module": "esnext",
+		"moduleResolution": "node",
+		"strict": true,
+		"jsx": "react",
+		"esModuleInterop": true,
+		"skipLibCheck": true,
+		"types": ["svelte"]
+	},
+	"include": ["node_modules/**/*"]
+}

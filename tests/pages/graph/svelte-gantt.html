@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8"/>
+		<script src="../wcdatavis.js"></script>
+		<link rel="stylesheet" href="../font-awesome.css"/>
+		<link rel="stylesheet" href="../jquery-ui.min.css"/>
+		<link rel="stylesheet" href="../jquery.contextMenu.min.css"/>
+		<link rel="stylesheet" href="../sumoselect.min.css"/>
+		<link rel="stylesheet" href="../flatpickr.min.css"/>
+		<link rel="stylesheet" href="../base.css"/>
+		<link rel="stylesheet" href="../wcdatavis.css"/>
+		<script type="text/javascript">
+MIE.WC_DataVis.jQuery(document).ready(function () {
+	MIE.DEBUGGING = true;
+
+	var source = new MIE.WC_DataVis.Source({
+		type: 'http',
+		url: '../gantt.csv'
+	}, null, {
+		'ID': 'string',
+		'Name': 'string',
+		'Start': { 'type': 'date', 'format': 'M/D/YY', },
+		'End': { 'type': 'date', 'format': 'M/D/YY' },
+		'Duration': 'number',
+		'Completion': 'number',
+		'Dependencies': 'string'
+	});
+	var computedView = new MIE.WC_DataVis.ComputedView(source);
+	new MIE.WC_DataVis.Graph('graph', computedView, {
+		id: 'graph',
+		computedView: computedView,
+		whenPlain: {
+			graphType: 'gantt'
+		},
+	}, {
+		title: 'Svelte Gantt Example',
+		height: 600,
+		renderer: 'svelte-gantt',
+	});
+	new MIE.WC_DataVis.Grid({
+		id: 'grid',
+		computedView: computedView,
+		table: {
+			features: {
+				sort: true,
+				filter: true,
+				group: true,
+				pivot: true,
+				limit: true
+			},
+			limit: {
+				threshold: 100,
+				chunkSize: 50
+			}
+		},
+		source: source
+	}, {
+		title: 'Gantt Chart Data'
+	});
+});
+		</script>
+	</head>
+	<body>
+		<div id="graph"></div>
+		<div id="grid"></div>
+	</body>
+</html>
