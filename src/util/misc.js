@@ -205,8 +205,8 @@ export var getComparisonFn = (function () {
 			: 0;
 	};
 
-	if (Intl && Intl.Collator) {
-		var collator = Intl.Collator(undefined, { usage: 'sort', sensitivity: 'base' });
+	if (window.Intl && window.Intl.Collator) {
+		var collator = window.Intl.Collator(undefined, { usage: 'sort', sensitivity: 'base' });
 
 		cmpFn.string = function (a, b) {
 			if (a == null || b == null) {
@@ -3087,7 +3087,7 @@ export function format(fcc, fti, cell, opts) {
 		// can have it format a number and then "parse" the result to figure out e.g. what the grouping
 		// and radix point characters are.
 
-		_.each(Intl.NumberFormat(window.DATAVIS_LANG).formatToParts('1234.5'), function (o) {
+		_.each(window.Intl.NumberFormat(window.DATAVIS_LANG).formatToParts('1234.5'), function (o) {
 			switch (o.type) {
 			case 'group':
 				defaultNumberFormat.integerPart.groupSeparator = o.value;

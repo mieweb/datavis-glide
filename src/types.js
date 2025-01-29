@@ -77,8 +77,8 @@ types.universalCmp = function (a, b) {
 
 	var compare;
 
-	if (Intl && Intl.Collator) {
-		var collator = Intl.Collator(undefined, { usage: 'sort', sensitivity: 'base' });
+	if (window.Intl != null && window.Intl.Collator != null) {
+		var collator = window.Intl.Collator(undefined, { usage: 'sort', sensitivity: 'base' });
 
 		compare = function (a, b) {
 			if (a == null || b == null) {
@@ -144,7 +144,7 @@ types.universalCmp = function (a, b) {
 		// can have it format a number and then "parse" the result to figure out e.g. what the grouping
 		// and radix point characters are.
 
-		_.each(Intl.NumberFormat(window.DATAVIS_LANG).formatToParts('1234.5'), function (o) {
+		_.each(window.Intl.NumberFormat(window.DATAVIS_LANG).formatToParts('1234.5'), function (o) {
 			switch (o.type) {
 			case 'group':
 				formatOpts.integerPart.groupSeparator = o.value;
@@ -330,7 +330,7 @@ types.universalCmp = function (a, b) {
 				config.maximumFractionDigits = 17;
 			}
 
-			return Intl.NumberFormat(window.DATAVIS_LANG, config).format(val);
+			return window.Intl.NumberFormat(window.DATAVIS_LANG, config).format(val);
 		case 'bignumber':
 			return new BigNumber(val).toFormat(
 				fmt.decimalPlaces,
