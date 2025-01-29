@@ -83,55 +83,82 @@ GraphRendererGoogle.prototype.draw_plain = function (data, typeInfo, dt, config)
 
 	switch (config.graphType) {
 	case 'gantt':
-		if (config.nameField == null) {
-			throw new Error('Configuration option `nameField` must exist');
+		var makeDate = function (x) {
+			return typeof x === 'string' ? moment(x).toDate() :
+				moment.isMoment(x) ? x.toDate() :
+				null;
+		}
+		var cols = [{
+			field: 'ID',
+			type: 'string',
+			default: (function () {
+				var id = 1;
+				return function () { return '' + id++; }
+			})()
+		}, {
+			field: 'Task',
+			type: 'string',
+			required: true
+		}, {
+			field: 'Resource',
+			type: 'string',
+			required: true
+		}, {
+			field: 'Start',
+			type: 'date',
+			default: null,
+			transform: makeDate
+		}, {
+			field: 'End',
+			type: 'date',
+			default: null,
+			transform: makeDate
+		}, {
+			field: 'Duration',
+			type: 'number',
+			default: null
+		}, {
+			field: 'Completion',
+			type: 'number',
+			default: null
+		}, {
+			field: 'Dependencies',
+			type: 'string',
+			default: ''
+		}];
+
+		// Make sure that all the fields that we need are in the data.
+
+		var missingRequired = false;
+		_.each(cols, function (c) {
+			if (c.required && !typeInfo.isSet(c.field)) {
+				console.error('[DataVis // Graph(Google) // Gantt] Missing required data field: %s', c.field);
+				missingRequired = true;
+			}
+		});
+		if (missingRequired) {
+			return null;
 		}
 
-		var timeConfigStr = '' + (+config.startField) + (+config.endField) + (+config.durationField);
-		if (timeConfigStr === '100' || timeConfigStr === '010' || timeConfigStr === '000') {
-			throw new Error('Time configuration is insufficient to determine offsets');
-		}
+		_.each(cols, function (c) {
+			// Add columns to the Google Charts data table.
+			dt.addColumn(c.type, c.field);
 
-		dt.addColumn('string', 'ID');
-		dt.addColumn('string', 'Name');
-		dt.addColumn('string', 'Resource');
-		dt.addColumn('date', 'Start');
-		dt.addColumn('date', 'End');
-		dt.addColumn('number', 'Duration');
-		dt.addColumn('number', 'Completion');
-		dt.addColumn('string', 'Dependencies');
-
-		var configOpts = [
-			{ name: 'id', default: (function () { var x = 0; return function () { return x++; }; }) },
-			{ name: 'name' },
-			{ name: 'resource', default: null },
-			{ name: 'start', default: null },
-			{ name: 'end', default: null },
-			{ name: 'duration', default: null },
-			{ name: 'completion', default: 0 },
-			{ name: 'dependencies', default: null }
-		];
-
-		_.each(configOpts, function (opt) {
-			if (config[opt.name + 'Field'] != null) {
-				Source.decodeAll(data.dataByRowId, config[opt.name + 'Field'], typeInfo);
+			// Make sure data is decoded.
+			if (typeInfo.isSet(c.field)) {
+				Source.decodeAll(data.dataByRowId, c.field, typeInfo);
 			}
 		});
 
 		_.each(data.data, function (row) {
 			var newRow = [];
-			_.each(configOpts, function (opt) {
-				if (config[opt.name + 'Field'] != null) {
-					newRow.push(getRealValue(config[opt.name + 'Field'], row.rowData[config[opt.name + 'Field']]));
-				}
-				else if (opt.default === undefined) {
-					throw new Error();
-				}
-				else if (typeof opt.default === 'function') {
-					newRow.push(opt.default());
+			_.each(cols, function (c) {
+				if (typeInfo.isSet(c.field)) {
+					var v = row.rowData[c.field].value;
+					newRow.push(c.transform != null ? c.transform(v) : v);
 				}
 				else {
-					newRow.push(opt.default);
+					newRow.push(typeof c.default === 'function' ? c.default() : c.default);
 				}
 			});
 			dt.addRow(newRow);

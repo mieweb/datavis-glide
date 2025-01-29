@@ -21,6 +21,7 @@ import {AggregateInfo} from '../../aggregates';
 import {GROUP_FUNCTION_REGISTRY} from '../../group_fun.js';
 
 import { GraphRenderer } from '../../graph_renderer.js';
+import { Source } from '../../source.js';
 
 // GraphRendererSvelteGantt {{{1
 
@@ -34,7 +35,7 @@ GraphRendererSvelteGantt.prototype.draw = function () {
 	self.elt.children().remove();
 
 	self.view.getData(function (ok, data) {
-		self.view.getTypeInfo(function () {
+		self.view.getTypeInfo(function (ok, typeInfo) {
 			var rows = []
 				, rowMap = {} // Used to keep track of rows we've already created.
 				, tasks = []
@@ -44,6 +45,49 @@ GraphRendererSvelteGantt.prototype.draw = function () {
 				, depId = 0
 				, minDate = null
 				, maxDate = null;
+
+			var makeDate = function (x) {
+				return typeof x === 'string' ? moment(x).valueOf() :
+					moment.isMoment(x) ? x.valueOf() :
+					null;
+			}
+			var cols = [{
+				field: 'Task',
+				required: true
+			}, {
+				field: 'Resource',
+				required: true
+			}, {
+				field: 'Start',
+				required: true
+			}, {
+				field: 'End',
+				required: true
+			}, {
+				field: 'Completion'
+			}, {
+				field: 'Dependencies'
+			}];
+
+			// Make sure that all the fields that we need are in the data.
+
+			var missingRequired = false;
+			_.each(cols, function (c) {
+				if (c.required && !typeInfo.isSet(c.field)) {
+					console.error('[DataVis // Graph(SvelteGantt) // Gantt] Missing required data field: %s', c.field);
+					missingRequired = true;
+				}
+			});
+			if (missingRequired) {
+				return null;
+			}
+
+			_.each(cols, function (c) {
+				// Make sure data is decoded.
+				if (typeInfo.isSet(c.field)) {
+					Source.decodeAll(data.dataByRowId, c.field, typeInfo);
+				}
+			});
 
 			_.each(data.data, function (row) {
 				if (rowMap[row.rowData['Resource'].value] == null) {
@@ -58,15 +102,17 @@ GraphRendererSvelteGantt.prototype.draw = function () {
 				var newTask = {
 					id: taskId,
 					resourceId: rowMap[row.rowData['Resource'].value],
-					amountDone: row.rowData['Completion'].value,
-					from: row.rowData['Start'].value.valueOf(),
-					to: row.rowData['End'].value.valueOf(),
-					label: row.rowData['Name'].value,
+					from: makeDate(row.rowData['Start'].value),
+					to: makeDate(row.rowData['End'].value),
+					label: row.rowData['Task'].value,
 				};
+				if (row.rowData['Completion'] != null) {
+					newTask.amountDone = row.rowData['Completion'].value;
+				}
 				tasks.push(newTask);
 				taskId += 1;
 
-				if (row.rowData['Dependencies'].value.length > 0) {
+				if (row.rowData['Dependencies'] != null && row.rowData['Dependencies'].value.length > 0) {
 					_.each(row.rowData['Dependencies'].value.split(','), function (dep) {
 						deps.push({
 							id: depId,

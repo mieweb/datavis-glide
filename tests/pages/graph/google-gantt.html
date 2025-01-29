@@ -18,11 +18,10 @@ MIE.WC_DataVis.jQuery(document).ready(function () {
 		type: 'http',
 		url: '../gantt.csv'
 	}, null, {
-		'ID': 'string',
-		'Name': 'string',
-		'Start': { 'type': 'date', 'format': 'M/D/YY', },
+		'Task': 'string',
+		'Resource': 'string',
+		'Start': { 'type': 'date', 'format': 'M/D/YY' },
 		'End': { 'type': 'date', 'format': 'M/D/YY' },
-		'Duration': 'number',
 		'Completion': 'number',
 		'Dependencies': 'string'
 	});
@@ -32,14 +31,6 @@ MIE.WC_DataVis.jQuery(document).ready(function () {
 		computedView: computedView,
 		whenPlain: {
 			graphType: 'gantt',
-			idField: 'ID',
-			nameField: 'Name',
-			resourceField: 'Resource',
-			startField: 'Start',
-			endField: 'End',
-			durationField: 'Duration',
-			completionField: 'Completion',
-			dependenciesField: 'Dependencies'
 		},
 	}, {
 		title: 'Google Charts Example',
