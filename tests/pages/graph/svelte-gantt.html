@@ -20,8 +20,9 @@ MIE.WC_DataVis.jQuery(document).ready(function () {
 	}, null, {
 		'Task': 'string',
 		'Resource': 'string',
-		'Start': { 'type': 'date', 'format': 'M/D/YY' },
+		'Start': { 'type': 'date', 'format': 'M/D/YY', },
 		'End': { 'type': 'date', 'format': 'M/D/YY' },
+		'Duration': 'number',
 		'Completion': 'number',
 		'Dependencies': 'string'
 	});
@@ -30,11 +31,12 @@ MIE.WC_DataVis.jQuery(document).ready(function () {
 		id: 'graph',
 		computedView: computedView,
 		whenPlain: {
-			graphType: 'gantt',
+			graphType: 'gantt'
 		},
 	}, {
-		title: 'Google Charts Example',
+		title: 'Svelte Gantt Example',
 		height: 600,
+		renderer: 'svelte-gantt',
 	});
 	new MIE.WC_DataVis.Grid({
 		id: 'grid',

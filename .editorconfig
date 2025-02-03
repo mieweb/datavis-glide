@@ -16,5 +16,5 @@ trim_trailing_whitespace = false
 indent_size = 2
 tab_width = 2
 
-[*.{json5,md,py}]
+[*.{json5,md,py,yaml}]
 indent_style = space
