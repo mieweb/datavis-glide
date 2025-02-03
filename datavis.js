@@ -12,10 +12,10 @@ import 'jquery-ui/dist/jquery-ui.min.js';
 import 'jquery-contextmenu';
 import 'sumoselect';
 
-import './wcdatavis.css';
 import 'jquery-ui/dist/themes/base/jquery-ui.min.css';
 import 'jquery-contextmenu/dist/jquery.contextMenu.min.css';
 import 'sumoselect/sumoselect.min.css';
+import './wcdatavis.css';
 
 import * as Util from './src/util/misc.js';
 import OrdMap from './src/util/ordmap.js';
