@@ -5,6 +5,7 @@ import resolve from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
 import babel from '@rollup/plugin-babel';
 import postcss from 'rollup-plugin-postcss';
+import replace from '@rollup/plugin-replace';
 
 export default {
 	input: 'datavis.js',
@@ -17,6 +18,14 @@ export default {
 		}
 	},
 	plugins: [
+		// This global CSS rule from Svelte-Gantt messes up other styles, so confine it to graphs.
+		replace({
+			include: ['**/Gantt.svelte'],
+			delimiters: ['', ''],
+			values: {
+				':global(*) {': ':global(.wcdv_graph *) {',
+			}
+		}),
 		svelte({
 			preprocess: sveltePreprocess({
 				typescript: true
