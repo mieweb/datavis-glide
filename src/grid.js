@@ -60,7 +60,6 @@ import {GridTableGroupDetail} from './renderers/grid/table/group_detail.js';
 import {GridTableGroupSummary} from './renderers/grid/table/group_summary.js';
 import {GridTablePivot} from './renderers/grid/table/pivot.js';
 
-
 // Server-Side Filter/Sort {{{1
 
 /*
@@ -1365,7 +1364,7 @@ Grid.prototype.redraw = function (contOk, contFail) {
 			});
 			self.renderer.on('generateCsvProgress', function (progress) {
 				if (progress === 0) {
-					self.ui.exportBtn.children('span.fa').remove();
+					self.ui.exportBtn.children('span.fa, svg.svg-inline--fa').remove();
 					self.ui.exportBtn.append(fontAwesome('fa-spinner', 'fa-pulse'));
 				}
 			});
@@ -1903,13 +1902,13 @@ Grid.prototype._setExportStatus = function (status) {
 	case 'notReady':
 		self.csvReady = false;
 		self.ui.exportBtn.attr('title', trans('GRID.TITLEBAR.GENERATE_CSV'));
-		self.ui.exportBtn.children('span.fa').remove();
+		self.ui.exportBtn.children('span.fa, svg.svg-inline--fa').remove();
 		self.ui.exportBtn.append(fontAwesome('fa-file-o'));
 		break;
 	case 'ready':
 		self.csvReady = true;
 		self.ui.exportBtn.attr('title', trans('GRID.TITLEBAR.DOWNLOAD_CSV'));
-		self.ui.exportBtn.children('span.fa').remove();
+		self.ui.exportBtn.children('span.fa, svg.svg-inline--fa').remove();
 		self.ui.exportBtn.append(fontAwesome('fa-download'));
 		break;
 	default:
