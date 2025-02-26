@@ -39,6 +39,7 @@ import {GROUP_FUNCTION_REGISTRY} from '../../group_fun.js';
 import handlebarsUtil from '../../util/handlebars.js';
 
 import {TableExport, Csv} from '../../util/csv.js';
+import flags from '../../flags.js';
 
 // GridTable {{{1
 // JSDoc Types {{{2
@@ -612,29 +613,69 @@ GridTable.prototype._addSortingToHeader = function (data, orientation, spec, con
 		self.view.setSort(sortSpec, self.makeProgress('Sort'));
 	};
 
-	// Set the sort direction in the arrow icon.  The way we do this is by building a single
-	// FontAwesome "stack" from the up and down carets.  Then we can style the one we want.
+	var ascArrow, descArrow, sortIcon_class, sortIcon_span;
 
-	var ascArrow = document.createElement('span');
-	ascArrow.classList.add('fa');
-	ascArrow.classList.add('fa-sort-asc');
-	ascArrow.classList.add('fa-stack-1x');
+	if (flags['FontAwesome Method'] === 'font') {
+		// Set the sort direction in the arrow icon.  The way we do this is by building a single
+		// FontAwesome "stack" from the up and down carets.  Then we can style the one we want.
 
-	var descArrow = document.createElement('span');
-	descArrow.classList.add('fa');
-	descArrow.classList.add('fa-sort-desc');
-	descArrow.classList.add('fa-stack-1x');
+		ascArrow = document.createElement('span');
+		ascArrow.classList.add('fa');
+		ascArrow.classList.add('fa-sort-asc');
+		ascArrow.classList.add('fa-stack-1x');
 
-	var sortIcon_class = gensym();
+		descArrow = document.createElement('span');
+		descArrow.classList.add('fa');
+		descArrow.classList.add('fa-sort-desc');
+		descArrow.classList.add('fa-stack-1x');
 
-	var sortIcon_span = fontAwesome('fa-stack', orientation === 'horizontal' ? 'fa-rotate-270' : null).get(0);
-	sortIcon_span.classList.add(sortIcon_class);
-	sortIcon_span.classList.add(sortIcon_orientationClass);
-	sortIcon_span.classList.add('wcdv_sort_icon');
-	sortIcon_span.appendChild(ascArrow);
-	sortIcon_span.appendChild(descArrow);
+		sortIcon_class = gensym();
+
+		sortIcon_span = fontAwesome('fa-stack', orientation === 'horizontal' ? 'fa-rotate-270' : null).get(0);
+		sortIcon_span.classList.add(sortIcon_class);
+		sortIcon_span.classList.add(sortIcon_orientationClass);
+		sortIcon_span.classList.add('wcdv_sort_icon');
+		sortIcon_span.appendChild(ascArrow);
+		sortIcon_span.appendChild(descArrow);
+	}
+	else if (flags['FontAwesome Method'] === 'svg') {
+		ascArrow = document.createElement('span');
+		ascArrow.classList.add('fa');
+		ascArrow.classList.add('fa-sort-asc');
+
+		descArrow = document.createElement('span');
+		descArrow.classList.add('fa');
+		descArrow.classList.add('fa-sort-desc');
+
+		sortIcon_class = gensym();
+
+		sortIcon_span = document.createElement('span');
+		sortIcon_span.classList.add('fa-layers');
+		if (orientation === 'horizontal') {
+			sortIcon_span.classList.add('fa-rotate-270');
+		}
+		sortIcon_span.classList.add(sortIcon_class);
+		sortIcon_span.classList.add(sortIcon_orientationClass);
+		sortIcon_span.classList.add('wcdv_sort_icon');
+		sortIcon_span.appendChild(ascArrow);
+		sortIcon_span.appendChild(descArrow);
+	}
 
 	var sortIcon_menu_items = {};
+
+	var makeIcon = function (icon) {
+		return flags['FontAwesome Method'] === 'font' ? icon :
+			function (a, b, c, item) {
+				var id = item._icon ? item._icon.id : gensym();
+				if (item._icon) {
+					// Remove the existing icon because contextmenu won't do it for you! The actual span
+					// shouldn't be attached to the page anymore but we'll get rid of it just in case.
+					jQuery(item._icon).remove();
+					jQuery(document.getElementById(id)).remove();
+				}
+				return fontAwesome(icon).attr({id: id}).get(0);
+			};
+	};
 
 	if (spec.field != null || spec.groupFieldIndex != null || spec.pivotFieldIndex != null) {
 
@@ -655,7 +696,7 @@ GridTable.prototype._addSortingToHeader = function (data, orientation, spec, con
 
 		sortIcon_menu_items[gensym()] = {
 			name: trans('GRID.TABLE.SORT_MENU.ASCENDING', name),
-			icon: 'fa-sort-amount-asc',
+			icon: makeIcon('fa-sort-amount-asc'),
 			callback: function () {
 				window.setTimeout(function () {
 					setSort('asc');
@@ -664,7 +705,7 @@ GridTable.prototype._addSortingToHeader = function (data, orientation, spec, con
 		};
 		sortIcon_menu_items[gensym()] = {
 			name: trans('GRID.TABLE.SORT_MENU.DESCENDING', name),
-			icon: 'fa-sort-amount-desc',
+			icon: makeIcon('fa-sort-amount-desc'),
 			callback: function () {
 				window.setTimeout(function () {
 					setSort('desc');
@@ -685,7 +726,7 @@ GridTable.prototype._addSortingToHeader = function (data, orientation, spec, con
 			//var aggType = aggInfo.instance.getType();
 			sortIcon_menu_items[gensym()] = {
 				name: trans('GRID.TABLE.SORT_MENU.ASCENDING', aggInfo.instance.getFullName()),
-				icon: 'fa-sort-amount-asc',
+				icon: makeIcon('fa-sort-amount-asc'),
 				callback: function () {
 					window.setTimeout(function () {
 						setSort('asc', aggNum);
@@ -694,7 +735,7 @@ GridTable.prototype._addSortingToHeader = function (data, orientation, spec, con
 			};
 			sortIcon_menu_items[gensym()] = {
 				name: trans('GRID.TABLE.SORT_MENU.DESCENDING', aggInfo.instance.getFullName()),
-				icon: 'fa-sort-amount-desc',
+				icon: makeIcon('fa-sort-amount-desc'),
 				callback: function () {
 					window.setTimeout(function () {
 						setSort('desc', aggNum);
@@ -710,7 +751,7 @@ GridTable.prototype._addSortingToHeader = function (data, orientation, spec, con
 
 	sortIcon_menu_items.reset = {
 		name: trans('GRID.TABLE.SORT_MENU.RESET_SORT'),
-		icon: 'fa-ban',
+		icon: makeIcon('fa-ban'),
 		callback: function () {
 			window.setTimeout(function () {
 				self.view.clearSort();
