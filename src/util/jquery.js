@@ -476,6 +476,45 @@ jQuery.fn.extend({
 		this.get(0).addEventListener('drop', handleFileSelect, false);
 	},
 
+	/**
+	 * Sets a delegated event handler for a click event that won't fire when the user clicks and
+	 * drags.
+	 *
+	 * @param {string} sel jQuery selector for the delegated event.
+	 *
+	 * @param {function} cb Function to call when the click happens.
+	 */
+
+	_onSingleClick: function (sel, cb) {
+		var elt = this;
+		var maxDist = 4;
+		var evtInfo = {
+			state: 'up',
+			x0: 0,
+			y0: 0
+		};
+		elt.on('mousedown', sel, function (evt) {
+			evtInfo.state = 'down';
+			evtInfo.x0 = evt.clientX;
+			evtInfo.y0 = evt.clientY;
+		});
+		elt.on('mousemove', sel, function () {
+			if (evtInfo.state === 'down') {
+				evtInfo.state = 'drag';
+			}
+		});
+		elt.on('mouseup', sel, function (evt) {
+			var moveDist = 0;
+			if (evtInfo.state === 'drag') {
+				moveDist = Math.sqrt(Math.pow(evt.clientX - evtInfo.x0, 2) + Math.pow(evt.clientY - evtInfo.y0, 2));
+			}
+			if (evtInfo.state === 'down' || moveDist < maxDist) {
+				cb.call(this);
+			}
+			evtInfo.state = 'up';
+		});
+	},
+
 	findFieldCell: function (field) {
 		return this.children().filter(function (i, elt) {
 			return jQuery(elt).attr('data-wcdv-field') === field;

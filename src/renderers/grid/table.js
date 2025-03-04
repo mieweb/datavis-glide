@@ -199,6 +199,10 @@ var GridTable = makeSubclass('GridTable', GridRenderer, function () {
 	self.needsRedraw = false;
 	self.contextMenuSelectors = [];
 	self.csvLock = new Lock('GridTable/csv');
+	self.focus = {
+		rvi: [],
+		cvi: []
+	};
 
 	_.defaults(self.opts, {
 		drawInternalBorders: true,
@@ -856,6 +860,68 @@ GridTable.prototype._addDrillDownClass = function (elt) {
 	elt.classList.add('wcdv_drill_down');
 };
 
+GridTable.prototype._updateFocus = function (tbl) {
+	var self = this;
+
+	tbl.find('td').removeClass('wcdv_focus');
+
+	_.each(self.focus.rvi, function (rvi) {
+		tbl.find('td[data-wcdv-rvi=' + rvi + ']').addClass('wcdv_focus');
+	});
+
+	_.each(self.focus.cvi, function (cvi) {
+		tbl.find('td[data-wcdv-cvi=' + cvi + ']').addClass('wcdv_focus');
+	});
+}
+
+// #_addFocusHandler {{{2
+
+GridTable.prototype._addFocusHandler = function (tbl, data) {
+	var self = this;
+
+	tbl._onSingleClick('tr[data-wcdv-rvi] > th', function () {
+		var rvi = jQuery(this).parent('tr').attr('data-wcdv-rvi');
+
+		if (rvi == null || rvi === '') {
+			return;
+		}
+
+		var fi = self.focus.rvi.indexOf(rvi);
+
+		if (fi < 0) {
+			// Adding a new focus for this rowval.
+			self.focus.rvi.push(rvi);
+		}
+		else {
+			// Remove the focus for this rowval.
+			self.focus.rvi.splice(fi, 1);
+		}
+
+		self._updateFocus(tbl);
+	});
+
+	tbl._onSingleClick('th[data-wcdv-cvi]', function () {
+		var cvi = jQuery(this).attr('data-wcdv-cvi');
+
+		if (cvi == null || cvi === '') {
+			return;
+		}
+
+		var fi = self.focus.cvi.indexOf(cvi);
+
+		if (fi < 0) {
+			// Adding a new focus for this rowval.
+			self.focus.cvi.push(cvi);
+		}
+		else {
+			// Remove the focus for this rowval.
+			self.focus.cvi.splice(fi, 1);
+		}
+
+		self._updateFocus(tbl);
+	});
+};
+
 // #addSortHandler {{{2
 
 GridTable.prototype.addSortHandler = function () {
@@ -1232,6 +1298,7 @@ GridTable.prototype.draw = function (root, opts, cont) {
 		};
 
 		self._addDrillDownHandler(self.ui.tbl, data);
+		self._addFocusHandler(self.ui.tbl, data);
 
 		if (self.features.block) {
 			var blockConfig = {

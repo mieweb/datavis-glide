@@ -829,6 +829,10 @@ tr.wcdvgrid_more td {
 	background-color: rgba(255, 235, 59, .4);
 }
 
+.wcdv_grid_table table td.wcdv_focus {
+	background-color: rgba(76, 175, 80, .3);
+}
+
 /*
 .wcdv_grid_table table > tbody > tr:first-child > td,
 .wcdv_grid_table table > tbody > tr:first-child > th {
