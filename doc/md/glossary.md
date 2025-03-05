@@ -30,3 +30,9 @@ Preferences System
 
 `rowVal` (“Row Value”)
 : A list of the values of all the fields that are part of the group. For example, grouping U.S. presidents by last name, first name — one rowval would be `["Obama", "Barack"]`. All data rows that are in the same group have the same rowval. Grouping presidents by last name only, the rowval `["Roosevelt"]` would have two rows associated with it.
+
+`rowValElt` (“Row Value Element”)
+: A single element of the rowval. In the example above, “Obama” is a rowval element. This term is typically used when rendering a table. For example, there is a `<th>` for each rowval element in a rowval.
+
+`rowNum` / `rowId` (“Row Num”)
+: Unique identifier for a row of data from a source. New code should use the term “rowId” since it avoids the connotation that there is an ordering to the data (ordering is provided by the view when sorting, not by the data source).
