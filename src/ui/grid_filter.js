@@ -309,7 +309,7 @@ GridFilter.prototype.makeOperatorDrop = function (include) {
 GridFilter.prototype.makeRemoveBtn = function () {
 	var self = this;
 
-	var removeBtn = jQuery(fontAwesome('F00D', null, 'Click to remove filter'));
+	var removeBtn = jQuery(fontAwesome('fa-times', null, 'Click to remove filter'));
 
 	removeBtn.css({'cursor': 'pointer', 'margin-left': '0.5em'})
 	return removeBtn;

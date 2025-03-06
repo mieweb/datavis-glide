@@ -699,7 +699,7 @@ GridTableGroupDetail.prototype.drawBody = function (data, typeInfo, columns, con
 					'data-wcdv-show-more-start': i,
 					'colspan': colSpan
 				})
-					.append(fontAwesome('F13A'))
+					.append(fontAwesome('fa-chevron-circle-down'))
 					.append(jQuery('<span>Showing rows 1–' + i + ' of ' + childRowValEltsLen + '.</span>')
 						.css({'padding-left': '0.5em'}))
 					.append(jQuery('<button type="button">Load ' + limitConfig.chunkSize + ' more rows.</button>')
@@ -849,7 +849,7 @@ GridTableGroupDetail.prototype.drawBody = function (data, typeInfo, columns, con
 					'data-wcdv-show-more-start': i,
 					'colspan': colSpan
 				})
-					.append(fontAwesome('F13A'))
+					.append(fontAwesome('fa-chevron-circle-down'))
 					.append(jQuery('<span>Showing rows 1–' + i + ' of ' + metadataNode.rows.length + '.</span>')
 						.css({'padding-left': '0.5em'}))
 					.append(jQuery('<button type="button">Load ' + limitConfig.chunkSize + ' more rows.</button>')

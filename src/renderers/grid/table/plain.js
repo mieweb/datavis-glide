@@ -247,7 +247,7 @@ GridTablePlain.prototype.drawHeader = function (columns, data, typeInfo, opts) {
 			// Create the "button" (really a SPAN) that will add the filter to the grid, and stick it
 			// onto the end of the column heading TH.
 
-			jQuery(fontAwesome('F0B0', null, 'Click to add a filter on this column'))
+			jQuery(fontAwesome('fa-filter', null, 'Click to add a filter on this column'))
 				.css({'cursor': 'pointer', 'margin-left': '0.5ex'})
 				.on('click', function () {
 					// When using TableTool, we need to put the filter UI into the floating (clone) header,
@@ -483,7 +483,7 @@ GridTablePlain.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 			colspan: colSpan
 		})
 			.on('click', showMore)
-			.append(fontAwesome('F13A'))
+			.append(fontAwesome('fa-chevron-circle-down'))
 			.append(jQuery('<span>Showing rows '
 											+ '1–'
 											+ (rowNum + 1)
@@ -498,7 +498,7 @@ GridTablePlain.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 								'padding-left': '0.5em',
 								'padding-right': '0.5em'
 							}))
-			.append(fontAwesome('F13A'));
+			.append(fontAwesome('fa-chevron-circle-down'));
 
 		self.moreVisibleHandler = onVisibilityChange(self.scrollEventElement, td, function(isVisible) {
 			if (isVisible && getProp(self.defn, 'table', 'limit', 'autoShowMore')) {
@@ -852,7 +852,7 @@ GridTablePlain.prototype.makeRowReorderBtn = function () {
 	var self = this;
 
 	return jQuery('<button type="button" class="drag-handle fa">')
-		.html(fontAwesome('f07d',null,'Drag or press up/down arrows to move'));
+		.html(fontAwesome('fa-arrows-v',null,'Drag or press up/down arrows to move'));
 };
 
 // #updateFeatures {{{2

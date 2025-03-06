@@ -126,7 +126,7 @@ GridControlField.prototype.draw = function () {
 	var label = self.displayText || (self.colConfig && self.colConfig.displayText) || self.field.field;
 
 	self.ui.removeButton = jQuery('<button>', {'type': 'button'})
-		.append(fontAwesome('F146'))
+		.append(fontAwesome('fa-minus-square'))
 		.attr('title', trans('GRID_CONTROL.FIELD.REMOVE'))
 		.addClass('wcdv_icon_button wcdv_remove wcdv_text-primary')
 		.on('click', function () {
@@ -457,7 +457,7 @@ AggregateControlField.prototype.draw = function () {
 			.on('click', function () {
 				self.ui.optionsDialog.dialog('open');
 			})
-			.append(fontAwesome('F044'))
+			.append(fontAwesome('fa-pencil-square-o'))
 			.appendTo(self.ui.root)
 		;
 		self._makeOptionsDialog(aggDefn);
@@ -533,7 +533,7 @@ AggregateControlField.prototype._makeOptionsDialog = function (aggDefn) {
 			'margin-top': '1ex'
 		})
 		.append(jQuery('<button>', {'type': 'button'})
-			.append(fontAwesome('F00C'))
+			.append(fontAwesome('fa-check'))
 			.append('OK')
 			.on('click', function () {
 				self.aggFunOpts = opts;
@@ -542,7 +542,7 @@ AggregateControlField.prototype._makeOptionsDialog = function (aggDefn) {
 			}))
 		.append(jQuery('<button>', {'type': 'button'})
 			.css('margin-left', '1em')
-			.append(fontAwesome('F05E'))
+			.append(fontAwesome('fa-ban'))
 			.append('Cancel')
 			.on('click', function () {
 				self.ui.optionsDialog.dialog('close');
@@ -839,7 +839,7 @@ GridControl.prototype.addField = function (field, displayText, opts, controlFiel
 		});
 
 	if (self.isHorizontal) {
-		li.append(fontAwesome('F178'));
+		li.append(fontAwesome('fa-long-arrow-right'));
 	}
 
 	li.append(cf.draw());

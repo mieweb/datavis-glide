@@ -1073,7 +1073,7 @@ Grid.prototype._addTitleWidgets = function (titlebar, doingServerFilter, id) {
 
 	if (typeof self.opts.helpText === 'string' && self.opts.helpText !== '') {
 		notHeader.append(' ');
-		fontAwesome('F059')
+		fontAwesome('fa-question-circle')
 			.tooltip({
 				classes: {
 					'ui-tooltip': 'ui-corner-all ui-widget-shadow wcdv_info_tooltip wcdv_border-primary'
@@ -1142,7 +1142,7 @@ Grid.prototype._addTitleWidgets = function (titlebar, doingServerFilter, id) {
 			evt.stopPropagation();
 			self.refresh();
 		})
-		.append(fontAwesome('f021'))
+		.append(fontAwesome('fa-refresh'))
 		.appendTo(self.ui.titlebar_controls)
 	;
 
@@ -1214,7 +1214,7 @@ Grid.prototype._addTitleWidgets = function (titlebar, doingServerFilter, id) {
 			evt.stopPropagation();
 			self.toggle();
 		})
-		.append(jQuery(fontAwesome('f078')))
+		.append(jQuery(fontAwesome('fa-chevron-down')))
 		.appendTo(self.ui.titlebar_controls)
 	;
 };
@@ -1697,13 +1697,13 @@ Grid.prototype._setSpinner = function (what) {
 
 	switch (what) {
 	case 'loading':
-		self.ui.spinner.html(fontAwesome('F021', 'fa-spin', trans('GRID.TITLEBAR.LOADING')));
+		self.ui.spinner.html(fontAwesome('fa-refresh', 'fa-spin', trans('GRID.TITLEBAR.LOADING')));
 		break;
 	case 'not-loaded':
-		self.ui.spinner.html(fontAwesome('F05E', null, trans('GRID.TITLEBAR.NOT_LOADED')));
+		self.ui.spinner.html(fontAwesome('fa-ban', null, trans('GRID.TITLEBAR.NOT_LOADED')));
 		break;
 	case 'working':
-		self.ui.spinner.html(fontAwesome('F1CE', 'fa-spin', trans('GRID.TITLEBAR.WORKING')));
+		self.ui.spinner.html(fontAwesome('fa-circle-o-notch', 'fa-spin', trans('GRID.TITLEBAR.WORKING')));
 		break;
 	}
 };

@@ -343,7 +343,7 @@ Graph.prototype._addTitleWidgets = function (titlebar) {
 			evt.stopPropagation();
 			self.export();
 		})
-		.append(fontAwesome('f019'))
+		.append(fontAwesome('fa-download'))
 		.appendTo(self.ui.titlebar_controls)
 	;
 
@@ -359,7 +359,7 @@ Graph.prototype._addTitleWidgets = function (titlebar) {
 			evt.stopPropagation();
 			self.refresh();
 		})
-		.append(fontAwesome('f021'))
+		.append(fontAwesome('fa-refresh'))
 		.appendTo(self.ui.titlebar_controls)
 	;
 
@@ -393,7 +393,7 @@ Graph.prototype._addTitleWidgets = function (titlebar) {
 			evt.stopPropagation();
 			self.toggle();
 		})
-		.append(jQuery(fontAwesome('f078')))
+		.append(jQuery(fontAwesome('fa-chevron-down')))
 		.appendTo(self.ui.titlebar_controls)
 	;
 };
@@ -828,13 +828,13 @@ Graph.prototype._setSpinner = function (what) {
 
 	switch (what) {
 	case 'loading':
-		self.ui.spinner.html(fontAwesome('F021', 'fa-spin', 'Loading...'));
+		self.ui.spinner.html(fontAwesome('fa-refresh', 'fa-spin', 'Loading...'));
 		break;
 	case 'not-loaded':
-		self.ui.spinner.html(fontAwesome('F05E', null, 'Not Loaded'));
+		self.ui.spinner.html(fontAwesome('fa-ban', null, 'Not Loaded'));
 		break;
 	case 'working':
-		self.ui.spinner.html(fontAwesome('F1CE', 'fa-spin', 'Working...'));
+		self.ui.spinner.html(fontAwesome('fa-circle-o-notch', 'fa-spin', 'Working...'));
 		break;
 	}
 };
