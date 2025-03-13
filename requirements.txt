@@ -1,7 +1,6 @@
-tornado==6.4
-Babel==2.14.0
+babel==2.17.0
 dicttoxml==1.7.16
-json5==0.9.17
-mkdocs==1.5.3
-mkdocs-material==9.5.12
-pymdown-extensions==10.7
+json5==0.10.0
+mkdocs==1.6.1
+mkdocs-material==9.6.8
+pymdown-extensions==10.14.3
