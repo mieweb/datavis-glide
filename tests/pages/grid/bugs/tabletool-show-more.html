@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8"/>
+		<!-- Tabletool only works with jQuery 1.9.1 -->
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.9.1/jquery.min.js" integrity="sha512-jGR1T3dQerLCSm/IGEGbndPwzszJBlKQ5Br9vuB0Pw2iyxOy+7AK+lJcCC8eaXyz/9du+bkCy4HXxByhxkHf+w==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+		<script src="../../wcdatavis.js"></script>
+		<script src="../../tabletool.js"></script>
+		<link rel="stylesheet" href="../../font-awesome.css"/>
+		<link rel="stylesheet" href="../../base.css"/>
+		<link rel="stylesheet" href="../../wcdatavis.css"/>
+		<link rel="stylesheet" href="../../tabletool.css"/>
+		<script>
+$(document).ready(function () {
+	MIE.DEBUGGING = true;
+
+	var prefs = new MIE.WC_DataVis.Prefs('TEST:GRID:BUGS:TABLETOOL-SHOW-MORE', null, {
+		backend: {
+			type: 'temporary'
+		}
+	});
+	prefs.addPerspective(null, 'Test', {
+	  "grid": {
+	    "colConfig": {
+	      "_keys": [
+	        "rowId",
+	        "string1",
+	        "country",
+	        "state",
+	        "fruit",
+	      ],
+	      "_map": {
+	        "rowId": {
+	          "field": "rowId",
+	          "isPinned": true
+	        },
+	        "string1": {
+	          "field": "string1"
+	        },
+	        "country": {
+	          "field": "country"
+	        },
+	        "state": {
+	          "field": "state"
+	        },
+	        "fruit": {
+	          "field": "fruit"
+	        },
+	      }
+	    }
+	  }
+	});
+
+	var source = new MIE.WC_DataVis.Source({
+		type: 'http',
+		url: '../../random500.json',
+	});
+	var computedView = new MIE.WC_DataVis.ComputedView(source, {
+		prefs: prefs
+	});
+	var grid = new MIE.WC_DataVis.Grid({
+		id: 'grid',
+		computedView: computedView,
+		prefs: prefs,
+		source: source,
+		table: {
+			limit: {
+				threshold: 40,
+				chunkSize: 40
+			}
+		}
+	}, {
+		title: 'Test - Grid - Bugs - Tabletool Show More',
+		showControls: true
+	});
+});
+		</script>
+	</head>
+	<body>
+		<div id="grid"></div>
+	</body>
+</html>
