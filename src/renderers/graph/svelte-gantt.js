@@ -3,6 +3,12 @@ import moment from 'moment';
 import numeral from 'numeral';
 import jQuery from 'jquery';
 
+// Promise polyfill for Svelte in IE mode.
+import 'core-js/actual/promise';
+
+// CSS.escape() polyfill for Svelte in IE mode.
+import 'css.escape';
+
 // import { mount } from 'svelte'; // Svelte 5
 import { SvelteGantt, SvelteGanttTable, SvelteGanttDependencies } from 'svelte-gantt';
 

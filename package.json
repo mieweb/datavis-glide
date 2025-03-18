@@ -36,6 +36,8 @@
     "bignumber.js": "=9.1.2",
     "block-ui": "=2.70.1",
     "chart.js": "=4.4.8",
+    "core-js": "=3.41.0",
+    "css.escape": "=1.5.1",
     "flatpickr": "=4.6.13",
     "handlebars": "=4.7.8",
     "jquery": "=3.7.1",
