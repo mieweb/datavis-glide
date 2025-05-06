@@ -55,6 +55,7 @@ import {
 import { OperationsPalette } from './operations_palette.js';
 import { FileSource } from './source.js';
 import { trans } from './trans.js';
+import {GridRendererDummy} from './renderers/grid/dummy.js';
 import {GridTablePlain} from './renderers/grid/table/plain.js';
 import {GridTableGroupDetail} from './renderers/grid/table/group_detail.js';
 import {GridTableGroupSummary} from './renderers/grid/table/group_summary.js';
