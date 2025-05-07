@@ -1210,6 +1210,9 @@ types.universalCmp = function (a, b) {
 			b = decode(b, 'object');
 		}
 
+		if (a == null) return -1;
+		if (b == null) return 1;
+
 		if (a.y !== b.y) return a.y < b.y ? -1 : 1;
 		if (a.d !== b.d) return a.d < b.d ? -1 : 1;
 		if (a.h !== b.h) return a.h < b.h ? -1 : 1;
