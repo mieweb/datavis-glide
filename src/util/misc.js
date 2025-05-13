@@ -2987,84 +2987,7 @@ var fmtRegexps = {
  * instance of the cell to disappear.
  */
 
-export function format(fcc, fti, cell, opts) {
-	var newVal
-		, isNegative = false
-		, isSafeToCache = true;
-
-	fcc = fcc || {};
-	fti = fti || {};
-	opts = opts || {
-		decode: true
-	};
-
-	_.defaults(opts, {
-		debug: false,
-		overrideType: null,
-		saferCaching: true
-	});
-
-	if (opts.debug) {
-		console.debug('[DataVis // Format] typeInfo = %O ; colConfig = %O ; cell = %O ; opts = %O', fti, fcc, cell, opts);
-	}
-
-	// Convert from a number format string to a number format object.  Originally, there was only one
-	// internal representation for a number, using the Numeral library.  The formatting string we
-	// accepted was just passed to numeral#format().  Now we support other internal representations
-	// and have a generalized object to specify how numbers should be formatted.  But we allow the
-	// user to specify the same format strings they always have, convert them to the new object-driven
-	// way of doing things, and apply them to all numbers regardless of representation.
-
-	var formatStrToObj = function (formatStr, base) {
-		var formatObj = deepCopy(base)
-			, m;
-
-		if (formatStr[0] === '$') {
-			formatObj.currencySymbol = '$';
-			formatStr = formatStr.slice(1);
-		}
-
-		//TODO Better way to handle detection of currency symbols.
-		//m = formatStr.match(/[\$\x7F-\uD7FF\uDC00-\uFFFF]|[\uD800-\uDBFF][\uDC00-\uDFFF]|[\uD800-\uDBFF]/);
-		//setProp(m != null ? m[0] : '', formatObj, 'currencySymbol');
-
-		m = formatStr.match(/^0,0/);
-		setProp(!!m, formatObj, 'integerPart', 'grouping');
-
-		m = formatStr.match(/\.(0+)$/);
-		setProp(m != null ? m[1].length : 0, formatObj, 'decimalPlaces');
-
-		return formatObj;
-	};
-
-	// When we just receive a value instead of a proper data cell, convert it so that code below can
-	// be simplified.  These cells are just "pretend" and anything stored in them is going to be
-	// discarded when this function is done.
-
-	if ((moment.isMoment(cell))
-			|| numeral.isNumeral(cell)
-			|| BigNumber.isBigNumber(cell)
-			|| cell == null
-			|| typeof cell !== 'object'
-			|| cell.value == null) {
-		cell = {
-			value: cell
-		};
-	}
-
-	// When we've already rendered this cell before, just reuse that.
-
-	if (cell.cachedRender != null) {
-		return cell.cachedRender;
-	}
-
-	var result = cell.orig || cell.value;
-
-	var t = opts.overrideType || fti.type;
-	var format = fcc.format;
-	var formatObj;
-	var format_dateOnly = fcc.format_dateOnly;
-
+export var format = (function () {
 	var defaultNumberFormat = {
 		integerPart: {
 			grouping: false,
@@ -3107,190 +3030,269 @@ export function format(fcc, fti, cell, opts) {
 		currencySymbol: '$'
 	}, defaultNumberFormat);
 
-	if (format == null) {
-		// Set the default formatting for each non-string type.  The general idea here is to be as
-		// precise as possible and let the user specify something more terse if they want to.
+	// Convert from a number format string to a number format object.  Originally, there was only one
+	// internal representation for a number, using the Numeral library.  The formatting string we
+	// accepted was just passed to numeral#format().  Now we support other internal representations
+	// and have a generalized object to specify how numbers should be formatted.  But we allow the
+	// user to specify the same format strings they always have, convert them to the new object-driven
+	// way of doing things, and apply them to all numbers regardless of representation.
 
-		switch (t) {
-		case 'number':
-			format = deepCopy(defaultNumberFormat);
-			break;
-		case 'currency':
-			format = deepCopy(defaultCurrencyFormat);
-			break;
-		case 'date':
-			format = 'LL';
-			break;
-		case 'datetime':
-			format = 'LLL';
-			break;
-		case 'time':
-			format = 'LTS';
-			break;
+	var formatStrToObj = function (formatStr, base) {
+		var formatObj = deepCopy(base)
+			, m;
+
+		if (formatStr[0] === '$') {
+			formatObj.currencySymbol = '$';
+			formatStr = formatStr.slice(1);
 		}
-	}
-	else {
-		// The user has supplied some formatting that they want to use.  For numeric types, this can be
-		// done via an object (powerful but verbose), or via a string (less powerful but terse).  Parse
-		// the string if necessary, or merge the object with the default configuration.
 
-		switch (t) {
-		case 'number':
-			format = typeof format === 'string'
-				? formatStrToObj(format, defaultNumberFormat)
-				: deepDefaults(format, defaultNumberFormat);
-			break;
-		case 'currency':
-			format = typeof format === 'string'
-				? formatStrToObj(format, defaultCurrencyFormat)
-				: deepDefaults(format, defaultCurrencyFormat);
-			break;
+		//TODO Better way to handle detection of currency symbols.
+		//m = formatStr.match(/[\$\x7F-\uD7FF\uDC00-\uFFFF]|[\uD800-\uDBFF][\uDC00-\uDFFF]|[\uD800-\uDBFF]/);
+		//setProp(m != null ? m[0] : '', formatObj, 'currencySymbol');
+
+		m = formatStr.match(/^0,0/);
+		setProp(!!m, formatObj, 'integerPart', 'grouping');
+
+		m = formatStr.match(/\.(0+)$/);
+		setProp(m != null ? m[1].length : 0, formatObj, 'decimalPlaces');
+
+		return formatObj;
+	};
+
+	return function (fcc, fti, cell, opts) {
+		var newVal
+			, isNegative = false
+			, isSafeToCache = true;
+
+		fcc = fcc || {};
+		fti = fti || {};
+		opts = opts || {
+			decode: true
+		};
+
+		_.defaults(opts, {
+			debug: false,
+			overrideType: null,
+			saferCaching: true
+		});
+
+		if (opts.debug) {
+			console.debug('[DataVis // Format] typeInfo = %O ; colConfig = %O ; cell = %O ; opts = %O', fti, fcc, cell, opts);
 		}
-	}
 
-	if (format_dateOnly == null && t === 'datetime') {
-		format_dateOnly = 'LL';
-	}
+		// When we just receive a value instead of a proper data cell, convert it so that code below can
+		// be simplified.  These cells are just "pretend" and anything stored in them is going to be
+		// discarded when this function is done.
 
-	if (result == null || result === '') {
-		result = '';
-	}
-	else if (['date', 'datetime'].indexOf(t) >= 0
-		&& ((moment.isMoment(cell.value) && !cell.value.isValid())
-			|| ['', '0000-00-00', '0000-00-00 00:00:00'].indexOf(cell.value) >= 0)) {
-
-		// Handle zero dates like Webchart uses all the time.  Turn them into the empty string,
-		// otherwise Moment will say "Invalid Date".
-
-		result = '';
-	}
-	else {
-		switch (t) {
-		case 'date':
-		case 'time':
-		case 'datetime':
-			if (opts.decode) {
-				decode(cell, fti);
-			}
-
-			result = types.registry.get(t).format(cell.value, {
-				full: format,
-				abbrev: t === 'datetime' && fcc.hideMidnight ? format_dateOnly : null
-			});
-			break;
-		case 'number':
-		case 'currency':
-		case 'duration':
-			if (opts.decode) {
-				decode(cell, fti);
-			}
-
-			result = types.registry.get(t).format(cell.value, format);
-			break;
-		case 'json':
-			if (typeof cell.value === 'string') {
-				result = cell.value;
-			}
-			else {
-				result = new JSONFormatter(cell.value, 0, {
-					onToggle: function (isOpen) {
-						if (window.TableTool) {
-							TableTool.update();
-						}
-					}
-				}).render();
-			}
-			break;
-		case 'string':
-			result = cell.value;
-			break;
-		default:
-			log.error('Unable to format - unknown type: { field = "%s", type = "%s", value = "%s" }',
-				fti.field, t, cell.value);
+		if ((moment.isMoment(cell))
+				|| numeral.isNumeral(cell)
+				|| BigNumber.isBigNumber(cell)
+				|| cell == null
+				|| typeof cell !== 'object'
+				|| cell.value == null) {
+			cell = {
+				value: cell
+			};
 		}
-	}
 
-	if (fcc.allowFormatting) {
-		if (typeof result === 'string') {
-			var foundFmtStr = false;
-			var fmtResult = ''
-				, fmtClass = ''
-				, fmtStyle = '';
-			var m0 = null;
-			while ((m0 = result.match(fmtRegexps.toplevel)) != null) {
-				foundFmtStr = true;
-				fmtClass = 'wcdv_format_string';
-				fmtStyle = '';
-				// Extract up to the start of the match, escaping it.
-				fmtResult += escapeHtml(result.substring(0, m0.index));
-				_.each(m0[1].split(','), function (f) {
-					var m1;
-					// Foreground and background color.
-					m1 = f.match(fmtRegexps.color);
-					if (m1 != null) {
-						fmtStyle += (m1[1] === 'bg' ? 'background-' : '') + 'color: #' + m1[2] + ';';
-						return;
-					}
-					// Text style and weight.
-					m1 = f.match(fmtRegexps.textStyle);
-					if (m1 != null) {
-						if (m1[1].indexOf('b') >= 0) {
-							fmtStyle += 'font-weight: bold;';
-						}
-						if (m1[1].indexOf('i') >= 0) {
-							fmtStyle += 'font-style: italic;';
-						}
-						if (m1[1].indexOf('u') >= 0) {
-							fmtStyle += 'text-decoration: underline;';
-						}
-						if (m1[1].indexOf('s') >= 0) {
-							fmtStyle += 'text-decoration: line-through;';
-						}
-					}
-					// Generic CSS class.
-					m1 = f.match(fmtRegexps.cssClass);
-					if (m1 != null) {
-						fmtClass += (fmtClass.length > 0 ? ' ' : '') + m1[1];
-					}
+		// When we've already rendered this cell before, just reuse that.
+
+		if (cell.cachedRender != null) {
+			return cell.cachedRender;
+		}
+
+		var result = cell.orig || cell.value;
+
+		var t = opts.overrideType || fti.type;
+		var format = fcc.format;
+		var formatObj;
+		var format_dateOnly = fcc.format_dateOnly;
+
+		if (format == null) {
+			// Set the default formatting for each non-string type.  The general idea here is to be as
+			// precise as possible and let the user specify something more terse if they want to.
+
+			switch (t) {
+			case 'number':
+				format = deepCopy(defaultNumberFormat);
+				break;
+			case 'currency':
+				format = deepCopy(defaultCurrencyFormat);
+				break;
+			case 'date':
+				format = 'LL';
+				break;
+			case 'datetime':
+				format = 'LLL';
+				break;
+			case 'time':
+				format = 'LTS';
+				break;
+			}
+		}
+		else {
+			// The user has supplied some formatting that they want to use.  For numeric types, this can be
+			// done via an object (powerful but verbose), or via a string (less powerful but terse).  Parse
+			// the string if necessary, or merge the object with the default configuration.
+
+			switch (t) {
+			case 'number':
+				format = typeof format === 'string'
+					? formatStrToObj(format, defaultNumberFormat)
+					: deepDefaults(format, defaultNumberFormat);
+				break;
+			case 'currency':
+				format = typeof format === 'string'
+					? formatStrToObj(format, defaultCurrencyFormat)
+					: deepDefaults(format, defaultCurrencyFormat);
+				break;
+			}
+		}
+
+		if (format_dateOnly == null && t === 'datetime') {
+			format_dateOnly = 'LL';
+		}
+
+		if (result == null || result === '') {
+			result = '';
+		}
+		else if (['date', 'datetime'].indexOf(t) >= 0
+			&& ((moment.isMoment(cell.value) && !cell.value.isValid())
+				|| ['', '0000-00-00', '0000-00-00 00:00:00'].indexOf(cell.value) >= 0)) {
+
+			// Handle zero dates like Webchart uses all the time.  Turn them into the empty string,
+			// otherwise Moment will say "Invalid Date".
+
+			result = '';
+		}
+		else {
+			switch (t) {
+			case 'date':
+			case 'time':
+			case 'datetime':
+				if (opts.decode) {
+					decode(cell, fti);
+				}
+
+				result = types.registry.get(t).format(cell.value, {
+					full: format,
+					abbrev: t === 'datetime' && fcc.hideMidnight ? format_dateOnly : null
 				});
-				// Make a span to hold our formatted value.
-				fmtResult += '<span';
-				if (fmtStyle != null) {
-					fmtResult += ' style="' + fmtStyle + '"';
+				break;
+			case 'number':
+			case 'currency':
+			case 'duration':
+				if (opts.decode) {
+					decode(cell, fti);
 				}
-				if (fmtClass != null) {
-					fmtResult += ' class="' + fmtClass + '"';
+
+				result = types.registry.get(t).format(cell.value, format);
+				break;
+			case 'json':
+				if (typeof cell.value === 'string') {
+					result = cell.value;
 				}
-				fmtResult += '>' + escapeHtml(m0[2]) + '</span>';
-				// Move along so we can match more text after the {{/}}.
-				result = result.substring(m0[0].length);
-			}
-			// No need to make an element if nothing was formatted.
-			if (foundFmtStr) {
-				return jQuery('<div>').html(fmtResult);
+				else {
+					result = new JSONFormatter(cell.value, 0, {
+						onToggle: function (isOpen) {
+							if (window.TableTool) {
+								TableTool.update();
+							}
+						}
+					}).render();
+				}
+				break;
+			case 'string':
+				result = cell.value;
+				break;
+			default:
+				log.error('Unable to format - unknown type: { field = "%s", type = "%s", value = "%s" }',
+					fti.field, t, cell.value);
 			}
 		}
-	}
 
-	// If there's a rendering function, pass the (possibly formatted) value through it to get the new
-	// value to display.  If the rendering function returns an Element (possibly built via jQuery),
-	// mark the result as unsafe to cache, because an Element can't be on the page more than once, so
-	// we need to have the rendering function make it every time, in the event that the same cell is
-	// displayed more than once in the grid.
-
-	if (typeof cell.render === 'function') {
-		result = cell.render(result);
-		if (opts.saferCaching && (result instanceof jQuery || result instanceof Element)) {
-			isSafeToCache = false;
+		if (fcc.allowFormatting) {
+			if (typeof result === 'string') {
+				var foundFmtStr = false;
+				var fmtResult = ''
+					, fmtClass = ''
+					, fmtStyle = '';
+				var m0 = null;
+				while ((m0 = result.match(fmtRegexps.toplevel)) != null) {
+					foundFmtStr = true;
+					fmtClass = 'wcdv_format_string';
+					fmtStyle = '';
+					// Extract up to the start of the match, escaping it.
+					fmtResult += escapeHtml(result.substring(0, m0.index));
+					_.each(m0[1].split(','), function (f) {
+						var m1;
+						// Foreground and background color.
+						m1 = f.match(fmtRegexps.color);
+						if (m1 != null) {
+							fmtStyle += (m1[1] === 'bg' ? 'background-' : '') + 'color: #' + m1[2] + ';';
+							return;
+						}
+						// Text style and weight.
+						m1 = f.match(fmtRegexps.textStyle);
+						if (m1 != null) {
+							if (m1[1].indexOf('b') >= 0) {
+								fmtStyle += 'font-weight: bold;';
+							}
+							if (m1[1].indexOf('i') >= 0) {
+								fmtStyle += 'font-style: italic;';
+							}
+							if (m1[1].indexOf('u') >= 0) {
+								fmtStyle += 'text-decoration: underline;';
+							}
+							if (m1[1].indexOf('s') >= 0) {
+								fmtStyle += 'text-decoration: line-through;';
+							}
+						}
+						// Generic CSS class.
+						m1 = f.match(fmtRegexps.cssClass);
+						if (m1 != null) {
+							fmtClass += (fmtClass.length > 0 ? ' ' : '') + m1[1];
+						}
+					});
+					// Make a span to hold our formatted value.
+					fmtResult += '<span';
+					if (fmtStyle != null) {
+						fmtResult += ' style="' + fmtStyle + '"';
+					}
+					if (fmtClass != null) {
+						fmtResult += ' class="' + fmtClass + '"';
+					}
+					fmtResult += '>' + escapeHtml(m0[2]) + '</span>';
+					// Move along so we can match more text after the {{/}}.
+					result = result.substring(m0[0].length);
+				}
+				// No need to make an element if nothing was formatted.
+				if (foundFmtStr) {
+					return jQuery('<div>').html(fmtResult);
+				}
+			}
 		}
-	}
 
-	if (isSafeToCache) {
-		cell.cachedRender = result;
-	}
+		// If there's a rendering function, pass the (possibly formatted) value through it to get the new
+		// value to display.  If the rendering function returns an Element (possibly built via jQuery),
+		// mark the result as unsafe to cache, because an Element can't be on the page more than once, so
+		// we need to have the rendering function make it every time, in the event that the same cell is
+		// displayed more than once in the grid.
 
-	return result;
-}
+		if (typeof cell.render === 'function') {
+			result = cell.render(result);
+			if (opts.saferCaching && (result instanceof jQuery || result instanceof Element)) {
+				isSafeToCache = false;
+			}
+		}
+
+		if (isSafeToCache) {
+			cell.cachedRender = result;
+		}
+
+		return result;
+	};
+})();
 
 // Date and Time Formatting {{{1
 
