@@ -1277,7 +1277,13 @@ types.universalCmp = function (a, b) {
 
 		switch (ir) {
 		case 'obj':
-			return JSON.parse(str);
+			try {
+				return JSON.parse(str);
+			}
+			catch (e) {
+				console.error('[DataVis // Type(JSON) // Parse] Failed to parse value: %s', e.toString());
+				return null;
+			}
 		default:
 			return null;
 		}
@@ -1297,7 +1303,10 @@ types.universalCmp = function (a, b) {
 	// format {{{2
 
 	function format(val, opts) {
-		if (typeof val === 'string') {
+		if (val == null) {
+			return '[invalid JSON]';
+		}
+		else if (typeof val === 'string') {
 			return val;
 		}
 		else {

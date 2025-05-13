@@ -3089,7 +3089,7 @@ export var format = (function () {
 				|| BigNumber.isBigNumber(cell)
 				|| cell == null
 				|| typeof cell !== 'object'
-				|| cell.value == null) {
+				|| typeof(cell.value) === 'undefined') {
 			cell = {
 				value: cell
 			};
@@ -3182,25 +3182,12 @@ export var format = (function () {
 			case 'number':
 			case 'currency':
 			case 'duration':
+			case 'json':
 				if (opts.decode) {
 					decode(cell, fti);
 				}
 
 				result = types.registry.get(t).format(cell.value, format);
-				break;
-			case 'json':
-				if (typeof cell.value === 'string') {
-					result = cell.value;
-				}
-				else {
-					result = new JSONFormatter(cell.value, 0, {
-						onToggle: function (isOpen) {
-							if (window.TableTool) {
-								TableTool.update();
-							}
-						}
-					}).render();
-				}
 				break;
 			case 'string':
 				result = cell.value;

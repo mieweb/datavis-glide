@@ -1,7 +1,7 @@
 {
   data: [{
-    alpha: 1,
-    beta: {
+    rownum: 1,
+    valid_json: {
       id: 1,
       name: "Ghee Buttersnaps",
       car: {
@@ -12,10 +12,12 @@
         name: "Blackwing Vol. 2",
         grade: "2x-firm"
       },
-    }
+    },
+    invalid_json_obj: '{}',
+    invalid_json_arr: '[]',
   }, {
-    alpha: 2,
-    beta: {
+    rownum: 2,
+    valid_json: {
       id: 2,
       name: "Magic Head",
       car: {
@@ -26,10 +28,12 @@
         name: "Blackwing Vol. 6",
         grade: "extra-firm"
       },
-    }
+    },
+    invalid_json_obj: '{}',
+    invalid_json_arr: '[]',
   }, {
-    alpha: 3,
-    beta: {
+    rownum: 3,
+    valid_json: {
       id: 3,
       name: "Ovaltine Jenkins",
       car: {
@@ -40,10 +44,12 @@
         name: "Dixon Metropolitan",
         grade: "No. 2"
       },
-    }
+    },
+    invalid_json_obj: '{}',
+    invalid_json_arr: '[]',
   }, {
-    alpha: 4,
-    beta: {
+    rownum: 4,
+    valid_json: {
       id: 4,
       name: "Mr. Vocab",
       car: {
@@ -54,10 +60,12 @@
         name: "Eagle Turquoise",
         grade: "F"
       },
-    }
+    },
+    invalid_json_obj: '{}',
+    invalid_json_arr: '[]',
   }, {
-    alpha: 5,
-    beta: {
+    rownum: 5,
+    valid_json: {
       id: 5,
       name: "Galileo Humpkins",
       car: {
@@ -68,10 +76,14 @@
         name: "Tombow 8900",
         grade: "2B"
       },
-    }
+    },
+    invalid_json_obj: '{not valid json}',
+    invalid_json_arr: '[not valid json]',
   }],
   "typeInfo": [
-      { "field": "alpha", "type": "number" }
-    , { "field": "beta", "type": "json" }
+      { field: "rownum", type: "number" }
+    , { field: "valid_json", type: "json" }
+    , { field: "invalid_json_obj", type: "string" }
+    , { field: "invalid_json_arr", type: "string" }
   ]
 }
