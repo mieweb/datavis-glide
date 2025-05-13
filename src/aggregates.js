@@ -1,7 +1,7 @@
 import _ from 'underscore';
 import sprintf from 'sprintf-js';
 import numeral from 'numeral';
-import BigNumber from 'bignumber.js/bignumber.js';
+import BigNumber from 'bignumber.js';
 
 import jQuery from 'jquery';
 

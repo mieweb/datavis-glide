@@ -1,7 +1,7 @@
 // Imports {{{1
 
 import _ from 'underscore';
-import BigNumber from 'bignumber.js/bignumber.js';
+import BigNumber from 'bignumber.js';
 import numeral from 'numeral';
 import moment from 'moment';
 

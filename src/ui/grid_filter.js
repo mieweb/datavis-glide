@@ -2,7 +2,7 @@ import _ from 'underscore';
 import moment from 'moment';
 import numeral from 'numeral';
 import jQuery from 'jquery';
-import BigNumber from 'bignumber.js/bignumber.js';
+import BigNumber from 'bignumber.js';
 
 import {
 	debug,

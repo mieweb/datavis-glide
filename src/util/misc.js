@@ -1,5 +1,5 @@
 import jQuery from 'jquery';
-import BigNumber from 'bignumber.js/bignumber.js';
+import BigNumber from 'bignumber.js';
 import numeral from 'numeral';
 import moment from 'moment';
 import _ from 'underscore';
