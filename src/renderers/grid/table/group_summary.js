@@ -57,7 +57,7 @@ var GridTableGroupSummary = makeSubclass('GridTableGroupSummary', GridTable, fun
 
 	console.debug('DataVis // ' + 'GRID TABLE - GROUP - SUMMARY', 'Constructing grid table; features = %O', features);
 
-	setPropDef(['rowVals', 'groupAggregates'], self.opts, 'displayOrder');
+	setPropDef(['rowVals', 'addCols', 'groupAggregates'], self.opts, 'displayOrder');
 });
 
 // #canRender {{{2
@@ -177,6 +177,10 @@ GridTableGroupSummary.prototype.drawBody = function (data, typeInfo, columns, co
 					// If the `value` function adds up the sums, yielding a grand total of them all, then we format
 					// that using Numeral exactly as specified for the "Amount" field.
 
+					if (self.opts.addCols == null || self.opts.addCols.length === 0) {
+						return;
+					}
+
 					_.each(self.opts.addCols, function (addCol) {
 						var td = document.createElement('td');
 						var addColResult = addCol.value(data.data, groupNum, rowAgg, aggType);
@@ -293,6 +297,14 @@ GridTableGroupSummary.prototype.drawBody = function (data, typeInfo, columns, co
 					tr.append(td);
 				});
 				break;
+			case 'addCols':
+				if (self.opts.addCols == null || self.opts.addCols.length === 0) {
+					break;
+				}
+				_.each(self.opts.addCols, function (addCol) {
+					self.csv.addCol('');
+					tr.append(document.createElement('td'));
+				});
 			}
 		});
 
