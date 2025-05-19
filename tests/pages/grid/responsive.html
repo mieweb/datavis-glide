@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8"/>
+		<script src="../wcdatavis.js"></script>
+		<link rel="stylesheet" href="../font-awesome.css"/>
+		<link rel="stylesheet" href="../base.css"/>
+		<link rel="stylesheet" href="../wcdatavis.css"/>
+		<script>
+document.addEventListener('DOMContentLoaded', function () {
+	MIE.DEBUGGING = true;
+
+	var source = new MIE.WC_DataVis.Source({
+		type: 'http',
+		url: '../random-people.csv'
+	});
+	var computedView = new MIE.WC_DataVis.ComputedView(source);
+	var grid = new MIE.WC_DataVis.Grid({
+		id: 'grid',
+		computedView: computedView,
+		table: {
+			features: {
+				limit: false,
+				rowSelect: true,
+			},
+		}
+	}, {
+		title: 'Test - Grid - Default',
+		showControls: true
+	});
+	grid.addRenderer(800, {
+		name: 'squirrelly',
+		opts: {
+			whenPlain: {
+				item: `<h2>{{it["Last Name"]}}, {{it["First Name"]}}</h2>
+<pre>
+	{{it["Street Address"]}}\n
+	{{it["City"]}}, {{it["State"]}}  {{it["Zip Code"]}}
+</pre>`
+			},
+			whenGroup: {
+				item: '<h1>{{@rowval(it, 0) /}}: {{@aggregate(it, "group", 0) /}}</h1>'
+			},
+			whenPivot: {
+				before: '<table>',
+				beforeGroup: '<tr>',
+				item: '<td>{{@rowval(it, 0) /}} - {{@colval(it, 0) /}} - {{@aggregate(it, "cell", 0) /}}</td>',
+				afterGroup: '</tr>',
+				after: '</table>'
+			}
+		}
+	});
+});
+		</script>
+	</head>
+	<body>
+		<div id="grid"></div>
+	</body>
+</html>

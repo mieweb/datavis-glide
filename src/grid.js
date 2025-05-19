@@ -55,6 +55,7 @@ import {
 import { OperationsPalette } from './operations_palette.js';
 import { FileSource } from './source.js';
 import { trans } from './trans.js';
+import {GridRendererDummy} from './renderers/grid/dummy.js';
 import {GridTablePlain} from './renderers/grid/table/plain.js';
 import {GridTableGroupDetail} from './renderers/grid/table/group_detail.js';
 import {GridTableGroupSummary} from './renderers/grid/table/group_summary.js';
@@ -523,9 +524,7 @@ var Grid = makeSubclass('Grid', Object, function (defn, opts, cb) {
 		self.redraw();
 	});
 
-	/*
-	 * Set up other container elements.
-	 */
+	// Set up UI elements {{{3
 
 	self.ui.root = jQuery(document.getElementById(self.id))
 		.addClass('wcdv_grid')
@@ -551,6 +550,8 @@ var Grid = makeSubclass('Grid', Object, function (defn, opts, cb) {
 			self.view.source.origin.setFiles(files);
 		});
 	}
+
+	// Titlebar {{{4
 
 	self.ui.titlebar = jQuery('<div class="wcdv_grid_titlebar">')
 		.attr('title', trans('GRID.TITLEBAR.SHOW_HIDE'))
@@ -582,6 +583,8 @@ var Grid = makeSubclass('Grid', Object, function (defn, opts, cb) {
 		self.refresh();
 	})
 	.hide();
+
+	// Toolbar {{{4
 
 	self.ui.content = jQuery('<div>', {
 		'class': 'wcdv_grid_content'
@@ -619,6 +622,12 @@ var Grid = makeSubclass('Grid', Object, function (defn, opts, cb) {
 	self.ui.toolbar_renderer = new RendererToolbar(self)
 	self.ui.toolbar_renderer.attach(self.ui.toolbar);
 
+	if (!self.opts.showToolbar) {
+		self.ui.toolbar.hide();
+	}
+
+	// Controls {{{4
+
 	self.ui.controls = jQuery('<div>', { 'class': 'wcdv_grid_control' });
 	self.ui.filterControl = jQuery('<div>', { 'class': 'wcdv_control_pane wcdv_filter_control' });
 	self.ui.groupControl = jQuery('<div>', { 'class': 'wcdv_control_pane wcdv_group_control' });
@@ -627,36 +636,15 @@ var Grid = makeSubclass('Grid', Object, function (defn, opts, cb) {
 	self.ui.operationsPalette = jQuery('<div>', { 'class': 'wcdv_grid_control' }).css({
 		display: 'block'
 	});
-	self.ui.grid = jQuery('<div>', { 'id': defn.table.id, 'class': 'wcdv_grid_table' });
 
-	if (self.rootHasFixedHeight) {
-		// When using TableTool, we can't just set the height of the whole grid and use flex to control
-		// the height of the table automatically.  See DV-196.
-		// Don't use the height: 0px trick in this situation and let TableTool manage the table height.
-		// FIXME Is this needed with the CSS method?
-		if (!self.features.floatingHeader || getProp(self.defn, 'table', 'floatingHeader', 'method') !== 'tabletool') {
-			// This is a trick to make 'flex: 1 1 auto' work right in Firefox, IE, Edge.
-			// Otherwise, the table takes up as much space as it needs and doesn't scroll.
-			self.ui.grid.css('height', '0px');
-		}
-	}
-
-	if (!self.opts.showToolbar) {
-		self.ui.toolbar.hide();
-	}
-
-	if (!self.opts.showControls) {
-		self.ui.controls.hide();
-	}
-
-	// Filter Control
+	// Filter Control {{{5
 
 	self.filterControl = new FilterControl(self, self.colConfig, self.view, self.features, self.timing);
 	self.ui.filterControl.children().remove();
 	self.filterControl.draw(self.ui.filterControl);
 	self.ui.filterControl.show();
 
-	// Group Control
+	// Group Control {{{5
 
 	self.groupControl = new GroupControl(self, self.colConfig, self.view, self.features, self.timing);
 	self.groupControl.draw(self.ui.groupControl);
@@ -676,12 +664,12 @@ var Grid = makeSubclass('Grid', Object, function (defn, opts, cb) {
 		self.ui.aggregateControl.hide();
 	});
 
-	// Pivot Control
+	// Pivot Control {{{5
 
 	self.pivotControl = new PivotControl(self, self.colConfig, self.view, self.features, self.timing);
 	self.pivotControl.draw(self.ui.pivotControl);
 
-	// Group <-> Pivot (Drag & Drop)
+	// Group <-> Pivot (Drag & Drop) {{{5
 
 	self.groupControl.getListElement().sortable({
 		connectWith: '#' + self.pivotControl.getListElement().attr('id')
@@ -700,10 +688,32 @@ var Grid = makeSubclass('Grid', Object, function (defn, opts, cb) {
 	self.operationsPalette.setOperations(self.defn.operations);
 	self.operationsPalette.draw(self.ui.operationsPalette);
 
-	// Aggregate Control
+	// Aggregate Control {{{5
 
 	self.aggregateControl = new AggregateControl(self, self.colConfig, self.view, self.features, self.timing);
 	self.aggregateControl.draw(self.ui.aggregateControl);
+
+	// }}}5
+
+	if (!self.opts.showControls) {
+		self.ui.controls.hide();
+	}
+
+	// }}}4
+
+	self.ui.grid = jQuery('<div>', { 'id': defn.table.id, 'class': 'wcdv_grid_table' });
+
+	if (self.rootHasFixedHeight) {
+		// When using TableTool, we can't just set the height of the whole grid and use flex to control
+		// the height of the table automatically.  See DV-196.
+		// Don't use the height: 0px trick in this situation and let TableTool manage the table height.
+		// FIXME Is this needed with the CSS method?
+		if (!self.features.floatingHeader || getProp(self.defn, 'table', 'floatingHeader', 'method') !== 'tabletool') {
+			// This is a trick to make 'flex: 1 1 auto' work right in Firefox, IE, Edge.
+			// Otherwise, the table takes up as much space as it needs and doesn't scroll.
+			self.ui.grid.css('height', '0px');
+		}
+	}
 
 	// The user has fixed the height of the containing grid, so we will need to have the browser put
 	// in some scrollbars for the overflow.
@@ -734,14 +744,15 @@ var Grid = makeSubclass('Grid', Object, function (defn, opts, cb) {
 			.append(self.ui.footer))
 	;
 
+	self.resetRenderers();
+	self.makeResponsive();
+
+	// }}}3
+
 	var initialRender = true;
 
 	self.tableDoneCont = function (grid, srcIndex) {
 		self.debug(null, 'Finished drawing grid table!');
-
-		// This just makes sure that we populate the "views" dropdown.  It's only needed the very
-		// first time that we show the grid.  Subsequent refreshes may call this code again, but
-		// there's no need to change the view dropdown when that happens.
 
 		if (initialRender) {
 			initialRender = false;
@@ -811,6 +822,7 @@ var Grid = makeSubclass('Grid', Object, function (defn, opts, cb) {
 		self.ui.statusSpan.hide();
 		self.ui.rowCount.show();
 		self._updateRowCount(info, ops);
+		self.mode = info.isPlain ? 'plain' : info.isGroup ? 'group' : info.isPivot ? 'pivot' : null;
 	});
 
 	self.view.on('dataUpdated', function () {
@@ -1255,157 +1267,122 @@ Grid.prototype.redraw = function (contOk, contFail) {
 	contOk = contOk || I;
 	contFail = contFail || I;
 
-	var makeGridTable = function () {
-		var rendererCtor
-			, rendererCtorOpts;
-
-		self.colConfigLock.lock('redrawing grid; prevent colConfig changes from notifying existing renderer');
-
-		self.view.getData(function (ok, data) {
-			if (!ok) {
-				return contFail();
-			}
-
-			if (self.defn.renderer != null) {
-				self.rendererName = self.defn.renderer;
-
-				rendererCtor = GridRenderer.registry.get(self.defn.renderer);
-				rendererCtorOpts = deepCopy(self.defn.rendererOpts);
-			}
-			else {
-				self.rendererName = 'table';
-
-				if (data.isPlain) {
-					rendererCtor = GridRenderer.registry.get(getPropDef('table_plain', self.defn, 'whenPlain', 'renderer'));
-					rendererCtorOpts = deepCopy(self.defn.table.whenPlain);
-
-					if (self.ui.footer) {
-						rendererCtorOpts.footer = self.ui.footer;
-					}
-
-					self.debug(null, 'Creating plain grid table');
-				}
-				else if (data.isGroup) {
-					switch (self.defn.table.groupMode) {
-					case 'summary':
-						rendererCtor = GridRenderer.registry.get(getPropDef('table_group_summary', self.defn, 'whenGroup', 'renderer'));
-						break;
-					case 'detail':
-						rendererCtor = GridRenderer.registry.get(getPropDef('table_group_detail', self.defn, 'whenGroup', 'renderer'));
-						break;
-					}
-
-					rendererCtorOpts = deepCopy(self.defn.table.whenGroup);
-
-					if (self.ui.footer) {
-						rendererCtorOpts.footer = self.ui.footer;
-					}
-
-					self.debug(null, 'Creating group grid table');
-				}
-				else if (data.isPivot) {
-					rendererCtor = GridRenderer.registry.get(getPropDef('table_pivot', self.defn, 'whenPivot', 'renderer'));
-					rendererCtorOpts = deepCopy(self.defn.table.whenPivot);
-
-					self.debug(null, 'Creating pivot grid table');
-				}
-			}
-
-			if (self.renderer) {
-				self.renderer.destroy();
-			}
-
-			rendererCtorOpts.generateCsv = self.generateCsv;
-			rendererCtorOpts.fixedHeight = self.rootHasFixedHeight;
-
-			self.ui.exportBtn.attr('disabled', true);
-			self.renderer = new rendererCtor(self, self.defn, self.view, self.features, rendererCtorOpts, self.timing, self.id, self.colConfig);
-
-			// Update the toolbar sections.  This needs to be done after creating the renderer because the
-			// renderer validates (and possibly changes) the supported features, and that changes what parts
-			// of the toolbar we show.  Obviously, we shouldn't show buttons for features that the current
-			// renderer doesn't implement.
-
-			if (data.isPlain) {
-				self.ui.toolbar_plain.show();
-				self.ui.toolbar_group.hide();
-				self.ui.toolbar_pivot.hide();
-			}
-			else if (data.isGroup) {
-				self.ui.toolbar_plain.hide();
-				self.ui.toolbar_group.show();
-				self.ui.toolbar_pivot.hide();
-			}
-			else if (data.isPivot) {
-				self.ui.toolbar_plain.hide();
-				self.ui.toolbar_group.hide();
-				self.ui.toolbar_pivot.show();
-			}
-
-			self.renderer.on('renderBegin', function () {
-				self._isIdle = false;
-				self.fire('renderBegin');
-			});
-			self.renderer.on('renderEnd', function () {
-				self.fire('renderEnd');
-				self._isIdle = true;
-			});
-
-			self.renderer.on('unableToRender', function () {
-				self._setExportStatus('notReady');
-				makeGridTable();
-			});
-
-			self.renderer.on('csvReady', function () {
-				if (self.exportLock.isLocked()) {
-					self.exportLock.unlock();
-				}
-				self._setExportStatus('ready');
-			});
-			self.renderer.on('generateCsvProgress', function (progress) {
-				if (progress === 0) {
-					self.ui.exportBtn.children('span.fa, svg.svg-inline--fa').remove();
-					self.ui.exportBtn.append(fontAwesome('fa-spinner', 'fa-pulse'));
-				}
-			});
-
-			if (self.features.limit) {
-				self.renderer.on('limited', function () {
-					self.ui.limit_div.show();
-				});
-				self.renderer.on('unlimited', function () {
-					self.ui.limit_div.hide();
-				});
-			}
-
-			if (self.features.rowSelect) {
-				self.renderer.on('selectionChange', function (selection) {
-					if (selection.length === 0) {
-						self.ui.selectionInfo.text('');
-					}
-					else {
-						var addComma = self.ui.rowCount.text().length > 0;
-						var str = addComma ? ', ' : '';
-						str += trans(selection.length === 1 ? 'GRID.TITLEBAR.SELECTED_COUNT_SINGULAR' : 'GRID.TITLEBAR.SELECTED_COUNT_PLURAL', selection.length);
-						self.ui.selectionInfo.text(str);
-					}
-					self.fire('selectionChange', null, selection);
-				});
-			}
-
-			self.renderer.draw(self.ui.grid, null, function () {
-				if (self.colConfigLock.isLocked()) {
-					self.colConfigLock.unlock('renderer finished drawing');
-				}
-				self.setSelection();
-				self.ui.exportBtn.attr('disabled', false);
-				self.tableDoneCont();
-			});
-		});
-	};
-
 	self.debug(null, 'Redrawing...');
-	makeGridTable();
+
+	var rendererCtor
+		, rendererCtorOpts;
+
+	self.colConfigLock.lock('redrawing grid; prevent colConfig changes from notifying existing renderer');
+
+	self.view.getData(function (ok, data) {
+		if (!ok) {
+			return contFail();
+		}
+
+		var mode = data.isPlain ? 'plain' : data.isGroup ? 'group' : data.isPivot ? 'pivot' : null;
+		var renderer = self.findRenderer(self.ui.root.get(0).getBoundingClientRect().width, mode);
+
+		self.rendererName = typeof renderer.fn === 'function' ? renderer.fn() : renderer.name;
+		self.rendererId = renderer.id;
+
+		var rendererCtor = GridRenderer.registry.get(self.rendererName);
+		var rendererCtorOpts = deepCopy(renderer.opts);
+
+		if (self.ui.footer) {
+			rendererCtorOpts.footer = self.ui.footer;
+		}
+
+		if (self.renderer) {
+			self.renderer.destroy();
+		}
+
+		rendererCtorOpts.generateCsv = self.generateCsv;
+		rendererCtorOpts.fixedHeight = self.rootHasFixedHeight;
+
+		self.ui.exportBtn.attr('disabled', true);
+		self.renderer = new rendererCtor(self, self.defn, self.view, self.features, rendererCtorOpts, self.timing, self.id, self.colConfig);
+
+		// Update the toolbar sections.  This needs to be done after creating the renderer because the
+		// renderer validates (and possibly changes) the supported features, and that changes what parts
+		// of the toolbar we show.  Obviously, we shouldn't show buttons for features that the current
+		// renderer doesn't implement.
+
+		if (data.isPlain) {
+			self.ui.toolbar_plain.show();
+			self.ui.toolbar_group.hide();
+			self.ui.toolbar_pivot.hide();
+		}
+		else if (data.isGroup) {
+			self.ui.toolbar_plain.hide();
+			self.ui.toolbar_group.show();
+			self.ui.toolbar_pivot.hide();
+		}
+		else if (data.isPivot) {
+			self.ui.toolbar_plain.hide();
+			self.ui.toolbar_group.hide();
+			self.ui.toolbar_pivot.show();
+		}
+
+		self.renderer.on('renderBegin', function () {
+			self._isIdle = false;
+			self.fire('renderBegin');
+		});
+		self.renderer.on('renderEnd', function () {
+			self.fire('renderEnd');
+			self._isIdle = true;
+		});
+
+		self.renderer.on('unableToRender', function () {
+			self._setExportStatus('notReady');
+			self.redraw();
+		});
+
+		self.renderer.on('csvReady', function () {
+			if (self.exportLock.isLocked()) {
+				self.exportLock.unlock();
+			}
+			self._setExportStatus('ready');
+		});
+		self.renderer.on('generateCsvProgress', function (progress) {
+			if (progress === 0) {
+				self.ui.exportBtn.children('span.fa, svg.svg-inline--fa').remove();
+				self.ui.exportBtn.append(fontAwesome('fa-spinner', 'fa-pulse'));
+			}
+		});
+
+		if (self.features.limit) {
+			self.renderer.on('limited', function () {
+				self.ui.limit_div.show();
+			});
+			self.renderer.on('unlimited', function () {
+				self.ui.limit_div.hide();
+			});
+		}
+
+		if (self.features.rowSelect) {
+			self.renderer.on('selectionChange', function (selection) {
+				if (selection.length === 0) {
+					self.ui.selectionInfo.text('');
+				}
+				else {
+					var addComma = self.ui.rowCount.text().length > 0;
+					var str = addComma ? ', ' : '';
+					str += trans(selection.length === 1 ? 'GRID.TITLEBAR.SELECTED_COUNT_SINGULAR' : 'GRID.TITLEBAR.SELECTED_COUNT_PLURAL', selection.length);
+					self.ui.selectionInfo.text(str);
+				}
+				self.fire('selectionChange', null, selection);
+			});
+		}
+
+		self.renderer.draw(self.ui.grid, null, function () {
+			if (self.colConfigLock.isLocked()) {
+				self.colConfigLock.unlock('renderer finished drawing');
+			}
+			self.setSelection();
+			self.ui.exportBtn.attr('disabled', false);
+			self.tableDoneCont();
+		});
+	});
 };
 
 // #refresh {{{2
@@ -1451,6 +1428,30 @@ Grid.prototype.clearRenderCache = function (cols) {
  *
  * @method
  * @memberof Grid
+ *
+ * @param {object} info
+ * @param {number} info.numRows
+ * @param {number} info.totalRows
+ * @param {number} info.numGroups
+ * @param {number} info.numPivots
+ * @param {boolean} info.isPlain
+ * @param {boolean} info.isGroup
+ * @param {boolean} info.isPivot
+ *
+ * @param {object} ops
+ * Describes what the view did.
+ *
+ * @param {boolean} ops.filter
+ * If true, then the view filtered data.
+ *
+ * @param {boolean} ops.group
+ * If true, then the view grouped data.
+ *
+ * @param {boolean} ops.pivot
+ * If true, then the view pivotted data.
+ *
+ * @param {boolean} ops.sort
+ * If true, then the view sorted data.
  */
 
 Grid.prototype._updateRowCount = function (info, ops) {
@@ -2210,6 +2211,193 @@ Grid.prototype.setOperations = function (ops) {
 	// therefore the buttons in the row need to be redrawn.
 
 	self.redraw();
+};
+
+// #makeResponsive {{{2
+
+Grid.prototype.makeResponsive = function () {
+	var self = this;
+
+	if (window.ResizeObserver == null) {
+		log.warn('ResizeObserver is not supported; grid will not be responsive.');
+		return;
+	}
+
+	var timer;
+
+	// We use a timer to create a delay, so the page has to be "still" for 500ms before we'll try to
+	// redraw the grid with a different renderer.
+
+	self.resizeObserver = new ResizeObserver(function (elts) {
+		if (timer != null) {
+			clearTimeout(timer);
+		}
+		timer = setTimeout(function () {
+			timer = null;
+			var renderer = self.findRenderer(elts[0].contentRect.width, self.mode);
+			if (renderer.id !== self.rendererId) {
+				self.debug('Resize', 'Resized to ' + elts[0].contentRect.width + '; using renderer: %O', renderer);
+				self.redraw();
+			}
+		}, 500);
+	});
+
+	self.resizeObserver.observe(self.ui.root.get(0));
+};
+
+// #addRenderer {{{2
+
+/**
+ * @typedef RendererSpec
+ * Either `name` or `fn` must exist.
+ *
+ * @prop {string} [name]
+ * Name of the renderer to use; must be registered in {@see GridRenderer.registry}.
+ *
+ * @prop {function} [fn]
+ * A nullary function that returns the name of the name of a renderer registered in
+ * {@see GridRenderer.registry}.
+ *
+ * @prop {object} [opts]
+ * Additional options to pass to the renderer contructor.
+ */
+
+/**
+ * Adds a new renderer to the grid.
+ *
+ * @param {number} minWidth
+ * The minimum width at which this renderer will work.
+ *
+ * @param {RendererSpec} renderer
+ * Specification of the renderer to add.
+ */
+
+Grid.prototype.addRenderer = (function () {
+	var id = 1;
+
+	return function (minWidth, renderer) {
+		var self = this
+			, i;
+
+		renderer.id = 'CUSTOM.' + id++;
+
+		for (i = 0; i < self.widthBreaks.length; i += 1) {
+			if (minWidth < self.widthBreaks[i].minWidth) {
+				// Insert at the appropriate place in the list.
+
+				self.widthBreaks.splice(i, 0, {
+					minWidth: minWidth,
+					renderer: renderer
+				});
+
+				return;
+			}
+		}
+
+		// New entry has the largest minWidth in the list, put it at the end.
+
+		self.widthBreaks.splice(-1, 0, {
+			minWidth: minWidth,
+			renderer: renderer
+		});
+	};
+})();
+
+// #clearRenderers {{{2
+
+/**
+ * Completely clears all grid renderers.
+ */
+
+Grid.prototype.clearRenderers = function () {
+	var self = this;
+
+	self.widthBreaks = [];
+};
+
+// #resetRenderers {{{2
+
+/**
+ * Resets the list of grid renderers to the initial state.
+ */
+
+Grid.prototype.resetRenderers = function () {
+	var self = this;
+
+	self.widthBreaks = [{
+		minWidth: 1024,
+		mode: ['plain'],
+		renderer: {
+			name: 'table_plain'
+		}
+	}, {
+		minWidth: 1024,
+		mode: ['group'],
+		renderer: {
+			fn: function () {
+				switch (self.defn.table.groupMode) {
+				case 'summary':
+					return 'table_group_summary';
+				case 'detail':
+					return 'table_group_detail';
+				}
+			}
+		}
+	}, {
+		minWidth: 1024,
+		mode: ['pivot'],
+		renderer: {
+			name: 'table_pivot'
+		}
+	}];
+};
+
+// #findRenderer {{{2
+
+/**
+ * Find a renderer suitable for drawing the grid.  A "suitable" renderer is one that (1) can handle
+ * the data `mode`, and (2) has a `minWidth` property less than the current width.  If no such
+ * renderer exists, we pick one that can handle the data, at the smallest `minWidth` available.  If
+ * there still aren't any renderers available (e.g. if the developer cleared the list) then null is
+ * returned.
+ *
+ * @param {number} width
+ * The width of the grid.
+ *
+ * @param {string} mode
+ * What type of data we're displaying. Must be one of: plain, group, pivot.
+ *
+ * @returns {RendererSpec}
+ * A renderer that can be used to display the grid.  Returns null if there aren't any options.
+ */
+
+Grid.prototype.findRenderer = function (width, mode) {
+	var self = this,
+		i, b;
+
+	if (self.widthBreaks == null || self.widthBreaks.length === 0) {
+		return null;
+	}
+
+	// Find the entry with the largest minWidth that's still less than the current width, which also
+	// supports the mode we're currently in.
+
+	for (i = self.widthBreaks.length - 1; i >= 0; i -= 1) {
+		b = self.widthBreaks[i];
+		if (b.minWidth <= width && (b.mode == null || b.mode.indexOf(mode) >= 0)) {
+			return b.renderer;
+		}
+	}
+
+	// There aren't any renderers with a minWidth less than the current width; start at the bottom and
+	// find the smallest that can handle the data.
+
+	for (i = 0; i < self.widthBreaks.length; i += 1) {
+		b = self.widthBreaks[i];
+		if (b.mode == null || b.mode.indexOf(mode) >= 0) {
+			return b.renderer;
+		}
+	}
 };
 
 // Exports {{{1

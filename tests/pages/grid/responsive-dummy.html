@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8"/>
+		<script src="../wcdatavis.js"></script>
+		<link rel="stylesheet" href="../font-awesome.css"/>
+		<link rel="stylesheet" href="../base.css"/>
+		<link rel="stylesheet" href="../wcdatavis.css"/>
+		<script>
+document.addEventListener('DOMContentLoaded', function () {
+	MIE.DEBUGGING = true;
+
+	var source = new MIE.WC_DataVis.Source({
+		type: 'http',
+		url: '../random-people.csv'
+	});
+	var computedView = new MIE.WC_DataVis.ComputedView(source);
+	var grid = new MIE.WC_DataVis.Grid({
+		id: 'grid',
+		computedView: computedView,
+		table: {
+			features: {
+				limit: false,
+				rowSelect: true,
+			},
+		}
+	}, {
+		title: 'Test - Grid - Default',
+		showControls: true
+	});
+	grid.addRenderer(800, { name: 'dummy', opts: { msg: 'Dummy 800' } });
+	grid.addRenderer(900, { name: 'dummy', opts: { msg: 'Dummy 900' } });
+	grid.addRenderer(1000, { name: 'dummy', opts: { msg: 'Dummy 1000' } });
+	grid.addRenderer(1100, { name: 'dummy', opts: { msg: 'Dummy 1100' } });
+	grid.addRenderer(1200, { name: 'dummy', opts: { msg: 'Dummy 1200' } });
+});
+		</script>
+	</head>
+	<body>
+		<div id="grid"></div>
+	</body>
+</html>

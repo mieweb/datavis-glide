@@ -2156,6 +2156,14 @@ export function delegate(from, to, methods) {
 		}
 		from.prototype[m] = function () {
 			var args = Array.prototype.slice.call(arguments);
+			if (this[to] == null) {
+				console.error('Delegated property "' + to + '" does not exist.');
+				return;
+			}
+			if (this[to][m] == null) {
+				console.error('Delegated method "' + to + '.' + m + '" does not exist.');
+				return;
+			}
 			return this[to][m].apply(this[to], args);
 		};
 	});
