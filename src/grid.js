@@ -746,7 +746,17 @@ var Grid = makeSubclass('Grid', Object, function (defn, opts, cb) {
 			.append(self.ui.footer))
 	;
 
-	self.resetRenderers();
+	if (self.defn.renderer != null) {
+		self.clearRenderers();
+		self.addRenderer(0, null, {
+			name: self.defn.renderer,
+			opts: self.defn.rendererOpts
+		});
+	}
+	else {
+		self.resetRenderers();
+	}
+
 	self.makeResponsive();
 
 	// }}}3
