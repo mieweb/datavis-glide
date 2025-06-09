@@ -31,31 +31,11 @@ $(document).ready(function () {
 	var source = new MIE.WC_DataVis.Source({
 		type: 'http',
 		url: '../fruit.csv'
-	}, null, {
-		'Order ID': {
-			type: 'number'
-		},
-		'Product': {
-			type: 'string'
-		},
-		'Category': {
-			type: 'string'
-		},
-		'Amount': {
-			type: 'currency'
-		},
-		'Date': {
-			type: 'date',
-			format: 'M/D/YYYY'
-		},
-		'Country': {
-			type: 'string'
-		}
 	});
-
-	var view = new MIE.WC_DataVis.View(source, 'Kitchen Sink');
-	new MIE.WC_DataVis.Grid('grid', view, {
+	var computedView = new MIE.WC_DataVis.ComputedView(source);
+	new MIE.WC_DataVis.Grid({
 		id: 'grid',
+		computedView: computedView,
 		table: {
 			features: {
 				rowSelect: true,
