@@ -1384,7 +1384,7 @@ var AggregateInfo = makeSubclass('AggregateInfo', Object, function (aggType, spe
 
 			if (fti.needsDecoding) {
 				if (decode != null) {
-					decode(fti.field);
+					decode(fti.field, fti);
 				}
 				else {
 					log.warn('Unable to decode field "' + fti.field + '" on demand for aggregate function, no decoding function provided.');

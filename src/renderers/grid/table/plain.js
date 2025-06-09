@@ -33,6 +33,7 @@ import {AggregateInfo} from '../../../aggregates.js';
 import {GridFilterSet} from '../../../grid_filter.js';
 import {GridRenderer} from '../../../grid_renderer.js';
 import {ComputedView} from '../../../computed_view.js';
+import {Source} from '../../../source.js';
 import {GROUP_FUNCTION_REGISTRY} from '../../../group_fun.js';
 
 import handlebarsUtil from '../../../util/handlebars.js';
@@ -724,7 +725,7 @@ GridTablePlain.prototype.drawFooter = function (columns, data, typeInfo) {
 						console.debug('[DataVis // %s // Footer(%s) // %s] Converting data: { field = "%s", type = "%s" }',
 							self.toString(), field, tag, fti.field, fti.type);
 
-						Source.decodeAll(data.dataByRowId, fti.field);
+						Source.decodeAll(data.dataByRowId, fti.field, typeInfo);
 					}
 
 					fti.deferDecoding = false;
