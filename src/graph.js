@@ -14,6 +14,7 @@ import {
 	makeSubclass,
 	makeToggleCheckbox,
 	presentDownload,
+	setProp,
 	toInt,
 } from './util/misc.js';
 import OrdMap from './util/ordmap.js';
@@ -46,7 +47,28 @@ import GRAPH_RENDERER_REGISTRY from './reg/graph_renderer.js';
  * Can either be a function that returns an object, or just an object.  If it's a function, it
  * receives the group fields and pivot fields as arguments.
  *
- * @mixes ComputedView~AggregateSpec
+ * @property {string} graphType
+ * Name of the type of graph.
+ *
+ * @property {number} [aggNum]
+ * When graphing grouped or pivotted data, the aggregate number that we're graphing for the value.
+ *
+ * @property {string} [aggType]
+ * When graphing pivotted data, the type of aggregate that we're graphing on the value axis.
+ *
+ * - `cell`: We're graphing separate series for each pivot colval.
+ * - `group`: We're graphing the aggregate calculated over all the data in each group.
+ * - `pivot`: We're graphing the aggregate calculated over all the data in each pivot.
+ *
+ * For example, when grouping by "Product" and pivotting by "Country", you can create a "Sum"
+ * aggregate on the field "Sales." Let's assume we're doing a column graph.
+ *
+ * - `cell`: Shows a stacked graph where each bar is a product, and each item in the stack is a country.
+ * - `group`: Shows a graph where each bar is a product (showing total sales in all countries).
+ * - `pivot`: Shows a graph where each bar is a country (showing total sales for all products).
+ *
+ * @property {object} [options]
+ * These options are passed directly to the graph rendering library (e.g. Google Charts, ChartJS).
  */
 
 // Constructor {{{2
@@ -137,52 +159,11 @@ var Graph = makeSubclass('Graph', Object, function (id, view, devConfig, opts) {
 		self._hideSpinner();
 	});
 
-	// Event handler for keeping the UI in sync with the data.
+	// Event handler for keeping the UI in sync with the data. We don't let the graph renderer redraw itself because we need to keep the UI in sync with the data. For example, if a pivot is removed, the aggregate will change if we were graphing a pivot-specific aggregate like "Count by [Pivot Field]").
 
 	self.view.on('workEnd', function (info, ops) {
-		var config;
-
-		if (ops.pivot) {
-			config = getProp(self.userConfig, 'pivot', 'graphs', getProp(self.userConfig, 'pivot', 'current'))
-				|| self.devConfig.whenPivot;
-		}
-		else if (ops.group) {
-			config = getProp(self.userConfig, 'group', 'graphs', getProp(self.userConfig, 'group', 'current'))
-				|| self.devConfig.whenGroup;
-		}
-		else {
-			config = getProp(self.userConfig, 'plain', 'graphs', getProp(self.userConfig, 'plain', 'current'))
-				|| self.devConfig.whenPlain;
-		}
-
-		if (config != null) {
-			console.debug('[DataVis // Graph // Handler(ComputedView.workEnd)] Matching configuration: %O', config);
-
-			var graphType = config.graphType;
-			var axis = graphType === 'bar' ? 'hAxis' : 'vAxis';
-			self.ui.graphTypeDropdown.val(config.graphType);
-		}
-
-		if (ops.group) {
-			self.ui.toolbar_aggregates.show();
-			if (config != null) {
-				self.ui.aggDropdown.val(config.aggNum);
-				self.ui.zeroAxisCheckbox.prop('checked', getProp(config, 'options', axis, 'minValue') == 0);
-			}
-		}
-		else {
-			self.ui.toolbar_aggregates.hide();
-		}
-
-		if (ops.pivot) {
-			self.ui.toolbar_pivot.show();
-			if (config != null) {
-				self.ui.stackCheckbox.prop('checked', !!getProp(config, 'options', 'isStacked'));
-			}
-		}
-		else {
-			self.ui.toolbar_pivot.hide();
-		}
+		self.lastOps = ops;
+		// self.drawFromConfig();
 	}, {
 		who: self
 	});
@@ -205,6 +186,40 @@ var Graph = makeSubclass('Graph', Object, function (id, view, devConfig, opts) {
 		*/
 	});
 
+	// self.view.on('aggregateSet', function (spec, shouldGraph) {
+	// 	var aggType, aggNum;
+	//
+	// 	if (shouldGraph != null) {
+	// 		if (shouldGraph.group && shouldGraph.group.length > 0) {
+	// 			aggType = 'group';
+	// 			aggNum = shouldGraph.group[0].aggNum;
+	// 		}
+	// 		else if (shouldGraph.pivot && shouldGraph.pivot.length > 0) {
+	// 			aggType = 'pivot';
+	// 			aggNum = shouldGraph.pivot[0].aggNum;
+	// 		}
+	//
+	// 		if (aggType == null || aggNum == null) {
+	// 			// Couldn't find an aggregate we could graph.
+	// 			return;
+	// 		}
+	//
+	// 		// Set the dropdown to match the aggregate we're supposed to graph.
+	//
+	// 		var matchingAgg = self.ui.aggDropdown.find('option');
+	// 		matchingAgg = matchingAgg.filter(function (i, elt) {
+	// 			return elt.getAttribute('data-wcdv-agg-type') === aggType;
+	// 		});
+	// 		matchingAgg = matchingAgg.filter(function (i, elt) {
+	// 			return +elt.getAttribute('data-wcdv-agg-num') === aggNum;
+	// 		});
+	// 		if (matchingAgg.length === 1) {
+	// 			self.ui.aggDropdown.val(matchingAgg.attr('value'));
+	// 			// self.ui.aggDropdown.trigger('change');
+	// 		}
+	// 	}
+	// });
+
 	if (self.opts.runImmediately) {
 		self.show();
 	}
@@ -213,6 +228,11 @@ var Graph = makeSubclass('Graph', Object, function (id, view, devConfig, opts) {
 		self.hide();
 	}
 
+	/*
+	 * Store self object so it can be accessed from other JavaScript in the page.
+	 */
+
+	setProp(self, window, 'MIE', 'WC_DataVis', 'graphs', self.id);
 });
 
 // #toString {{{2
@@ -276,7 +296,7 @@ Graph.prototype._makeUserInterface = function () {
 
 	self.ui.toolbar_pivot = jQuery('<div>')
 		.addClass('wcdv_toolbar_section')
-		.hide()
+		.css('visibility', 'hidden')
 		.appendTo(self.ui.toolbar);
 	self._addPivotButtons(self.ui.toolbar_pivot);
 
@@ -285,7 +305,7 @@ Graph.prototype._makeUserInterface = function () {
 
 	self.ui.toolbar_aggregates = jQuery('<div>')
 		.addClass('wcdv_toolbar_section pull-right')
-		.hide()
+		.css('visibility', 'hidden')
 		.appendTo(self.ui.toolbar);
 	self._addAggregateButtons(self.ui.toolbar_aggregates);
 
@@ -411,12 +431,6 @@ Graph.prototype._addAggregateButtons = function (toolbar) {
 		})
 		.appendTo(toolbar);
 
-	if (getProp(self.renderer, 'prototype', 'graphTypes')) {
-		self.renderer.prototype.graphTypes.each(function (gt) {
-			self.ui.graphTypeDropdown.append(jQuery('<option>', { 'value': gt.value }).text(gt.name));
-		});
-	}
-
 	var aggDropdownId = gensym();
 	jQuery('<label>', { 'for': aggDropdownId }).text('Aggregate: ').appendTo(toolbar);
 	self.ui.aggDropdown = jQuery('<select>', { 'id': aggDropdownId })
@@ -440,6 +454,29 @@ Graph.prototype._addAggregateButtons = function (toolbar) {
 		self._updateAggDropdown();
 	});
 };
+
+// #_setGraphTypeOptions {{{2
+
+Graph.prototype._setGraphTypeOptions = function () {
+	var self = this;
+
+	if (self.ui.graphTypeDropdown == null) {
+		console.error('[DataVis // Graph // Set Graph Type Options] Dropdown UI element does not exist');
+		return;
+	}
+
+	if (self.renderer == null) {
+		console.error('[DataVis // Graph // Set Graph Type Options] Renderer does not exist');
+		return;
+	}
+
+	self.ui.graphTypeDropdown.children().remove();
+	if (self.renderer.graphTypes != null) {
+		self.renderer.graphTypes.each(function (gt) {
+			self.ui.graphTypeDropdown.append(jQuery('<option>', { 'value': gt.value }).text(gt.name));
+		});
+	}
+}
 
 // #_addPivotButtons {{{2
 
@@ -521,6 +558,57 @@ Graph.prototype._updateAggDropdown = function () {
 		});
 	}, 'Updating graph aggregate dropdown');
 };
+
+// #syncDrawnGraphConfigWithUi {{{2
+
+/**
+ * Synchronize the configuration actually used to draw a graph with the user interface. This updates
+ * things like the graph type and aggregate dropdowns to reflect how the graph was drawn.
+ *
+ * @param {Graph~Config_When} config
+ * The configuration used by the graph that was just drawn.
+ */
+
+Graph.prototype.syncDrawnGraphConfigWithUi = function (config) {
+	var self = this;
+
+	if (config == null) {
+		return;
+	}
+
+	var axis = config.graphType === 'bar' ? 'hAxis' : 'vAxis';
+	self.ui.graphTypeDropdown.val(config.graphType);
+
+	if (self.lastOps != null && self.lastOps.group) {
+		self.ui.toolbar_aggregates.css('visibility', 'visible');
+		var matchingAgg = self.ui.aggDropdown.find('option');
+		if (config.aggType != null) {
+			matchingAgg = matchingAgg.filter(function (i, elt) {
+				return elt.getAttribute('data-wcdv-agg-type') === config.aggType;
+			});
+		}
+		if (config.aggNum != null) {
+			matchingAgg = matchingAgg.filter(function (i, elt) {
+				return +elt.getAttribute('data-wcdv-agg-num') === config.aggNum;
+			});
+		}
+		if (matchingAgg.length === 1) {
+			self.ui.aggDropdown.val(matchingAgg.attr('value'));
+		}
+		self.ui.zeroAxisCheckbox.prop('checked', getProp(config, 'options', axis, 'minValue') == 0);
+	}
+	else {
+		self.ui.toolbar_aggregates.css('visibility', 'hidden');
+	}
+
+	if (self.lastOps != null && self.lastOps.pivot) {
+		self.ui.toolbar_pivot.css('visibility', 'visible');
+		self.ui.stackCheckbox.prop('checked', !!getProp(config, 'options', 'isStacked'));
+	}
+	else {
+		self.ui.toolbar_pivot.css('visibility', 'hidden');
+	}
+}
 
 // #export {{{2
 
@@ -721,6 +809,10 @@ Graph.prototype.redraw = function () {
 			? GRAPH_RENDERER_REGISTRY.get(self.opts.renderer)
 			: GRAPH_RENDERER_REGISTRY.get('google');
 		self.renderer = new ctor(self, self.ui.graph, self.view, self.opts);
+		self.renderer.on('draw', function (config) {
+			self.syncDrawnGraphConfigWithUi(config);
+		});
+		self._setGraphTypeOptions();
 		self.drawFromConfig();
 	}, {
 		who: self

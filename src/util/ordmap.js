@@ -47,6 +47,13 @@ OrdMap.prototype.constructor = OrdMap;
 OrdMap.fromArray = function (values, keyField) {
 	var o = new OrdMap();
 
+	if (!_.isArray(values)) {
+		throw new Error('Call Error: `values` must be an array');
+	}
+	if (!_.isString(keyField) && !_.isNumber(keyField)) {
+		throw new Error('Call Error: `keyField` must be a string or number');
+	}
+
 	for (var i = 0; i < values.length; i += 1) {
 		o.set(values[i][keyField], values[i]);
 	}

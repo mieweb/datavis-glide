@@ -48,7 +48,7 @@ var GraphRendererGoogle = makeSubclass('GraphRendererGoogle', GraphRenderer, nul
 		value: 'gantt',
 		name: 'Gantt Chart',
 		modes: ['plain'],
-	}])
+	}], 'value')
 });
 
 // #draw_plain {{{2
@@ -443,7 +443,10 @@ GraphRendererGoogle.prototype._ensureGoogleChartsLoaded = function (cont) {
 GraphRendererGoogle.prototype.draw = function (devConfig, userConfig) {
 	var self = this;
 
-	self.super.addRedrawHandlers();
+	if (!self.hasRun) {
+		self.super.addRedrawHandlers();
+	}
+	self.hasRun = true;
 
 	devConfig = devConfig || {};
 	userConfig = userConfig || {};
@@ -568,8 +571,8 @@ GraphRendererGoogle.prototype.draw = function (devConfig, userConfig) {
 				});
 
 				debug.info('GRAPH // GOOGLE // DRAW', 'Starting draw: [config = %O ; options = %O]', config, options);
-
 				chart.draw(dt, options);
+				self.fire('draw', null, config);
 			});
 		}, 'Drawing Google graph');
 	});

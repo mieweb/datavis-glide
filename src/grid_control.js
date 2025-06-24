@@ -464,22 +464,21 @@ AggregateControlField.prototype.draw = function () {
 		self._makeOptionsDialog(aggDefn);
 	}
 
-	if (self.control.view.hasClientKind('graph')) {
-		self.ui.graphBtn = jQuery('<button>', {
-			'type': 'button'
-		})
-			.addClass('wcdv_icon_button wcdv_text-primary')
-			.on('click', function () {
-				// TODO Think of a better way to do this.  I feel like the coupling here is too high.
-
-				self.control.clearGraphFlag();
-				self.shouldGraph = true;
-				self.control.updateView();
-			})
-			.append(fontAwesome('fa-bar-chart'))
-			.appendTo(self.ui.root)
-		;
-	}
+	// if (self.control.view.hasClientKind('graph')) {
+	// 	self.ui.graphBtn = jQuery('<button>', {
+	// 		'type': 'button'
+	// 	})
+	// 		.addClass('wcdv_icon_button wcdv_text-primary')
+	// 		.on('click', function () {
+	// 			// TODO Think of a better way to do this.  I feel like the coupling here is too high.
+	// 			self.control.clearGraphFlag();
+	// 			self.shouldGraph = true;
+	// 			self.control.updateView();
+	// 		})
+	// 		.append(fontAwesome('fa-bar-chart'))
+	// 		.appendTo(self.ui.root)
+	// 	;
+	// }
 
 	self.ui.isHiddenCheckbox = jQuery('<input>', {
 		'type': 'checkbox'

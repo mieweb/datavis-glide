@@ -11,6 +11,7 @@ import {
 	loadScript,
 	log,
 	makeSubclass,
+	mixinEventHandling,
 	setProp,
 } from './util/misc.js';
 import {AggregateInfo} from './aggregates';
@@ -26,6 +27,10 @@ var GraphRenderer = makeSubclass('GraphRenderer', Object, function (graph, elt, 
 	self.view = view;
 	self.opts = opts;
 });
+
+mixinEventHandling(GraphRenderer, [
+'draw'
+]);
 
 // #toString {{{2
 

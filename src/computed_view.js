@@ -2840,16 +2840,35 @@ ComputedView.prototype.setAggregate = function (spec, opts) {
 					}
 				}
 				*/
-				if ((aggType === 'group' || aggType === 'pivot') && agg.shouldGraph) {
-					shouldGraph[aggType].push(agg);
-				}
 				return true;
 			});
+
+			// Go through all the aggregates for this type (e.g. group or pivot) that should be graphed,
+			// adding them to the list. Graphs listening for the `aggregateSet` event can read the list,
+			// configuring their renderer to show the specified aggregates.
+
+			if (shouldGraph[aggType] != null) {
+				_.each(aggSpec, function (agg, i) {
+					if (agg.shouldGraph) {
+						shouldGraph[aggType].push({
+							aggNum: i,
+							aggSpec: agg
+						});
+					}
+				});
+			}
+
 			spec[aggType] = aggSpec;
 		});
 
 		self.super.setAggregate(deepCopy(spec), opts);
 	}
+
+	// if (opts.sendEvent) {
+	// 	self.fire('aggregateSet', {
+	// 		notTo: opts.dontSendEventTo
+	// 	}, spec, shouldGraph);
+	// }
 
 	if (isDifferent && self.prefs != null && opts.savePrefs) {
 		self.prefs.save();

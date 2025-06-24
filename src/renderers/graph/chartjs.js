@@ -33,7 +33,7 @@ var GraphRendererChartJs = makeSubclass('GraphRendererChartJs', GraphRenderer, n
 		value: 'column',
 		name: 'Column Chart',
 		modes: ['plain', 'group', 'pivot'],
-	}])
+	}], 'value')
 });
 
 // #draw_plain {{{2
@@ -386,7 +386,10 @@ GraphRendererChartJs.prototype.draw_pivot = function (data, typeInfo, dt, config
 GraphRendererChartJs.prototype.draw = function (devConfig, userConfig) {
 	var self = this;
 
-	self.super.addRedrawHandlers();
+	if (!self.hasRun) {
+		self.super.addRedrawHandlers();
+	}
+	self.hasRun = true;
 
 	devConfig = devConfig || {};
 	userConfig = userConfig || {};
@@ -448,6 +451,7 @@ GraphRendererChartJs.prototype.draw = function (devConfig, userConfig) {
 			console.debug('[DataVis // Graph // Chartjs // Draw] Starting draw: [%O]', obj);
 
 			var chart = new Chart(document.getElementById(id), obj);
+			self.fire('draw', null, config);
 		});
 	}, 'Drawing Chart.js graph');
 };
