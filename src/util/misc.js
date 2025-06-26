@@ -27,6 +27,51 @@ function isObject(value) {
 }
 
 /**
+ * Deep equality check that matches underscore's _.isEqual behavior
+ * Handles arrays, objects, primitives, dates, and special cases
+ */
+function isEqual(a, b) {
+	// Check strict equality first
+	if (a === b) return true;
+	
+	// Check for null/undefined
+	if (a == null || b == null) return a === b;
+	
+	// Check types
+	if (typeof a !== typeof b) return false;
+	
+	// Handle arrays
+	if (Array.isArray(a) && Array.isArray(b)) {
+		if (a.length !== b.length) return false;
+		for (let i = 0; i < a.length; i++) {
+			if (!isEqual(a[i], b[i])) return false;
+		}
+		return true;
+	}
+	
+	// Handle dates
+	if (a instanceof Date && b instanceof Date) {
+		return a.getTime() === b.getTime();
+	}
+	
+	// Handle objects
+	if (typeof a === 'object' && typeof b === 'object') {
+		const keysA = Object.keys(a);
+		const keysB = Object.keys(b);
+		
+		if (keysA.length !== keysB.length) return false;
+		
+		for (let key of keysA) {
+			if (!keysB.includes(key)) return false;
+			if (!isEqual(a[key], b[key])) return false;
+		}
+		return true;
+	}
+	
+	return false;
+}
+
+/**
  * Iterate over an object or array, calling a function for each item
  * Replaces _.each with support for both arrays and objects
  */
@@ -46,6 +91,9 @@ function each(obj, fn, context) {
 	}
 	return obj;
 }
+
+// Export native ES6+ utility functions
+export { isObject, isEqual, each };
 
 // Functional {{{1
 
