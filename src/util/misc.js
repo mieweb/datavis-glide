@@ -72,6 +72,42 @@ function isEqual(a, b) {
 }
 
 /**
+ * Applies defaults to object properties, similar to _.defaults
+ */
+function defaults(target, ...sources) {
+	sources.forEach(source => {
+		if (source) {
+			Object.keys(source).forEach(key => {
+				if (target[key] === undefined) {
+					target[key] = source[key];
+				}
+			});
+		}
+	});
+	return target;
+}
+
+/**
+ * Maps object values while preserving keys, similar to _.mapObject
+ */
+function mapObject(obj, fn) {
+	const result = {};
+	Object.keys(obj).forEach(key => {
+		result[key] = fn(obj[key], key);
+	});
+	return result;
+}
+
+/**
+ * Binds a function to a specific context, similar to _.bind
+ */
+function bind(fn, context, ...args) {
+	return function(...newArgs) {
+		return fn.apply(context, args.concat(newArgs));
+	};
+}
+
+/**
  * Iterate over an object or array, calling a function for each item
  * Replaces _.each with support for both arrays and objects
  */
@@ -93,7 +129,7 @@ function each(obj, fn, context) {
 }
 
 // Export native ES6+ utility functions
-export { isObject, isEqual, each };
+export { isObject, isEqual, each, defaults, mapObject, bind };
 
 // Functional {{{1
 
@@ -399,7 +435,7 @@ export var getComparisonFn = (function () {
 			else if (moment.isMoment(val)) {
 				return cmpFn.date;
 			}
-			else if (_.isArray(val)) {
+			else if (Array.isArray(val)) {
 				return cmpFn.array;
 			}
 			else {
@@ -514,10 +550,10 @@ export function trulyYours(cont, spec, thisArg, acc) {
 
 export function asyncChain(fns, args, done) {
 	var self = this;
-	if (!_.isArray(fns)) {
+	if (!Array.isArray(fns)) {
 		throw new Error('Call Error: `fns` must be an array');
 	}
-	if (!_.isArray(args)) {
+	if (!Array.isArray(args)) {
 		throw new Error('Call Error: `args` must be an array');
 	}
 
@@ -715,7 +751,7 @@ export function tryFloatConvert(x) {
  */
 
 export function arrayCompare(a, b) {
-	if (!_.isArray(a) || !_.isArray(b)) {
+	if (!Array.isArray(a) || !Array.isArray(b)) {
 		throw new Error('Call Error: arguments must be arrays');
 	}
 
@@ -741,7 +777,7 @@ export function arrayCompare(a, b) {
  */
 
 export function arrayEqual(a, b) {
-	if (!_.isArray(a) || !_.isArray(b)) {
+	if (!Array.isArray(a) || !Array.isArray(b)) {
 		throw new Error('Call Error: arguments must be arrays');
 	}
 
@@ -782,7 +818,7 @@ export function eachUntil(l, f, r) {
 
 /**
  * Calls a function on each key/value pair in an object until the function returns a certain value.
- * This is mainly useful as a sort of short-circuited version of `_.each()` or a version of
+ * This is mainly useful as a sort of short-circuited version of `each()` or a version of
  * `_.every()` that works on objects.  This contrived example only goes through as many keys as
  * necessary to determine that one of them is "TERMINATE."
  *
@@ -835,7 +871,7 @@ export function eachUntilObj(o, f, r, extra) {
  */
 
 export function asyncEach(args, fun, done) {
-	if (!_.isArray(args)) {
+	if (!Array.isArray(args)) {
 		throw new Error('Call Error: `args` must be an array');
 	}
 	if (typeof fun !== 'function') {
@@ -1014,7 +1050,7 @@ export function isNothing(x) {
 export function isEmpty(o) {
 	var numProps = 0;
 
-	_.each(o, function () {
+	each(o, function () {
 		numProps += 1;
 	});
 
@@ -1039,17 +1075,17 @@ export function deepDefaults() {
 	}
 
 	var f = function (dst, src) {
-		_.each(src, function (v, k) {
+		each(src, function (v, k) {
 			if (dst[k] === undefined) {
 				dst[k] = (typeof v === 'object' && v != null) ? deepCopy(v) : v;
 			}
-			else if (_.isObject(dst[k]) && _.isObject(v)) {
+			else if (isObject(dst[k]) && isObject(v)) {
 				f(dst[k], v);
 			}
 		});
 	};
 
-	_.each(args, function (arg) {
+	each(args, function (arg) {
 		f(base, arg);
 	});
 
@@ -1084,7 +1120,7 @@ export function getProp() {
 		, o = args.shift()
 		, i;
 
-	args = _.flatten(args);
+	args = function(arr) { return arr.flat(); }(args);
 
 	for (i = 0; o !== undefined && o !== null && i < args.length; i += 1) {
 		o = o[args[i]];
@@ -1142,11 +1178,11 @@ export function setProp() {
 	var x = args.shift();
 	var o = args.shift();
 
-	args = _.flatten(args);
+	args = function(arr) { return arr.flat(); }(args);
 
 	for (var i = 0; i < args.length - 1; i += 1) {
 		if (o[args[i]] == null) {
-			o[args[i]] = _.isNumber(args[i]) ? [] : {};
+			o[args[i]] = function(x) { return typeof x === "number"; }(args[i]) ? [] : {};
 		}
 
 		o = o[args[i]];
@@ -1165,11 +1201,11 @@ export function setPropDef() {
 	var x = args.shift();
 	var o = args.shift();
 
-	args = _.flatten(args);
+	args = function(arr) { return arr.flat(); }(args);
 
 	for (var i = 0; i < args.length - 1; i += 1) {
 		if (o[args[i]] === undefined) {
-			o[args[i]] = _.isNumber(args[i]) ? [] : {};
+			o[args[i]] = function(x) { return typeof x === "number"; }(args[i]) ? [] : {};
 		}
 
 		o = o[args[i]];
@@ -1203,7 +1239,7 @@ export function setPropDef() {
 export function copyProps(src, dest, props, opts) {
 	opts = opts || {};
 
-	_.each(props, function (p) {
+	each(props, function (p) {
 		if (Object.prototype.hasOwnProperty.call(src, p) || (opts.followPrototype && p in src)) {
 			dest[p] = src[p];
 		}
@@ -1263,7 +1299,7 @@ export function needPropArr() {
 		, exn = args[0]
 		, prop = needProp.apply(this, args);
 
-	if (!_.isArray(prop)) {
+	if (!Array.isArray(prop)) {
 		throw new exn('Property [' + args.slice(1).join('.') + '] must be an array');
 	}
 
@@ -1283,7 +1319,7 @@ export function needPropObj() {
 		, exn = args[0]
 		, prop = needProp.apply(this, args);
 
-	if (!_.isObject(prop)) {
+	if (!isObject(prop)) {
 		throw new exn('Property [' + args.slice(1).join('.') + '] must be an object');
 	}
 
@@ -1375,7 +1411,7 @@ export function pruneTree() {
 	for (i = 0; i < args.length; i += 1) {
 		if (o[args[i]] !== undefined) {
 			deleteFrom.push(o);
-			if (_.isObject(o[args[i]])) {
+			if (isObject(o[args[i]])) {
 				o = o[args[i]];
 				continue;
 			}
@@ -1419,7 +1455,7 @@ export function mergeSort(data, cmp, cont) {
 				var result = [];
 				while (left.length !== 0 && right.length !== 0) {
 					var cmpResult = cmp(left[0], right[0]);
-					if (!_.isNumber(cmpResult)) {
+					if (!function(x) { return typeof x === "number"; }(cmpResult)) {
 						throw 'comparison result returned non-number';
 					}
 					result.push(cmpResult <= 0 ? left.shift() : right.shift());
@@ -1622,10 +1658,10 @@ export function cmpObjField(fieldPath, cmp) {
 	return function (a, b) {
 		a = objGetPath(a, fieldPath);
 		b = objGetPath(b, fieldPath);
-		if (!_.isString(a) && !_.isNumber(a) && !_.isDate(a)) {
+		if (!function(x) { return typeof x === "string"; }(a) && !function(x) { return typeof x === "number"; }(a) && !function(x) { return x instanceof Date; }(a)) {
 			throw 'object "a" doesn\'t contain field path: ' + fieldPath.toString();
 		}
-		if (!_.isString(b) && !_.isNumber(b) && !_.isDate(b)) {
+		if (!function(x) { return typeof x === "string"; }(b) && !function(x) { return typeof x === "number"; }(b) && !function(x) { return x instanceof Date; }(b)) {
 			throw 'object "b" doesn\'t contain field path: ' + fieldPath.toString();
 		}
 		return cmp(a, b);
@@ -1649,7 +1685,7 @@ export function cmpObjField(fieldPath, cmp) {
  */
 
 export function objFromArray(a, v) {
-	return _.reduce(a, function (o, x, i) {
+	return a.reduce(function (o, x, i) {
 		o[x] = v ? v[i % v.length] : x;
 		return o;
 	}, {});
@@ -1674,12 +1710,12 @@ export function walkObj(o, f, opts) {
 	});
 
 	var walk = function (o, acc) {
-		_.each(o, function (v, k) {
+		each(o, function (v, k) {
 			var x;
 			var newAcc = acc.slice();
 			newAcc.push(k);
 
-			if (opts.callOnNodes || !_.isObject(v) || _.isArray(v)) {
+			if (opts.callOnNodes || !isObject(v) || Array.isArray(v)) {
 				x = f(v, newAcc);
 			}
 
@@ -1687,7 +1723,7 @@ export function walkObj(o, f, opts) {
 				o[k] = v = x;
 			}
 
-			if (_.isObject(v)) {
+			if (isObject(v)) {
 				walk(v, newAcc);
 			}
 		});
@@ -1789,7 +1825,7 @@ export var makeSubclass = function (name, parent, ctor, ptype) {
 	//subclass.prototype.__ctor = subclass;
 	//subclass.prototype.__ctorname = name;
 
-	_.each(ptype, function (v, k) {
+	each(ptype, function (v, k) {
 		subclass.prototype[k] = v;
 	});
 
@@ -1813,13 +1849,13 @@ export var makeSubclass = function (name, parent, ctor, ptype) {
  */
 
 export var makeSuper = function (me, parent) {
-	var sup = _.mapObject(parent.prototype, function (v, k) {
+	var sup = mapObject(parent.prototype, function (v, k) {
 		if (typeof v === 'function') {
-			return _.bind(v, me);
+			return bind(v, me);
 		}
 	});
 
-	sup.ctor = _.bind(parent, me);
+	sup.ctor = bind(parent, me);
 
 	return sup;
 };
@@ -1870,7 +1906,7 @@ export var mixinEventHandling = (function () {
 				self.eventHandlers = {};
 
 				if (obj.events != null) {
-					_.each(obj.events, function (evt) {
+					each(obj.events, function (evt) {
 						self.eventHandlers[evt] = [];
 					});
 				}
@@ -1903,10 +1939,10 @@ export var mixinEventHandling = (function () {
 
 			//self._initEventHandlers();
 
-			if (!_.isArray(evt)) {
+			if (!Array.isArray(evt)) {
 				evt = [evt];
 			}
-			_.each(evt, function (e, i) {
+			each(evt, function (e, i) {
 				if (typeof e !== 'string') {
 					throw new Error('Call Error: `evt[' + i + ']` must be a string');
 				}
@@ -1928,11 +1964,11 @@ export var mixinEventHandling = (function () {
 
 			self._initEventHandlers();
 
-			if (!_.isArray(evt)) {
+			if (!Array.isArray(evt)) {
 				evt = [evt];
 			}
 
-			_.each(evt, function (e) {
+			each(evt, function (e) {
 				if (obj.events != null && obj.events[e] === undefined) {
 					throw new Error('Unable to register handler on ' + getName(self) + ' for "' + e + '" event: no such event available');
 				}
@@ -1973,7 +2009,7 @@ export var mixinEventHandling = (function () {
 			self._initEventHandlers();
 
 			if (evt === '*') {
-				_.each(obj.events, function (e) {
+				each(obj.events, function (e) {
 					self.off(e, who, opts);
 				});
 				return;
@@ -1985,7 +2021,7 @@ export var mixinEventHandling = (function () {
 
 			var newHandlers = [];
 
-			_.each(self.eventHandlers[evt], function (handler, i) {
+			each(self.eventHandlers[evt], function (handler, i) {
 				if (handler == null) {
 					// This handler has been removed, e.g. due to reaching the invocation limit.
 					return;
@@ -2041,7 +2077,7 @@ export var mixinEventHandling = (function () {
 
 			var handlers = [];
 
-			_.each(self.eventHandlers[evt], function (handler, i) {
+			each(self.eventHandlers[evt], function (handler, i) {
 				var handler = self.eventHandlers[evt][i];
 
 				if (handler == null) {
@@ -2056,7 +2092,7 @@ export var mixinEventHandling = (function () {
 				//   - `notTo` is an object (direct comparison)
 
 				if (handler.who && opts.notTo &&
-						((_.isArray(opts.notTo) && opts.notTo.indexOf(handler.who) >= 0)
+						((Array.isArray(opts.notTo) && opts.notTo.indexOf(handler.who) >= 0)
 							|| (typeof opts.notTo === 'function' && opts.notTo(handler.who))
 							|| (typeof opts.notTo === 'object' && opts.notTo === handler.who))) {
 					return;
@@ -2118,7 +2154,7 @@ export var mixinEventHandling = (function () {
 
 				// Clean up handlers we removed (because they reached the limit).
 
-				self.eventHandlers[evt] = _.without(self.eventHandlers[evt], null);
+				self.eventHandlers[evt] = self.eventHandlers[evt].filter(function(item) { return item !== null; });
 			});
 		};
 
@@ -2207,7 +2243,7 @@ export function mixinLogging(obj, tagPrefix) {
 // makeSetters {{{2
 
 export function makeSetters(cls, setterList) {
-	_.each(setterList, function (s) {
+	each(setterList, function (s) {
 		cls.prototype[s.name] = function (x, opts) {
 			opts = deepDefaults(opts, {
 				sendEvent: true,
@@ -2226,10 +2262,10 @@ export function makeSetters(cls, setterList) {
 // delegate {{{2
 
 export function delegate(from, to, methods) {
-	if (!_.isArray(methods)) {
+	if (!Array.isArray(methods)) {
 		methods = [methods];
 	}
-	_.each(methods, function (m, i) {
+	each(methods, function (m, i) {
 		if (typeof m !== 'string') {
 			throw new Error('Call Error: `methods[' + i + ']` must be a string');
 		}
@@ -2255,7 +2291,7 @@ export function mixinNameSetting(cls) {
 	cls.prototype.setName = function (name) {
 		var self = this;
 
-		if (name != null && !_.isString(name)) {
+		if (name != null && !function(x) { return typeof x === "string"; }(name)) {
 			self.name = self.constructor.name + ' #' + (++cls.prototype.__namesGenerated);
 			self.logWarning(null, 'Name provided for this ' + self.constructor.name + ' instance is not a string.');
 		}
@@ -2526,7 +2562,7 @@ export var loadScript = (function () {
 	var alreadyLoaded = {};
 	var lock = new Lock('LOAD SCRIPT');
 	return function (url, callback, opts) {
-		_.defaults(opts, {
+		defaults(opts, {
 			needAsyncSetup: false
 		});
 
@@ -2650,7 +2686,7 @@ export function setTableCell(cell, value, opts) {
 		operationDiv.style.display = 'inline-block';
 		operationDiv.style.float = 'right';
 
-		_.each(ops, function (op, index) {
+		each(ops, function (op, index) {
 			operationDiv.appendChild(makeOperationButton('cell', op, index, {inCell: true}));
 		});
 
@@ -2677,7 +2713,7 @@ export function setTableCell(cell, value, opts) {
 		operationDiv.style.display = 'inline-block';
 		operationDiv.style.float = 'right';
 
-		_.each(ops, function (op, index) {
+		each(ops, function (op, index) {
 			var opBtn = makeOperationButton('cell', op, index, {inCell: true});
 			if (op.disableWhen && op.disableWhen(value)) {
 				opBtn.disabled = true;
@@ -2754,7 +2790,7 @@ export function setElement(container, value, opts) {
 export function makeOperationButton(type, op, index, opts) {
 	opts = opts || {};
 
-	_.defaults(opts, {
+	defaults(opts, {
 		inCell: false
 	});
 
@@ -2879,9 +2915,9 @@ export function makeRadioButtons(rootObj, path, def, label, name, values, conv, 
 	if (label) {
 		jQuery('<label>').text(label).appendTo(root);
 	}
-	_.each(values, function (v) {
-		var label = _.isString(v) ? v : v.label;
-		var value = _.isString(v) ? v : v.value;
+	each(values, function (v) {
+		var label = function(x) { return typeof x === "string"; }(v) ? v : v.label;
+		var value = function(x) { return typeof x === "string"; }(v) ? v : v.value;
 		jQuery('<label>')
 			.append(jQuery('<input>', { 'type': 'radio', 'name': name, 'value': value })
 							.on('change', handler))
@@ -2899,16 +2935,16 @@ export function makeRadioButtons(rootObj, path, def, label, name, values, conv, 
  */
 
 export function valueInfo(value) {
-	if (_.isNumber(value)) {
+	if (function(x) { return typeof x === "number"; }(value)) {
 		return [value, ': Number'];
 	}
-	else if (_.isString(value)) {
+	else if (function(x) { return typeof x === "string"; }(value)) {
 		return ['"' + value + '"', ': String'];
 	}
-	else if (_.isArray(value)) {
+	else if (Array.isArray(value)) {
 		return [value, ': Array'];
 	}
-	else if (_.isObject(value)) {
+	else if (isObject(value)) {
 		return [value, ': Object'];
 	}
 	else {
@@ -2936,13 +2972,13 @@ export var log = {
 
 export var concatLog = {
 	info: function () {
-		log.info.apply(window.console, _.flatten(arguments, true));
+		log.info.apply(window.console, function(arr) { return arr.flat(); }(arguments, true));
 	},
 	warn: function () {
-		log.warn.apply(window.console, _.flatten(arguments, true));
+		log.warn.apply(window.console, function(arr) { return arr.flat(); }(arguments, true));
 	},
 	error: function () {
-		log.error.apply(window.console, _.flatten(arguments, true));
+		log.error.apply(window.console, function(arr) { return arr.flat(); }(arguments, true));
 	}
 };
 
@@ -3097,7 +3133,7 @@ export var format = (function () {
 		// can have it format a number and then "parse" the result to figure out e.g. what the grouping
 		// and radix point characters are.
 
-		_.each(window.Intl.NumberFormat(window.DATAVIS_LANG).formatToParts('1234.5'), function (o) {
+		each(window.Intl.NumberFormat(window.DATAVIS_LANG).formatToParts('1234.5'), function (o) {
 			switch (o.type) {
 			case 'group':
 				defaultNumberFormat.integerPart.groupSeparator = o.value;
@@ -3157,7 +3193,7 @@ export var format = (function () {
 			decode: true
 		};
 
-		_.defaults(opts, {
+		defaults(opts, {
 			debug: false,
 			overrideType: null,
 			saferCaching: true
@@ -3298,7 +3334,7 @@ export var format = (function () {
 					fmtStyle = '';
 					// Extract up to the start of the match, escaping it.
 					fmtResult += escapeHtml(result.substring(0, m0.index));
-					_.each(m0[1].split(','), function (f) {
+					each(m0[1].split(','), function (f) {
 						var m1;
 						// Foreground and background color.
 						m1 = f.match(fmtRegexps.color);
@@ -3426,7 +3462,7 @@ export function formatDate(d) {
 			return x.getFullYear();
 		}
 	};
-	return _.map(dateFormatString.split('-'), function (fmt) {
+	return dateFormatString.split('-').map(function (fmt) {
 		if (convert[fmt]) {
 			return convert[fmt](d);
 		}
@@ -3756,7 +3792,7 @@ Timing.prototype.stop = function (what) {
 // #getSubjects {{{2
 
 Timing.prototype.getSubjects = function () {
-	return _.keys(this.events);
+	return Object.keys(this.events);
 };
 
 // #dump {{{2
@@ -3769,7 +3805,7 @@ Timing.prototype.dump = function (subject) {
 			throw new Error('Unknown subject: ' + sub);
 		}
 
-		_.each(self.events[sub], function (evt) {
+		each(self.events[sub], function (evt) {
 			var start = getProp(self.data, sub, evt, 'start')
 				, end = getProp(self.data, sub, evt, 'end');
 
@@ -3781,7 +3817,7 @@ Timing.prototype.dump = function (subject) {
 		f(subject);
 	}
 	else {
-		_.each(self.getSubjects(), f);
+		each(self.getSubjects(), f);
 	}
 };
 
@@ -3801,7 +3837,7 @@ export function getParamsFromUrl() {
 		key = decode(match[1]);
 		val = decode(match[2]);
 		if (params[key]) {
-			if (!_.isArray(params[key])) {
+			if (!Array.isArray(params[key])) {
 				params[key] = [params[key]];
 			}
 			params[key].push(val);
@@ -3904,19 +3940,19 @@ export function determineColumns(colConfig, data, typeInfo) {
 		columns = pinned.concat(notPinned);
 	}
 	else if (typeInfo.size() > 0) {
-		columns = _.reject(typeInfo.keys(), function (field) {
-			return field.charAt(0) === '_';
+		columns = typeInfo.keys().filter(function (field) {
+			return field.charAt(0) !== '_';
 		});
 	}
 	else if (data != null) {
 		if (data.isPlain && data.data.length > 0) {
-			columns = _.keys(data.data[0].rowData);
+			columns = Object.keys(data.data[0].rowData);
 		}
 		else if (data.isGroup && data.data[0].length > 0) {
-			columns = _.keys(data.data[0][0].rowData);
+			columns = Object.keys(data.data[0][0].rowData);
 		}
 		else if (data.isPivot && data.data[0][0].length > 0) {
-			columns = _.keys(data.data[0][0][0].rowData);
+			columns = Object.keys(data.data[0][0][0].rowData);
 		}
 	}
 
