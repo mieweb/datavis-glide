@@ -67,9 +67,9 @@ window.test_filter = function (view) {
 
 	QUnit.test('Filter Test', function (assert) {
 		var done = assert.async();
-		MIE.WC_DataVis.Util.asyncEach(filterInfo, function (fi, next_fi) {
-			MIE.WC_DataVis.Util.asyncEach(fi.args, function (arg, next_arg) {
-				MIE.WC_DataVis.Util.asyncEach(tests[fi.type][arg], function (test, next_test) {
+		MIE.WC_DataVis.Util.asyncEach(filterInfo, function (fi, i1, next_fi) {
+			MIE.WC_DataVis.Util.asyncEach(fi.args, function (arg, i2, next_arg) {
+				MIE.WC_DataVis.Util.asyncEach(tests[fi.type][arg], function (test, i3, next_test) {
 					var info = sprintf('Field = "%s" ; Arg Type = "%s" ; Filter = "%s"',
 						fi.field, arg, JSON.stringify(test.filter));
 					view.reset();

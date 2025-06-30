@@ -1,5 +1,5 @@
 JSDOC := ../node_modules/.bin/jsdoc
-PAGES_DEPENDS := ../dist/wcdatavis.js ../dist/wcdatavis.css ../examples/base.css
+PAGES_DEPENDS := ../dist/wcdatavis.js ../dist/wcdatavis.css
 PUB_PATH := zeus.med-web.com:~/public_html/datavis
 
 .PHONY:	all

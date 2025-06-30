@@ -18,7 +18,7 @@ window.test_sort = function (view) {
 
 	QUnit.test('Sort Test', function (assert) {
 		var done = assert.async();
-		MIE.WC_DataVis.Util.asyncEach(sortInfo, function (si, next) {
+		MIE.WC_DataVis.Util.asyncEach(sortInfo, function (si, i, next) {
 			var field = si[0];
 			var min = si[1];
 			var max = si[2];

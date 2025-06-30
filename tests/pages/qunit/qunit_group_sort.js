@@ -84,7 +84,7 @@ window.test_group_sort = function (view) {
 
 	QUnit.test('Group Sort Test', function (assert) {
 		var done = assert.async();
-		MIE.WC_DataVis.Util.asyncEach(sortInfo, function (si, next) {
+		MIE.WC_DataVis.Util.asyncEach(sortInfo, function (si, i, next) {
 			view.reset();
 			view.setGroup({fieldNames: [si.field]}, {
 				updateData: false
