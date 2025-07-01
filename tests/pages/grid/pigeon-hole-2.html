@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8"/>
+		<script src="../wcdatavis.js"></script>
+		<link rel="stylesheet" href="../font-awesome.css"/>
+		<link rel="stylesheet" href="../base.css"/>
+		<link rel="stylesheet" href="../wcdatavis.css"/>
+		<script>
+document.addEventListener('DOMContentLoaded', function () {
+	MIE.DEBUGGING = true;
+
+	var source = new MIE.WC_DataVis.Source({
+		type: 'http',
+		url: '../random1000.json'
+	});
+
+	var prefs = new MIE.WC_DataVis.Prefs('example_pigeon_hole_2');
+
+	prefs.addPerspective(null, 'Pre-Configured', {
+		view: {
+			group: {
+				fieldNames: ['fruit'],
+				addRowVals: [['Lemon'], ['Lime']]
+			},
+			pivot: {
+				fieldNames: ['country'],
+				addColVals: [['Australia'], ['New Zealand']]
+			},
+			sort: {
+				vertical: {
+					field: 'fruit',
+					values: ['Strawberry', 'Mango', 'Lemon', 'Lime', 'Blueberry', 'Grape']
+				},
+				horizontal: {
+					field: 'country',
+					values: ['United States', 'Canada', 'Mexico', 'Australia', 'New Zealand']
+				}
+			}
+		}
+	}, {
+		isTemporary: true,
+		isEssential: true
+	});
+
+	var computedView = new MIE.WC_DataVis.ComputedView(source, {
+		prefs: prefs
+	});
+
+	var grid = new MIE.WC_DataVis.Grid({
+		id: 'grid',
+		computedView: computedView,
+		prefs: prefs,
+		table: {
+			features: {
+				floatingHeader: false
+			},
+		},
+	}, {
+		title: 'Pigeonhole Sorting #2',
+		showControls: true
+	});
+});
+		</script>
+	</head>
+	<body>
+		<div id="grid"></div>
+	</body>
+</html>

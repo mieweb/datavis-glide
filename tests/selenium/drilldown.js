@@ -46,7 +46,9 @@ describe('Drill Down', function() {
 
 		it('in pivot aggregate', async function () {
 			await grid.drillDown('pivot', null, ['Cherry']);
+			// FIXME: The "wait for idle" here doesn't work, have to manually wait instead.
 			await grid.waitForIdle();
+			sleep(0.2);
 			assert.equal(await grid.getNumRows(), 9);
 			assert.deepEqual(_.map(await grid.getPlainData_asObjects(['rowId']), (row) => +row['rowId']), [20, 28, 40, 49, 51, 55, 58, 66, 88]);
 		});

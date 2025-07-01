@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8"/>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js"></script>
+		<script src="../wcdatavis.js"></script>
+		<link rel="stylesheet" href="../font-awesome.css"/>
+		<link rel="stylesheet" href="../base.css"/>
+		<link rel="stylesheet" href="../wcdatavis.css"/>
+		<script>
+document.addEventListener('DOMContentLoaded', function () {
+	MIE.DEBUGGING = true;
+
+	var data = new MIE.WC_DataVis.Util.EagerPipeline(function () {
+		var n = (Math.random() * 10).toFixed(2);
+		return [+n, -1 * n];
+	}).andThenCurry(_.times, 50)
+		.andThen(_.flatten)
+		.andThen(_.sortBy)
+		.andThenCurry(_.map, '#', function (x) { return '$' + x; })
+		.andThenCurry(_.map, '#', function (x) { return { 'Dummy': 'Dummy', 'Numeral': x, 'Primitive': x, 'BigNumber': x }; })
+		.done();
+
+	window.localData = {
+		data: data,
+		typeInfo: {
+			'Dummy': {
+				type: 'string'
+			},
+			'Numeral': {
+				internalType: 'numeral'
+			},
+			'Primitive': {
+				internalType: 'primitive'
+			},
+			'BigNumber': {
+				internalType: 'bignumber'
+			}
+		}
+	};
+
+	var source = new MIE.WC_DataVis.Source({
+		type: 'local',
+		varName: 'localData'
+	});
+
+	var computedView = new MIE.WC_DataVis.ComputedView(source);
+	new MIE.WC_DataVis.Grid({
+		id: 'grid',
+		computedView: computedView,
+		table: {
+			groupMode: 'summary'
+		}
+	}, {
+		title: 'Float Math',
+		showControls: true
+	});
+});
+		</script>
+	</head>
+	<body>
+		<div id="grid"></div>
+	</body>
+</html>

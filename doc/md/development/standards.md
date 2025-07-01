@@ -6,15 +6,17 @@ DataVis has three different kinds of branches:
 
 - **development** (`master`): Mostly stable and fully merged branch.  Eventually this will become the next major release.
 
-- **stable** (e.g. `v1`, `v2`): Stable and released version of DataVis.  Only minor enhancements and bug fixes are allowed.  Hereafter, just called the "stable" branch, although there is one for each major release.
+- **release** (e.g. `v3.0`, `v3.1`): Stable and released version of DataVis.  Only bug fixes are allowed.  Hereafter, just called the "stable" branch, although there is one for each major release.
 
-- **feature** (e.g. `server_limit`, `mirage`): Feature branches are for active development where you want to commit stuff that doesn't fully work yet.
+- **feature** (e.g. `feature/server_limit`, `feature/mirage`): Feature branches are for active development where you want to commit stuff that doesn't fully work yet.
 
 How do you know where changes should go?
 
-* For bug fixes, commit into the stable branch and merge to `master`.
-* For minor new features and refactoring, commit into `master` and merge into stable when they're well tested.
-* For major new features, commit to a feature branch, merging from `master` to keep up-to-date.  When done, merge info `master` and delete the feature branch.
+* For bug fixes, commit into every stable branch that needs it. Merge from the latest stable branch into `master`.
+* For minor changes or new features that don’t have breaking changes, create a new branch off the most recent stable branch and make them there. (For example, if the latest stable is `v3.2` then make a branch called `v3.3` and make the new feature there.) Merge from that branch into `master`.
+* For major new features or breaking changes, commit to a feature branch, merging from `master` to keep up-to-date.  When done, merge into `master` and delete the feature branch. When ready to release, create a new major release branch (e.g. `v4.0`) from `master`.
+* Testing changes should be included in as many stable branches as possible, because tests will be run in every stable branch before release. Remember to merge into `master`, too.
+* Documentation changes can be included only in the most recent stable branch, then merged into `master`. This is because we (currently) only build one set of documentation.
 
 ### Tips for Switching Branches
 

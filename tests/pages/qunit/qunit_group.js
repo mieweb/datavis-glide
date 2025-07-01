@@ -39,12 +39,12 @@ window.test_group = function (view) {
 
 	QUnit.test('Group Test', function (assert) {
 		var done = assert.async();
-		MIE.WC_DataVis.Util.asyncEach(groupInfo, function (gi, next) {
+		MIE.WC_DataVis.Util.asyncEach(groupInfo, function (gi, i, next) {
 			var fields = gi[0];
 			var numGroups = gi[1];
 			var result = gi[2];
 			view.reset();
-			view.setGroup({ fieldNames: fields }, {
+			view.setGroup({ fieldNames: MIE.WC_DataVis.Util.deepCopy(fields) }, {
 				updateData: false
 			});
 			view.getData(function (ok, data) {

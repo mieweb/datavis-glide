@@ -24,11 +24,13 @@ We use GNU Make to provide a simple interface to the various tools to build and 
 * `make setup` — Installs all dependencies.
 * `make datavis` — Build the compressed DataVis JS and CSS files.
 * `make tests` — Same as `make`, then copy to tests directory, and build test data.
-* `make serve` — Start local server for interactive testing.
+* `make [PORT=] serve` — Start local server for interactive testing.
 * `make test` — Same as `make tests`, then run automated tests using Mocha & Selenium.
 * `make doc` — Build all documentation.
   * `make jsdoc` — Build JS API documentation from comments in the source.
   * `make mkdocs` — Build the Manual from Markdown files.
+* `make clean` — Remove all build products and generated test data.
+* `make teardown` — Resets the development environment.
 
 ## Tree Structure
 
@@ -37,20 +39,23 @@ We use GNU Make to provide a simple interface to the various tools to build and 
 * `doc` — The user & developer manual.
   * `md` — Manual Markdown source files.
   * `html` — Manual HTML output files.
-* `examples`
-  * `graph` — Examples using graph output.
-  * `grid` — Examples using grid output.
-  * `test` — QUnit tests (these may move eventually).
 * `src` — Contains all the source JS files.
   * `renderers` — Classes for DataVis output.
   * `ui` — Classes for user interface components.
+    * `filters` — Filter widget implementation.
+    * `windows` — Modal dialogs.
   * `util` — Classes and modules for utilities.
+  * `reg` — Registry files.
+  * `lang` — Compiled language packs.
 * `tests`
   * `data` — Data files for testing and examples.
     * `*.json5` — Input for generating JSON files.
     * `*.in.json` — Input for generating JSON files.
   * `lib` — Auxiliary JS files to help make writing test cases easier.
   * `pages` — HTML pages used for running Selenium tests.
+    * `grid` — Tests specifically for the grid.
+    * `graph` — Tests specifically for the graph.
+    * `qunit` — Unit tests, mostly for the view.
   * `selenium` — Selenium test case files.
 
 ### Submodules

@@ -930,10 +930,10 @@ export function eachUntilObj(o, f, r, extra) {
  * The list to iterate over.
  *
  * @param {function} fun
- * An asynchronous function.  The arguments passed to it are: (1) the next element of `args`, and
- * (2) a callback function to continue iterating.
+ * An asynchronous function.  The arguments passed to it are: (1) the next element of `args`,
+ * (2) the index, and (3) a callback function to continue iterating.
  *
- * @param {function} done
+ * @param {function} [done]
  * A function called when we're done.
  */
 
@@ -944,15 +944,15 @@ export function asyncEach(args, fun, done) {
 	if (typeof fun !== 'function') {
 		throw new Error('Call Error: `fun` must be a function');
 	}
-	if (typeof done !== 'function') {
-		throw new Error('Call Error: `done` must be a function');
+	if (done != null && typeof done !== 'function') {
+		throw new Error('Call Error: `done` must be null or a function');
 	}
 
 	args = shallowCopy(args);
 	var i = 0;
 	function g() {
 		if (args.length === 0) {
-			return done();
+			return typeof done === 'function' ? done() : null;
 		}
 		return fun(args.shift(), i++, g);
 	}

@@ -189,8 +189,8 @@ window.test_aggregates = function (view) {
 			updateData: false
 		});
 
-		MIE.WC_DataVis.Util.asyncEach(expected, function (e, e_next) {
-			MIE.WC_DataVis.Util.asyncEach(e.agg, function (a, a_next) {
+		MIE.WC_DataVis.Util.asyncEach(expected, function (e, i1, e_next) {
+			MIE.WC_DataVis.Util.asyncEach(e.agg, function (a, i2, a_next) {
 				view.setAggregate(MIE.WC_DataVis.Util.objFromArray(['group', 'pivot', 'cell', 'all'],
 					[[{
 						fun: e.fun,
