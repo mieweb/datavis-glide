@@ -15,6 +15,7 @@ import {
 	deepCopy,
 	deepDefaults,
 	delegate,
+	each,
 	eachUntilObj,
 	gensym,
 	getComparisonFn,
@@ -2686,11 +2687,11 @@ ComputedView.prototype.pivot = function () {
 	var buildData = function (data) {
 		var result = [];
 
-		_.each(data, function (groupedRows, groupNum) {
+		each(data, function (groupedRows, groupNum) {
 			var newData = [];
-			_.each(colVals, function (colVal) {
+			each(colVals, function (colVal) {
 				var tmp = [];
-				_.each(groupedRows, function (row) {
+				each(groupedRows, function (row) {
 					if (colVal.every(function (colValElt, colValIndex) {
 						var pivotSpecElt = finalPivotSpec[colValIndex];
 						return colValElt === row.rowData[pivotSpecElt.field].natRep.pivot[colValIndex];
@@ -2821,7 +2822,7 @@ ComputedView.prototype.setAggregate = function (spec, opts) {
 
 		// Remove any fields that don't exist in the data (according to typeInfo).
 
-		_.each(spec, function (aggSpec, aggType) {
+		each(spec, function (aggSpec, aggType) {
 			aggSpec = aggSpec.filter(function(agg) {
 				var a = AGGREGATE_REGISTRY.get(agg.fun);
 				if (a == null) {
@@ -2854,7 +2855,7 @@ ComputedView.prototype.setAggregate = function (spec, opts) {
 			// configuring their renderer to show the specified aggregates.
 
 			if (shouldGraph[aggType] != null) {
-				_.each(aggSpec, function (agg, i) {
+				each(aggSpec, function (agg, i) {
 					if (agg.shouldGraph) {
 						shouldGraph[aggType].push({
 							aggNum: i,
@@ -2920,7 +2921,7 @@ ComputedView.prototype.aggregate = function (cont) {
 		return cont(false);
 	}
 
-	_.each(['group', 'pivot', 'cell', 'all'], function (what) {
+	each(['group', 'pivot', 'cell', 'all'], function (what) {
 		self.debug('AGGREGATE', 'Computing %s aggregate functions: %s',
 			what, getProp(self, 'aggregateSpec', what).map(function(spec) { return spec.fun; }).join(', '));
 	});
@@ -2941,8 +2942,8 @@ ComputedView.prototype.aggregate = function (cont) {
 
 	// Initialize the informational data structures.
 
-	_.each(['group', 'pivot', 'cell', 'all'], function (what) {
-		_.each(self.aggregateSpec[what], function (spec, aggNum) {
+	each(['group', 'pivot', 'cell', 'all'], function (what) {
+		each(self.aggregateSpec[what], function (spec, aggNum) {
 			try {
 				info[what][aggNum] = new AggregateInfo(what, spec, aggNum, self.colConfig, self.typeInfo, function (field) {
 					Source.decodeAll(self.data.dataByRowId, field, self.typeInfo);
@@ -2964,8 +2965,8 @@ ComputedView.prototype.aggregate = function (cont) {
 		info[what] = info[what].filter(function(item) { return item !== null; });
 	});
 
-	_.each(self.data.rowVals, function (rowVal, rowValIdx) {
-		_.each(info.group, function (aggInfo, aggNum) {
+	each(self.data.rowVals, function (rowVal, rowValIdx) {
+		each(info.group, function (aggInfo, aggNum) {
 			if (groupResults[aggNum] === undefined) {
 				groupResults[aggNum] = [];
 			}
@@ -2981,13 +2982,13 @@ ComputedView.prototype.aggregate = function (cont) {
 		});
 
 		if (self.data.isPivot) {
-			_.each(info.cell, function (aggInfo, aggNum) {
+			each(info.cell, function (aggInfo, aggNum) {
 				if (cellResults[aggNum] === undefined) {
 					cellResults[aggNum] = [];
 				}
 				cellResults[aggNum][rowValIdx] = [];
 
-				_.each(self.data.colVals, function (colVal, colValIdx) {
+				each(self.data.colVals, function (colVal, colValIdx) {
 					var aggResult = aggInfo.instance.calculate(self.data.data[rowValIdx][colValIdx]);
 					cellResults[aggNum][rowValIdx][colValIdx] = aggResult;
 					if (aggInfo.debug) {
@@ -3004,10 +3005,10 @@ ComputedView.prototype.aggregate = function (cont) {
 	});
 
 	if (self.data.isPivot && info.pivot) {
-		_.each(info.pivot, function (aggInfo, aggNum) {
+		each(info.pivot, function (aggInfo, aggNum) {
 			pivotResults[aggNum] = [];
 
-			_.each(self.data.colVals, function (colVal, colValIdx) {
+			each(self.data.colVals, function (colVal, colValIdx) {
 				var aggResult = aggInfo.instance.calculate(self.data.data.map(function(item) { return item[colValIdx]; }).flat());
 				pivotResults[aggNum][colValIdx] = aggResult;
 				if (aggInfo.debug) {
@@ -3022,7 +3023,7 @@ ComputedView.prototype.aggregate = function (cont) {
 	}
 
 	if (info.all && (self.data.isGroup || self.data.isPivot)) {
-		_.each(info.all, function (aggInfo, aggNum) {
+		each(info.all, function (aggInfo, aggNum) {
 			var aggResult = aggInfo.instance.calculate(self.data.data.flat());
 			allResults[aggNum] = aggResult;
 			if (aggInfo.debug) {
@@ -3127,7 +3128,7 @@ ComputedView.prototype.getData = function (cont, reason) {
 				dataByRowId: []
 			};
 
-			_.each(data, function (rowData, rowNum) {
+			each(data, function (rowData, rowNum) {
 				self.data.data.push({
 					rowNum: rowNum,
 					rowData: rowData
