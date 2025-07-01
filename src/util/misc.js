@@ -1689,7 +1689,7 @@ export var makeSubclass = function (name, parent, ctor, ptype) {
 
 	if (ctor == null && parent !== Object) {
 		ctor = function () {
-			this.super.ctor.apply(this, arguments);
+			this.super[parent.name].ctor.apply(this, arguments);
 		};
 	}
 

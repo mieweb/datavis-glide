@@ -123,7 +123,7 @@ StringDropdownGridFilterChosen.prototype.getOperator = function () {
 
 StringDropdownGridFilterChosen.prototype.getValue = function () {
 	var self = this
-		, val = self.super.getValue(self);
+		, val = self.super['GridFilter'].getValue(self);
 
 	return val === null ? undefined : val;
 };
@@ -207,14 +207,14 @@ StringDropdownGridFilterSumo.prototype.adjustInputWidth = function (opts) {
 		self.optWrapper.outerWidth(Math.max(width, self.minDropdownWidth));
 	};
 
-	self.super.adjustInputWidth(opts);
+	self.super['GridFilter'].adjustInputWidth(opts);
 };
 
 // #getValue {{{3
 
 StringDropdownGridFilterSumo.prototype.getValue = function () {
 	var self = this
-		, val = self.super.getValue();
+		, val = self.super['GridFilter'].getValue();
 
 	return val === null ? undefined : val;
 };
@@ -248,7 +248,7 @@ StringDropdownGridFilterSumo.prototype.setOperator = function (op) {
 		op = '$in';
 	}
 
-	return self.super.setOperator(op);
+	return self.super['GridFilter'].setOperator(op);
 };
 
 // #showInput {{{3

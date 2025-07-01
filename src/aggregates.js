@@ -591,7 +591,7 @@ var CountDistinctAggregate = makeSubclass('CountDistinctAggregate', Aggregate, f
 	var self = this;
 
 	self.set = {};
-	self.super.ctor.apply(self, arguments);
+	self.super['Aggregate'].ctor.apply(self, arguments);
 }, {
 	name: trans('AGGREGATE.NAME.COUNT_DISTINCT'),
 	fieldCount: 1,
@@ -859,7 +859,7 @@ var AverageAggregate = makeSubclass('AverageAggregate', Aggregate, function (opt
 	var self = this;
 
 	self.sumAgg = new SumAggregate(opts);
-	self.super.ctor.apply(self, arguments);
+	self.super['Aggregate'].ctor.apply(self, arguments);
 }, {
 	name: trans('AGGREGATE.NAME.AVERAGE'),
 	fieldCount: 1,
@@ -944,7 +944,7 @@ MinAggregate.prototype.checkOpts = function () {
 		return false;
 	}
 
-	return self.super.checkOpts();
+	return self.super['Aggregate'].checkOpts();
 };
 
 // #calculateStep {{{2
@@ -988,7 +988,7 @@ MaxAggregate.prototype.checkOpts = function () {
 		return false;
 	}
 
-	return self.super.checkOpts();
+	return self.super['Aggregate'].checkOpts();
 };
 
 // #calculateStep {{{2
@@ -1023,7 +1023,7 @@ FirstAggregate.prototype.checkData = function (data) {
 		return false;
 	}
 
-	return self.super.checkData(data);
+	return self.super['Aggregate'].checkData(data);
 };
 
 // #calculate {{{2
@@ -1056,7 +1056,7 @@ LastAggregate.prototype.checkData = function (data) {
 		return false;
 	}
 
-	return self.super.checkData(data);
+	return self.super['Aggregate'].checkData(data);
 };
 
 // #calculate {{{2
@@ -1095,7 +1095,7 @@ NthAggregate.prototype.checkOpts = function () {
 		return false;
 	}
 
-	return self.super.checkOpts();
+	return self.super['Aggregate'].checkOpts();
 };
 
 // #checkData {{{2
@@ -1113,7 +1113,7 @@ NthAggregate.prototype.checkData = function (data) {
 		return self.bottomValue;
 	}
 
-	return self.super.checkData(data);
+	return self.super['Aggregate'].checkData(data);
 };
 
 // #calculate {{{2
