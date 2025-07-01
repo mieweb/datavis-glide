@@ -194,7 +194,7 @@ import flags from '../../flags.js';
 var GridTable = makeSubclass('GridTable', GridRenderer, function () {
 	var self = this;
 
-	self.super.ctor.apply(self, arguments);
+	self.super['GridRenderer'].ctor.apply(self, arguments);
 
 	self.selection = [];
 	self.needsRedraw = false;
@@ -1265,7 +1265,7 @@ GridTable.prototype.draw = function (root, opts, cont) {
 		self.csv = new TableExport();
 	}
 
-	return self.super.draw(root, opts, function (ok, data, typeInfo, andThen) {
+	return self.super['GridRenderer'].draw(root, opts, function (ok, data, typeInfo, andThen) {
 		if (!ok) {
 			return cont();
 		}

@@ -20,7 +20,7 @@ import {GridRenderer} from '../../grid_renderer.js';
 var GridRendererHandlebars = makeSubclass('GridRendererHandlebars', GridRenderer, function () {
 	var self = this;
 
-	self.super.ctor.apply(self, arguments);
+	self.super['GridRenderer'].ctor.apply(self, arguments);
 
 	self.hbEnv = hbUtil.makeEnv();
 });
@@ -157,7 +157,7 @@ GridRendererHandlebars.prototype.draw = function (root, cont, opts) {
 		throw new Error('Call Error: `cont` must be null or a function');
 	}
 
-	return self.super.draw(root, opts, function (ok, data, typeInfo) {
+	return self.super['GridRenderer'].draw(root, opts, function (ok, data, typeInfo) {
 		if (!ok) {
 			return cont();
 		}

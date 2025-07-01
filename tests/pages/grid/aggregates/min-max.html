@@ -44,7 +44,7 @@ MinOverMaxConcatAggregate.prototype.checkOpts = function () {
 		return false;
 	}
 
-	return this.super.checkOpts();
+	return this.super['Aggregate'].checkOpts();
 };
 
 MinOverMaxConcatAggregate.prototype.calculateStep = function (acc, next) {

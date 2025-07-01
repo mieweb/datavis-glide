@@ -240,7 +240,7 @@ var PrefsBackendLocalStorage = makeSubclass('PrefsBackendLocalStorage', PrefsBac
 		throw e;
 	}
 
-	self.super.ctor.apply(self, args);
+	self.super['PrefsBackend'].ctor.apply(self, args);
 
 	self.opts = deepDefaults(self.opts, {
 		key: 'WC_DataVis_Prefs'
@@ -625,7 +625,7 @@ var PrefsBackendTemporary = makeSubclass('PrefsBackendTemporary', PrefsBackend, 
 	var self = this
 		, args = Array.prototype.slice.call(arguments);
 
-	self.super.ctor.apply(self, args);
+	self.super['PrefsBackend'].ctor.apply(self, args);
 	self.storage = {
 		perspectives: {}
 	};

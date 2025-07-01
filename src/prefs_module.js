@@ -134,7 +134,7 @@ var PrefsModuleComputedView = makeSubclass('PrefsModuleComputedView', PrefsModul
 	var self = this
 		, args = Array.prototype.slice.call(arguments);
 
-	self.super.ctor.apply(self, args);
+	self.super['PrefsModule'].ctor.apply(self, args);
 
 	if (!(self.target instanceof ComputedView)) {
 		throw new Error('Call Error: `target` must be an instance of ComputedView');
@@ -299,7 +299,7 @@ var PrefsModuleMirageView = makeSubclass('PrefsModuleMirageView', PrefsModule, f
 	var self = this
 		, args = Array.prototype.slice.call(arguments);
 
-	self.super.ctor.apply(self, args);
+	self.super['PrefsModule'].ctor.apply(self, args);
 
 	if (!(self.target instanceof MirageView)) {
 		throw new Error('Call Error: `target` must be an instance of MirageView');
@@ -457,7 +457,7 @@ var PrefsModuleGrid = makeSubclass('PrefsModuleGrid', PrefsModule, function () {
 	var self = this
 		, args = Array.prototype.slice.call(arguments);
 
-	self.super.ctor.apply(self, args);
+	self.super['PrefsModule'].ctor.apply(self, args);
 
 	if (!(self.target instanceof Grid)) {
 		throw new Error('Call Error: `target` must be an instance of Grid');
@@ -523,7 +523,7 @@ var PrefsModuleGraph = makeSubclass('PrefsModuleGraph', PrefsModule, function ()
 	var self = this
 		, args = Array.prototype.slice.call(arguments);
 
-	self.super.ctor.apply(self, args);
+	self.super['PrefsModule'].ctor.apply(self, args);
 
 	if (!(self.target instanceof Graph)) {
 		throw new Error('Call Error: `target` must be an instance of Graph');
@@ -583,7 +583,7 @@ var PrefsModuleMeta = makeSubclass('PrefsModuleMeta', PrefsModule, function () {
 	var self = this
 		, args = Array.prototype.slice.call(arguments);
 
-	self.super.ctor.apply(self, args);
+	self.super['PrefsModule'].ctor.apply(self, args);
 
 	if (!(self.target instanceof Perspective)) {
 		throw new Error('Call Error: `target` must be an instance of Perspective');

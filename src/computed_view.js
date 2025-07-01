@@ -442,7 +442,7 @@ ComputedView.prototype.setSort = function (spec, opts) {
 
 	isDifferent = !_.isEqual(self.sortSpec, spec);
 
-	self.super.setSort(spec, opts);
+	self.super['View'].setSort(spec, opts);
 
 	if (isDifferent && self.prefs != null && opts.savePrefs) {
 		self.prefs.save();
@@ -1317,7 +1317,7 @@ ComputedView.prototype.setFilter = function (spec, progress, opts) {
 	self.filterSpec = spec;
 	self.filterProgress = progress;
 
-	self.super.setFilter(spec, opts);
+	self.super['View'].setFilter(spec, opts);
 
 	if (isDifferent && self.prefs != null && opts.savePrefs) {
 		self.prefs.save();
@@ -1835,7 +1835,7 @@ ComputedView.prototype.setGroup = function (spec, opts, cont) {
 
 	isDifferent = !_.isEqual(self.groupSpec, spec);
 
-	self.super.setGroup(spec, opts);
+	self.super['View'].setGroup(spec, opts);
 
 	if (isDifferent && self.prefs != null && opts.savePrefs) {
 		self.prefs.save();
@@ -2316,7 +2316,7 @@ ComputedView.prototype.setPivot = function (spec, opts) {
 
 	isDifferent = !_.isEqual(self.pivotSpec, spec);
 
-	self.super.setPivot(spec, opts);
+	self.super['View'].setPivot(spec, opts);
 
 	if (isDifferent) {
 		// If we've removed the pivot completely, make sure that we also get rid of any horizontal
@@ -2800,7 +2800,7 @@ ComputedView.prototype.setAggregate = function (spec, opts) {
 	isDifferent = !_.isEqual(self.aggregateSpec, spec);
 
 	if (spec == null) {
-		self.super.setAggregate(null, opts);
+		self.super['View'].setAggregate(null, opts);
 	}
 	else {
 		// Make sure we have typeInfo so we can perform the next check.
@@ -2861,7 +2861,7 @@ ComputedView.prototype.setAggregate = function (spec, opts) {
 			spec[aggType] = aggSpec;
 		});
 
-		self.super.setAggregate(deepCopy(spec), opts);
+		self.super['View'].setAggregate(deepCopy(spec), opts);
 	}
 
 	// if (opts.sendEvent) {

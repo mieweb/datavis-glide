@@ -15,7 +15,6 @@ import {
 	isInt,
 	log,
 	makeSubclass,
-	makeSuper,
 	mixinEventHandling,
 	toFloat,
 	toInt,
@@ -37,7 +36,7 @@ import DateFilter from './ui/filters/date.js';
 var StringTextboxGridFilter = makeSubclass('StringTextboxGridFilter', GridFilter, function () {
 	var self = this;
 
-	self.ctor.apply(self, arguments);
+	self.super['GridFilter'].ctor.apply(self, arguments);
 
 	self.input = jQuery('<input type="text">');
 	self.input.on('change', function (evt) {
@@ -74,9 +73,8 @@ var StringTextboxGridFilter = makeSubclass('StringTextboxGridFilter', GridFilter
 var StringDropdownGridFilterChosen = makeSubclass('StringDropdownGridFilterChosen', GridFilter, function () {
 	var self = this;
 
-	GridFilter.apply(self, arguments);
+	self.super['GridFilter'].ctor.apply(self, arguments);
 
-	self.super = makeSuper(self, GridFilter);
 	self.limit = 1;
 	self.input = jQuery('<select>').attr({
 		'multiple': true
@@ -123,7 +121,7 @@ StringDropdownGridFilterChosen.prototype.getOperator = function () {
 
 StringDropdownGridFilterChosen.prototype.getValue = function () {
 	var self = this
-		, val = self.super.getValue(self);
+		, val = self.super['GridFilter'].getValue(self);
 
 	return val === null ? undefined : val;
 };
@@ -140,9 +138,8 @@ StringDropdownGridFilterChosen.prototype.getValue = function () {
 var StringDropdownGridFilterSumo = makeSubclass('StringDropdownGridFilterSumo', GridFilter, function () {
 	var self = this;
 
-	GridFilter.apply(self, arguments);
+	self.super['GridFilter'].ctor.apply(self, arguments);
 
-	self.super = makeSuper(self, GridFilter);
 	self.limit = 1;
 	self.minDropdownWidth = 200;
 	self.input = jQuery('<select>').attr({
@@ -207,14 +204,14 @@ StringDropdownGridFilterSumo.prototype.adjustInputWidth = function (opts) {
 		self.optWrapper.outerWidth(Math.max(width, self.minDropdownWidth));
 	};
 
-	self.super.adjustInputWidth(opts);
+	self.super['GridFilter'].adjustInputWidth(opts);
 };
 
 // #getValue {{{3
 
 StringDropdownGridFilterSumo.prototype.getValue = function () {
 	var self = this
-		, val = self.super.getValue();
+		, val = self.super['GridFilter'].getValue();
 
 	return val === null ? undefined : val;
 };
@@ -248,7 +245,7 @@ StringDropdownGridFilterSumo.prototype.setOperator = function (op) {
 		op = '$in';
 	}
 
-	return self.super.setOperator(op);
+	return self.super['GridFilter'].setOperator(op);
 };
 
 // #showInput {{{3
@@ -272,7 +269,7 @@ StringDropdownGridFilterSumo.prototype.hideInput = function (op) {
 var NumberTextboxGridFilter = makeSubclass('NumberTextboxGridFilter', GridFilter, function () {
 	var self = this;
 
-	GridFilter.apply(self, arguments);
+	self.super['GridFilter'].ctor.apply(self, arguments);
 
 	self.input = jQuery('<input>', {
 		'type': 'text'
@@ -297,7 +294,7 @@ var NumberTextboxGridFilter = makeSubclass('NumberTextboxGridFilter', GridFilter
 var NumberCheckboxGridFilter = makeSubclass('NumberCheckboxGridFilter', GridFilter, function () {
 	var self = this;
 
-	GridFilter.apply(self, arguments);
+	self.super['GridFilter'].ctor.apply(self, arguments);
 
 	self.input = jQuery('<input>', {'id': gensym(), 'type': 'checkbox'});
 	self.input.on('change', function () {
@@ -334,7 +331,7 @@ NumberCheckboxGridFilter.prototype.getOperator = function () {
 var NumberTriBoolGridFilter = makeSubclass('NumberTriBoolGridFilter', GridFilter, function () {
 	var self = this;
 
-	GridFilter.apply(self, arguments);
+	self.super['GridFilter'].ctor.apply(self, arguments);
 
 	self.inputName = gensym();
 
@@ -434,7 +431,7 @@ NumberTriBoolGridFilter.prototype.getOperator = function () {
 var DateSingleGridFilter = makeSubclass('DateSingleGridFilter', GridFilter, function () {
 	var self = this;
 
-	GridFilter.apply(self, arguments);
+	self.super['GridFilter'].ctor.apply(self, arguments);
 
 	self.input = jQuery('<input>').attr({
 		'type': 'text',
@@ -470,7 +467,7 @@ var DateSingleGridFilter = makeSubclass('DateSingleGridFilter', GridFilter, func
 var DateRangeGridFilter = makeSubclass('DateRangeGridFilter', GridFilter, function () {
 	var self = this;
 
-	GridFilter.apply(self, arguments);
+	self.super['GridFilter'].ctor.apply(self, arguments);
 
 	self.limit = 1;
 

@@ -1642,7 +1642,7 @@ export function walkObj(o, f, opts) {
  * });
  *
  * HouseFinch.prototype.printInfo = function () {
- *   self.super.printInfo();
+ *   self.super['Animal'].printInfo();
  *   console.log('He says: Tweet tweet!');
  * };
  *
@@ -1689,17 +1689,34 @@ export var makeSubclass = function (name, parent, ctor, ptype) {
 
 	if (ctor == null && parent !== Object) {
 		ctor = function () {
-			this.super.ctor.apply(this, arguments);
+			this.super[parent.name].ctor.apply(this, arguments);
 		};
 	}
 
+	/**
+	 * This becomes the actual constructor that's invoked by using the `new` operator.
+	 */
+
 	var subclass = function () {
+		var childInst = this;
+
+		// Create a reference to superclass methods that are bound to the current instance, so invoking
+		// `self.super['BaseClass'].methodName()` calls the specified method of the base class, but with
+		// the current instance as `this`.
+
 		if (parent !== Object) {
-			this.super = makeSuper(this, parent);
+			console.log('[DataVis / Obj / Super] Creating %s#super[\'%s\']', childInst.constructor.name, parent.name);
+			if (childInst.super == null) {
+				childInst.super = {};
+			}
+			childInst.super[parent.name] = makeSuper(childInst, parent);
 		}
 
+		// Invoke the user's "constructor" if one was provided.  It would be pretty uncommon to not have
+		// a user-supplied initializer.
+
 		if (ctor != null) {
-			ctor.apply(this, arguments);
+			ctor.apply(childInst, arguments);
 		}
 	};
 
@@ -1723,26 +1740,27 @@ export var makeSubclass = function (name, parent, ctor, ptype) {
  * Creates an object to act as a proxy to superclass methods.  Probably best to not use this
  * directly, and instead let {@linkcode makeSubclass makeSubclass()} do the work for you.
  *
- * @param {object} me
+ * @param {object} childInst
  * An instance of the subclass.
  *
- * @param {function} parent
+ * @param {function} parentCls
  * The superclass.
  *
  * @return {object}
- * An object containing proxies to superclass methods (bound to `me`).
+ * An object containing proxies to superclass methods (bound to `child`).
  */
 
-export var makeSuper = function (me, parent) {
-	var sup = _.mapObject(parent.prototype, function (v, k) {
-		if (typeof v === 'function') {
-			return _.bind(v, me);
+export var makeSuper = function (childInst, parentCls) {
+	var superObj = {}
+		, method;
+	for (method in parentCls.prototype) {
+		if (typeof parentCls.prototype[method] === 'function') {
+			console.log('[DataVis // Obj // Super] Binding %s#super[\'%s\'].%s to %s#%s', childInst.constructor.name, parentCls.name, method, parentCls.name, method);
+			superObj[method] = _.bind(parentCls.prototype[method], childInst);
 		}
-	});
-
-	sup.ctor = _.bind(parent, me);
-
-	return sup;
+	}
+	superObj.ctor = _.bind(parentCls, childInst);
+	return superObj;
 };
 
 // mixinEventHandling {{{2

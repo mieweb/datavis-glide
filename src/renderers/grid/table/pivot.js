@@ -51,7 +51,7 @@ import GridTable from '../table.js';
 var GridTablePivot = makeSubclass('GridTablePivot', GridTable, function (grid, defn, view, features, opts, timing, id) {
 	var self = this;
 
-	self.super.ctor.apply(self, arguments);
+	self.super['GridTable'].ctor.apply(self, arguments);
 
 	self.features.limit = false;
 	self.features.footer = false;

@@ -387,7 +387,7 @@ GraphRendererChartJs.prototype.draw = function (devConfig, userConfig) {
 	var self = this;
 
 	if (!self.hasRun) {
-		self.super.addRedrawHandlers();
+		self.super['GraphRenderer'].addRedrawHandlers();
 	}
 	self.hasRun = true;
 
