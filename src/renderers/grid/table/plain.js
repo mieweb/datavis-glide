@@ -118,7 +118,7 @@ GridTablePlain.prototype.draw = function (root, opts, cont) {
 				self.setActiveRow(jQuery(this).closest('tr'));
 			});
 
-			jQuery(document).on('keydown', function (evt) {
+			jQuery(document).on('keydown.wcdv_active_row', function (evt) {
 				var avoidElts = ['A', 'BUTTON', 'INPUT', 'SELECT', 'TEXTAREA'];
 
 				if (avoidElts.indexOf(evt.target.tagName) >= 0) {
@@ -127,11 +127,11 @@ GridTablePlain.prototype.draw = function (root, opts, cont) {
 
 				switch(evt.key.toLowerCase()) {
 				case 'j':
-						if (self.activeRow) {
-							evt.preventDefault();
-							self.activeRowNext();
-						}
-						break;
+					if (self.activeRow) {
+						evt.preventDefault();
+						self.activeRowNext();
+					}
+					break;
 				case 'k':
 					if (self.activeRow) {
 						evt.preventDefault();
@@ -1334,6 +1334,9 @@ GridTablePlain.prototype.clear = function () {
 	if (self.ui != null && self.ui.slider != null) {
 		self.ui.slider.destroy();
 	}
+
+	jQuery(document).off('keydown.wcdv_active_row');
+
 	self.super['GridTable'].clear();
 };
 
