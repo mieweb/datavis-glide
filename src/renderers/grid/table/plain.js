@@ -205,6 +205,9 @@ GridTablePlain.prototype.setActiveRow = function (which) {
 				if (cr instanceof Element || cr instanceof jQuery) {
 					dd.append(cr);
 				}
+				else if (cr === '') {
+					dd.html('&nbsp;');
+				}
 				else if (v.allowHtml) {
 					dd.html(cr);
 				}
