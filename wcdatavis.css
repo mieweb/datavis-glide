@@ -1345,10 +1345,10 @@ table tfoot.sticky {
 /* FOCUS */
 
 .wcdv-focus {
-	animation: pulse 0.5s 2;
+	animation: wcdv-pulse 0.5s 2;
 }
 
-@-webkit-keyframes pulse {
+@keyframes wcdv-pulse {
 	0% {
 		box-shadow: 0 0 4px 4px #0095D6FF;
 	}
