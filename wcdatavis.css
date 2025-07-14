@@ -1342,4 +1342,19 @@ table tfoot.sticky {
 	border-left: 3px solid #0095D6;
 }
 
+/* FOCUS */
+
+.wcdv-focus {
+	animation: pulse 0.5s 2;
+}
+
+@-webkit-keyframes pulse {
+	0% {
+		box-shadow: 0 0 4px 4px #0095D6FF;
+	}
+	100% {
+		box-shadow: 0 0 4px 4px #0095D600;
+	}
+}
+
 /* vim:set noet sw=4 ts=4: */

@@ -6,6 +6,8 @@ import jQuery from 'jquery';
 
 import { trans } from '../../../trans.js';
 import {
+	addFocusHandler,
+	removeFocusHandler,
 	debug,
 	deepCopy,
 	determineColumns,
@@ -74,6 +76,8 @@ var GridTablePlain = makeSubclass('GridTablePlain', GridTable, function (grid, d
 
 	self.features.filter = false;
 
+	self._focusEventId = gensym('grid-plain-');
+
 	console.debug('DataVis // %s // Constructing grid table; features = %O', self.toString(), features);
 
 	self.addFilterHandler();
@@ -105,7 +109,7 @@ GridTablePlain.prototype.draw = function (root, opts, cont) {
 				self.ui.slider.on('hide', function () {
 					self.clearActiveRow();
 				});
-				self.ui.slider.draw(jQuery(document.body));
+				self.ui.slider.draw(root);
 			}
 
 			self.ui.tbody.on('click', 'td', function (evt) {
@@ -118,11 +122,20 @@ GridTablePlain.prototype.draw = function (root, opts, cont) {
 				self.setActiveRow(jQuery(this).closest('tr'));
 			});
 
-			jQuery(document).on('keydown.wcdv_active_row', function (evt) {
+			self._hasFocus = false;
+			addFocusHandler(root, self._focusEventId, function (isFocused) {
+				self._hasFocus = isFocused;
+			});
+
+			jQuery(document).on('keydown.active-row-' + self._focusEventId, function (evt) {
 				var avoidElts = ['A', 'BUTTON', 'INPUT', 'SELECT', 'TEXTAREA'];
 
 				if (avoidElts.indexOf(evt.target.tagName) >= 0) {
 					return; // These elements don't count for setting the active row.
+				}
+
+				if (!self._hasFocus) {
+					return;
 				}
 
 				switch(evt.key.toLowerCase()) {
@@ -1338,7 +1351,8 @@ GridTablePlain.prototype.clear = function () {
 		self.ui.slider.destroy();
 	}
 
-	jQuery(document).off('keydown.wcdv_active_row');
+	jQuery(document).off('keydown.active-row-' + self._focusEventId);
+	removeFocusHandler(self._focusEventId);
 
 	self.super['GridTable'].clear();
 };

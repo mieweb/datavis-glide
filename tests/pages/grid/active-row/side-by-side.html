@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8"/>
+		<script src="../../wcdatavis.js"></script>
+		<link rel="stylesheet" href="../../font-awesome.css"/>
+		<link rel="stylesheet" href="../../base.css"/>
+		<link rel="stylesheet" href="../../wcdatavis.css"/>
+		<script>
+document.addEventListener('DOMContentLoaded', function () {
+	MIE.DEBUGGING = true;
+
+	var source = new MIE.WC_DataVis.Source({
+		type: 'http',
+		url: '../../random100.json'
+	});
+	var computedView1 = new MIE.WC_DataVis.ComputedView(source);
+	new MIE.WC_DataVis.Grid({
+		id: 'test-grid-active-row-side-by-side-1',
+		computedView: computedView1,
+		table: {
+			features: {
+				limit: false,
+				rowSelect: true,
+				activeRow: true,
+			},
+			activeRow: {
+				slider: true
+			},
+			columns: [
+					'rowId'
+				, 'string1'
+				, 'country'
+				, 'state'
+				, 'fruit'
+				, 'link'
+				, 'int1'
+				, 'float1'
+				, 'currency1'
+				, 'date1'
+				, 'time1'
+				, 'datetime1'
+				, 'fixedPrecision1'
+				, 'boolean1'
+				, 'duration1'
+			]
+		}
+	}, {
+		title: 'Test - Grid - Active Row - Side by Side 1',
+		showControls: true
+	});
+	var computedView2 = new MIE.WC_DataVis.ComputedView(source);
+	new MIE.WC_DataVis.Grid({
+		id: 'test-grid-active-row-side-by-side-2',
+		computedView: computedView2,
+		table: {
+			features: {
+				limit: false,
+				rowSelect: true,
+				activeRow: true,
+			},
+			activeRow: {
+				slider: true
+			},
+			columns: [
+					'rowId'
+				, 'string1'
+				, 'country'
+				, 'state'
+				, 'fruit'
+				, 'link'
+				, 'int1'
+				, 'float1'
+				, 'currency1'
+				, 'date1'
+				, 'time1'
+				, 'datetime1'
+				, 'fixedPrecision1'
+				, 'boolean1'
+				, 'duration1'
+			]
+		}
+	}, {
+		title: 'Test - Grid - Active Row - Side by Side 2',
+		showControls: true
+	});
+});
+		</script>
+	</head>
+	<body>
+		<div style="display: flex">
+			<div id="test-grid-active-row-side-by-side-1" style="width: 400px; flex: auto; margin-top: 0px; margin-right: 1em"></div>
+			<div id="test-grid-active-row-side-by-side-2" style="width: 400px; flex: auto; margin-top: 0px"></div>
+		</div>
+	</body>
+</html>
