@@ -311,7 +311,7 @@ GridFilter.prototype.makeRemoveBtn = function () {
 
 	var removeBtn = jQuery(fontAwesome('fa-times', null, 'Click to remove filter'));
 
-	removeBtn.css({'cursor': 'pointer', 'margin-left': '0.5em'})
+	removeBtn.css({'cursor': 'pointer', 'margin-left': '0.5em'});
 	return removeBtn;
 };
 

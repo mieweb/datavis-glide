@@ -69,4 +69,4 @@ var trans = (function () {
 export {
 	trans,
 	TRANSLATION_REGISTRY,
-}
+};

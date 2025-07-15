@@ -123,7 +123,7 @@ Slider.prototype.setHeader = function (s) {
 	var self = this;
 
 	self.ui.header.text(s);
-}
+};
 
 // #setBody {{{2
 

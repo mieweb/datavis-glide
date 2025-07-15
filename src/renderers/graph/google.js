@@ -87,13 +87,13 @@ GraphRendererGoogle.prototype.draw_plain = function (data, typeInfo, dt, config)
 			return typeof x === 'string' ? moment(x).toDate() :
 				moment.isMoment(x) ? x.toDate() :
 				null;
-		}
+		};
 		var cols = [{
 			field: 'ID',
 			type: 'string',
 			default: (function () {
 				var id = 1;
-				return function () { return '' + id++; }
+				return function () { return '' + id++; };
 			})()
 		}, {
 			field: 'Task',
@@ -284,7 +284,7 @@ GraphRendererGoogle.prototype.draw_group = function (data, typeInfo, dt, config)
 // #draw_pivot {{{2
 
 GraphRendererGoogle.prototype.draw_pivot = function (data, typeInfo, dt, config) {
-	var self = this
+	var self = this;
 
 	if (typeof config === 'function') {
 		config = config(data.groupFields, data.pivotFields);

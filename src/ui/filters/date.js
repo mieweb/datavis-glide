@@ -47,7 +47,7 @@ var DateFilter = makeSubclass('DateFilter', GridFilter, function () {
 		, 'MONTH'
 		, 'QUARTER'
 		, 'YEAR'
-	]
+	];
 	self.inputs = {};
 		// used for: on, before, after
 	self.inputs.single = jQuery('<input>').attr({

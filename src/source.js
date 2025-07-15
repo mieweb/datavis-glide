@@ -270,7 +270,7 @@ HttpSource.prototype.unlimit = function () {
 
 	self.isLimited = false;
 	self.autoLimit.enabled = false;
-}
+};
 
 // #getData {{{2
 
@@ -486,7 +486,7 @@ TableSource.prototype.getData = function (params, cont) {
 	self.cache.data = newData;
 
 	return cont(true, self.cache.data);
-}
+};
 
 // #getTypeInfo {{{2
 
@@ -516,7 +516,7 @@ TableSource.prototype.getTypeInfo = function (cont) {
 	self.cache.typeInfo = newTypeInfo;
 
 	return cont(true, self.cache.typeInfo);
-}
+};
 
 // Source {{{1
 

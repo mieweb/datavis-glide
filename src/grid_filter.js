@@ -524,12 +524,12 @@ DateRangeGridFilter.prototype.getValue = function () {
 		if (self.typeInfo.internalType === 'string') {
 			if (self.typeInfo.type === 'date') {
 				result = _.mapObject(result, function (m) {
-					return m.format('YYYY-MM-DD')
+					return m.format('YYYY-MM-DD');
 				});
 			}
 			else if (self.typeInfo.type === 'datetime') {
 				result = _.mapObject(result, function (m) {
-					return m.format('YYYY-MM-DD HH:mm:ss')
+					return m.format('YYYY-MM-DD HH:mm:ss');
 				});
 			}
 		}
@@ -889,7 +889,7 @@ GridFilterSet.prototype.remove = function (id, filterBtn, noEvent) {
 		return;
 	}
 
-	var sameId = function (elt) { return elt.getId() === id };
+	var sameId = function (elt) { return elt.getId() === id; };
 	var allIndex = _.findIndex(self.filters.all, sameId);
 	var colIndex = _.findIndex(self.filters.byCol[filter.field], sameId);
 

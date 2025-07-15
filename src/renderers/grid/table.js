@@ -918,7 +918,7 @@ GridTable.prototype._updateFocus = function (tbl) {
 	_.each(self.focus.cvi, function (cvi) {
 		tbl.find('td[data-wcdv-cvi=' + cvi + ']').addClass('wcdv_focus');
 	});
-}
+};
 
 // #_addFocusHandler {{{2
 
@@ -1110,7 +1110,7 @@ GridTable.prototype._getDisplayFormat = function () {
 	var self = this;
 	var df = objFromArray(['cell', 'group', 'pivot', 'all'], [[]]);
 	df = _.mapObject(df, function (val, key) {
-		return getPropDef([], self.opts, 'displayFormat', key)
+		return getPropDef([], self.opts, 'displayFormat', key);
 	});
 	return df;
 };
@@ -1841,7 +1841,7 @@ GridTable.prototype.drawBody_groupAggregates = function (data, tr, groupNum, dis
 		// For example, day of week, because we can't filter to show "only Mondays."
 
 		if (_.every(data.groupSpec, function (gs) {
-			return gs.fun == null || GROUP_FUNCTION_REGISTRY.get(gs.fun).canFilter
+			return gs.fun == null || GROUP_FUNCTION_REGISTRY.get(gs.fun).canFilter;
 		})) {
 			self._addDrillDownClass(td);
 		}
@@ -2186,6 +2186,6 @@ GridTable.prototype.isSelected = function (what) {
 
 GridTable.prototype._updateSelectionGui = function () {
 	log.error('GridTable#_updateSelectionGui(): Must be implemented by subclass');
-}
+};
 
 export default GridTable;

@@ -228,11 +228,11 @@ GridRenderer.prototype.hasOperations = function (type, field) {
 
 	switch (type) {
 	case 'all':
-		return getPropDef(0, self.defn, 'operations', 'all', 'length') > 0
+		return getPropDef(0, self.defn, 'operations', 'all', 'length') > 0;
 	case 'row':
-		return getPropDef(0, self.defn, 'operations', 'row', 'length') > 0
+		return getPropDef(0, self.defn, 'operations', 'row', 'length') > 0;
 	case 'cell':
-		return getPropDef(0, self.defn, 'operations', 'cell', field, 'length') > 0
+		return getPropDef(0, self.defn, 'operations', 'cell', field, 'length') > 0;
 	default:
 		return false;
 	}

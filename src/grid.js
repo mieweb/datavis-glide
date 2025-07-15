@@ -637,7 +637,7 @@ var Grid = makeSubclass('Grid', Object, function (defn, opts, cb) {
 	self.ui.toolbar_pivot.attach(self.ui.toolbar);
 	self.ui.toolbar_pivot.hide();
 
-	self.ui.toolbar_renderer = new RendererToolbar(self)
+	self.ui.toolbar_renderer = new RendererToolbar(self);
 	self.ui.toolbar_renderer.attach(self.ui.toolbar);
 
 	if (!self.opts.showToolbar) {
@@ -1448,7 +1448,7 @@ Grid.prototype.clearRenderCache = function (cols) {
 	if (self.renderer != null) {
 		self.renderer.clearRenderCache(cols);
 	}
-}
+};
 
 // #_updateRowCount {{{2
 
@@ -2371,7 +2371,7 @@ Grid.prototype.resetRenderers = function () {
 					return {
 						name: 'table_group_detail',
 						opts: getPropDef({}, self.defn, 'table', 'whenGroup')
-					}
+					};
 				}
 			}
 		}
@@ -2422,7 +2422,7 @@ Grid.prototype.findRenderer = function (width, mode) {
 		}
 
 		return x;
-	}
+	};
 
 	if (self.widthBreaks == null || self.widthBreaks.length === 0) {
 		return null;

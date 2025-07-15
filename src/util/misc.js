@@ -1373,7 +1373,7 @@ export function mergeSort(data, cmp, cont) {
 }
 
 export function mergeSort2(data, cmp) {
-	cmp = cmp || function (a, b) { return a < b };
+	cmp = cmp || function (a, b) { return a < b; };
 
 	var merge = function (left, right) {
 		var result = []
@@ -1400,7 +1400,7 @@ export function mergeSort2(data, cmp) {
 }
 
 export function mergeSort3(data, cmp, cont, update) {
-	cmp = cmp || function (a, b) { return a < b };
+	cmp = cmp || function (a, b) { return a < b; };
 	var size = data.length;
 	var step = 0;
 	var stepsBeforeUpdate = Math.min(data.length / 50, 500);
@@ -1453,7 +1453,7 @@ export function mergeSort3(data, cmp, cont, update) {
  */
 
 export var mergeSort4 = function (data, cmp, cont, update) {
-	cmp = cmp || function (x, y) { return x < y };
+	cmp = cmp || function (x, y) { return x < y; };
 	var a = data;
 	var num = data.length;
 	var b = new Array(num);
@@ -2210,7 +2210,7 @@ export function mixinNameSetting(cls) {
 		var self = this;
 
 		return self.name;
-	}
+	};
 }
 
 // Locking {{{1
@@ -2388,7 +2388,7 @@ export function onVisibilityChange(parent, elt, callback) {
 			}
 			old_visible = visible;
 		}
-	}
+	};
 }
 
 // addFocusHandler {{{2
@@ -3942,7 +3942,7 @@ export function dataURItoBlob(dataURI) {
   var byteString = atob(dataURI.split(',')[1]);
 
   // separate out the mime component
-  var mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0]
+  var mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
 
   // write the bytes of the string to an ArrayBuffer
   var ab = new ArrayBuffer(byteString.length);
@@ -4043,7 +4043,7 @@ if (!String.prototype.repeat) {
     }
     str += str.substring(0, str.length * count - str.length);
     return str;
-  }
+  };
 }
 
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/startsWith
@@ -4072,7 +4072,7 @@ if (!String.prototype.endsWith) {
 
 Number.isNaN = Number.isNaN || function(value) {
 	return value !== value;
-}
+};
 
 // https://developer.mozilla.org/en-US/docs/Web/API/Element/closest
 

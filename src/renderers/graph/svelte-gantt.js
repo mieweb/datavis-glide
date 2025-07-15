@@ -56,7 +56,7 @@ GraphRendererSvelteGantt.prototype.draw = function () {
 				return typeof x === 'string' ? moment(x).valueOf() :
 					moment.isMoment(x) ? x.valueOf() :
 					null;
-			}
+			};
 			var cols = [{
 				field: 'Task',
 				required: true

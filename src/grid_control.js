@@ -285,7 +285,7 @@ FunGridControlField.prototype.getSpec = function () {
 	return {
 		field: self.field.field,
 		fun: self.field.fun
-	}
+	};
 };
 
 // #showFunWin {{{2

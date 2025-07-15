@@ -446,7 +446,7 @@ Graph.prototype._addAggregateButtons = function (toolbar) {
 		'Y-Axis Starts at Zero',
 		toolbar,
 		function () {
-			self.drawInteractive()
+			self.drawInteractive();
 		}
 	);
 
@@ -476,7 +476,7 @@ Graph.prototype._setGraphTypeOptions = function () {
 			self.ui.graphTypeDropdown.append(jQuery('<option>', { 'value': gt.value }).text(gt.name));
 		});
 	}
-}
+};
 
 // #_addPivotButtons {{{2
 
@@ -490,7 +490,7 @@ Graph.prototype._addPivotButtons = function (toolbar) {
 		'Stack',
 		toolbar,
 		function () {
-			self.drawInteractive()
+			self.drawInteractive();
 		}
 	);
 };
@@ -608,7 +608,7 @@ Graph.prototype.syncDrawnGraphConfigWithUi = function (config) {
 	else {
 		self.ui.toolbar_pivot.css('visibility', 'hidden');
 	}
-}
+};
 
 // #export {{{2
 
@@ -648,7 +648,7 @@ Graph.prototype.drawFromConfig = function () {
 
 	self.lastDrawnFrom = 'config';
 	self.renderer.draw(self.devConfig, self.userConfig);
-}
+};
 
 // #drawInteractive {{{2
 

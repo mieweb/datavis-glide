@@ -203,7 +203,7 @@ GridTablePlain.prototype.setActiveRow = function (which) {
 		colConfig: self.colConfig,
 		tableRow: tr,
 		tableRenderer: self
-	}
+	};
 	if (getProp(self.defn, 'table', 'activeRow', 'slider')) {
 		if (getProp(self.defn, 'table', 'activeRow', 'callback')) {
 			cbObj.slider = self.ui.slider;
@@ -255,7 +255,7 @@ GridTablePlain.prototype.clearActiveRow = function () {
 	self.ui.tbody.find('tr.wcdv-active-row').removeClass('wcdv-active-row');
 
 	self.activeRow = null;
-}
+};
 
 // #activeRowPrev {{{2
 
@@ -1312,7 +1312,7 @@ GridTablePlain.prototype.checkAll = function (evt) {
 	else {
 		self.unselect();
 	}
-}
+};
 
 // #_addRowReorderHandler {{{2
 

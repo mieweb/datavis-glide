@@ -663,7 +663,7 @@ GridTableGroupDetail.prototype.drawBody = function (data, typeInfo, columns, con
 				}
 				if(self.defn.table.whenGroup.showExpandedGroups){
 					afterElement = render(childMetadataNode.id, 0, childTr);
-					
+
 				} else {
 					afterElement = childTr;
 				}
@@ -1321,7 +1321,7 @@ GridTableGroupDetail.prototype.checkAll = function (evt) {
 	else {
 		self.unselect();
 	}
-}
+};
 
 // #addDataToCsv {{{2
 

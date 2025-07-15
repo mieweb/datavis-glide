@@ -694,7 +694,7 @@ var ValuesWithCountsAggregate = makeSubclass('ValuesWithCountsAggregate', Aggreg
 		return {
 			map: new OrdMap(),
 			resultIsElement: false
-		}
+		};
 	},
 	options: {
 		'separator': {
@@ -1309,7 +1309,7 @@ var AggregateInfo = makeSubclass('AggregateInfo', Object, function (aggType, spe
 		throw new Error('Call Error: `spec.fun` must be a string');
 	}
 	if (spec.fields != null && !_.isArray(spec.fields)) {
-		throw new Error('Call Error: `spec.fields` must be null or an array')
+		throw new Error('Call Error: `spec.fields` must be null or an array');
 	}
 
 	if (aggNum != null && typeof aggNum !== 'number') {

@@ -509,7 +509,7 @@ PrefsBackendLocalStorage.prototype.getCurrent = function (cont) {
 	}
 
 	var storedPrefData = JSON.parse(localStorage.getItem(self.localStorageKey) || '{}');
-	var current = getProp(storedPrefData, self.id, 'current')
+	var current = getProp(storedPrefData, self.id, 'current');
 
 	self.debug(null, 'Current perspective is "%s"', current);
 

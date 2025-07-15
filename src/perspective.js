@@ -109,7 +109,7 @@ var Perspective = makeSubclass('Perspective', Object, function (id, name, config
 	var self = this;
 
 	if (id != null && typeof id !== 'string') {
-		throw new Error('Call Error: `id` must be null or a string')
+		throw new Error('Call Error: `id` must be null or a string');
 	}
 	if (name != null && typeof name !== 'string') {
 		throw new Error('Call Error: `name` must be null or a string');

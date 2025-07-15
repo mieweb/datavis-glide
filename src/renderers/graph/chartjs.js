@@ -248,7 +248,7 @@ GraphRendererChartJs.prototype.draw_group = function (data, typeInfo, obj, confi
 // #draw_pivot {{{2
 
 GraphRendererChartJs.prototype.draw_pivot = function (data, typeInfo, dt, config) {
-	var self = this
+	var self = this;
 
 	if (typeof config === 'function') {
 		config = config(data.groupFields, data.pivotFields);

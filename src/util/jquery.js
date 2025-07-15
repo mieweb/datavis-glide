@@ -274,7 +274,7 @@ jQuery.fn.extend({
 			});
 			this.on('dragstop', function (evt, ui) {
 				console.log('### ' + tag + ' > DRAG.STOP: evt = %O, ui = %O', evt, ui);
-			})
+			});
 			break;
 		case 'drop':
 			this.on('dropactivate', function (evt, ui) {
@@ -282,7 +282,7 @@ jQuery.fn.extend({
 			});
 			this.on('dropdeactivate', function (evt, ui) {
 				console.log('### ' + tag + ' > DROP.DEACTIVATE: evt = %O, ui = %O', evt, ui);
-			})
+			});
 			this.on('drop', function (evt, ui) {
 				console.log('### ' + tag + ' > DROP.DROP: evt = %O, ui = %O', evt, ui);
 			});
@@ -293,7 +293,7 @@ jQuery.fn.extend({
 			});
 			this.on('sortremove', function (evt, ui) {
 				console.log('### ' + tag + ' > SORT.REMOVE: evt = %O, ui = %O', evt, ui);
-			})
+			});
 			this.on('sortstart', function (evt, ui) {
 				console.log('### ' + tag + ' > SORT.START: evt = %O, ui = %O', evt, ui);
 			});

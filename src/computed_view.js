@@ -3090,7 +3090,7 @@ ComputedView.prototype.getData = function (cont, reason) {
 	var fail = function () {
 		self.lock.unlock();
 		return cont(false);
-	}
+	};
 
 	self.lock.lock();
 
