@@ -1435,7 +1435,8 @@ ComputedView.prototype.filter = function (cont) {
 
 	function passesFilter(fltr, field, row) {
 		var fti = self.typeInfo.get(field);
-		var datum = row[field].value;
+		var datum = row[field].value
+			, d;
 
 		// When there's no such column, automatically fail.
 
@@ -1464,15 +1465,11 @@ ComputedView.prototype.filter = function (cont) {
 		};
 
 		pred['$contains'] = function (operand) {
-			return ( isMoment && false )
-				|| ( isNumeral && false )
-				|| ( isString && datum.indexOf(operand.toString().toLowerCase()) >= 0 )
-				|| ( isNumber && false )
-			;
+			return isString && datum.indexOf(operand.toString().toLowerCase()) >= 0;
 		};
 
 		pred['$notcontains'] = function (operand) {
-			return !pred['$notcontains'](operand);
+			return !pred['$contains'](operand);
 		};
 
 		pred['$gt'] = function (operand) {
@@ -1560,7 +1557,7 @@ ComputedView.prototype.filter = function (cont) {
 					}
 					var dayIdx = days.indexOf(operand);
 					var monthIdx = months.indexOf(operand);
-					var d = isString ? moment(datum) : isMoment ? datum : null;
+					d = isString ? moment(datum) : isMoment ? datum : null;
 					if (d == null) {
 						console.error('Operator "$every" cannot be applied to data in field "' + field + '" of type "' + fti.type + '" and internal type "' + fti.internalType + '"');
 						return false;
@@ -1583,7 +1580,7 @@ ComputedView.prototype.filter = function (cont) {
 						console.error('Invalid operator "$this" for field "' + field + '" of type "' + fti.type + '"');
 						return false;
 					}
-					var d = isString ? moment(datum) : isMoment ? datum : null;
+					d = isString ? moment(datum) : isMoment ? datum : null;
 					if (d == null) {
 						console.error('Operator "$this" cannot be applied to data in field "' + field + '" of type "' + fti.type + '" and internal type "' + fti.internalType + '"');
 						return false;
@@ -1591,19 +1588,14 @@ ComputedView.prototype.filter = function (cont) {
 					switch (operand) {
 					case 'DATE':
 						return d.format('YYYY-MM-DD') === now.format('YYYY-MM-DD');
-						break;
 					case 'WEEK':
 						return d.format('YYYY-WW') === now.format('YYYY-WW');
-						break;
 					case 'MONTH':
 						return d.format('YYYY-MM') === now.format('YYYY-MM');
-						break;
 					case 'QUARTER':
 						return d.format('YYYY-Q') === now.format('YYYY-Q');
-						break;
 					case 'YEAR':
 						return d.format('YYYY') === now.format('YYYY');
-						break;
 					default:
 						console.error('Invalid "$this" operand "' + operand + '" for field "' + field + '"');
 						return false;
@@ -1615,7 +1607,7 @@ ComputedView.prototype.filter = function (cont) {
 						console.error('Invalid operator "$last" for field "' + field + '" of type "' + fti.type + '"');
 						return false;
 					}
-					var d = isString ? moment(datum) : isMoment ? datum : null;
+					d = isString ? moment(datum) : isMoment ? datum : null;
 					if (d == null) {
 						console.error('Operator "$last" cannot be applied to data in field "' + field + '" of type "' + fti.type + '" and internal type "' + fti.internalType + '"');
 						return false;
@@ -1623,19 +1615,14 @@ ComputedView.prototype.filter = function (cont) {
 					switch (operand) {
 					case 'DATE':
 						return d.format('YYYY-MM-DD') === now.clone().subtract(1, 'days').format('YYYY-MM-DD');
-						break;
 					case 'WEEK':
 						return d.format('YYYY-WW') === now.clone().subtract(1, 'weeks').format('YYYY-WW');
-						break;
 					case 'MONTH':
 						return d.format('YYYY-MM') === now.clone().subtract(1, 'months').format('YYYY-MM');
-						break;
 					case 'QUARTER':
 						return d.format('YYYY-Q') === now.clone().subtract(1, 'quarters').format('YYYY-Q');
-						break;
 					case 'YEAR':
 						return d.format('YYYY') === now.clone().subtract(1, 'years').format('YYYY');
-						break;
 					default:
 						console.error('Invalid "$last" operand "' + operand + '" for field "' + field + '"');
 						return false;

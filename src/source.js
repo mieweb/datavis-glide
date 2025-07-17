@@ -897,20 +897,12 @@ Source.prototype.getData = function (cont) {
 			return cont(false);
 		}
 
-		if (/* TODO: Add option to disable post-processing */ false && self.type === 'local') {
-			self.cache.data = data;
+		self.postProcess(data, function (finalData) {
+			self.cache.data = finalData;
 			self.locks.getData.unlock();
 			self.fire('fetchDataEnd', {async: true});
-			return cont(true, data);
-		}
-		else {
-			self.postProcess(data, function (finalData) {
-				self.cache.data = finalData;
-				self.locks.getData.unlock();
-				self.fire('fetchDataEnd', {async: true});
-				return cont(true, finalData);
-			});
-		}
+			return cont(true, finalData);
+		});
 	});
 };
 
@@ -1523,9 +1515,16 @@ Source.prototype.clearDiscriminatorRanges = function () {
 Source.prototype.condenseDiscriminatorRanges = function () {
 	var self = this;
 
+	if (self.discriminatorField == null) {
+		return;
+	}
+
 	if (self.discriminatorRanges.length === 0) {
 		return;
 	}
+
+	var dfti = self.cache.typeInfo.get(self.discriminatorField);
+	var cmp = getComparisonFn.byType(dfti);
 
 	var newMin = null;
 	var newMax = null;

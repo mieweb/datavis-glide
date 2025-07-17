@@ -1981,8 +1981,6 @@ export var mixinEventHandling = (function () {
 			var handlers = [];
 
 			_.each(self.eventHandlers[evt], function (handler, i) {
-				var handler = self.eventHandlers[evt][i];
-
 				if (handler == null) {
 					// This handler has been removed, e.g. due to reaching the invocation limit.
 					return;
@@ -2589,10 +2587,12 @@ export function setTableCell(cell, value, opts) {
 		throw new Error('Call Error: `cell` must be a HTMLTableCellElement instance');
 	}
 
-	var container = cell;
+	var container = cell
+		, wrapper
+		, operationDiv;
 
 	if (fcc.maxHeight != null && value !== '') {
-		var wrapper = document.createElement('div');
+		wrapper = document.createElement('div');
 		wrapper.classList.add('wcdv_maxheight_wrapper');
 		wrapper.style.maxHeight = fcc.maxHeight;
 
@@ -2612,7 +2612,7 @@ export function setTableCell(cell, value, opts) {
 		showValueSpan.classList.add('fa');
 		showValueSpan.classList.add('fa-asterisk');
 
-		var operationDiv = document.createElement('div');
+		operationDiv = document.createElement('div');
 		operationDiv.style.display = 'inline-block';
 		operationDiv.style.float = 'right';
 
@@ -2637,9 +2637,9 @@ export function setTableCell(cell, value, opts) {
 		wrapper.appendChild(container);
 	}
 	else if (ops.length > 0) {
-		var wrapper = document.createElement('div');
+		wrapper = document.createElement('div');
 
-		var operationDiv = document.createElement('div');
+		operationDiv = document.createElement('div');
 		operationDiv.style.display = 'inline-block';
 		operationDiv.style.float = 'right';
 
@@ -3763,6 +3763,7 @@ export function getParamsFromUrl() {
 		query  = window.location.search.substring(1),
 		params = {};
 
+	// eslint-disable-next-line no-cond-assign
 	while (match = search.exec(query)) {
 		key = decode(match[1]);
 		val = decode(match[2]);
@@ -4038,6 +4039,7 @@ if (!String.prototype.repeat) {
     if (str.length * count >= (1 << 28)) {
       throw new RangeError('repeat count must not overflow maximum string size');
     }
+		// eslint-disable-next-line no-cond-assign
     while (count >>= 1) { // shift it by multiple of 2 because this is binary summation of series
        str += str; // binary summation
     }

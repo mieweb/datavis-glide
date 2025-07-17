@@ -367,6 +367,7 @@ PrefsBackendLocalStorage.prototype.migrate = function (version, cont) {
 		localStorage.setItem(self.localStorageKey, JSON.stringify(localStorageObj));
 	};
 
+	var localStorageObj;
 
 	for (var i = version; i < self.version; i += 1) {
 		switch (i) {
@@ -414,7 +415,7 @@ PrefsBackendLocalStorage.prototype.migrate = function (version, cont) {
 			localStorage.setItem(self.localStorageKey, JSON.stringify(newPrefs));
 			break;
 		case 1:
-			var localStorageObj = readConfig();
+			localStorageObj = readConfig();
 
 			// Perspectives now store module configuration in a property called `config` with some new
 			// information added at the toplevel.
@@ -433,7 +434,7 @@ PrefsBackendLocalStorage.prototype.migrate = function (version, cont) {
 			writeConfig(localStorageObj);
 			break;
 		case 2:
-			var localStorageObj = readConfig();
+			localStorageObj = readConfig();
 
 			// The configuration for `view` is now known as `computedView` since we now have multiple
 			// types of view which are configured separately.

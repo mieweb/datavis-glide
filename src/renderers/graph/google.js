@@ -1,3 +1,5 @@
+/* global google */
+
 import _ from 'underscore';
 import moment from 'moment';
 import numeral from 'numeral';

@@ -385,12 +385,12 @@ GridTable.prototype._validateFloatTableHeader = function () {
 		else if (window.TableTool) {
 			config.method = 'tabletool';
 		}
-		else if (true /* TODO Replace with actual check for browser support. */) {
+		else {
 			config.method = 'css';
 		}
-		else {
-			self.features.floatingHeader = false;
-		}
+		// else {
+		// 	self.features.floatingHeader = false;
+		// }
 	}
 
 	self.defn.table.floatingHeader = config;

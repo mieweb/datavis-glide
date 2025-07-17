@@ -889,7 +889,7 @@ Prefs.prototype.deletePerspective = function (id, cont, opts) {
 
 				// Now delete all continuous sequences of the new current perspective.
 				var newCurId = self.history[self.historyIndex].id;
-				for (var i = self.historyIndex + 1; i < self.history.length && self.history[i].id !== newCurId; i += 1) {
+				for (i = self.historyIndex + 1; i < self.history.length && self.history[i].id !== newCurId; i += 1) {
 					self.history[i] = null;
 				}
 				self.history = _.without(self.history, null);
