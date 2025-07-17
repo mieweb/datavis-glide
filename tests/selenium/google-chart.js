@@ -96,7 +96,7 @@ describe('Google Chart', function() {
 					assert.equal(t.pivot, 'United States');
 					assert.equal(t.value, '90,162');
 				});
-			})
+			});
 		});
 	});
 });

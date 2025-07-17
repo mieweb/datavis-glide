@@ -39,7 +39,7 @@ const autoLimit = (req, res, u) => {
 		if (err != null) {
 			res.end();
 		}
-		json = JSON.parse(data);
+		let json = JSON.parse(data);
 		if (u.query.state) {
 			json.data = _.filter(json.data, (d) => d.state === u.query.state);
 		}

@@ -9,7 +9,7 @@ const child_process = require('child_process');
 const Promise = require('bluebird');
 
 function decToHex(s, padLen) {
-	result = (+s).toString(16).toUpperCase();
+	let result = (+s).toString(16).toUpperCase();
 	while (result.length < padLen) {
 		result = '0' + result;
 	}

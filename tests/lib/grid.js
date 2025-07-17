@@ -610,7 +610,7 @@ class Grid {
 		await selectByValue(newAggDropdown, funName);
 
 		if (field != null) {
-			const fieldDropdown = await control.findElement(By.css('ul.wcdv_control_vertical > li:last-of-type select'))
+			const fieldDropdown = await control.findElement(By.css('ul.wcdv_control_vertical > li:last-of-type select'));
 			await selectByValue(fieldDropdown, field);
 		}
 	}
@@ -648,9 +648,10 @@ class Grid {
 		switch (type) {
 		case 'group':
 			break;
-		case 'pivot':
+		case 'pivot': {
 			let cvi = await this.findColValIdx(colVal);
 			return this.driver.findElement(By.css(`td[data-wcdv-agg-scope=pivot][data-wcdv-cvi="${cvi}"][data-wcdv-agg-num="${aggNum}"]`));
+		}
 		case 'cell':
 			break;
 		case 'all':
@@ -916,7 +917,7 @@ class Grid {
 
 	async getOperations(type, opts) {
 		switch (type) {
-		case 'all':
+		case 'all': {
 			const panes = await this.driver.findElements(By.css('div.wcdv_control_pane'));
 			const operationsPanes = await asyncFilter(panes, async (elt) => {
 				const titles = await elt.findElements(By.css('span.wcdv_control_title'));
@@ -936,7 +937,7 @@ class Grid {
 						: await btn.getText());
 			});
 			return result;
-			break;
+		}
 		case 'row': {
 			const tr = await this.ui.table.findElement(By.css(`tbody > tr[data-row-num="${opts.row}"]`));
 			if (tr == null) {
@@ -945,14 +946,12 @@ class Grid {
 			const operationButtons = await tr.findElements(By.css('td.wcdv_row_operations > button'));
 			return await asyncMap(operationButtons, async (btn) =>
 				await btn.getAttribute('title') ||(await getClass(btn.findElement(By.css('span')), /fa-/))[0]);
-			break;
 		}
 		case 'cell': {
 			const td = await this.getCell(opts.col, opts.row, {result: 'element'});
 			const operationButtons = await td.findElements(By.css('button.wcdv_operation'));
 			return await asyncMap(operationButtons, async (btn) =>
 				await btn.getAttribute('title') ||(await getClass(btn.findElement(By.css('span')), /fa-/))[0]);
-			break;
 		}
 		}
 	}
@@ -1078,10 +1077,11 @@ class Grid {
 			const tds = await tr.findElements(By.css(`td:not(.wcdv_group_col_spacer)`));
 			await Promise.each(fields, async (i) => {
 				switch (opts.result) {
-				case 'text':
+				case 'text': {
 					const t = await tds[i].getText();
 					row[headers[i]] = (t === ' ' ? '' : t);
 					break;
+				}
 				case 'element':
 					row[headers[i]] = tds[i];
 					break;
