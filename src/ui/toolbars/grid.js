@@ -778,7 +778,7 @@ var ComputedViewToolbar = makeSubclass('ComputedViewToolbar', ToolbarSection, fu
 	// This button creates a MirageView from the current view, and switches my grid's view to the new
 	// MirageView.  If an error occurs, it should abort and leave things the way they are.
 
-	jQuery('<button>', {'type': 'button', 'title': trans('GRID_TOOLBAR.MIRAGE.STORE_DISPLAYED_DATA')})
+	self.ui.storeMirageBtn = jQuery('<button>', {'type': 'button', 'title': trans('GRID_TOOLBAR.MIRAGE.STORE_DISPLAYED_DATA')})
 		.append(fontAwesome('fa-save'))
 		.append(trans('GRID_TOOLBAR.MIRAGE.STORE_DISPLAYED_DATA'))
 		.on('click', function () {

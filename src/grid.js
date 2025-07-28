@@ -668,16 +668,19 @@ var Grid = makeSubclass('Grid', Object, function (defn, opts, cb) {
 	self.groupControl.draw(self.ui.groupControl);
 
 	self.groupControl.on('fieldAdded', function (fieldAdded, fields) {
+		self.ui.toolbar_computedView.ui.storeMirageBtn.attr('disabled', false);
 		self.ui.pivotControl.show();
 		self.ui.aggregateControl.show();
 	});
 	self.groupControl.on('fieldRemoved', function (fieldRemoved, fields) {
 		if (fields.length === 0) {
+			self.ui.toolbar_computedView.ui.storeMirageBtn.attr('disabled', true);
 			self.ui.pivotControl.hide();
 			self.ui.aggregateControl.hide();
 		}
 	});
 	self.groupControl.on('cleared', function () {
+		self.ui.toolbar_computedView.ui.storeMirageBtn.attr('disabled', true);
 		self.ui.pivotControl.hide();
 		self.ui.aggregateControl.hide();
 	});
@@ -1519,6 +1522,7 @@ Grid.prototype._updateRowCount = function (info, ops) {
 	if (self.view.source.origin.isLimited) {
 		self.ui.autoLimit.show();
 		self.ui.groupControl.hide();
+		self.ui.toolbar_computedView.ui.storeMirageBtn.attr('disabled', true);
 	}
 	else {
 		self.ui.autoLimit.hide();
