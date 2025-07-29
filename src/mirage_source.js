@@ -151,20 +151,26 @@ MirageSource.prototype.save = function (data, typeInfo, ok, fail) {
 
 	var aggRes = [];
 
-	for (var aggNum = 0; aggNum < data.agg.info.cell.length; aggNum += 1) {
-		for (var rvi = 0; rvi < data.rowVals.length; rvi += 1) {
-			for (var cvi = 0; cvi < data.colVals.length; cvi += 1) {
-				if (data.data[rvi][cvi].length > 0) {
-					aggRes.push({
-						aggType: 'cell',
-						aggNum: aggNum,
-						coordinates: [].concat(data.rowVals[rvi], data.colVals[cvi]),
-						result: data.agg.results.cell[aggNum][rvi][cvi]
-					});
+	// Cell Aggregates {{{3
+
+	if (data.isPivot) {
+		for (var aggNum = 0; aggNum < data.agg.info.cell.length; aggNum += 1) {
+			for (var rvi = 0; rvi < data.rowVals.length; rvi += 1) {
+				for (var cvi = 0; cvi < data.colVals.length; cvi += 1) {
+					if (data.data[rvi][cvi].length > 0) {
+						aggRes.push({
+							aggType: 'cell',
+							aggNum: aggNum,
+							coordinates: [].concat(data.rowVals[rvi], data.colVals[cvi]),
+							result: data.agg.results.cell[aggNum][rvi][cvi]
+						});
+					}
 				}
 			}
 		}
 	}
+
+	// Group Aggregates {{{3
 
 	for (var aggNum = 0; aggNum < data.agg.info.group.length; aggNum += 1) {
 		for (var rvi = 0; rvi < data.rowVals.length; rvi += 1) {
@@ -177,16 +183,22 @@ MirageSource.prototype.save = function (data, typeInfo, ok, fail) {
 		}
 	}
 
-	for (var aggNum = 0; aggNum < data.agg.info.pivot.length; aggNum += 1) {
-		for (var cvi = 0; cvi < data.colVals.length; cvi += 1) {
-			aggRes.push({
-				aggType: 'pivot',
-				aggNum: aggNum,
-				coordinates: data.colVals[cvi],
-				result: data.agg.results.pivot[aggNum][cvi]
-			});
+	// Pivot Aggregates {{{3
+
+	if (data.isPivot) {
+		for (var aggNum = 0; aggNum < data.agg.info.pivot.length; aggNum += 1) {
+			for (var cvi = 0; cvi < data.colVals.length; cvi += 1) {
+				aggRes.push({
+					aggType: 'pivot',
+					aggNum: aggNum,
+					coordinates: data.colVals[cvi],
+					result: data.agg.results.pivot[aggNum][cvi]
+				});
+			}
 		}
 	}
+
+	// All Aggregates {{{3
 
 	for (var aggNum = 0; aggNum < data.agg.info.all.length; aggNum += 1) {
 		aggRes.push({
@@ -196,6 +208,8 @@ MirageSource.prototype.save = function (data, typeInfo, ok, fail) {
 			result: data.agg.results.all[aggNum]
 		});
 	}
+
+	// }}}3
 
 	var metadata = {
 		prefsName: self.prefsName,
@@ -250,7 +264,8 @@ MirageSource.prototype.load = function (ok, fail) {
 		data: [],
 		groupMetadata: {
 			lookup: {
-				byRowValIndex: []
+				byRowValIndex: [],
+				byId: []
 			}
 		}
 	};
@@ -264,11 +279,15 @@ MirageSource.prototype.load = function (ok, fail) {
 		copyProps(metadata, sourceConfig, ['sourceType', 'sourceName', 'sourceParams']);
 		copyProps(metadata, viewConfig, ['filterSpec', 'groupSpec', 'pivotSpec', 'aggregateSpec']);
 
-		data.groupSpec = metadata.groupSpec.fieldNames;
-		data.groupFields = _.pluck(data.groupSpec, 'field');
+		if (metadata.groupSpec != null) {
+			data.groupSpec = metadata.groupSpec.fieldNames;
+			data.groupFields = _.pluck(data.groupSpec, 'field');
+		}
 
-		data.pivotSpec = metadata.pivotSpec.fieldNames;
-		data.pivotFields = _.pluck(data.pivotSpec, 'field');
+		if (metadata.pivotSpec != null) {
+			data.pivotSpec = metadata.pivotSpec.fieldNames;
+			data.pivotFields = _.pluck(data.pivotSpec, 'field');
+		}
 
 		_.each(aggRes, function (ar) {
 			var rv = null
@@ -393,28 +412,25 @@ MirageSource.prototype.load = function (ok, fail) {
 
 		var metadataId = 0;
 		var postorder = function (node, depth) {
-			//node.id = metadataId++;
-			//node.numRows = 0;
+			node.id = metadataId++;
+			node.numRows = 0;
 
-			//data.groupMetadata.lookup.byId[node.id] = node;
+			data.groupMetadata.lookup.byId[node.id] = node;
 
 			// NOTE When there are no rows in the data, the root of the tree has no children, but also no
 			// rows (because it's not a rowVal leaf).  This case is handled by setting numRows = 0 above.
 
-			//if (node.children == null) {
-			//	if (node.rows != null) {
-			//		node.numRows = node.rows.length;
-			//	}
-			//}
-			//else {
-			if (node.children != null) {
-				//node.numChildren = _.keys(node.children).length;
-				//node.rows = [];
+			if (node.children == null) {
+				node.rows = [];
+			}
+			else {
+				node.numChildren = _.keys(node.children).length;
+				node.rows = [];
 				_.each(node.children, function (child) {
 					child.parent = node;
 					postorder(child, depth + 1);
-					//node.numRows += child.numRows;
-					//node.rows = node.rows.concat(child.rows);
+					node.numRows += child.numRows;
+					node.rows = node.rows.concat(child.rows);
 				});
 				if (depth > 0) {
 					node.rowValIndex = node.children[_.keys(node.children)[0]].rowValIndex;
@@ -426,9 +442,9 @@ MirageSource.prototype.load = function (ok, fail) {
 				node.groupFieldIndex = depth - 1;
 				node.groupField = data.groupSpec[node.groupFieldIndex].field;
 				node.groupSpec = data.groupSpec[node.groupFieldIndex];
-				//if (node.rows != null && node.rows.length > 0) {
-				//	node.rowValCell = node.rows[0].rowData[node.groupField];
-				//}
+				if (node.rows != null && node.rows.length > 0) {
+					node.rowValCell = node.rows[0].rowData[node.groupField];
+				}
 			}
 		};
 
