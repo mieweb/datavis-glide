@@ -1519,7 +1519,7 @@ Grid.prototype._updateRowCount = function (info, ops) {
 	// When we have been auto-limited, show the banner message showing as much and prevent people from
 	// grouping (because we don't have all the data, grouping / pivotting is misleading).
 
-	if (self.view.source.origin.isLimited) {
+	if (getProp(self.view, 'source', 'origin', 'isLimited')) {
 		self.ui.autoLimit.show();
 		self.ui.groupControl.hide();
 		self.ui.toolbar_computedView.ui.storeMirageBtn.attr('disabled', true);
