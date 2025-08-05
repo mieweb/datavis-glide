@@ -1,6 +1,8 @@
 import url from 'url';
 import fs from 'fs';
+import path from 'path';
 import process from 'process';
+import handler from 'serve-handler';
 
 import _ from 'lodash';
 import { defineConfig } from 'vite';
@@ -56,6 +58,18 @@ const testScaffold = () => ({
           return reflectCgi(req, res, u);
         case '/ds/autolimit':
           return autoLimit(req, res, u);
+        default:
+          let p = path.normalize(server.config.root + '/' + u.pathname);
+          if (!fs.existsSync(p)) {
+            return next();
+          }
+          let s = fs.statSync(p);
+          if (s.isDirectory()) {
+            return handler(req, res, {
+              cleanUrls: true,
+              directoryListing: true
+            });
+          }
         }
       }
       catch (e) {
