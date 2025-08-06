@@ -41,6 +41,8 @@ export default {
   'CALENDAR.QUARTER': 'quarter',
   'CALENDAR.WEEK': 'week',
   'CALENDAR.YEAR': 'year',
+  'DATA.NOTHING_TO_GRAPH': 'Nothing to Graph',
+  'DATA.NO_DATA': 'No Data',
   'DIALOG.CANCEL': 'Cancel',
   'DIALOG.OK': 'OK',
   'FILTER.DATE.OPERATOR.AFTER': 'after',

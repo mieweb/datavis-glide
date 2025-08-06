@@ -20,6 +20,7 @@ import {GROUP_FUNCTION_REGISTRY} from '../../group_fun.js';
 import OrdMap from '../../util/ordmap.js';
 import { GraphRenderer } from '../../graph_renderer.js';
 import { Source } from '../../source.js';
+import { trans } from '../../trans.js';
 
 // GraphRendererGoogle {{{1
 
@@ -469,7 +470,7 @@ GraphRendererGoogle.prototype.draw = function (devConfig, userConfig) {
 				};
 
 				if (data.data.length === 0) {
-					makeMessage('No Data');
+					makeMessage(trans('DATA.NO_DATA'));
 					return;
 				}
 
@@ -487,7 +488,7 @@ GraphRendererGoogle.prototype.draw = function (devConfig, userConfig) {
 				}
 
 				if (config == null) {
-					makeMessage('Nothing to Graph');
+					makeMessage(trans('DATA.NOTHING_TO_GRAPH'));
 					return;
 				}
 

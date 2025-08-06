@@ -21,6 +21,7 @@ import {GROUP_FUNCTION_REGISTRY} from '../../group_fun.js';
 
 import OrdMap from '../../util/ordmap.js';
 import { GraphRenderer } from '../../graph_renderer.js';
+import { trans } from '../../trans.js';
 
 // GraphRendererChartJs {{{1
 
@@ -413,7 +414,7 @@ GraphRendererChartJs.prototype.draw = function (devConfig, userConfig) {
 			};
 
 			if (data.data.length === 0) {
-				makeMessage('No Data');
+				makeMessage(trans('DATA.NO_DATA'));
 				return;
 			}
 
@@ -430,7 +431,7 @@ GraphRendererChartJs.prototype.draw = function (devConfig, userConfig) {
 			}
 
 			if (config == null) {
-				makeMessage('Nothing to Graph');
+				makeMessage(trans('DATA.NOTHING_TO_GRAPH'));
 				return;
 			}
 
