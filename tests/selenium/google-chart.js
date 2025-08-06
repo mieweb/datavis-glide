@@ -28,7 +28,7 @@ describe('Google Chart', function() {
 		let grid, graph;
 
 		before(async function () {
-			await driver.get('http://localhost:3000/graph/google.html');
+			await driver.get('http://localhost:3000/tests/pages/graph/google.html');
 			grid = new Grid(driver);
 			graph = new Graph(driver);
 			await grid.waitForIdle();

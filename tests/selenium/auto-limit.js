@@ -18,7 +18,7 @@ describe('Auto Limit', function () {
 	});
 
 	before(async function () {
-		await driver.get('http://localhost:3000/grid/server-auto-limit.html');
+		await driver.get('http://localhost:3000/tests/pages/grid/server-auto-limit.html');
 		grid = new Grid(driver);
 		await grid.waitForIdle();
 	});

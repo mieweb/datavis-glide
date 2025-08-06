@@ -89,7 +89,7 @@ describe('Allow HTML', function () {
 	_.each(tests, function (t) {
 		describe(`${t.name} (${t.url})`, function () {
 			before(async function () {
-				await driver.get(`http://localhost:3000/grid/allowHtml/${t.url}`);
+				await driver.get(`http://localhost:3000/tests/pages/grid/allowHtml/${t.url}`);
 				grid = new Grid(driver);
 				await grid.waitForIdle();
 			});

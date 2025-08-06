@@ -27,7 +27,7 @@ describe('Row Customization', function() {
 		let grid;
 
 		before(async function () {
-			await driver.get('http://localhost:3000/grid/row-customization.html');
+			await driver.get('http://localhost:3000/tests/pages/grid/row-customization.html');
 			grid = new Grid(driver);
 			await grid.waitForIdle();
 

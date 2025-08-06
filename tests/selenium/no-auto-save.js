@@ -26,7 +26,7 @@ describe('Preferences (w/o Auto Save)', function() {
 	// Therefore, we clear local storage after the test is done instead.  SO DON'T MOVE IT HERE!
 
 	beforeEach(async function () {
-		await driver.get('http://localhost:3000/grid/no-auto-save.html');
+		await driver.get('http://localhost:3000/tests/pages/grid/no-auto-save.html');
 	});
 
 	afterEach(async function () {

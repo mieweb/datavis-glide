@@ -38,7 +38,7 @@ describe('Operations', function () {
 
   describe('configured as part of the grid', function () {
     before(async function () {
-      await driver.get(`http://localhost:3000/grid/operations/basic.html`);
+      await driver.get(`http://localhost:3000/tests/pages/grid/operations/basic.html`);
       grid = new Grid(driver);
       await grid.waitForIdle();
     });
@@ -50,7 +50,7 @@ describe('Operations', function () {
 
   describe('configured immediately after grid was created', function () {
     before(async function () {
-      await driver.get(`http://localhost:3000/grid/operations/delayed.html`);
+      await driver.get(`http://localhost:3000/tests/pages/grid/operations/delayed.html`);
       grid = new Grid(driver);
       await grid.waitForIdle();
       sleep(5); // This sucks but there's no other way (right now) to know when the operations have been asynchronously applied.
@@ -63,7 +63,7 @@ describe('Operations', function () {
 
   describe('when data is retrieved', function () {
     before(async function () {
-      await driver.get(`http://localhost:3000/grid/operations/on-view-getTypeInfo.html`);
+      await driver.get(`http://localhost:3000/tests/pages/grid/operations/on-view-getTypeInfo.html`);
       grid = new Grid(driver);
       await grid.waitForIdle();
     });

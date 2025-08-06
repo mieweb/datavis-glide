@@ -26,7 +26,7 @@ describe('Preferences', function() {
 	// Therefore, we clear local storage after the test is done instead.  SO DON'T MOVE IT HERE!
 
 	beforeEach(async function () {
-		await driver.get('http://localhost:3000/grid/default.html');
+		await driver.get('http://localhost:3000/tests/pages/grid/default.html');
 	});
 
 	afterEach(async function () {

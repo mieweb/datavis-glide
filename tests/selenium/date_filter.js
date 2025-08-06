@@ -18,7 +18,7 @@ describe('Date Filter', function() {
 	});
 
 	before(async function () {
-		await driver.get('http://localhost:3000/grid/filters/date.html');
+		await driver.get('http://localhost:3000/tests/pages/grid/filters/date.html');
 		grid = new Grid(driver);
 		await grid.waitForIdle();
 	});

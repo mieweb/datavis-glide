@@ -26,7 +26,7 @@ describe('Number Formatting', function() {
 	// Therefore, we clear local storage after the test is done instead.  SO DON'T MOVE IT HERE!
 
 	beforeEach(async function () {
-		await driver.get('http://localhost:3000/grid/number-format-str.html');
+		await driver.get('http://localhost:3000/tests/pages/grid/number-format-str.html');
 	});
 
 	afterEach(async function () {
