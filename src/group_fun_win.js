@@ -76,9 +76,9 @@ var GroupFunWin = makeSubclass('GroupFunWin', Object, function (title, groupFuns
 			'type': 'button',
 			'class': 'wcdv_option',
 			'data-wcdv-groupfunname': gfName,
-			'title': gf.displayName
+			'title': gf.getTransName()
 		})
-			.text(gf.displayName)
+			.text(gf.getTransName())
 			.on('click', function () {
 				selected = gfName;
 				self.win.dialog('close');

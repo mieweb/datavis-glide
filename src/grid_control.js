@@ -268,8 +268,8 @@ FunGridControlField.prototype.draw = function () {
 
 		if (self.field.fun != null) {
 			var gf = GROUP_FUNCTION_REGISTRY.get(self.field.fun);
-			self.ui.fieldLabel.text(self.field.field + ' (' + gf.displayName + ')');
-			self.ui.fieldLabel.attr('title', self.field.field + ' (' + gf.displayName + ')');
+			self.ui.fieldLabel.text(self.field.field + ' (' + gf.getTransName() + ')');
+			self.ui.fieldLabel.attr('title', self.field.field + ' (' + gf.getTransName() + ')');
 		}
 		self.ui.fieldLabel.after(self.ui.groupFunWinBtn);
 	}
@@ -302,7 +302,7 @@ FunGridControlField.prototype.showFunWin = function () {
 			else {
 				self.field.fun = groupFunName;
 				var gf = GROUP_FUNCTION_REGISTRY.get(self.field.fun);
-				self.ui.fieldLabel.text(self.field.field + ' (' + gf.displayName + ')');
+				self.ui.fieldLabel.text(self.field.field + ' (' + gf.getTransName() + ')');
 			}
 			self.control.updateView();
 		}

@@ -54,8 +54,8 @@ import {AGGREGATE_REGISTRY, AggregateInfo} from './aggregates.js';
  * @param {object} spec
  * A specification for the group function.
  *
- * @param {string} spec.displayName
- * What should be shown in the user interface for this function's name.
+ * @param {string} spec.transLabel
+ * Translation label that should be shown in the user interface for this function's name.
  *
  * @param {Array.<string>} [spec.allowedTypes]
  * If present, this function will only be presented as an option for fields in the specified set of
@@ -91,8 +91,8 @@ var GroupFunction = makeSubclass('GroupFunction', Object, function (spec) {
 
 	spec = deepDefaults(spec, {});
 
-	if (spec.displayName == null || typeof spec.displayName !== 'string') {
-		throw new Error('Call Error: `displayName` must be a string');
+	if (spec.transLabel == null || typeof spec.transLabel !== 'string') {
+		throw new Error('Call Error: `transLabel` must be a string');
 	}
 
 	if (spec.allowedTypes != null && !_.isArray(spec.allowedTypes)) {
@@ -128,8 +128,20 @@ var GroupFunction = makeSubclass('GroupFunction', Object, function (spec) {
 		spec.sortType = spec.resultType;
 	}
 
-	copyProps(spec, self, ['category', 'displayName', 'allowedTypes', 'valueFun', 'resultType', 'sortType', 'canFilter', 'valueToFilter']);
+	copyProps(spec, self, ['category', 'transLabel', 'allowedTypes', 'valueFun', 'resultType', 'sortType', 'canFilter', 'valueToFilter']);
 });
+
+// #getTransName {{{2
+
+GroupFunction.prototype.getTransName = function () {
+	return trans(this.transLabel);
+};
+
+// #getDisplayName {{{2
+
+GroupFunction.prototype.getDisplayName = function () {
+	return this.getTransName();
+};
 
 // #applyValueFun {{{2
 
@@ -155,7 +167,8 @@ var GROUP_FUNCTION_REGISTRY = new OrdMap();
 
 GROUP_FUNCTION_REGISTRY.set('year', new GroupFunction({
 	category: 'date',
-	displayName: trans('GRID.GROUP_FUN.DATE.YEAR'),
+	name: 'year',
+	transLabel: 'GRID.GROUP_FUN.DATE.YEAR',
 	allowedTypes: ['date', 'datetime'],
 	valueFun: function (d) {
 		if (typeof d === 'string') {
@@ -178,7 +191,8 @@ GROUP_FUNCTION_REGISTRY.set('year', new GroupFunction({
 
 GROUP_FUNCTION_REGISTRY.set('quarter', new GroupFunction({
 	category: 'repeating',
-	displayName: trans('GRID.GROUP_FUN.REPEATING.QUARTER'),
+	name: 'quarter',
+	transLabel: 'GRID.GROUP_FUN.REPEATING.QUARTER',
 	allowedTypes: ['date', 'datetime'],
 	valueFun: function (d) {
 		if (typeof d === 'string') {
@@ -198,7 +212,8 @@ GROUP_FUNCTION_REGISTRY.set('quarter', new GroupFunction({
 
 GROUP_FUNCTION_REGISTRY.set('month', new GroupFunction({
 	category: 'repeating',
-	displayName: trans('GRID.GROUP_FUN.REPEATING.MONTH'),
+	name: 'month',
+	transLabel: 'GRID.GROUP_FUN.REPEATING.MONTH',
 	allowedTypes: ['date', 'datetime'],
 	valueFun: function (d) {
 		if (typeof d === 'string') {
@@ -219,7 +234,8 @@ GROUP_FUNCTION_REGISTRY.set('month', new GroupFunction({
 
 GROUP_FUNCTION_REGISTRY.set('week_iso', new GroupFunction({
 	category: 'repeating',
-	displayName: trans('GRID.GROUP_FUN.REPEATING.WEEK'),
+	name: 'week_iso',
+	transLabel: 'GRID.GROUP_FUN.REPEATING.WEEK',
 	allowedTypes: ['date', 'datetime'],
 	valueFun: function (d) {
 		if (typeof d === 'string') {
@@ -239,7 +255,8 @@ GROUP_FUNCTION_REGISTRY.set('week_iso', new GroupFunction({
 
 GROUP_FUNCTION_REGISTRY.set('day_of_week', new GroupFunction({
 	category: 'repeating',
-	displayName: trans('GRID.GROUP_FUN.REPEATING.DAY_OF_WEEK'),
+	name: 'day_of_week',
+	transLabel: 'GRID.GROUP_FUN.REPEATING.DAY_OF_WEEK',
 	allowedTypes: ['date', 'datetime'],
 	valueFun: function (d) {
 		if (typeof d === 'string') {
@@ -260,7 +277,8 @@ GROUP_FUNCTION_REGISTRY.set('day_of_week', new GroupFunction({
 
 GROUP_FUNCTION_REGISTRY.set('year_and_quarter', new GroupFunction({
 	category: 'date',
-	displayName: trans('GRID.GROUP_FUN.DATE.YEAR_AND_QUARTER'),
+	name: 'year_and_quarter',
+	transLabel: 'GRID.GROUP_FUN.DATE.YEAR_AND_QUARTER',
 	allowedTypes: ['date', 'datetime'],
 	valueFun: function (d) {
 		if (typeof d === 'string') {
@@ -283,7 +301,8 @@ GROUP_FUNCTION_REGISTRY.set('year_and_quarter', new GroupFunction({
 
 GROUP_FUNCTION_REGISTRY.set('year_and_month', new GroupFunction({
 	category: 'date',
-	displayName: trans('GRID.GROUP_FUN.DATE.YEAR_AND_MONTH'),
+	name: 'year_and_month',
+	transLabel: 'GRID.GROUP_FUN.DATE.YEAR_AND_MONTH',
 	allowedTypes: ['date', 'datetime'],
 	valueFun: function (d) {
 		if (typeof d === 'string') {
@@ -307,7 +326,8 @@ GROUP_FUNCTION_REGISTRY.set('year_and_month', new GroupFunction({
 
 GROUP_FUNCTION_REGISTRY.set('year_and_week_iso', new GroupFunction({
 	category: 'date',
-	displayName: trans('GRID.GROUP_FUN.DATE.YEAR_AND_WEEK'),
+	name: 'year_and_week_iso',
+	transLabel: 'GRID.GROUP_FUN.DATE.YEAR_AND_WEEK',
 	allowedTypes: ['date', 'datetime'],
 	valueFun: function (d) {
 		if (typeof d === 'string') {
@@ -330,7 +350,8 @@ GROUP_FUNCTION_REGISTRY.set('year_and_week_iso', new GroupFunction({
 
 GROUP_FUNCTION_REGISTRY.set('day', new GroupFunction({
 	category: 'date',
-	displayName: trans('GRID.GROUP_FUN.DATE.FULL_DATE'),
+	name: 'day',
+	transLabel: 'GRID.GROUP_FUN.DATE.FULL_DATE',
 	allowedTypes: ['datetime'],
 	valueFun: function (d) {
 		if (typeof d === 'string') {
@@ -354,7 +375,8 @@ GROUP_FUNCTION_REGISTRY.set('day', new GroupFunction({
 
 GROUP_FUNCTION_REGISTRY.set('day_and_time_1hr', new GroupFunction({
 	category: 'datetime',
-	displayName: trans('GRID.GROUP_FUN.DATE_TIME.SLICE.1HR'),
+	name: 'day_and_time_1hr',
+	transLabel: 'GRID.GROUP_FUN.DATE_TIME.SLICE.1HR',
 	allowedTypes: ['datetime'],
 	valueFun: function (d) {
 		if (typeof d === 'string') {
@@ -378,7 +400,8 @@ GROUP_FUNCTION_REGISTRY.set('day_and_time_1hr', new GroupFunction({
 
 GROUP_FUNCTION_REGISTRY.set('day_and_time_15min', new GroupFunction({
 	category: 'datetime',
-	displayName: trans('GRID.GROUP_FUN.DATE_TIME.SLICE.15MIN'),
+	name: 'day_and_time_15min',
+	transLabel: 'GRID.GROUP_FUN.DATE_TIME.SLICE.15MIN',
 	allowedTypes: ['datetime'],
 	valueFun: function (d) {
 		if (typeof d === 'string') {
@@ -408,7 +431,8 @@ GROUP_FUNCTION_REGISTRY.set('day_and_time_15min', new GroupFunction({
 
 GROUP_FUNCTION_REGISTRY.set('time_1hr', new GroupFunction({
 	category: 'time',
-	displayName: trans('GRID.GROUP_FUN.TIME.SLICE.1HR'),
+	name: 'time_1hr',
+	transLabel: 'GRID.GROUP_FUN.TIME.SLICE.1HR',
 	allowedTypes: ['time'],
 	valueFun: function (d, fti) {
 		if (typeof d === 'string') {
@@ -432,7 +456,8 @@ GROUP_FUNCTION_REGISTRY.set('time_1hr', new GroupFunction({
 
 GROUP_FUNCTION_REGISTRY.set('time_15min', new GroupFunction({
 	category: 'time',
-	displayName: trans('GRID.GROUP_FUN.TIME.SLICE.15MIN'),
+	name: 'time_15min',
+	transLabel: 'GRID.GROUP_FUN.TIME.SLICE.15MIN',
 	allowedTypes: ['time'],
 	valueFun: function (d, fti) {
 		if (typeof d === 'string') {
