@@ -170,4 +170,9 @@ export default {
   "GRID_CONTROL.OPERATIONS.TITLE": "Operaciones",
   "GRID_TOOLBAR.GROUP.EXPAND_ALL": "Expandir todos los grupos",
   "GRID_TOOLBAR.PLAIN.TEMPLATES_EDITOR": "Editor de plantillas",
+
+  'FILTER.STRING.OPERATOR.BLANK': 'nulo',
+  'FILTER.STRING.OPERATOR.IN': 'incluido en',
+  'FILTER.STRING.OPERATOR.NOT_BLANK': 'no nulo',
+  'FILTER.STRING.OPERATOR.NOT_IN': 'no incluido en'
 };

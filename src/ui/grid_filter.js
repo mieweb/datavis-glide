@@ -19,6 +19,7 @@ import {
 	toFloat,
 	toInt,
 } from '../util/misc.js';
+import { trans } from '../trans.js';
 
 /**
  * @file
@@ -247,25 +248,25 @@ GridFilter.prototype.makeOperatorDrop = function (include) {
 	// These are all the operators that are possible.
 
 	var operators = [
-		['$contains', '∈'],
-		['$notcontains', '∉'],
-		['$eq', '='],
-		['$ne', '≠'],
-		['$gt', '>'],
-		['$gte', '≥'],
-		['$lt', '<'],
-		['$lte', '≤'],
-		['$in', 'in'],
-		['$nin', 'not in'],
-		['$exists', 'not blank'],
-		['$notexists', 'blank']
+		{value: '$contains', text: '∈'},
+		{value: '$notcontains', text: '∉'},
+		{value: '$eq', text: '='},
+		{value: '$ne', text: '≠'},
+		{value: '$gt', text: '>'},
+		{value: '$gte', text: '≥'},
+		{value: '$lt', text: '<'},
+		{value: '$lte', text: '≤'},
+		{value: '$in', text: 'in', transLabel: 'FILTER.STRING.OPERATOR.IN'},
+		{value: '$nin', text: 'not in', transLabel: 'FILTER.STRING.OPERATOR.NOT_IN'},
+		{value: '$exists', text: 'not blank', transLabel: 'FILTER.STRING.OPERATOR.NOT_BLANK'},
+		{value: '$notexists', text: 'blank', transLabel: 'FILTER.STRING.OPERATOR.BLANK'}
 	];
 
 	// Remove anything that user didn't ask for.
 
 	if (include !== undefined && _.isArray(include)) {
 		operators = _.reject(operators, function (elt) {
-			return include.indexOf(elt[0]) < 0;
+			return include.indexOf(elt.value) < 0;
 		});
 	}
 
@@ -276,9 +277,7 @@ GridFilter.prototype.makeOperatorDrop = function (include) {
 	// Add all the operators as options within the <SELECT>.
 
 	_.each(operators, function (op) {
-		var value = op[0]
-			, name = op[1];
-		operatorDrop.append(jQuery('<option>', { value: value }).text(name));
+		operatorDrop.append(jQuery('<option>', { value: op.value }).text(op.transLabel != null ? trans(op.transLabel) : op.text));
 	});
 
 	// Hook up the event to update the filter when the operator is changed.
