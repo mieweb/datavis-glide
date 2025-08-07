@@ -197,6 +197,9 @@ function checkAggregate(defn, agg, source) {
  * @property {string} name
  * Name of the aggregate function used in the dropdown menu by the grid.
  *
+ * @property {string} transLabel
+ * Translation label for the displayed name of the aggregate function.
+ *
  * @property {int} [fieldCount=0]
  * Number of fields required.  Usually zero or one.
  *
@@ -505,15 +508,23 @@ Aggregate.prototype.getFullName = function () {
 		return self.opts.name;
 	}
 	else if (self.fieldCount > 0 && _.isArray(self.opts.fields) && self.opts.fields.length > 0) {
-		return trans('AGGREGATE.HEADER_DISPLAY', self.name, (
+		return trans('AGGREGATE.HEADER_DISPLAY', self.getTransName(), (
 			_.map(self.opts.fields, function (field, fieldIdx) {
 				var fcc = getPropDef({}, self.opts, 'colConfig', fieldIdx);
 				return fcc.displayText || field;
 			}).join(', ')));
 	}
 	else {
-		return self.name;
+		return self.getTransName();
 	}
+};
+
+// #getTransName {{{2
+
+Aggregate.prototype.getTransName = function () {
+	var self = this;
+
+	return trans(self.transLabel);
 };
 
 // #getType {{{2
@@ -566,7 +577,8 @@ Aggregate.prototype.getType = function () {
 // Count {{{1
 
 var CountAggregate = makeSubclass('CountAggregate', Aggregate, null, {
-	name: trans('AGGREGATE.NAME.COUNT'),
+	name: 'count',
+	transLabel: 'AGGREGATE.NAME.COUNT',
 	fieldCount: 0,
 	type: 'number',
 	inheritFormatting: false,
@@ -593,7 +605,8 @@ var CountDistinctAggregate = makeSubclass('CountDistinctAggregate', Aggregate, f
 	self.set = {};
 	self.super['Aggregate'].ctor.apply(self, arguments);
 }, {
-	name: trans('AGGREGATE.NAME.COUNT_DISTINCT'),
+	name: 'countDistinct',
+	transLabel: 'AGGREGATE.NAME.COUNT_DISTINCT',
 	fieldCount: 1,
 	type: 'number',
 	inheritFormatting: false,
@@ -629,7 +642,8 @@ CountDistinctAggregate.prototype.calculateDone = function (acc) {
 // Values {{{1
 
 var ValuesAggregate = makeSubclass('ValuesAggregate', Aggregate, null, {
-	name: trans('AGGREGATE.NAME.VALUES'),
+	name: 'values',
+	transLabel: 'AGGREGATE.NAME.VALUES',
 	fieldCount: 1,
 	inheritFormatting: false,
 	type: 'string',
@@ -686,7 +700,8 @@ ValuesAggregate.prototype.calculateDone = function (acc) {
 // Values w/ Counts {{{1
 
 var ValuesWithCountsAggregate = makeSubclass('ValuesWithCountsAggregate', Aggregate, null, {
-	name: trans('AGGREGATE.NAME.VALUES_WITH_COUNTS'),
+	name: 'valuesWithCounts',
+	transLabel: 'AGGREGATE.NAME.VALUES_WITH_COUNTS',
 	fieldCount: 1,
 	inheritFormatting: false,
 	type: 'string',
@@ -758,7 +773,8 @@ ValuesWithCountsAggregate.prototype.calculateDone = function (acc) {
 // Distinct Values {{{1
 
 var DistinctValuesAggregate = makeSubclass('DistinctValuesAggregate', ValuesWithCountsAggregate, null, {
-	name: trans('AGGREGATE.NAME.DISTINCT_VALUES')
+	name: 'distinctValues',
+	transLabel: 'AGGREGATE.NAME.DISTINCT_VALUES',
 });
 
 // #calculateDone {{{2
@@ -790,7 +806,8 @@ DistinctValuesAggregate.prototype.calculateDone = function (acc) {
 // Sum {{{1
 
 var SumAggregate = makeSubclass('SumAggregate', Aggregate, null, {
-	name: trans('AGGREGATE.NAME.SUM'),
+	name: 'sum',
+	transLabel: 'AGGREGATE.NAME.SUM',
 	fieldCount: 1,
 	// type: 'number',
 	allowedTypes: ['number', 'currency', 'duration'],
@@ -861,7 +878,8 @@ var AverageAggregate = makeSubclass('AverageAggregate', Aggregate, function (opt
 	self.sumAgg = new SumAggregate(opts);
 	self.super['Aggregate'].ctor.apply(self, arguments);
 }, {
-	name: trans('AGGREGATE.NAME.AVERAGE'),
+	name: 'average',
+	transLabel: 'AGGREGATE.NAME.AVERAGE',
 	fieldCount: 1,
 	type: 'number',
 	allowedTypes: ['number', 'currency'],
@@ -920,7 +938,8 @@ AverageAggregate.prototype.calculate = function (data) {
 // Min {{{1
 
 var MinAggregate = makeSubclass('MinAggregate', Aggregate, null, {
-	name: trans('AGGREGATE.NAME.MIN'),
+	name: 'min',
+	transLabel: 'AGGREGATE.NAME.MIN',
 	fieldCount: 1,
 	inheritFormatting: true
 });
@@ -964,7 +983,8 @@ MinAggregate.prototype.calculateStep = function (acc, next) {
 // Max {{{1
 
 var MaxAggregate = makeSubclass('MaxAggregate', Aggregate, null, {
-	name: trans('AGGREGATE.NAME.MAX'),
+	name: 'max',
+	transLabel: 'AGGREGATE.NAME.MAX',
 	fieldCount: 1,
 	inheritFormatting: true
 });
@@ -1008,7 +1028,8 @@ MaxAggregate.prototype.calculateStep = function (acc, next) {
 // First {{{1
 
 var FirstAggregate = makeSubclass('FirstAggregate', Aggregate, null, {
-	name: trans('AGGREGATE.NAME.FIRST'),
+	name: 'first',
+	transLabel: 'AGGREGATE.NAME.FIRST',
 	fieldCount: 1,
 	inheritFormatting: true
 });
@@ -1041,7 +1062,8 @@ FirstAggregate.prototype.calculate = function (data) {
 // Last {{{1
 
 var LastAggregate = makeSubclass('LastAggregate', Aggregate, null, {
-	name: trans('AGGREGATE.NAME.LAST'),
+	name: 'last',
+	transLabel: 'AGGREGATE.NAME.LAST',
 	fieldCount: 1,
 	inheritFormatting: true
 });
@@ -1074,7 +1096,8 @@ LastAggregate.prototype.calculate = function (data) {
 // Nth {{{1
 
 var NthAggregate = makeSubclass('NthAggregate', Aggregate, null, {
-	name: trans('AGGREGATE.NAME.NTH'),
+	name: 'nth',
+	transLabel: 'AGGREGATE.NAME.NTH',
 	enabled: false,
 	fieldCount: 1,
 	inheritFormatting: true
@@ -1131,12 +1154,13 @@ NthAggregate.prototype.calculate = function (data) {
 // Sum / Sum {{{1
 
 var SumOverSumAggregate = makeSubclass('SumOverSumAggregate', Aggregate, null, {
-	name: trans('AGGREGATE.NAME.SUM_OVER_SUM'),
+	name: 'sumOverSum',
+	transLabel: 'AGGREGATE.NAME.SUM_OVER_SUM',
 	fieldCount: 2,
 	fieldInfo: [{
-		name: trans('AGGREGATE.FIELD.NUMERATOR')
+		transLabel: 'AGGREGATE.FIELD.NUMERATOR',
 	}, {
-		name: trans('AGGREGATE.FIELD.DENOMINATOR')
+		transLabel: 'AGGREGATE.FIELD.DENOMINATOR',
 	}],
 	type: 'string',
 	inheritFormatting: false,
@@ -1197,12 +1221,13 @@ SumOverSumAggregate.prototype.getFullName = function () {
 // Count / Count {{{1
 
 var CountOverCountAggregate = makeSubclass('CountOverCountAggregate', Aggregate, null, {
-	name: trans('AGGREGATE.NAME.COUNT_OVER_COUNT'),
+	name: 'countOverCount',
+	transLabel: 'AGGREGATE.NAME.COUNT_OVER_COUNT',
 	fieldCount: 2,
 	fieldInfo: [{
-		name: trans('AGGREGATE.FIELD.NUMERATOR')
+		transLabel: 'AGGREGATE.FIELD.NUMERATOR',
 	}, {
-		name: trans('AGGREGATE.FIELD.DENOMINATOR')
+		transLabel: 'AGGREGATE.FIELD.DENOMINATOR',
 	}],
 	type: 'number',
 	inheritFormatting: false,
@@ -1225,6 +1250,7 @@ AGGREGATE_REGISTRY.set('first', FirstAggregate);
 AGGREGATE_REGISTRY.set('last', LastAggregate);
 AGGREGATE_REGISTRY.set('nth', NthAggregate);
 AGGREGATE_REGISTRY.set('sumOverSum', SumOverSumAggregate);
+AGGREGATE_REGISTRY.set('countOverCount', CountOverCountAggregate);
 
 // AggregateInfo {{{1
 

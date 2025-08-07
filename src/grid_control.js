@@ -401,8 +401,8 @@ AggregateControlField.prototype.draw = function () {
 
 	for (var i = 0; i < aggDefn.prototype.fieldCount; i += 1) {
 		var li = jQuery('<li>').addClass('wcdv_aggregate_field').appendTo(fieldList);
-		if (getProp(aggDefn.prototype, 'fieldInfo', i, 'name')) {
-			var label = jQuery('<label>').text(aggDefn.prototype.fieldInfo[i].name + ':').appendTo(li);
+		if (getProp(aggDefn.prototype, 'fieldInfo', i, 'transLabel')) {
+			var label = jQuery('<label>').text(trans(aggDefn.prototype.fieldInfo[i].transLabel) + ':').appendTo(li);
 		}
 		var select = jQuery('<select>')
 			.on('change', function (evt) {
@@ -565,7 +565,7 @@ AggregateControlField.prototype._makeOptionsDialog = function (aggDefn) {
 	self.ui.optionsDialog = self.ui.optionsDiv.dialog({
 		autoOpen: false,
 		modal: true,
-		title: trans('GRID_CONTROL.AGGREGATE.OPTIONS_DIALOG.TITLE', aggDefn.prototype.name),
+		title: trans('GRID_CONTROL.AGGREGATE.OPTIONS_DIALOG.TITLE', aggDefn.prototype.getTransName()),
 		minHeight: 0,
 		classes: {
 			"ui-dialog": "ui-corner-all wcdv_dialog",
@@ -1607,7 +1607,7 @@ AggregateControl.prototype.draw = function (parent) {
 		.appendTo(self.ui.dropdown);
 
 	AGGREGATE_REGISTRY.each(function (aggFunDefn, aggFunShortName) {
-		jQuery('<option>', { 'value': aggFunShortName }).text(aggFunDefn.prototype.name).appendTo(self.ui.dropdown);
+		jQuery('<option>', { 'value': aggFunShortName }).text(aggFunDefn.prototype.getTransName()).appendTo(self.ui.dropdown);
 	});
 	/*
 	self.ui.fun = jQuery('<div>').css({'margin-top': '7px'}).appendTo(self.ui.root);
@@ -1674,7 +1674,7 @@ AggregateControl.prototype.draw = function (parent) {
 			console.debug('[DataVis // %s // Aggregate Control] View set aggregate to: %s', self.grid.toString(), JSON.stringify(spec.all));
 
 			_.each(spec.all, function (agg) {
-				self.addField(agg.fun, AGGREGATE_REGISTRY.get(agg.fun).prototype.name, { updateView: false }, {
+				self.addField(agg.fun, AGGREGATE_REGISTRY.get(agg.fun).prototype.getTransName(), { updateView: false }, {
 					fields: agg.fields,
 					isHidden: agg.isHidden
 				});
