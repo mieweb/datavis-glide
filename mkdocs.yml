@@ -1,6 +1,7 @@
 site_name: DataVis
 repo_url: https://repo.mieweb.com/projects/DV/repos/wcdatavis/
 site_author: Taylor Venable <tvenable@mieweb.com>
+site_url: https://zeus.med-web.com/~tvenable/datavis/manual/
 theme:
   name: material
   feature:
@@ -38,6 +39,7 @@ nav:
       - Active Row: grid/active-row.md
   - Graph:
       - Overview: graph/index.md
+      - Google Charts: graph/google.md
       - Gantt Charts: graph/gantt.md
   - Types: types.md
   - Preferences: prefs.md
@@ -71,3 +73,5 @@ markdown_extensions:
         - name: mermaid
           class: mermaid
           format: !!python/name:pymdownx.superfences.fence_div_format
+plugins:
+  - site-urls
