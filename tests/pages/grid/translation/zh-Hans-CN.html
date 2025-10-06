@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8"/>
+		<script src="../../jquery.min.js"></script>
+		<script src="../../jquery-ui.min.js"></script>
+		<script src="../../jquery.blockUI.js"></script>
+		<script src="../../jquery.contextMenu.min.js"></script>
+		<script src="../../jquery.sumoselect.min.js"></script>
+		<script src="../../flatpickr.min.js"></script>
+		<script>window.DATAVIS_LANG = 'zh-Hans-CN'</script>
+		<script src="../../wcdatavis.js"></script>
+		<link rel="stylesheet" href="../../font-awesome.css"/>
+		<link rel="stylesheet" href="../../jquery-ui.min.css"/>
+		<link rel="stylesheet" href="../../jquery.contextMenu.min.css"/>
+		<link rel="stylesheet" href="../../sumoselect.min.css"/>
+		<link rel="stylesheet" href="../../flatpickr.min.css"/>
+		<link rel="stylesheet" href="../../base.css"/>
+		<link rel="stylesheet" href="../../wcdatavis.css"/>
+		<script>
+$(document).ready(function () {
+	MIE.DEBUGGING = true;
+
+	var source = new MIE.WC_DataVis.Source({
+		type: 'http',
+		url: '../../random100.json'
+	});
+	var computedView = new MIE.WC_DataVis.ComputedView(source);
+	new MIE.WC_DataVis.Grid({
+		id: 'grid',
+		computedView: computedView,
+		table: {
+			features: {
+				limit: false,
+				rowSelect: true,
+			}
+		}
+	}, {
+		title: 'Test - Grid - Translation',
+		showControls: true
+	});
+});
+		</script>
+	</head>
+	<body>
+		<div id="grid"></div>
+	</body>
+</html>
