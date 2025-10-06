@@ -3,7 +3,14 @@ import OrdMap from './util/ordmap.js';
 
 import trans_enUs from './lang/en-US.js';
 import trans_esMx from './lang/es-MX.js';
+import trans_frFr from './lang/fr-FR.js';
+import trans_idId from './lang/id-ID.js';
+import trans_nlNl from './lang/nl-NL.js';
 import trans_ptBr from './lang/pt-BR.js';
+import trans_ruRu from './lang/ru-RU.js';
+import trans_thTh from './lang/th-TH.js';
+import trans_viVn from './lang/vi-VN.js';
+import trans_zhHansCn from './lang/zh-Hans-CN.js';
 
 var TRANSLATION_REGISTRY = new OrdMap();
 
@@ -13,8 +20,30 @@ TRANSLATION_REGISTRY.set('EN-US', trans_enUs);
 TRANSLATION_REGISTRY.set('ES', trans_esMx);
 TRANSLATION_REGISTRY.set('ES-MX', trans_esMx);
 
+TRANSLATION_REGISTRY.set('FR', trans_frFr);
+TRANSLATION_REGISTRY.set('FR-FR', trans_frFr);
+
+TRANSLATION_REGISTRY.set('ID', trans_idId);
+TRANSLATION_REGISTRY.set('ID-ID', trans_idId);
+
+TRANSLATION_REGISTRY.set('NL', trans_nlNl);
+TRANSLATION_REGISTRY.set('NL-NL', trans_nlNl);
+
 TRANSLATION_REGISTRY.set('PT', trans_ptBr);
 TRANSLATION_REGISTRY.set('PT-BR', trans_ptBr);
+
+TRANSLATION_REGISTRY.set('RU', trans_ruRu);
+TRANSLATION_REGISTRY.set('RU-RU', trans_ruRu);
+
+TRANSLATION_REGISTRY.set('TH', trans_thTh);
+TRANSLATION_REGISTRY.set('TH-TH', trans_thTh);
+
+TRANSLATION_REGISTRY.set('VI', trans_viVn);
+TRANSLATION_REGISTRY.set('VI-VN', trans_viVn);
+
+TRANSLATION_REGISTRY.set('ZH', trans_zhHansCn);
+TRANSLATION_REGISTRY.set('ZH-HANS', trans_zhHansCn);
+TRANSLATION_REGISTRY.set('ZH-HANS-CN', trans_zhHansCn);
 
 var trans = (function () {
 	var alreadyWarnedAboutLang = {};
