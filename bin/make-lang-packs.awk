@@ -1,19 +1,37 @@
-#!/usr/bin/env gawk
+#!/usr/bin/env gawk -f
 
-# This program uses information about DataVis' supported translation items,
-# plus a dump of translations in various languages, to produce language packs
-# for all languages specified.
+# SUMMARY: A program to produce DataVis language packs from TSV files.
 #
-#   1. Convert all translations in lang/en-US.js into a TSV file, call this file en.tsv.
-#   2. Fetch all translations using a system report, download in TSV format, call this file trans.tsv.
+# USAGE: gawk -f ./bin/make-lang-packs.awk en-US.tsv trans/[LANG].tsv ...
+#   -> produces src/lang/[LANG].js ...
 #
-#   > select lang_code, context, value, trans
-#   > from common_label_translate
-#   > into outfile 'trans.tsv'
-#   >   columns terminated by '\t'
-#   >   lines terminated by '\n'
+# DESCRIPTION:
 #
-#   $ gawk ./bin/make-lang-packs.awk en.tsv trans.tsv
+# en-US.tsv is a TSV file containing the following columns:
+#
+#   1. Label used by DataVis' translation system.
+#   2. The English version of the text.
+#   3. Notes for translators.
+#
+# [LANG].tsv is a TSV file, translated for a specific language:
+#
+#   1. Label used by DataVis' translation system.
+#   2. The translated version of the text.
+#
+# Blank lines and lines starting with "//" are ignored.
+#
+# Translation files are currently being produced by providing Ozwell with the following prompt:
+#
+#   Translate the following TSV content into [LANG]. The file has the following tab-separated
+#   columns: (1) label - do not translate this column, (2) english text - translate this,
+#   (3) notes - use this to pick an appropriate translation, if present; do not include this in the
+#   output. The english text may include placeholders such as "%s" and "%d" which must also occur
+#   in the corresponding place in the translated text. For output, generate a code block containing
+#   TSV data with these columns: (1) label - the same as from the input, (2) the translated text.
+#   Keep any blank lines and lines starting with "//" exactly as they are in the input. Here's the
+#   file to translate:
+#
+#   [INCLUDE en-US.tsv HERE]
 
 BEGIN {
     FS = "\t"
@@ -25,7 +43,7 @@ BEGINFILE {
     lang = l[length(l)-1]
 }
 
-NR < 2 { next }
+FNR < 2 { next }
 /^[[:space:]]*\/\// { next }
 /^[[:space:]]*$/ { next }
 
@@ -37,10 +55,15 @@ lang == "en-US" {
     trans["en-US"][$1] = $2
 }
 
-# Translation file format: language | label | english | translated
+# Translation file format: label | translated
 
-lang != "en-US" && $2 in english {
-    trans[$1][$2] = $4
+lang != "en-US" {
+    if ($1 in english) {
+        trans[lang][$1] = $2
+    }
+    else {
+        notInEnglish[lang][$1] = $2
+    }
 }
 
 END {
@@ -50,6 +73,7 @@ END {
         print("export default {") > jsFile
         for (label in english) {
             if (label in trans[lang]) {
+                gsub(/'/, "\\'", trans[lang][label])
                 print("  '" label "': '" trans[lang][label] "',") > jsFile
             }
             else {
@@ -63,6 +87,12 @@ END {
             print("Label\tEnglish\tNotes") > missingFile
             for (label in missing[lang]) {
                 print(label "\t" english[label] "\t" notes[label]) > missingFile
+            }
+        }
+        if (length(notInEnglish[lang]) > 0) {
+            for (label in notInEnglish[lang]) {
+                print("  - Extra translation for: " label)
+                print("    > " notInEnglish[lang][label])
             }
         }
     }
