@@ -71,7 +71,7 @@ teardown:	npm-teardown python-teardown jsdoc-teardown
 
 # Building DataVis {{{1
 
-dist/wcdatavis.js:	rollup.config.js datavis.js $(SOURCE) $(LANG_PACKS)
+dist/wcdatavis.js:	rollup.config.js datavis.js global-jquery.js ie-fixes.js $(SOURCE) $(LANG_PACKS)
 	npm run rollup
 
 dist/wcdatavis.min.js:	dist/wcdatavis.js

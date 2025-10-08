@@ -1,3 +1,6 @@
+import './ie-fixes.js';
+import 'core-js/es/number/is-integer';
+
 import jQuery from 'jquery';
 
 // Don't try to inline this code, it won't work. Imports are lifted,
