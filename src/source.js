@@ -6,16 +6,13 @@ import Papa from 'papaparse';
 import jQuery from 'jquery';
 
 import {
-	debug,
 	deepCopy,
 	deepDefaults,
 	getComparisonFn,
 	getParamsFromUrl,
 	getProp,
-	log,
 	logAsync,
 	makeSubclass,
-	mixinDebugging,
 	mixinEventHandling,
 	mixinLogging,
 	mixinNameSetting,
@@ -56,6 +53,8 @@ var LocalSource = makeSubclass('LocalSource', Object, function (spec) {
 
 	self._copyData();
 });
+
+mixinLogging(LocalSource);
 
 // #_copyData {{{2
 
@@ -131,6 +130,8 @@ var HttpSource = makeSubclass('HttpSource', Object, function (spec, userTypeInfo
 	self.cache = null;
 	self.userTypeInfo = userTypeInfo;
 });
+
+mixinLogging(HttpSource);
 
 // #parseData {{{2
 
@@ -296,7 +297,7 @@ HttpSource.prototype.getData = function (params, cont) {
 		dataType: self.dataType,
 		error: function (jqXHR, textStatus, errorThrown) {
 			al.finish();
-			log.error('HTTP Data Source / AJAX Error / ' + errorThrown);
+			self.logError(self.makeLogTag() + ' HTTP Data Source / AJAX Error / ' + errorThrown);
 			return cont(false);
 		},
 		success: function (data, textStatus, jqXHR) {
@@ -359,6 +360,8 @@ var FileSource = makeSubclass('FileSource', Object, function (spec, userTypeInfo
 	};
 });
 
+mixinLogging(FileSource);
+
 // #setToolbar {{{2
 
 FileSource.prototype.setToolbar = function (toolbar) {
@@ -370,7 +373,7 @@ FileSource.prototype.setToolbar = function (toolbar) {
 				header: true,
 				skipEmptyLines: true,
 				complete: function (results, file) {
-					console.log(results);
+					self.logInfo(results);
 
 					self.cache.data = results.data;
 					self.cache.typeInfo = new OrdMap();
@@ -401,7 +404,7 @@ FileSource.prototype.setFiles = function (files) {
 		header: true,
 		skipEmptyLines: true,
 		complete: function (results, file) {
-			console.log(results);
+			self.logInfo(results);
 
 			self.cache.data = results.data;
 			self.cache.typeInfo = new OrdMap();
@@ -446,6 +449,8 @@ var TableSource = makeSubclass('TableSource', Object, function (spec, userTypeIn
 
 	self.cache = {};
 });
+
+mixinLogging(TableSource);
 
 // #getData {{{2
 
@@ -754,7 +759,6 @@ mixinEventHandling(Source, [
 	, 'getTypeInfo'
 ]);
 
-mixinDebugging(Source);
 mixinLogging(Source);
 mixinNameSetting(Source);
 
@@ -995,7 +999,7 @@ Source.prototype.getTypeInfo = function (cont) {
 		if (self.userTypeInfo != null) {
 			_.each(self.userTypeInfo, function (userFti, field) {
 				if (!typeInfo.isSet(field)) {
-					log.warn('Overriding type information on field "' + field + '" which is not present in the source.');
+					self.logWarn(self.makeLogTag() + ' Overriding type information on field "' + field + '" which is not present in the source.');
 					typeInfo.set(field, {});
 				}
 
@@ -1016,12 +1020,12 @@ Source.prototype.getTypeInfo = function (cont) {
 
 				_.extend(fti, userFti);
 
-				self.debug('GET TYPE INFO', 'Overriding origin type information { field = "' + field + '", typeInfo = %O }', userFti);
+				self.logDebug(self.makeLogTag('getTypeInfo') + ' Overriding origin type information { field = "' + field + '", typeInfo = %O }', userFti);
 			});
 		}
 
 		self.cache.typeInfo = typeInfo;
-		self.debug('GET TYPE INFO', 'Type Info = %O', deepCopy(self.cache.typeInfo.asMap()));
+		self.logDebug(self.makeLogTag('getTypeInfo') + ' Type Info = %O', deepCopy(self.cache.typeInfo.asMap()));
 
 		self.fire(Source.events.getTypeInfo, null, self.cache.typeInfo, self);
 		return cont(true, self.cache.typeInfo);
@@ -1061,14 +1065,14 @@ Source.prototype.postProcess = function (data, cont) {
 		throw new SourceError('Data Source / Post Process / Data is not an array');
 	}
 
-	self.debug('POST-PROCESSING', 'Beginning post-processing');
+	self.logDebug(self.makeLogTag('postProcess') + ' Beginning post-processing');
 
 	self.getTypeInfo(function (ok, typeInfo) {
 		if (!ok) {
 			return cont(data);
 		}
 
-		self.debug('POST-PROCESSING', 'Received type info from source origin: %O', typeInfo.asMap());
+		self.logDebug(self.makeLogTag('postProcess') + ' Received type info from source origin: %O', typeInfo.asMap());
 
 		typeInfo.each(function (fti) {
 			if (fti.type == null) {
@@ -1158,7 +1162,7 @@ Source.prototype.postProcess = function (data, cont) {
 			var newMin = null;
 			var newMax = null;
 
-			self.debug('POST-PROCESSING', 'Checking discriminator ranges for "%s" field (type = %s)', self.discriminatorField, dfti.type);
+			self.logDebug(self.makeLogTag('postProcess') + ' Checking discriminator ranges for "%s" field (type = %s)', self.discriminatorField, dfti.type);
 
 			_.each(data, function (row, rowNum) {
 				var val = row[self.discriminatorField].value;
@@ -1191,7 +1195,7 @@ Source.prototype.postProcess = function (data, cont) {
 			data = _.without(data, null);
 		}
 
-		self.debug('POST-PROCESSING', 'Post-processing finished');
+		self.logDebug(self.makeLogTag('postProcess') + ' Post-processing finished');
 
 		return cont(data);
 	});
@@ -1236,7 +1240,7 @@ Source.prototype.guessTypes = function (data, typeInfo) {
 			return;
 		}
 
-		self.debug('CONVERSION // TYPE GUESSING', 'Guessing type for field "%s"', fti.field);
+		self.logDebug(self.makeLogTag('guessTypes') + ' Guessing type for field "%s"', fti.field);
 
 		var guess = null;
 
@@ -1248,13 +1252,13 @@ Source.prototype.guessTypes = function (data, typeInfo) {
 				guess = newGuess;
 			}
 			else if (newGuess !== guess) {
-				self.debug('CONVERSION // TYPE GUESSING', 'For field "%s", previous guess "%s" disagrees with current guess "%s" (rowNum = %d, value = %O)', f, guess, newGuess, i, val);
+				self.logDebug(self.makeLogTag('guessTypes') + ' For field "%s", previous guess "%s" disagrees with current guess "%s" (rowNum = %d, value = %O)', f, guess, newGuess, i, val);
 				guess = 'string';
 			}
 		}
 
 		if (guess != null && guess !== 'string') {
-			self.debug('CONVERSION // TYPE GUESSING', 'For field "%s", successfully guessed new type "%s"', f, guess);
+			self.logDebug(self.makeLogTag('guessTypes') + ' For field "%s", successfully guessed new type "%s"', f, guess);
 			fti.type = guess;
 		}
 	});
@@ -1281,7 +1285,7 @@ Source.prototype.setConversionTypeInfo = function (data, typeInfo) {
 				}
 			}
 			else if (['primitive', 'numeral', 'bignumber'].indexOf(fti.internalType) < 0) {
-				log.error('Invalid internalType "' + fti.internalType + '" requested for field "' + fti.field + '" - falling back to "primitive" instead');
+				self.logError(self.makeLogTag() + ' Invalid internalType "' + fti.internalType + '" requested for field "' + fti.field + '" - falling back to "primitive" instead');
 				fti.internalType = 'primitive';
 			}
 		}
@@ -1301,7 +1305,7 @@ Source.prototype.setConversionTypeInfo = function (data, typeInfo) {
 		}
 
 		if (fti.deferDecoding) {
-			self.debug('CONVERSION', 'Deferring conversion until <%s> { field = "%s", type = "%s", format = "%s" }',
+			self.logDebug(self.makeLogTag('convert') + ' Deferring conversion until <%s> { field = "%s", type = "%s", format = "%s" }',
 				fti.needsDecoding ? 'SORT' : 'DISPLAY', f, fti.type, fti.format);
 		}
 	});
@@ -1341,7 +1345,7 @@ Source.prototype.refresh = function () {
 		return;
 	}
 
-	self.debug(null, 'Refreshing...');
+	self.logDebug(self.makeLogTag() + ' Refreshing...');
 
 	self.locks.refresh.lock();
 
@@ -1386,11 +1390,11 @@ Source.prototype.createParams = function () {
 	}
 
 	_.each(self.params, function (p) {
-		self.debug('CREATE PARAMS', 'Parameter =', p);
+		self.logDebug(self.makeLogTag('createParams') + ' Parameter =', p);
 		p.toParams(obj);
 	});
 
-	self.debug('CREATE PARAMS', 'Final Parameters =', obj);
+	self.logDebug(self.makeLogTag('createParams') + ' Final Parameters =', obj);
 
 	// The JSON clause parameters will be objects that need to be serialized first, so they can be
 	// sent to the server and unpacked there.

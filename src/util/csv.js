@@ -6,7 +6,6 @@ import jQuery from 'jquery';
 
 import { trans } from '../trans.js';
 import {
-	debug,
 	deepCopy,
 	determineColumns,
 	fontAwesome,
@@ -17,7 +16,6 @@ import {
 	getPropDef,
 	isElement,
 	isVisible,
-	log,
 	makeOperationButton,
 	makeSubclass,
 	mergeSort2,

@@ -3,7 +3,6 @@ import _ from 'underscore';
 import jQuery from 'jquery';
 
 import {
-	debug,
 	deepCopy,
 	deepDefaults,
 	determineColumns,
@@ -13,6 +12,7 @@ import {
 	getPropDef,
 	makeSubclass,
 	makeToggleCheckbox,
+	mixinLogging,
 	presentDownload,
 	setProp,
 	toInt,
@@ -234,6 +234,8 @@ var Graph = makeSubclass('Graph', Object, function (id, view, devConfig, opts) {
 
 	setProp(self, window, 'MIE', 'WC_DataVis', 'graphs', self.id);
 });
+
+mixinLogging(Graph);
 
 // #toString {{{2
 
@@ -461,12 +463,12 @@ Graph.prototype._setGraphTypeOptions = function () {
 	var self = this;
 
 	if (self.ui.graphTypeDropdown == null) {
-		console.error('[DataVis // Graph // Set Graph Type Options] Dropdown UI element does not exist');
+		self.logError(self.makeLogTag('set graph type optoins') + ' Dropdown UI element does not exist');
 		return;
 	}
 
 	if (self.renderer == null) {
-		console.error('[DataVis // Graph // Set Graph Type Options] Renderer does not exist');
+		self.logError(self.makeLogTag('set graph type optoins') + ' Renderer does not exist');
 		return;
 	}
 
@@ -714,7 +716,7 @@ Graph.prototype.drawInteractive = function () {
 		self.prefs.save();
 	}
 
-	console.debug('[DataVis // Graph] Drawing graph based on interactive config [userConfig = %O]', self.userConfig);
+	self.logDebug(self.makeLogTag() + ' Drawing graph based on interactive config [userConfig = %O]', self.userConfig);
 
 	self.lastDrawnFrom = 'interactive';
 	self.renderer.draw(self.devConfig, self.userConfig);

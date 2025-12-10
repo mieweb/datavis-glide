@@ -147,7 +147,7 @@ MirageSource.prototype.save = function (data, typeInfo, ok, fail) {
 		throw new Error('Cannot store mirage data for plain data.');
 	}
 
-	self.logDebug('SAVE', 'Processing view data to store in backend');
+	self.logDebug(self.makeLogTag('save') + ' Processing view data to store in backend');
 
 	var aggRes = [];
 
@@ -224,7 +224,7 @@ MirageSource.prototype.save = function (data, typeInfo, ok, fail) {
 		aggregateSpec: self.viewConfig.aggregateSpec,
 	};
 
-	self.logDebug('SAVE', 'Sending processed data to backend: {metadata=%O, aggRes=%O}', metadata, aggRes);
+	self.logDebug(self.makeLogTag('save') + ' Sending processed data to backend: {metadata=%O, aggRes=%O}', metadata, aggRes);
 
 	self.backend.save(metadata, aggRes, ok, fail);
 };
@@ -545,7 +545,7 @@ MirageBackend_IndexedDB.prototype.open = function (ok, fail) {
 	var request = window.indexedDB.open(self.dbName, self.DB_CURRENT_VERSION);
 
 	request.onupgradeneeded = function (evt) {
-		self.logInfo('OPEN', 'Upgrading database from version ' + evt.target.version + ' to ' + self.DB_CURRENT_VERSION + '...');
+		self.logInfo(self.makeLogTag('open') + ' Upgrading database from version ' + evt.target.version + ' to ' + self.DB_CURRENT_VERSION + '...');
 		self.db = evt.target.result;
 
 		// metadata
@@ -622,7 +622,7 @@ MirageBackend_IndexedDB.prototype.save = function (metadata, aggResult, ok, fail
 		var txn = self.db.transaction(['metadata', 'aggResult'], 'readwrite');
 
 		txn.oncomplete = function (evt) {
-			self.logInfo('SAVE', 'Successfully stored all mirage data.');
+			self.logInfo(self.makeLogTag('save') + ' Successfully stored all mirage data.');
 			return ok();
 		};
 
@@ -642,18 +642,18 @@ MirageBackend_IndexedDB.prototype.save = function (metadata, aggResult, ok, fail
 				var req = arStore.add(ar);
 
 				req.onerror = function (evt) {
-					self.logError('SAVE', 'Failed to add aggregate results: %O', ar);
+					self.logError(self.makeLogTag('save') + ' Failed to add aggregate results: %O', ar);
 					return fail(evt.target.error.message);
 				};
 			});
 		};
 
 		req.onerror = function (evt) {
-			self.logError('SAVE', 'Failed to add metadata: %O', metadata);
+			self.logError(self.makeLogTag('save') + ' Failed to add metadata: %O', metadata);
 			return fail(evt.target.error.message);
 		};
 	}, function (evt) {
-		self.logError('SAVE', 'Failed to open database.');
+		self.logError(self.makeLogTag('save') + ' Failed to open database.');
 		return fail(evt.target.error.message);
 	});
 };
@@ -667,7 +667,7 @@ MirageBackend_IndexedDB.prototype.load = function (prefsName, perspectiveName, o
 		var txn = self.db.transaction(['metadata', 'aggResult'], 'readonly');
 
 		txn.oncomplete = function (evt) {
-			self.logInfo('SAVE', 'Successfully loaded all mirage data.');
+			self.logInfo(self.makeLogTag('save') + ' Successfully loaded all mirage data.');
 		};
 
 		txn.onerror = function (evt) {
@@ -710,7 +710,7 @@ MirageBackend_IndexedDB.prototype.load = function (prefsName, perspectiveName, o
 			// Error getting agg result data.
 
 			req.onerror = function (evt) {
-				self.logError('SAVE', 'Failed to retrieve aggregate results.');
+				self.logError(self.makeLogTag('save') + ' Failed to retrieve aggregate results.');
 				return fail(evt.target.error.message);
 			};
 		};
@@ -718,11 +718,11 @@ MirageBackend_IndexedDB.prototype.load = function (prefsName, perspectiveName, o
 		// Error getting metadata row.
 
 		req.onerror = function (evt) {
-			self.logError('SAVE', 'Failed to retrieve metadata.');
+			self.logError(self.makeLogTag('save') + ' Failed to retrieve metadata.');
 			return fail(evt.target.error.message);
 		};
 	}, function (evt) {
-		self.logError('SAVE', 'Failed to open database.');
+		self.logError(self.makeLogTag('save') + ' Failed to open database.');
 		return fail(evt.target.error.message);
 	});
 };

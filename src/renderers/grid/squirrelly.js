@@ -3,7 +3,6 @@ import jQuery from 'jquery';
 import * as Sqrl from 'squirrelly/dist/browser/squirrelly.min.js';
 
 import {
-	debug,
 	deepCopy,
 	format,
 	makeSubclass,

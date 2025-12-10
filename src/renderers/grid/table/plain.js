@@ -8,7 +8,6 @@ import { trans } from '../../../trans.js';
 import {
 	addFocusHandler,
 	removeFocusHandler,
-	debug,
 	deepCopy,
 	determineColumns,
 	fontAwesome,
@@ -20,11 +19,11 @@ import {
 	isElement,
 	isElementInViewport,
 	isVisible,
-	log,
 	makeOperationButton,
 	makeSubclass,
 	mergeSort2,
 	mixinEventHandling,
+	mixinLogging,
 	objFromArray,
 	onVisibilityChange,
 	setPropDef,
@@ -78,10 +77,12 @@ var GridTablePlain = makeSubclass('GridTablePlain', GridTable, function (grid, d
 
 	self._focusEventId = gensym('grid-plain-');
 
-	console.debug('DataVis // %s // Constructing grid table; features = %O', self.toString(), features);
+	self.logDebug(self.makeLogTag() + ' DataVis // %s // Constructing grid table; features = %O', self.toString(), features);
 
 	self.addFilterHandler();
 });
+
+mixinLogging(GridTablePlain);
 
 // #canRender {{{2
 
@@ -457,7 +458,7 @@ GridTablePlain.prototype.drawHeader = function (columns, data, typeInfo, opts) {
 
 							var trHeight = tr.innerHeight();
 
-							console.debug('[DataVis // %s // Add Filter] Adjusting original table header height to ' + trHeight + 'px to match floating header height', self.toString());
+							self.logDebug(self.makeLogTag() + ' Adjusting original table header height to ' + trHeight + 'px to match floating header height', self.toString());
 							filterTr.innerHeight(trHeight);
 						}
 					};
@@ -525,7 +526,7 @@ GridTablePlain.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 	var usingTableTool = self.features.floatingHeader && getProp(self.defn, 'table', 'floatingHeader', 'method') === 'tabletool';
 
 	if (self.features.limit && limitConfig && data.data.length > limitConfig.threshold) {
-		console.debug('[DataVis // %s // Draw] Limiting output to first ' + limitConfig.threshold + ' rows', self.toString());
+		self.logDebug(self.makeLogTag() + ' Limiting output to first ' + limitConfig.threshold + ' rows', self.toString());
 	}
 
 	if (self.opts.generateCsv) {
@@ -706,7 +707,7 @@ GridTablePlain.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 
 		self.moreVisibleHandler = onVisibilityChange(self.scrollEventElement, td, function(isVisible) {
 			if (isVisible && getProp(self.defn, 'table', 'limit', 'autoShowMore')) {
-				console.debug('[DataVis // %s // More] "Show More Rows" button scrolled into view', self.toString());
+				self.logDebug(self.makeLogTag() + ' "Show More Rows" button scrolled into view', self.toString());
 				showMore();
 			}
 		});
@@ -734,7 +735,7 @@ GridTablePlain.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 			howMany = data.data.length;
 		}
 
-		console.debug('[DataVis // %s // Draw] Rendering rows '
+		self.logDebug(self.makeLogTag() + ' Rendering rows '
 			+ startIndex
 			+ ' - '
 			+ Math.min(useLimit && startIndex === 0 ? limitConfig.threshold - 1 : Number.POSITIVE_INFINITY
@@ -929,11 +930,11 @@ GridTablePlain.prototype.drawFooter = function (columns, data, typeInfo) {
 					footerConfig.fields = [field];
 				}
 
-				console.debug('[DataVis // %s // Footer(%s)] Creating footer using config: %O', self.toString(), field, footerConfig);
+				self.logDebug(self.makeLogTag() + ' Creating footer using config: %O', self.toString(), field, footerConfig);
 
 				var aggInfo = new AggregateInfo('all', footerConfig, 0, self.colConfig, typeInfo, function (tag, fti) {
 					if (fti.needsDecoding) {
-						console.debug('[DataVis // %s // Footer(%s) // %s] Converting data: { field = "%s", type = "%s" }',
+						self.logDebug(self.makeLogTag() + ' Converting data: { field = "%s", type = "%s" }',
 							self.toString(), field, tag, fti.field, fti.type);
 
 						Source.decodeAll(data.dataByRowId, fti.field, typeInfo);
@@ -962,7 +963,7 @@ GridTablePlain.prototype.drawFooter = function (columns, data, typeInfo) {
 					}
 
 					if (aggInfo.debug) {
-						console.debug('[DataVis // %s // Footer(%s)] Aggregate result: %s',
+						self.logDebug(self.makeLogTag() + ' Aggregate result: %s',
 							self.toString(), field, JSON.stringify(aggResult));
 					}
 
@@ -1094,17 +1095,17 @@ GridTablePlain.prototype.addWorkHandler = function () {
 	var self = this;
 
 	self.view.on(ComputedView.events.workEnd, function (info, ops) {
-		console.debug('[DataVis // %s // Handler(ComputedView.workEnd)] ComputedView has finished doing work',
+		self.logDebug(self.makeLogTag() + ' ComputedView has finished doing work',
 			self.toString());
 
 		if (ops.group || ops.pivot) {
-			console.debug('[DataVis // %s // Handler(ComputedView.workEnd)] Unable to render this data: %O',
+			self.logDebug(self.makeLogTag() + ' Unable to render this data: %O',
 				self.toString(), ops);
 			self.fire('unableToRender', null, ops);
 			return;
 		}
 
-		console.debug('[DataVis // %s // Handler(ComputedView.workEnd)] Redrawing because the view has done work',
+		self.logDebug(self.makeLogTag() + ' Redrawing because the view has done work',
 			self.toString());
 		self.draw(self.root);
 	}, { who: self });
@@ -1119,7 +1120,7 @@ GridTablePlain.prototype.addWorkHandler = function () {
 //	// grid, and they are taken care of by the 'sort' and 'filter' events on a row-by-row basis.
 //
 //	self.view.on(ComputedView.events.workEnd, function (info, ops) {
-//		console.debug('DataVis // ' + 'GRID TABLE // HANDLER (ComputedView.workEnd)', 'ComputedView has finished doing work');
+//		self.logDebug(self.makeLogTag('handler(workEnd)') + ' ComputedView has finished doing work');
 //
 //		if (ops.group || ops.pivot) {
 //
@@ -1132,7 +1133,7 @@ GridTablePlain.prototype.addWorkHandler = function () {
 //		}
 //
 //		if (self.needsRedraw) {
-//			console.debug('DataVis // ' + 'GRID TABLE // HANDLER (ComputedView.workEnd)', 'Redrawing because the view has done work');
+//			self.logDebug(self.makeLogTag('handler(workEnd)') + ' Redrawing because the view has done work');
 //
 //			self.needsRedraw = false;
 //
@@ -1178,7 +1179,7 @@ GridTablePlain.prototype.addDataToCsv = function (data) {
 	var self = this;
 	var columns = determineColumns(self.colConfig, data, self.typeInfo);
 
-	console.debug('[DataVis // %s // Generate CSV] Started generating CSV file', self.toString());
+	self.logDebug(self.makeLogTag() + ' Started generating CSV file', self.toString());
 	self.fire('generateCsvProgress', null, 0);
 
 	self.csv.start();
@@ -1218,7 +1219,7 @@ GridTablePlain.prototype.addDataToCsv = function (data) {
 
 		if (i === data.data.length) {
 			self.csv.finish(function () {
-				console.debug('[DataVis // %s // Generate CSV] Finished generating CSV file', self.toString());
+				self.logDebug(self.makeLogTag() + ' Finished generating CSV file', self.toString());
 				self.csvLock.unlock();
 				self.fire('generateCsvProgress', null, 100);
 				self.fire('csvReady');

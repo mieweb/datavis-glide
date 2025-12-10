@@ -3,13 +3,12 @@ import jQuery from 'jquery';
 import Handlebars from 'handlebars';
 
 import {
-	debug,
 	deepCopy,
 	getPropDef,
 	I,
-	log,
 	makeSubclass,
 	mixinEventHandling,
+	mixinLogging,
 } from './util/misc.js';
 
 import OrdMap from './util/ordmap.js';
@@ -61,10 +60,10 @@ var GridRenderer = (function () {
 		self.drawLock = new Lock('GridRenderer/draw');
 
 		self.grid.on('colConfigUpdate', function (newColConfig) {
-			console.debug('[DataVis // GridRenderer // Handler(colConfigUpdate)] Received new colConfig: %O', newColConfig);
+			self.logDebug(self.makeLogTag() + ' Received new colConfig: %O', newColConfig);
 			self.colConfig = newColConfig;
 			if (self.hasRendered) {
-				console.debug('[DataVis // GridRenderer // Handler(colConfigUpdate)] Redrawing with new colConfig');
+				self.logDebug(self.makeLogTag() + ' Redrawing with new colConfig');
 				self.draw(self.root, self.drawOpts);
 			}
 		}, { who: self });
@@ -101,7 +100,7 @@ GridRenderer.prototype.draw = function (root, opts, cont1) {
 	var self = this;
 	var args = Array.prototype.slice.call(arguments);
 
-	console.debug('[DataVis // GridRenderer // Draw] Beginning draw operation; opts = %O', opts);
+	self.logDebug(self.makeLogTag() + ' Beginning draw operation; opts = %O', opts);
 
 	opts = opts || {};
 
@@ -123,7 +122,7 @@ GridRenderer.prototype.draw = function (root, opts, cont1) {
 			return cont1(false);
 		}
 
-		console.debug('[DataVis // GridRenderer // Draw] Data = %O', data);
+		self.logDebug(self.makeLogTag() + ' Data = %O', data);
 
 		return self.view.getTypeInfo(function (ok, typeInfo) {
 			if (!ok) {
@@ -131,17 +130,17 @@ GridRenderer.prototype.draw = function (root, opts, cont1) {
 			}
 
 			if (data == null || typeInfo == null) {
-				log.error('Provided data or typeInfo is null');
+				self.logError(self.makeLogTag() + ' Provided data or typeInfo is null');
 				return cont1(false);
 			}
 
-			console.debug('[DataVis // GridRenderer // Draw] TypeInfo = %O', typeInfo.asMap());
+			self.logDebug(self.makeLogTag() + ' TypeInfo = %O', typeInfo.asMap());
 
 			if ((data.isPlain && !self.canRender('plain'))
 					|| (data.isGroup && !self.canRender('group'))
 					|| (data.isPivot && !self.canRender('pivot'))) {
 
-				console.debug('[DataVis // GridRenderer // Draw] Unable to render data using current grid table: { isPlain = %s ; isGroup = %s ; isPivot = %s }', data.isPlain, data.isGroup, data.isPivot);
+				self.logDebug(self.makeLogTag() + ' Unable to render data using current grid table: { isPlain = %s ; isGroup = %s ; isPivot = %s }', data.isPlain, data.isGroup, data.isPivot);
 
 				return self.fire('unableToRender');
 			}

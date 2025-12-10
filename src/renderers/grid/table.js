@@ -6,7 +6,6 @@ import jQuery from 'jquery';
 
 import { trans } from '../../trans.js';
 import {
-	debug,
 	deepCopy,
 	determineColumns,
 	fontAwesome,
@@ -17,11 +16,11 @@ import {
 	getPropDef,
 	isElement,
 	isVisible,
-	log,
 	makeOperationButton,
 	makeSubclass,
 	mergeSort2,
 	mixinEventHandling,
+	mixinLogging,
 	objFromArray,
 	onVisibilityChange,
 	setPropDef,
@@ -213,6 +212,8 @@ var GridTable = makeSubclass('GridTable', GridRenderer, function () {
 	});
 });
 
+mixinLogging(GridTable);
+
 // Events {{{2
 
 /**
@@ -292,7 +293,7 @@ GridTable.prototype._validateFeatures = function () {
 	var self = this;
 
 	if (self.features.block && !jQuery.blockUI) {
-		log.error('GRID TABLE // CONFIG',
+		self.logError(self.makeLogTag() + ' GRID TABLE // CONFIG',
 							'Feature "block" requires BlockUI library, which is not present');
 		self.features.block = false;
 	}
@@ -322,7 +323,7 @@ GridTable.prototype._validateLimit = function () {
 
 	if (self.features.limit) {
 		if (self.defn.table.limit.threshold === undefined) {
-			debug.warn('GRID TABLE - PLAIN // DRAW', 'Disabling limit feature because no limit threshold was provided');
+			self.logDebug(self.makeLogTag('validation') + ' Disabling limit feature because no limit threshold was provided');
 			self.features.limit = false;
 		}
 	}
@@ -347,19 +348,19 @@ GridTable.prototype._validateFloatTableHeader = function () {
 		switch (config.method) {
 		case 'floatThead':
 			if (jQuery.prototype.floatThead == null) {
-				log.error('GRID TABLE // CONFIG', 'Requested floating header method "floatThead" is not available');
+				self.logError(self.makeLogTag('validation') + ' Requested floating header method "floatThead" is not available');
 				self.features.floatingHeader = false;
 			}
 			break;
 		case 'fixedHeaderTable':
 			if (jQuery.prototype.fixedHeaderTable == null) {
-				log.error('GRID TABLE // CONFIG', 'Requested floating header method "fixedHeaderTable" is not available');
+				self.logError(self.makeLogTag('validation') + ' Requested floating header method "fixedHeaderTable" is not available');
 				self.features.floatingHeader = false;
 			}
 			break;
 		case 'tabletool':
 			if (window.TableTool == null) {
-				log.error('GRID TABLE // CONFIG', 'Requested floating header method "tabletool" is not available');
+				self.logError(self.makeLogTag('validation') + ' Requested floating header method "tabletool" is not available');
 				self.features.floatingHeader = false;
 			}
 			break;
@@ -367,7 +368,7 @@ GridTable.prototype._validateFloatTableHeader = function () {
 			// TODO Check for browser support.
 			break;
 		default:
-			log.error('GRID TABLE // CONFIG', 'Unrecognized floating header method: ' + config.method);
+			self.logError(self.makeLogTag('validation') + ' Unrecognized floating header method: ' + config.method);
 			self.features.floatingHeader = false;
 		}
 	}
@@ -813,7 +814,7 @@ GridTable.prototype._addSortingToHeader = function (data, orientation, spec, con
 			delete spec_copy.aggNum;
 		}
 
-		console.debug('[DataVis // %s // Add Sorting] orientation = %s ; spec = %O ; current = %O ; dir = %s',
+		self.logDebug(self.makeLogTag() + ' orientation = %s ; spec = %O ; current = %O ; dir = %s',
 			self.toString(), orientation, spec_copy, sortSpec_copy[orientation], currentDir);
 
 		if (_.isEqual(sortSpec_copy[orientation], spec_copy)) {
@@ -892,7 +893,7 @@ GridTable.prototype._addDrillDownHandler = function (tbl, data) {
 			});
 		}
 
-		console.debug('[DataVis // %s // Drill Down] Creating new perspective: filter = %O', self.toString(), filter);
+		self.logDebug(self.makeLogTag() + ' Creating new perspective: filter = %O', self.toString(), filter);
 
 		window.setTimeout(function () {
 			self.view.prefs.addPerspective(null, 'Drill Down', { view: { filter: filter } }, { isTemporary: true }, null, { onDuplicate: 'replace' });
@@ -989,7 +990,7 @@ GridTable.prototype.addSortHandler = function () {
 	if (self.features.sort) {
 //		if (self.features.limit) {
 			self.view.on('sortEnd', function () {
-				console.debug('[DataVis // %s // Handler(ComputedView.sortEnd)] Marking table to be redrawn', self.toString());
+				self.logDebug(self.makeLogTag() + ' Marking table to be redrawn', self.toString());
 				self.needsRedraw = true;
 			}, { who: self });
 //		}
@@ -1031,7 +1032,7 @@ GridTable.prototype.addFilterHandler = function () {
 
 //	if (self.features.limit || self.view.opts.saveViewConfig) {
 		self.view.on(ComputedView.events.filterEnd, function () {
-			console.debug('[DataVis // %s // Handler(ComputedView.filterEnd)] Marking table to be redrawn', self.toString());
+			self.logDebug(self.makeLogTag('handler(filterEnd)') + ' Marking table to be redrawn');
 			self.needsRedraw = true;
 		}, { who: self });
 //	}
@@ -1040,7 +1041,7 @@ GridTable.prototype.addFilterHandler = function () {
 //
 //		self.view.on(ComputedView.events.filter, function (rowNum, hide) {
 //			if (isNothing(self.ui.tr[rowNum])) {
-//				console.debug('[DataVis // ' + 'GRID TABLE // HANDLER (ComputedView.filter)', 'We were told to ' + (hide ? 'hide' ] 'show') + ' row ' + rowNum + ', but it doesn\'t exist');
+//				self.logDebug(self.makeLogTag('filter') + ' We were told to ' + (hide ? 'hide' ] 'show') + ' row ' + rowNum + ', but it doesn\'t exist');
 //				return;
 //			}
 //
@@ -1251,12 +1252,12 @@ GridTable.prototype.draw = function (root, opts, cont) {
 	if (self.opts.generateCsv) {
 		if (self.csvLock.isLocked()) {
 			return self.csvLock.onUnlock(function () {
-				console.debug('[DataVis // %s // CSV] Retrying table draw due to CSV lock: %O %O', self.toString(), root, opts);
+				self.logDebug(self.makeLogTag() + ' Retrying table draw due to CSV lock: %O %O', self.toString(), root, opts);
 				self.draw.apply(self, args);
 			});
 		}
 		else {
-			console.debug('[DataVis // %s // CSV] Creating new CSV buffer', self.toString());
+			self.logDebug(self.makeLogTag() + ' Creating new CSV buffer', self.toString());
 			self.csvLock.lock();
 			self.csv = new Csv();
 		}
@@ -1365,7 +1366,7 @@ GridTable.prototype.draw = function (root, opts, cont) {
 
 		self.view.on(ComputedView.events.workBegin, function () {
 			if (self.features.block) {
-				console.debug('[DataVis // %s // Handler(ComputedView.workBegin)] Blocking table body', self.toString());
+				self.logDebug(self.makeLogTag() + ' Blocking table body', self.toString());
 				if (getProp(self.defn, 'table', 'block', 'wholePage')) {
 					jQuery.blockUI(blockConfig);
 				}
@@ -1384,7 +1385,7 @@ GridTable.prototype.draw = function (root, opts, cont) {
 
 		self.view.on(ComputedView.events.workEnd, function () {
 			if (self.features.block) {
-				console.debug('[DataVis // %s // Handler(ComputedView.workEnd)] Unblocking table body', self.toString());
+				self.logDebug(self.makeLogTag() + ' Unblocking table body', self.toString());
 				if (getProp(self.defn, 'table', 'block', 'wholePage')) {
 					jQuery.unblockUI();
 				}
@@ -1418,7 +1419,7 @@ GridTable.prototype.draw = function (root, opts, cont) {
 
 		if (self.features.rowSelect) {
 			if (typeof self._addRowSelectHandler !== 'function') {
-				log.warn('Requested feature "rowSelect" is not available: `_addRowSelectHandler` method does not exist');
+				self.logWarning(self.makeLogTag() + ' Requested feature "rowSelect" is not available: `_addRowSelectHandler` method does not exist');
 			}
 			else {
 				self._addRowSelectHandler();
@@ -1464,7 +1465,7 @@ GridTable.prototype.draw = function (root, opts, cont) {
 			// Activate TableTool using this attribute, if the user asked for it.
 
 			if (self.features.floatingHeader) {
-				console.debug('[DataVis // %s // Draw] Enabling floating header using method "%s"',
+				self.logDebug(self.makeLogTag() + ' Enabling floating header using method "%s"',
 					self.toString(), getProp(self.defn, 'table', 'floatingHeader', 'method'));
 				switch (getProp(self.defn, 'table', 'floatingHeader', 'method')) {
 				case 'floatThead':
@@ -1878,7 +1879,7 @@ GridTable.prototype.clear = function () {
 		self.ui.contextMenus.remove();
 	}
 
-	console.debug('[DataVis // %s // Clear] Removing %d context menus', self.toString(), self.contextMenuSelectors.length);
+	self.logDebug(self.makeLogTag() + ' Removing %d context menus', self.toString(), self.contextMenuSelectors.length);
 
 	_.each(self.contextMenuSelectors, function (sel) {
 		jQuery.contextMenu('destroy', sel);
@@ -1921,19 +1922,19 @@ GridTable.prototype.makeProgress = function (thing) {
 	if (getProp(self.defn, 'table', 'progress', 'method') === 'NProgress') {
 		return {
 			begin: function () {
-				console.debug('[DataVis // %s // Progress(%s)] Begin', self.toString(), thing);
+				self.logDebug(self.makeLogTag() + ' Begin', self.toString(), thing);
 				if (window.NProgress !== undefined) {
 					window.NProgress.start();
 				}
 			},
 			update: function (amount, estTotal) {
-				console.debug('[DataVis // %s // Progress(%s)] %s', self.toString(), thing, sprintf.sprintf('Update: %d / %d = %.0f%%', amount, estTotal, (amount / estTotal) * 100));
+				self.logDebug(self.makeLogTag() + ' %s', self.toString(), thing, sprintf.sprintf('Update: %d / %d = %.0f%%', amount, estTotal, (amount / estTotal) * 100));
 				if (window.NProgress !== undefined) {
 					window.NProgress.set(amount / estTotal);
 				}
 			},
 			end: function () {
-				console.debug('[DataVis // %s // Progress(%s)] End', self.toString(), thing);
+				self.logDebug(self.makeLogTag() + ' End', self.toString(), thing);
 				if (window.NProgress !== undefined) {
 					window.NProgress.done();
 					jQuery('.nprogress-custom-parent').removeClass('nprogress-custom-parent');
@@ -1944,7 +1945,7 @@ GridTable.prototype.makeProgress = function (thing) {
 	else if (getProp(self.defn, 'table', 'progress', 'method') === 'jQueryUI') {
 		return {
 			begin: function () {
-				console.debug('[DataVis // %s // Progress(%s)] Begin', self.toString(), thing);
+				self.logDebug(self.makeLogTag() + ' Begin', self.toString(), thing);
 				self.ui.progress.progressbar({
 					'classes': {
 						'ui-progressbar': 'wcdvgrid_progressbar',
@@ -1953,11 +1954,11 @@ GridTable.prototype.makeProgress = function (thing) {
 				});
 			},
 			update: function (amount, estTotal) {
-				console.debug('[DataVis // %s // Progress(%s)] %s', self.toString(), thing, sprintf.sprintf('Update: %d / %d = %.0f%%', amount, estTotal, (amount / estTotal) * 100));
+				self.logDebug(self.makeLogTag() + ' %s', self.toString(), thing, sprintf.sprintf('Update: %d / %d = %.0f%%', amount, estTotal, (amount / estTotal) * 100));
 				self.ui.progress.progressbar('value', (amount / estTotal) * 100);
 			},
 			end: function () {
-				console.debug('[DataVis // %s // Progress(%s)] End', self.toString(), thing);
+				self.logDebug(self.makeLogTag() + ' End', self.toString(), thing);
 				self.ui.progress.progressbar('destroy');
 			}
 		};
@@ -2021,7 +2022,7 @@ GridTable.prototype.setSelection = function (what) {
 		data = _.flatten(data);
 	}
 	else if (self.data.isPivot) {
-		log.error('Selection is not supported for pivotted data, because there is no way to see or change the selection in the user interface');
+		self.logError(self.makeLogTag() + ' Selection is not supported for pivotted data, because there is no way to see or change the selection in the user interface');
 		return;
 	}
 
@@ -2032,7 +2033,7 @@ GridTable.prototype.setSelection = function (what) {
 		self.selection = what;
 	}
 	else {
-		log.error('GridTable#setSelection(): parameter `what` must be null/undef or an array');
+		self.logError(self.makeLogTag() + ' GridTable#setSelection(): parameter `what` must be null/undef or an array');
 		return false;
 	}
 
@@ -2072,7 +2073,7 @@ GridTable.prototype.select = function (what) {
 		data = _.flatten(data);
 	}
 	else if (self.data.isPivot) {
-		log.error('Selection is not supported for pivotted data, because there is no way to see or change the selection in the user interface');
+		self.logError(self.makeLogTag() + ' Selection is not supported for pivotted data, because there is no way to see or change the selection in the user interface');
 		return;
 	}
 
@@ -2132,7 +2133,7 @@ GridTable.prototype.unselect = function (what) {
 		data = _.flatten(data);
 	}
 	else if (self.data.isPivot) {
-		log.error('Selection is not supported for pivotted data, because there is no way to see or change the selection in the user interface');
+		self.logError(self.makeLogTag() + ' Selection is not supported for pivotted data, because there is no way to see or change the selection in the user interface');
 		return;
 	}
 
@@ -2185,7 +2186,7 @@ GridTable.prototype.isSelected = function (what) {
 // #_updateSelectionGui {{{2
 
 GridTable.prototype._updateSelectionGui = function () {
-	log.error('GridTable#_updateSelectionGui(): Must be implemented by subclass');
+	self.logError(self.makeLogTag() + ' GridTable#_updateSelectionGui(): Must be implemented by subclass');
 };
 
 export default GridTable;

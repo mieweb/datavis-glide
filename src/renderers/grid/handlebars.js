@@ -4,7 +4,6 @@ import Handlebars from 'handlebars';
 import jQuery from 'jquery';
 
 import {
-	debug,
 	deepCopy,
 	format,
 	makeSubclass,

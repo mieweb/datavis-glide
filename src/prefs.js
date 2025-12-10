@@ -11,9 +11,7 @@ import {
 	getProp,
 	getPropDef,
 	I,
-	log,
 	makeSubclass,
-	mixinDebugging,
 	mixinEventHandling,
 	mixinLogging,
 	mixinNameSetting,
@@ -173,7 +171,7 @@ var Prefs = makeSubclass('Prefs', Object, function (name, moduleBindings, opts) 
 	var backendCtor = PREFS_BACKEND_REGISTRY.get(self.opts.backend.type);
 	var backendCtorOpts = self.opts.backend[self.opts.backend.type];
 
-	self.debug(null, 'Creating new preferences backend: name = "%s" ; type = %s ; opts = %O',
+	self.logDebug(self.makeLogTag() + ' Creating new preferences backend: name = "%s" ; type = %s ; opts = %O',
 		self.name, self.opts.backend.type, backendCtorOpts);
 
 	// If creating the backend fails for any reason (e.g. unable to access localStorage) then fall
@@ -222,7 +220,6 @@ mixinEventHandling(Prefs, [
 , 'primed'
 ]);
 
-mixinDebugging(Prefs);
 mixinLogging(Prefs);
 mixinNameSetting(Prefs);
 
@@ -329,7 +326,7 @@ Prefs.prototype.init = function () {
 		return;
 	}
 
-	self.debug(null, 'Initializing prefs system');
+	self.logDebug(self.makeLogTag() + ' Initializing prefs system');
 
 	self.isInitialized = true;
 	self.perspectives = {};
@@ -382,7 +379,7 @@ Prefs.prototype.prime = function (cont) {
 
 	var makeFinishCont = function (status) {
 		return function () {
-			self.debug('PRIMING', 'End');
+			self.logDebug(self.makeLogTag('prime') + ' End');
 			self.isPrimed = true;
 			self.primeLock.unlock();
 			return cont(status);
@@ -391,7 +388,7 @@ Prefs.prototype.prime = function (cont) {
 
 	self.init();
 
-	self.debug('PRIMING', 'Begin');
+	self.logDebug(self.makeLogTag('prime') + ' Begin');
 
 	return self.backend.getPerspectives(function (ids) {
 		self.availablePerspectives = _.union(self.availablePerspectives, ids);
@@ -404,7 +401,7 @@ Prefs.prototype.prime = function (cont) {
 				// When there's already a current perspective (as would be the case when prefs have been
 				// pre-configured), we don't have to do anything else.
 
-				self.debug('PRIMING', 'Finished adding all perspectives');
+				self.logDebug(self.makeLogTag('prime') + ' Finished adding all perspectives');
 
 				self.fire('primed');
 
@@ -414,7 +411,7 @@ Prefs.prototype.prime = function (cont) {
 				else if (self.availablePerspectives.length === 0) {
 					// There are no perspectives available, so we need to make a basic one.
 
-					self.debug('PRIMING', 'No perspectives exist, creating one');
+					self.logDebug(self.makeLogTag('prime') + ' No perspectives exist, creating one');
 
 					return self.addMainPerspective(makeFinishCont(true));
 				}
@@ -425,7 +422,7 @@ Prefs.prototype.prime = function (cont) {
 						if (currentId == null) {
 							// There's no current perspective, somehow, so again just create one.
 
-							self.debug('PRIMING', 'No current perspective set, creating one');
+							self.logDebug(self.makeLogTag('prime') + ' No current perspective set, creating one');
 
 							return self.addMainPerspective(makeFinishCont(true));
 						}
@@ -524,7 +521,7 @@ Prefs.prototype._resetHistory = function (p) {
 Prefs.prototype._historyDebug = function () {
 	var self = this;
 
-	console.log('### HISTORY ### [%d] %O', self.historyIndex, self.history.map(function (x) { return x.name; }));
+	self.logInfo(self.makeLogTag() + ' ### HISTORY ### [%d] %O', self.historyIndex, self.history.map(function (x) { return x.name; }));
 };
 
 // #bind {{{2
@@ -564,7 +561,7 @@ Prefs.prototype.bind = function (moduleName, target, moduleBoundUserData) {
 	var moduleCtor = PREFS_MODULE_REGISTRY.get(moduleName);
 	self.modules[moduleName] = new moduleCtor(self, target);
 
-	self.debug('BIND', 'Binding module %s to target %s', moduleName, target.toString());
+	self.logDebug(self.makeLogTag('bind') + ' Binding module %s to target %s', moduleName, target.toString());
 
 	self.fire('moduleBound', null, moduleName, self.modules[moduleName], target, moduleBoundUserData);
 
@@ -723,7 +720,7 @@ Prefs.prototype.addPerspective = function (id, name, config, perspectiveOpts, co
 			id = p.id;
 		}
 
-		self.debug(null, 'Adding new perspective: id = "%s" ; name = "%s" ; config = %O', id, name, config);
+		self.logDebug(self.makeLogTag() + ' Adding new perspective: id = "%s" ; name = "%s" ; config = %O', id, name, config);
 
 		if (self.availablePerspectives.indexOf(id) < 0) {
 			self.availablePerspectives.push(id);
@@ -741,7 +738,7 @@ Prefs.prototype.addPerspective = function (id, name, config, perspectiveOpts, co
 	};
 
 	if (self.currentPerspective) {
-		self.debug('ADD', 'Saving current perspective "%s" before adding new one "%s"', self.currentPerspective.name, name);
+		self.logDebug(self.makeLogTag('add') + ' Saving current perspective "%s" before adding new one "%s"', self.currentPerspective.name, name);
 		self.save();
 		if (config == null) {
 			config = deepCopy(self.currentPerspective.config);
@@ -814,7 +811,7 @@ Prefs.prototype.deletePerspective = function (id, cont, opts) {
 	// Make sure that we're not trying to delete an essential perspective.
 
 	if (self.perspectives[id].opts.isEssential) {
-		self.logError('DELETE PERSPECTIVE', 'Not allowed to delete essential perspective: id = "%s" ; name = "%s"',
+		self.logError(self.makeLogTag('delete') + ' Not allowed to delete essential perspective: id = "%s" ; name = "%s"',
 			id, self.perspectives[id].name);
 		return cont(false);
 	}
@@ -1029,7 +1026,7 @@ Prefs.prototype.renamePerspective = function (id, newName, cont, opts) {
 
 	_.each(self.perspectives, function (p) {
 		if (p.name === newName) {
-			log.warn(sprintf.sprintf('Renaming perspective (id = "%s") now shares the name "%s" with a different perspective (id = "%s")',
+			self.logWarning(sprintf.sprintf('Renaming perspective (id = "%s") now shares the name "%s" with a different perspective (id = "%s")',
 				id, newName, p.id));
 		}
 	});
@@ -1123,7 +1120,7 @@ Prefs.prototype.setCurrentPerspective = function (id, cont, opts) {
 
 	if (self.perspectives[id] == null) {
 		if (self.availablePerspectives.indexOf(id) < 0) {
-			self.logWarning('SET CURRENT PERSPECTIVE', 'Perspective does not exist: id = "%s"', id);
+			self.logWarning(self.makeLogTag('setCurrentPerspective') + ' Perspective does not exist: id = "%s"', id);
 			if (self.availablePerspectives.length === 0) {
 				return self.addMainPerspective(cont);
 			}
@@ -1141,7 +1138,7 @@ Prefs.prototype.setCurrentPerspective = function (id, cont, opts) {
 		});
 	}
 
-	self.debug(null, 'Switching to perspective: id = "%s"', id);
+	self.logDebug(self.makeLogTag() + ' Switching to perspective: id = "%s"', id);
 
 	self.currentPerspective = self.perspectives[id];
 
@@ -1251,7 +1248,7 @@ Prefs.prototype.clonePerspective = function (qry, name, configMutator, ok, fail,
 	var newConfig = (configMutator || I)(deepCopy(src.config));
 	var newName = name || prompt(opts.message, src.name);
 	if (newName != null) {
-		self.debug('CLONE', 'Creating new perspective "%s" with config = %O', newName, newConfig);
+		self.logDebug(self.makeLogTag('clonePerspective') + 'Creating new perspective "%s" with config = %O', newName, newConfig);
 		self.addPerspective(null, newName, newConfig, null, function (isOk) {
 			if (isOk) {
 				return self.save(ok);
@@ -1366,7 +1363,7 @@ Prefs.prototype.reset = function (cont) {
 
 	_.each(self.perspectives, function (p) {
 		if (p.opts.isTemporary && p.opts.isEssential) {
-			self.debug(null, 'Saving temporary essential perspective: %s', p.id);
+			self.logDebug(self.makeLogTag() + ' Saving temporary essential perspective: %s', p.id);
 			self.bardo[p.id] = {
 				id: p.id,
 				name: p.name,
@@ -1386,12 +1383,12 @@ Prefs.prototype.reset = function (cont) {
 
 		_.each(self.modules, function (module, moduleName) {
 			if (typeof module.reset === 'function') {
-				self.debug(null, 'Resetting module: moduleName = %s', moduleName);
+				self.logDebug(self.makeLogTag() + ' Resetting module: moduleName = %s', moduleName);
 				module.reset();
 			}
 		});
 
-		self.debug(null, 'Restoring temporary essential perspectives: %s', JSON.stringify(_.keys(self.bardo)));
+		self.logDebug(self.makeLogTag() + ' Restoring temporary essential perspectives: %s', JSON.stringify(_.keys(self.bardo)));
 
 		_.each(self.bardo, function (p) {
 			self.addPerspective(p.id, p.name, p.config, p.opts, null, { switch: false });

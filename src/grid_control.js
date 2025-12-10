@@ -4,17 +4,16 @@ import jQuery from 'jquery';
 
 import { trans } from './trans.js';
 import {
-	debug,
 	deepCopy,
 	deepDefaults,
 	determineColumns,
 	fontAwesome,
 	gensym,
 	getProp,
-	log,
 	makeSubclass,
 	mapLimit,
 	mixinEventHandling,
+	mixinLogging,
 	objFromArray,
 } from './util/misc.js';
 
@@ -113,6 +112,8 @@ var GridControlField = (function () {
 	});
 })();
 
+mixinLogging(GridControlField);
+
 // #draw {{{2
 
 /**
@@ -182,14 +183,14 @@ GridControlField.prototype.destroy = function () {
 GridControlField.prototype.showError = function (errMsg) {
 	var self = this;
 
-	debug.error('GRID // CONTROL', errMsg);
+	self.logDebug(self.makeLogTag() + ' GRID // CONTROL', errMsg);
 
 	if (self.ui.error) {
 		self.ui.error.attr('title', errMsg);
 		self.ui.error.show();
 	}
 	else {
-		log.error('Call Error: Attempted to call `showError()` on a ControlField subclass instance that does not provide a way of indicating errors in the user interface.');
+		self.logError(self.makeLogTag() + ' Call Error: Attempted to call `showError()` on a ControlField subclass instance that does not provide a way of indicating errors in the user interface.');
 	}
 };
 
@@ -706,6 +707,8 @@ var GridControl = makeSubclass('GridControl', Object, function (grid, colConfig,
 	updateCanHide: true
 });
 
+mixinLogging(GridControl);
+
 // Events {{{2
 
 /**
@@ -977,7 +980,7 @@ GridControl.prototype.clear = function (opts) {
 GridControl.prototype.destroy = function () {
 	var self = this;
 
-	console.debug('[DataVis // GridControl] Good-bye, cruel world!');
+	self.logDebug(self.makeLogTag() + ' Good-bye, cruel world!');
 
 	self.view.off('*', self);
 	self.grid.off('*', self);
@@ -1023,7 +1026,7 @@ GridControl.prototype.addViewConfigChangeHandler = function (event, sync) {
 	//    does this synchronization.
 
 	var sync_colConfig = function (colConfig) {
-		console.debug('[DataVis // %s // %s Control] Synchronizing column configuration with grid', self.grid.toString(), self.controlType.toUpperCase());
+		self.logDebug(self.makeLogTag() + ' Synchronizing column configuration with grid', self.grid.toString(), self.controlType.toUpperCase());
 		self.colConfig = colConfig;
 		if (self.showColumns) {
 			clearDropdown();
@@ -1034,7 +1037,7 @@ GridControl.prototype.addViewConfigChangeHandler = function (event, sync) {
 	};
 
 	var sync_view = function () {
-		console.debug('[DataVis // %s // %s Control] Synchronizing user interface with view', self.grid.toString(), self.controlType.toUpperCase());
+		self.logDebug(self.makeLogTag() + ' Synchronizing user interface with view', self.grid.toString(), self.controlType.toUpperCase());
 		sync();
 	};
 
@@ -1213,7 +1216,7 @@ GroupControl.prototype.draw = function (parent) {
 		var spec = self.view.getGroup();
 		var fields = (!self.view.source.origin.isLimited && spec && spec.fieldNames) || [];
 		self.clear({ updateView: false });
-		console.debug('[DataVis // %s // Group Control] View set group fields to: %s', self.grid.toString(), JSON.stringify(fields));
+		self.logDebug(self.makeLogTag() + ' View set group fields to: %s', self.grid.toString(), JSON.stringify(fields));
 		_.each(fields, function (field) {
 			self.addField(field, getProp(self.colConfig.get(field), 'displayText'), { updateView: false });
 		});
@@ -1276,7 +1279,7 @@ GroupControl.prototype.addField = function (field, displayText, opts) {
 	if (self.typeInfo == null) {
 		return self.view.getTypeInfo(function (ok, typeInfo) {
 			if (!ok) {
-				console.error('[DataVis // Control(Group) // Add] Failed to retrieve typeInfo');
+				self.logError(self.makeLogTag() + ' Failed to retrieve typeInfo');
 				return;
 			}
 			self.typeInfo = typeInfo;
@@ -1287,20 +1290,20 @@ GroupControl.prototype.addField = function (field, displayText, opts) {
 	var fieldName = typeof field === 'string' ? field : field.field;
 	var fti = self.typeInfo.get(fieldName);
 	if (fti == null) {
-		console.error('[DataVis // Control(Group) // Add] Field not in typeInfo: %s', fieldName);
+		self.logError(self.makeLogTag() + ' Field not in typeInfo: %s', fieldName);
 		self.ui.dropdown.val('');
 		return;
 	}
 
 	var tc = types.registry.get(fti.type);
 	if (tc == null) {
-		console.error('[DataVis // Control(Group) // Add] Field "%s" type "%s" not in registry', fieldName, fti.type);
+		self.logError(self.makeLogTag() + ' Field "%s" type "%s" not in registry', fieldName, fti.type);
 		self.ui.dropdown.val('');
 		return;
 	}
 
 	if (!tc.supports.group) {
-		console.info('[DataVis // Control(Group) // Add] Field "%s" type "%s" does not support grouping', fieldName, fti.type);
+		self.logError(self.makeLogTag() + ' Field "%s" type "%s" does not support grouping', fieldName, fti.type);
 		self.ui.dropdown.val('');
 		return;
 	}
@@ -1421,7 +1424,7 @@ PivotControl.prototype.draw = function (parent) {
 		spec = self.view.getPivot();
 		var fields = (!self.view.source.origin.isLimited && spec && spec.fieldNames) || [];
 		self.clear({ updateView: false });
-		console.debug('[DataVis // %s // Pivot Control] View set pivot fields to: %s', self.grid.toString(), JSON.stringify(fields));
+		self.logDebug(self.makeLogTag() + ' View set pivot fields to: %s', self.grid.toString(), JSON.stringify(fields));
 		_.each(fields, function (field) {
 			self.addField(field, getProp(self.colConfig.get(field), 'displayText'), { updateView: false });
 		});
@@ -1490,7 +1493,7 @@ PivotControl.prototype.addField = function (field, displayText, opts) {
 	if (self.typeInfo == null) {
 		return self.view.getTypeInfo(function (ok, typeInfo) {
 			if (!ok) {
-				console.error('[DataVis // Control(Pivot) // Add] Failed to retrieve typeInfo');
+				self.logError(self.makeLogTag() + ' Failed to retrieve typeInfo');
 				return;
 			}
 			self.typeInfo = typeInfo;
@@ -1501,20 +1504,20 @@ PivotControl.prototype.addField = function (field, displayText, opts) {
 	var fieldName = typeof field === 'string' ? field : field.field;
 	var fti = self.typeInfo.get(fieldName);
 	if (fti == null) {
-		console.error('[DataVis // Control(Pivot) // Add] Field not in typeInfo: %s', fieldName);
+		self.logError(self.makeLogTag() + ' Field not in typeInfo: %s', fieldName);
 		self.ui.dropdown.val('');
 		return;
 	}
 
 	var tc = types.registry.get(fti.type);
 	if (tc == null) {
-		console.error('[DataVis // Control(Pivot) // Add] Field "%s" type "%s" not in registry', fieldName, fti.type);
+		self.logError(self.makeLogTag() + ' Field "%s" type "%s" not in registry', fieldName, fti.type);
 		self.ui.dropdown.val('');
 		return;
 	}
 
 	if (!tc.supports.group) {
-		console.info('[DataVis // Control(Pivot) // Add] Field "%s" type "%s" does not support grouping', fieldName, fti.type);
+		self.logError(self.makeLogTag() + ' Field "%s" type "%s" does not support grouping', fieldName, fti.type);
 		self.ui.dropdown.val('');
 		return;
 	}
@@ -1671,7 +1674,7 @@ AggregateControl.prototype.draw = function (parent) {
 		var spec = self.view.getAggregate();
 		self.clear({ updateView: false });
 		if (spec != null) {
-			console.debug('[DataVis // %s // Aggregate Control] View set aggregate to: %s', self.grid.toString(), JSON.stringify(spec.all));
+			self.logDebug(self.makeLogTag() + ' View set aggregate to: %s', self.grid.toString(), JSON.stringify(spec.all));
 
 			_.each(spec.all, function (agg) {
 				self.addField(agg.fun, AGGREGATE_REGISTRY.get(agg.fun).prototype.getTransName(), { updateView: false }, {
@@ -1767,7 +1770,7 @@ AggregateControl.prototype.showHideFields = function (agg) {
 AggregateControl.prototype.addFieldDropdowns = function (agg) {
 	var self = this;
 
-	console.debug('[DataVis // %s // Aggregate Control] Adding %s extra field dropdowns for the %s aggregate function',
+	self.logDebug(self.makeLogTag() + ' Adding %s extra field dropdowns for the %s aggregate function',
 		self.grid.toString(), agg.prototype.fieldCount - self.ui.fields.length, agg.prototype.name);
 
 	// Create the extra dropdowns that we need to get all the fields required by the aggregate
@@ -1906,7 +1909,7 @@ FilterControl.prototype.draw = function (parent) {
 
 	self.addViewConfigChangeHandler('filterSet', function () {
 		var spec = self.view.getFilter();
-		console.debug('[DataVis // %s // Filter Control] View set filter to: %s', self.grid.toString(), JSON.stringify(spec));
+		self.logDebug(self.makeLogTag() + 'View set filter to: %s', self.grid.toString(), JSON.stringify(spec));
 		self.clear({ updateView: false });
 		_.each(spec, function (fieldSpec, field) {
 			self.addField(field, getProp(self.colConfig.get(field), 'displayText'), { updateView: false });

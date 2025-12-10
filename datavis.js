@@ -48,8 +48,6 @@ GRAPH_RENDERER_REGISTRY.set('svelte-gantt', GraphRendererSvelteGantt);
 // Set some global variables for <script> tag usage.
 
 window.MIE              = window.MIE || {};
-window.MIE.log          = Util.log;
-window.MIE.debug        = Util.debug;
 window.MIE.OrdMap       = OrdMap;
 window.MIE.Lock         = Lock;
 window.MIE.trans        = trans;

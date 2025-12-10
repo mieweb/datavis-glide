@@ -4,14 +4,13 @@ import numeral from 'numeral';
 
 import {
 	dataURItoBlob,
-	debug,
 	deepCopy,
 	deepDefaults,
 	getProp,
 	loadScript,
-	log,
 	makeSubclass,
 	mixinEventHandling,
+	mixinLogging,
 	setProp,
 } from './util/misc.js';
 import {AggregateInfo} from './aggregates';
@@ -31,6 +30,7 @@ var GraphRenderer = makeSubclass('GraphRenderer', Object, function (graph, elt, 
 mixinEventHandling(GraphRenderer, [
 'draw'
 ]);
+mixinLogging(GraphRenderer);
 
 // #toString {{{2
 
@@ -66,12 +66,11 @@ GraphRenderer.prototype._validateConfig = function () {
 GraphRenderer.prototype.addRedrawHandlers = function () {
 	var self = this;
 
-	debug.info('GRAPH // RENDER', 'Adding redraw handlers');
+	self.logDebug(self.makeLogTag('addRedrawHandlers') + ' Adding redraw handlers');
 
 	self.view.off('workEnd', self);
 	self.view.on('workEnd', function () {
-		debug.info('GRAPH RENDERER // HANDLER (View.dataUpdated)',
-			'Redrawing graph because the view has finished doing work');
+		self.logDebug(self.makeLogTag('addRedrawHandlers // View.dataUpdated') + ' Redrawing graph because the view has finished doing work');
 		self.draw();
 	}, { who: self });
 };

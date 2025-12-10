@@ -16,8 +16,8 @@ import {
 	isElement,
 	isFloat,
 	isInt,
-	log,
 	makeSubclass,
+	mixinLogging,
 	toFloat,
 	toInt,
 } from './util/misc.js';
@@ -242,6 +242,8 @@ var Aggregate = makeSubclass('Aggregate', Object, function (opts) {
 	numItems: 0
 });
 
+mixinLogging(Aggregate, function () { return 'Aggregate(' + this.name + ')'; });
+
 // JSDoc {{{2
 
 /**
@@ -338,7 +340,7 @@ Aggregate.prototype.calculate = function (data) {
 			acc = self.calculateStep(acc, data[i].rowData, data, i);
 		}
 		catch (e) {
-			log.error('Aggregate ' + self.name + ': Error occurred at data index [' + i + ']: ' + e.toString());
+			self.logError(self.makeLogTag() + ' Error occurred at data index [' + i + ']: ' + e.toString());
 			return self.bottomValue;
 		}
 	}
@@ -361,28 +363,28 @@ Aggregate.prototype.checkOpts = function () {
 
 	if (self.fieldCount > 0) {
 		if (self.opts.fields == null) {
-			log.error('Aggregate ' + self.name + ': Missing `opts.fields`');
+			self.logError(self.makeLogTag() + ' Missing `opts.fields`');
 			return false;
 		}
 		else if (!_.isArray(self.opts.fields)) {
-			log.error('Aggregate ' + self.name + ': `opts.fields` must be an array');
+			self.logError(self.makeLogTag() + ' `opts.fields` must be an array');
 			return false;
 		}
 		else if (self.opts.fields.length !== self.fieldCount) {
-			log.error('Aggregate ' + self.name + ': `opts.fields` must include ' + self.fieldCount + ' elements');
+			self.logError(self.makeLogTag() + ' `opts.fields` must include ' + self.fieldCount + ' elements');
 			return false;
 		}
 
 		if (self.opts.typeInfo == null) {
-			log.error('Aggregate ' + self.name + ': Missing `opts.typeInfo`');
+			self.logError(self.makeLogTag() + ' Missing `opts.typeInfo`');
 			return false;
 		}
 		else if (!_.isArray(self.opts.typeInfo)) {
-			log.error('Aggregate ' + self.name + ': `opts.typeInfo` must be an array');
+			self.logError(self.makeLogTag() + ' `opts.typeInfo` must be an array');
 			return false;
 		}
 		else if (self.opts.typeInfo.length !== self.fieldCount) {
-			log.error('Aggregate ' + self.name + ': `opts.typeInfo` must include ' + self.fieldCount + ' elements');
+			self.logError(self.makeLogTag() + ' `opts.typeInfo` must include ' + self.fieldCount + ' elements');
 			return false;
 		}
 	}
@@ -403,7 +405,7 @@ Aggregate.prototype.checkData = function (data) {
 	var self = this;
 
 	if (!_.isArray(data)) {
-		log.error('Aggregate ' + self.name + ': `data` must be an array');
+		self.logError(self.makeLogTag() + ' `data` must be an array');
 		return false;
 	}
 
@@ -950,7 +952,7 @@ MinAggregate.prototype.checkOpts = function () {
 	var self = this;
 
 	if (self.opts.typeInfo == null) {
-		log.error('Aggregate ' + self.name + ': Missing `opts.typeInfo`');
+		self.logError(self.makeLogTag() + ' Missing `opts.typeInfo`');
 		return false;
 	}
 
@@ -959,7 +961,7 @@ MinAggregate.prototype.checkOpts = function () {
 	}
 
 	if (typeof self.opts.compare !== 'function') {
-		log.error('Aggregate ' + self.name + ': Missing `opts.compare`');
+		self.logError(self.makeLogTag() + ' Missing `opts.compare`');
 		return false;
 	}
 
@@ -995,7 +997,7 @@ MaxAggregate.prototype.checkOpts = function () {
 	var self = this;
 
 	if (self.opts.typeInfo == null) {
-		log.error('Aggregate ' + self.name + ': Missing `opts.typeInfo`');
+		self.logError(self.makeLogTag() + ' Missing `opts.typeInfo`');
 		return false;
 	}
 
@@ -1004,7 +1006,7 @@ MaxAggregate.prototype.checkOpts = function () {
 	}
 
 	if (typeof self.opts.compare !== 'function') {
-		log.error('Aggregate ' + self.name + ': Missing `opts.compare`');
+		self.logError(self.makeLogTag() + ' Missing `opts.compare`');
 		return false;
 	}
 
@@ -1040,7 +1042,7 @@ FirstAggregate.prototype.checkData = function (data) {
 	var self = this;
 
 	if (data.length === 0) {
-		//log.error('Aggregate ' + self.name + ': `data` has no elements');
+		//self.logError(self.makeLogTag() + ' `data` has no elements');
 		return false;
 	}
 
@@ -1074,7 +1076,7 @@ LastAggregate.prototype.checkData = function (data) {
 	var self = this;
 
 	if (data.length === 0) {
-		//log.error('Aggregate ' + self.name + ': `data` has no elements');
+		//self.logError(self.makeLogTag() + ' `data` has no elements');
 		return false;
 	}
 
@@ -1109,12 +1111,12 @@ NthAggregate.prototype.checkOpts = function () {
 	var self = this;
 
 	if (self.opts.index == null) {
-		log.error('Aggregate ' + self.name + ': Missing `opts.index`');
+		self.logError(self.makeLogTag() + ' Missing `opts.index`');
 		return false;
 	}
 
 	if (!_.isNumber(self.opts.index)) {
-		log.error('Aggregate ' + self.name + ': `opts.index` must be a number');
+		self.logError(self.makeLogTag() + ' `opts.index` must be a number');
 		return false;
 	}
 
@@ -1127,12 +1129,12 @@ NthAggregate.prototype.checkData = function (data) {
 	var self = this;
 
 	if (data.length === 0) {
-		//log.error('Aggregate ' + self.name + ': `data` has no elements');
+		//self.logError(self.makeLogTag() + ' `data` has no elements');
 		return false;
 	}
 
 	if (data.length <= self.opts.index) {
-		log.error('Aggregate ' + self.name + ': `data` has insufficient number of elements');
+		self.logError(self.makeLogTag() + ' `data` has insufficient number of elements');
 		return self.bottomValue;
 	}
 
@@ -1373,7 +1375,7 @@ var AggregateInfo = makeSubclass('AggregateInfo', Object, function (aggType, spe
 	// function class.
 
 	if (self.fields.length !== aggClass.prototype.fieldCount) {
-		log.warn('Creating ' + aggType + '[' + aggNum + '] aggregate function "' + spec.fun + '" to be applied over fields ' + JSON.stringify(self.fields) + ', which doesn\'t match the number of fields supported by the aggregate function (' + aggClass.prototype.fieldCount + ')... expect trouble.');
+		self.logWarning(self.makeLogTag() + ' Creating ' + aggType + '[' + aggNum + '] aggregate function "' + spec.fun + '" to be applied over fields ' + JSON.stringify(self.fields) + ', which doesn\'t match the number of fields supported by the aggregate function (' + aggClass.prototype.fieldCount + ')... expect trouble.');
 	}
 
 	if (self.fields.length > 0) {
@@ -1385,7 +1387,7 @@ var AggregateInfo = makeSubclass('AggregateInfo', Object, function (aggType, spe
 			});
 		}
 		else {
-			log.warn('Creating ' + aggType + '[' + aggNum + '] aggregate function "' + spec.fun + '" to be applied over fields ' + JSON.stringify(self.fields) + ', but no column config was provided.');
+			self.logWarning(self.makeLogTag() + ' Creating ' + aggType + '[' + aggNum + '] aggregate function "' + spec.fun + '" to be applied over fields ' + JSON.stringify(self.fields) + ', but no column config was provided.');
 		}
 
 		// Set the typeInfo array for the supplied fields.
@@ -1396,7 +1398,7 @@ var AggregateInfo = makeSubclass('AggregateInfo', Object, function (aggType, spe
 			});
 		}
 		else {
-			log.warn('Creating ' + aggType + '[' + aggNum + '] aggregate function "' + spec.fun + '" to be applied over fields ' + JSON.stringify(self.fields) + ', but no type info was provided.');
+			self.logWarning(self.makeLogTag() + ' Creating ' + aggType + '[' + aggNum + '] aggregate function "' + spec.fun + '" to be applied over fields ' + JSON.stringify(self.fields) + ', but no type info was provided.');
 		}
 
 		// Perform type decoding if needed, before we calculate the aggregate results.  This is
@@ -1413,7 +1415,7 @@ var AggregateInfo = makeSubclass('AggregateInfo', Object, function (aggType, spe
 					decode(fti.field, fti);
 				}
 				else {
-					log.warn('Unable to decode field "' + fti.field + '" on demand for aggregate function, no decoding function provided.');
+					self.logWarning(self.makeLogTag() + ' Unable to decode field "' + fti.field + '" on demand for aggregate function, no decoding function provided.');
 				}
 			}
 		});
@@ -1428,6 +1430,8 @@ var AggregateInfo = makeSubclass('AggregateInfo', Object, function (aggType, spe
 
 	self.instance = new aggClass(ctorOpts);
 });
+
+mixinLogging(AggregateInfo);
 
 // Exports {{{1
 

@@ -14,7 +14,6 @@ import {
 	car,
 	cdr,
 	copyProps,
-	debug,
 	deepCopy,
 	deepDefaults,
 	delegate,
@@ -28,17 +27,15 @@ import {
 	I,
 	interleaveWith,
 	isElement,
-	log,
 	logAsync,
 	makeSubclass,
 	mergeSort4,
-	mixinDebugging,
 	mixinEventHandling,
+	mixinLogging,
 	objFromArray,
 	pigeonHoleSort,
 	setProp,
 	Timing,
-	mixinLogging,
 } from './util/misc.js';
 import OrdMap from './util/ordmap.js';
 import Lock from './util/lock.js';

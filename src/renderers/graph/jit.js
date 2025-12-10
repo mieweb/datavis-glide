@@ -5,12 +5,10 @@ import jQuery from 'jquery';
 
 import {
 	dataURItoBlob,
-	debug,
 	deepCopy,
 	deepDefaults,
 	getProp,
 	loadScript,
-	log,
 	makeSubclass,
 	setProp,
 } from '../../util/misc.js';

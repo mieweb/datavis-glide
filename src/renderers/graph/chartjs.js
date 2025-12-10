@@ -6,14 +6,13 @@ import Chart from 'chart.js/auto'; // FIXME: This imports everything.
 
 import {
 	dataURItoBlob,
-	debug,
 	deepCopy,
 	deepDefaults,
 	gensym,
 	getProp,
 	loadScript,
-	log,
 	makeSubclass,
+	mixinLogging,
 	setProp,
 } from '../../util/misc.js';
 import {AggregateInfo} from '../../aggregates';
@@ -36,6 +35,8 @@ var GraphRendererChartJs = makeSubclass('GraphRendererChartJs', GraphRenderer, n
 		modes: ['plain', 'group', 'pivot'],
 	}], 'value')
 });
+
+mixinLogging(GraphRendererChartJs);
 
 // #draw_plain {{{2
 
@@ -183,11 +184,11 @@ GraphRendererChartJs.prototype.draw_group = function (data, typeInfo, obj, confi
 
 		var aggInfo = getProp(data, 'agg', 'info', config.aggType, config.aggNum);
 		if (aggInfo == null) {
-			log.error('The specified aggregate does not exist: ' + config.aggType + '[' + config.aggNum + ']');
+			self.logError(self.makeLogTag() + ' The specified aggregate does not exist: ' + config.aggType + '[' + config.aggNum + ']');
 			return null;
 		}
 		if (data.agg.results[config.aggType][config.aggNum] == null) {
-			log.error('No results exist for the specified aggregate: ' + config.aggType + '[' + config.aggNum + ']');
+			self.logError(self.makeLogTag() + ' No results exist for the specified aggregate: ' + config.aggType + '[' + config.aggNum + ']');
 			return null;
 		}
 		var name = aggInfo.name || aggInfo.instance.getFullName();
@@ -234,7 +235,7 @@ GraphRendererChartJs.prototype.draw_group = function (data, typeInfo, obj, confi
 				var aggResult = aggInfo.instance.calculate(_.flatten(data.data[rowValIdx]));
 				obj.data.datasets[i].data.push(aggResult);
 				if (aggInfo.debug) {
-					console.debug('[DataVis Graph // Group // Aggregate] Group aggregate (%s) : Group [%s] = %s',
+					self.logDebug(self.makeLogTag() + ' Group aggregate (%s) : Group [%s] = %s',
 						aggInfo.instance.name + (aggInfo.name ? ' -> ' + aggInfo.name : ''),
 						rowVal.join(', '),
 						JSON.stringify(aggResult));
@@ -273,11 +274,11 @@ GraphRendererChartJs.prototype.draw_pivot = function (data, typeInfo, dt, config
 	if (config.aggType != null && config.aggNum != null) {
 		var aggInfo = getProp(data, 'agg', 'info', config.aggType, config.aggNum);
 		if (aggInfo == null) {
-			log.error('The specified aggregate does not exist: ' + config.aggType + '[' + config.aggNum + ']');
+			self.logError(self.makeLogTag() + ' The specified aggregate does not exist: ' + config.aggType + '[' + config.aggNum + ']');
 			return null;
 		}
 		if (data.agg.results[config.aggType][config.aggNum] == null) {
-			log.error('No results exist for the specified aggregate: ' + config.aggType + '[' + config.aggNum + ']');
+			self.logError(self.makeLogTag() + ' No results exist for the specified aggregate: ' + config.aggType + '[' + config.aggNum + ']');
 			return null;
 		}
 		var name = aggInfo.name || aggInfo.instance.getFullName();
@@ -366,7 +367,7 @@ GraphRendererChartJs.prototype.draw_pivot = function (data, typeInfo, dt, config
 					var aggResult = aggInfo.instance.calculate(data.data[rowValIndex][colValIndex]);
 					newRow.push(aggResult);
 					if (aggInfo.debug) {
-						console.debug('[DataVis // Graph // Group // Aggregate] Group aggregate (%s) : RowVal [%s] x ColVal [%s] = %s',
+						self.logDebug(self.makeLogTag() + ' Group aggregate (%s) : RowVal [%s] x ColVal [%s] = %s',
 							aggInfo.instance.name + (aggInfo.name ? ' -> ' + aggInfo.name : ''),
 							rowVal.join(', '),
 							colVal.join(', '),
@@ -449,7 +450,7 @@ GraphRendererChartJs.prototype.draw = function (devConfig, userConfig) {
 
 			var obj = deepDefaults({}, graphTypeMap.bar, config);
 
-			console.debug('[DataVis // Graph // Chartjs // Draw] Starting draw: [%O]', obj);
+			self.logDebug(self.makeLogTag() + ' Starting draw: [%O]', obj);
 
 			var chart = new Chart(document.getElementById(id), obj);
 			self.fire('draw', null, config);
