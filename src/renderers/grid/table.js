@@ -490,6 +490,239 @@ GridTable.prototype.setAlignment = function (elt, fcc, fti, overrideType, fallba
 	}
 };
 
+// #_addColumnResizeHandle {{{2
+
+/**
+ * Adds a resize handle to a column header that allows the user to drag to resize the column.
+ *
+ * @param {jQuery} headingTh
+ * The TH element to add the resize handle to.
+ *
+ * @param {string} field
+ * The field name for this column.
+ *
+ * @param {number} colIndex
+ * The column index.
+ */
+
+GridTable.prototype._addColumnResizeHandle = function (headingTh, field, colIndex) {
+	var self = this;
+
+	var resizeHandle = document.createElement('div');
+	resizeHandle.className = 'wcdv_column_resize_handle';
+	resizeHandle.setAttribute('title', trans('GRID.TABLE.RESIZE_COLUMN'));
+	resizeHandle.setAttribute('aria-label', trans('GRID.TABLE.RESIZE_COLUMN'));
+
+	var startX = 0;
+	var startWidth = 0;
+	var isResizing = false;
+
+	var onMouseDown = function (e) {
+		e.preventDefault();
+		e.stopPropagation();
+
+		isResizing = true;
+		startX = e.pageX;
+		startWidth = headingTh.outerWidth();
+
+		// Add a class to the table to indicate we're resizing
+		self.ui.tbl.addClass('wcdv_resizing');
+
+		document.addEventListener('mousemove', onMouseMove);
+		document.addEventListener('mouseup', onMouseUp);
+	};
+
+	var onMouseMove = function (e) {
+		if (!isResizing) return;
+
+		var diff = e.pageX - startX;
+		var newWidth = Math.max(50, startWidth + diff); // Minimum width of 50px
+
+		headingTh.css('width', newWidth + 'px');
+		headingTh.css('min-width', newWidth + 'px');
+
+		// Also update all cells in this column
+		var thIndex = headingTh.index();
+		self.ui.tbody.find('tr').each(function () {
+			var td = jQuery(this).children().eq(thIndex);
+			td.css('width', newWidth + 'px');
+			td.css('min-width', newWidth + 'px');
+		});
+	};
+
+	var onMouseUp = function (e) {
+		if (!isResizing) return;
+
+		isResizing = false;
+		self.ui.tbl.removeClass('wcdv_resizing');
+
+		document.removeEventListener('mousemove', onMouseMove);
+		document.removeEventListener('mouseup', onMouseUp);
+
+		// Save the new width to colConfig
+		var newWidth = headingTh.outerWidth();
+		var fcc = self.colConfig.get(field) || {};
+		fcc.width = newWidth + 'px';
+		self.colConfig.set(field, fcc);
+
+		// Fire columnResize event
+		self.fire('columnResize', { field: field, width: newWidth });
+
+		// Notify the grid about the colConfig update
+		if (self.grid && typeof self.grid.setColConfig === 'function') {
+			self.grid.setColConfig(self.colConfig, {
+				from: 'resize',
+				savePrefs: true
+			});
+		}
+	};
+
+	resizeHandle.addEventListener('mousedown', onMouseDown);
+	headingTh.get(0).appendChild(resizeHandle);
+	headingTh.addClass('wcdv_resizable_column');
+};
+
+// #_addColumnReorderHandler {{{2
+
+/**
+ * Makes a column header draggable to allow reordering columns via drag-and-drop.
+ *
+ * @param {jQuery} headingTh
+ * The TH element to make draggable.
+ *
+ * @param {string} field
+ * The field name for this column.
+ *
+ * @param {number} colIndex
+ * The column index.
+ *
+ * @param {Array.<string>} columns
+ * The array of column field names.
+ */
+
+GridTable.prototype._addColumnReorderHandler = function (headingTh, field, colIndex, columns) {
+	var self = this;
+	var dragHandle = headingTh.find('.wcdv_heading_title');
+
+	if (dragHandle.length === 0) {
+		dragHandle = headingTh;
+	}
+
+	dragHandle.attr('title', trans('GRID.TABLE.REORDER_COLUMN'));
+	dragHandle.css('cursor', 'grab');
+
+	headingTh.attr('draggable', 'true');
+	headingTh.addClass('wcdv_reorderable_column');
+
+	headingTh.on('dragstart', function (e) {
+		e.originalEvent.dataTransfer.effectAllowed = 'move';
+		e.originalEvent.dataTransfer.setData('text/plain', field);
+		headingTh.addClass('wcdv_column_dragging');
+		self._dragSourceField = field;
+		self._dragSourceIndex = colIndex;
+	});
+
+	headingTh.on('dragend', function (e) {
+		headingTh.removeClass('wcdv_column_dragging');
+		jQuery('.wcdv_column_drop_target').removeClass('wcdv_column_drop_target');
+		delete self._dragSourceField;
+		delete self._dragSourceIndex;
+	});
+
+	headingTh.on('dragover', function (e) {
+		e.preventDefault();
+		e.originalEvent.dataTransfer.dropEffect = 'move';
+
+		if (self._dragSourceField && self._dragSourceField !== field) {
+			headingTh.addClass('wcdv_column_drop_target');
+		}
+	});
+
+	headingTh.on('dragleave', function (e) {
+		headingTh.removeClass('wcdv_column_drop_target');
+	});
+
+	headingTh.on('drop', function (e) {
+		e.preventDefault();
+		headingTh.removeClass('wcdv_column_drop_target');
+
+		var sourceField = self._dragSourceField;
+		var sourceIndex = self._dragSourceIndex;
+
+		if (!sourceField || sourceField === field) {
+			return;
+		}
+
+		// Find the target index
+		var targetIndex = colIndex;
+
+		// Reorder the columns in colConfig
+		self._reorderColumn(sourceField, sourceIndex, targetIndex);
+	});
+};
+
+// #_reorderColumn {{{2
+
+/**
+ * Reorders a column from one position to another.
+ *
+ * @param {string} sourceField
+ * The field being moved.
+ *
+ * @param {number} fromIndex
+ * The original index of the column.
+ *
+ * @param {number} toIndex
+ * The target index for the column.
+ */
+
+GridTable.prototype._reorderColumn = function (sourceField, fromIndex, toIndex) {
+	var self = this;
+
+	// Get all keys in order
+	var keys = self.colConfig.keys();
+
+	// Remove the source field from its current position
+	var actualFromIndex = keys.indexOf(sourceField);
+	if (actualFromIndex === -1) {
+		return;
+	}
+
+	keys.splice(actualFromIndex, 1);
+
+	// Insert at the new position
+	// Adjust target index if needed (if we removed an item before the target)
+	var adjustedToIndex = toIndex;
+	if (actualFromIndex < toIndex) {
+		adjustedToIndex -= 1;
+	}
+
+	keys.splice(adjustedToIndex, 0, sourceField);
+
+	// Rebuild colConfig with new order
+	var OrdMap = self.colConfig.constructor;
+	var newColConfig = new OrdMap();
+
+	keys.forEach(function (key) {
+		newColConfig.set(key, self.colConfig.get(key));
+	});
+
+	self.colConfig = newColConfig;
+
+	// Notify the grid about the colConfig update
+	if (self.grid && typeof self.grid.setColConfig === 'function') {
+		self.grid.setColConfig(self.colConfig, {
+			from: 'reorder',
+			savePrefs: true
+		});
+	}
+
+	// Redraw the table with the new column order
+	if (self.grid && typeof self.grid.redraw === 'function') {
+		self.grid.redraw();
+	}
+};
+
 // #_addSortingToHeader {{{2
 
 /**

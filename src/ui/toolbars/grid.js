@@ -90,6 +90,22 @@ var PlainToolbar = makeSubclass('PlainToolbar', ToolbarSection, function (grid) 
 		})
 		.appendTo(self.ui.root)
 	;
+
+	// Row Mode toggle (Clipped vs Wrapped)
+	self.ui.rowMode = makeRadioButtons(
+		grid.defn
+		, ['table', 'rowMode']
+		, 'wrapped'
+		, null
+		, 'rowMode'
+		, [{label: trans('GRID_TOOLBAR.PLAIN.ROW_MODE.WRAPPED'), value: 'wrapped'}
+			, {label: trans('GRID_TOOLBAR.PLAIN.ROW_MODE.CLIPPED'), value: 'clipped'}]
+		, trans('GRID_TOOLBAR.PLAIN.ROW_MODE')
+		, function (selected) {
+			grid.setRowMode(selected);
+		}
+		, self.ui.root
+	);
 });
 
 // #update {{{2
@@ -110,10 +126,12 @@ PlainToolbar.prototype.update = function () {
 	case 'table':
 		self.ui.columnConfig.show();
 		self.ui.TemplatesEditor.hide();
+		self.ui.rowMode.show();
 		break;
 	case 'handlebars':
 		self.ui.columnConfig.hide();
 		self.ui.TemplatesEditor.show();
+		self.ui.rowMode.hide();
 		break;
 	}
 };

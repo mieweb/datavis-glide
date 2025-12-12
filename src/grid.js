@@ -353,6 +353,12 @@ function makeJsonOrderBy(o) {
  * prevents UI freezes while doing so.  However, the overall time required to finish rendering the
  * table goes way up.
  *
+ * @property {boolean} [columnResize=true] If true, allow the user to resize columns by dragging
+ * the column border. Column widths are persisted to the column configuration.
+ *
+ * @property {boolean} [columnReorder=true] If true, allow the user to reorder columns by dragging
+ * column headers to new positions. Column order is persisted to the column configuration.
+ *
  * @property {boolean} [activeRow=false]
  * If true, then clicking a row in plain output makes the row "active." An active row is highlighted
  * and causes other configurable behavior to occur. By default, the slider appears on the right side
@@ -761,6 +767,10 @@ var Grid = makeSubclass('Grid', Object, function (defn, opts, cb) {
 
 	self.ui.grid = jQuery('<div>', { 'id': defn.table.id, 'class': 'wcdv_grid_table' });
 
+	// Apply the initial row mode class
+	var rowMode = getPropDef('wrapped', defn, 'table', 'rowMode');
+	self.ui.grid.addClass('wcdv_row_mode_' + rowMode);
+
 	if (self.rootHasFixedHeight) {
 		// When using TableTool, we can't just set the height of the whole grid and use flex to control
 		// the height of the table automatically.  See DV-196.
@@ -941,6 +951,7 @@ mixinEventHandling(Grid, [
 	, 'renderEnd'
 	, 'colConfigUpdate'
 	, 'selectionChange'
+	, 'rowModeChange'
 ]);
 
 delegate(Grid, 'renderer', ['setSelection', 'getSelection', 'select', 'unselect', 'isSelected']);
@@ -1020,6 +1031,8 @@ Grid.prototype._validateFeatures = function () {
 		'progress',
 		'incremental',
 		'operations',
+		'columnResize',
+		'columnReorder',
 		'activeRow'
 	];
 
@@ -1839,6 +1852,7 @@ Grid.prototype._normalize = function (defn) {
 		prefs: null,
 		table: {
 			groupMode: 'detail',
+			rowMode: 'wrapped',
 			features: {
 				sort: true,
 				filter: true,
@@ -1853,6 +1867,8 @@ Grid.prototype._normalize = function (defn) {
 				floatingHeader: true,
 				block: false,
 				progress: false,
+				columnResize: true,
+				columnReorder: true,
 				activeRow: false
 			},
 			limit: {
@@ -2204,6 +2220,52 @@ Grid.prototype.resetColConfig = function (opts) {
 	});
 
 	self.setColConfig(self.initColConfig.clone(), opts);
+};
+
+// #setRowMode {{{2
+
+/**
+ * Set the row display mode for the grid.
+ *
+ * @param {string} mode
+ * The row mode to use. Must be either "wrapped" (default) or "clipped".
+ * - "wrapped": Cells can wrap text to multiple lines (default behavior)
+ * - "clipped": Single-line cells with text truncated (similar to AG Grid)
+ */
+
+Grid.prototype.setRowMode = function (mode) {
+	var self = this;
+
+	if (['wrapped', 'clipped'].indexOf(mode) < 0) {
+		log.warn('Invalid row mode: ' + mode + '. Using "wrapped" as default.');
+		mode = 'wrapped';
+	}
+
+	self.defn.table.rowMode = mode;
+	self.debug('ROW_MODE', 'Setting row mode to: %s', mode);
+
+	// Update the CSS class on the grid table container
+	if (self.ui && self.ui.grid) {
+		self.ui.grid.removeClass('wcdv_row_mode_wrapped wcdv_row_mode_clipped');
+		self.ui.grid.addClass('wcdv_row_mode_' + mode);
+	}
+
+	// Fire an event for any listeners
+	self.fire('rowModeChange', mode);
+};
+
+// #getRowMode {{{2
+
+/**
+ * Get the current row display mode for the grid.
+ *
+ * @returns {string} The current row mode ("wrapped" or "clipped").
+ */
+
+Grid.prototype.getRowMode = function () {
+	var self = this;
+
+	return getPropDef('wrapped', self.defn, 'table', 'rowMode');
 };
 
 // #isIdle {{{2
