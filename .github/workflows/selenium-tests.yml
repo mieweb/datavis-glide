@@ -1,0 +1,43 @@
+name: Selenium Tests
+
+on:
+  push:
+    branches: [ master, 'v*.*' ]
+  pull_request:
+    branches: '*'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      
+      - name: Install dependencies
+        run: make setup
+      
+      - name: Build DataVis
+        run: make datavis
+      
+      - name: Run Selenium tests
+        run: ./bin/run-tests.sh
+      
+      - name: Upload test results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: tests/selenium/*.log
+          if-no-files-found: ignore
