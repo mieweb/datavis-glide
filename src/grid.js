@@ -6,7 +6,6 @@ import sprintf from 'sprintf-js';
 import jQuery from 'jquery';
 
 import {
-	debug,
 	deepCopy,
 	deepDefaults,
 	delegate,
@@ -14,12 +13,10 @@ import {
 	getProp,
 	getPropDef,
 	I,
-	log,
 	makeRadioButtons,
 	makeSubclass,
 	makeToggleCheckbox,
 	mixinEventHandling,
-	mixinDebugging,
 	mixinLogging,
 	mixinNameSetting,
 	presentDownload,
@@ -129,7 +126,7 @@ function makeJsonHaving(filters) {
 					h['$ne'] = '';
 					break;
 				default:
-					log.error('Unsupported filter condition "' + filter.condition + '" for type "' + filter.type + '"');
+					self.logError(self.makeLogTag() + ' Unsupported filter condition "' + filter.condition + '" for type "' + filter.type + '"');
 					isSupported = false;
 			}
 			if (isSupported) {
@@ -486,8 +483,8 @@ var Grid = makeSubclass('Grid', Object, function (defn, opts, cb) {
 	self._validateFeatures();
 	self._validateId(self.defn.id);
 
-	self.debug(null, 'Definition: %O', defn);
-	self.debug(null, 'Options: %O', opts);
+	self.logDebug(self.makeLogTag() + ' Definition: %O', defn);
+	self.logDebug(self.makeLogTag() + ' Options: %O', opts);
 
 	// Check the validity of the provided computed/mirage views and prefs.
 
@@ -510,17 +507,17 @@ var Grid = makeSubclass('Grid', Object, function (defn, opts, cb) {
 	// Create default versions of the computed/mirage views and prefs if none were provided.
 
 	if (self.computedView == null) {
-		self.debug('COMPUTED VIEW', 'No computed view specified, creating our own.');
+		self.logDebug(self.makeLogTag() + ' No computed view specified, creating our own.');
 		self.computedView = new ComputedView();
 	}
 
 	if (self.mirageView == null) {
-		self.debug('MIRAGE VIEW', 'No mirage view specified, creating our own.');
+		self.logDebug(self.makeLogTag() + ' No mirage view specified, creating our own.');
 		self.mirageView = new MirageView();
 	}
 
 	if (self.prefs == null) {
-		self.debug('PREFS', 'No prefs specified, creating our own.');
+		self.logDebug(self.makeLogTag() + ' No prefs specified, creating our own.');
 		self.prefs = new Prefs(self.id);
 	}
 
@@ -783,7 +780,7 @@ var Grid = makeSubclass('Grid', Object, function (defn, opts, cb) {
 	var initialRender = true;
 
 	self.tableDoneCont = function (grid, srcIndex) {
-		self.debug(null, 'Finished drawing grid table!');
+		self.logDebug(self.makeLogTag() + ' Finished drawing grid table!');
 
 		if (initialRender) {
 			initialRender = false;
@@ -908,7 +905,6 @@ mixinEventHandling(Grid, [
 
 delegate(Grid, 'renderer', ['setSelection', 'getSelection', 'select', 'unselect', 'isSelected']);
 
-mixinDebugging(Grid);
 mixinLogging(Grid);
 mixinNameSetting(Grid);
 
@@ -998,7 +994,7 @@ Grid.prototype._validateFeatures = function () {
 		self.features[feat] = getPropDef(false, self.defn, 'table', 'features', feat);
 	});
 
-	self.debug(null, 'Features =', self.features);
+	self.logDebug(self.makeLogTag() + ' Features =', self.features);
 };
 
 // #_validateId {{{2
@@ -1039,12 +1035,12 @@ Grid.prototype.setView = function () {
 	// Otherwise, configure the grid to use a MirageView.
 
 	if (p.isMirage()) {
-		self.debug('SET VIEW', 'Switching to Mirage View for pre-computed data for perspective "%s"', p.name);
+		self.logDebug(self.makeLogTag('setView') + ' Switching to Mirage View for pre-computed data for perspective "%s"', p.name);
 		self.view = self.prefs.modules['mirage'].target;
 		self.view.setPerspectiveName(p.name);
 	}
 	else {
-		self.debug('SET VIEW', 'Switching to Computed View for live data for perspective "%s"', p.name);
+		self.logDebug(self.makeLogTag('setView') + ' Switching to Computed View for live data for perspective "%s"', p.name);
 		self.view = self.prefs.modules['view'].target;
 	}
 };
@@ -1299,7 +1295,7 @@ Grid.prototype.redraw = function (contOk, contFail) {
 	contOk = contOk || I;
 	contFail = contFail || I;
 
-	self.debug(null, 'Redrawing...');
+	self.logDebug(self.makeLogTag() + ' Redrawing...');
 
 	var rendererCtor
 		, rendererCtorOpts;
@@ -1433,7 +1429,7 @@ Grid.prototype.refresh = function () {
 		return;
 	}
 
-	self.debug(null, 'Refreshing...');
+	self.logDebug(self.makeLogTag() + ' Refreshing...');
 
 	self._isIdle = false;
 	self.view.refresh();
@@ -1491,7 +1487,7 @@ Grid.prototype._updateRowCount = function (info, ops) {
 	var doingServerFilter = getProp(self.defn, 'server', 'filter') && getProp(self.defn, 'server', 'limit') !== -1;
 	var text = [];
 
-	self.debug(null, 'Updating row count');
+	self.logDebug(self.makeLogTag() + ' Updating row count');
 
 	// When there's no titlebar, there's nothing for us to do here.
 
@@ -1553,7 +1549,7 @@ Grid.prototype._updateRowCount = function (info, ops) {
 Grid.prototype.hide = function () {
 	var self = this;
 
-	self.debug(null, 'Hiding...');
+	self.logDebug(self.makeLogTag() + ' Hiding...');
 
 	self.ui.content.hide({
 		duration: 0,
@@ -1584,7 +1580,7 @@ Grid.prototype.show = function (opts) {
 		redraw: true
 	});
 
-	self.debug(null, 'Showing...');
+	self.logDebug(self.makeLogTag() + ' Showing...');
 
 	self.ui.content.show({
 		duration: 0,
@@ -1867,7 +1863,7 @@ Grid.prototype._normalizeColumns = function (defn) {
 		}
 
 		if (typeof cc.field !== 'string') {
-			log.warn('Column Configuration: `field` must be a string');
+			self.logWarning(self.makeLogTag() + ' Column Configuration: `field` must be a string');
 			continue;
 		}
 
@@ -1891,7 +1887,7 @@ Grid.prototype._normalizeColumns = function (defn) {
 
 		if (cc.widget === 'checkbox') {
 			if (cc.filter !== undefined && cc.filter !== 'checkbox') {
-				log.warn('Overriding configuration to use filter type "' + cc.filter + '" for checkbox widgets.');
+				self.logWarning(self.makeLogTag() + ' Overriding configuration to use filter type "' + cc.filter + '" for checkbox widgets.');
 			}
 			cc.filter = 'checkbox';
 		}
@@ -1992,7 +1988,7 @@ Grid.prototype.setColConfig = function (colConfig, opts) {
 	}
 
 	var setCurrent = function () {
-		self.debug('COLCONFIG', 'Setting from %s: %O', opts.from || '[unknown]', colConfig);
+		self.logDebug(self.makeLogTag('colConfig') + ' Setting from %s: %O', opts.from || '[unknown]', colConfig);
 		self.colConfig = colConfig;
 		self.colConfigSource = opts.from;
 
@@ -2000,13 +1996,13 @@ Grid.prototype.setColConfig = function (colConfig, opts) {
 			self.renderer.colConfig = self.colConfig;
 		}
 
-		self.debug('COLCONFIG', 'Setting shadow from %s: %O', opts.from || '[unknown]', colConfig);
+		self.logDebug(self.makeLogTag('colConfig') + ' Setting shadow from %s: %O', opts.from || '[unknown]', colConfig);
 		self.shadowColConfig = colConfig.clone();
 		updated = true;
 	};
 
 	var setInitial = function () {
-		self.debug('COLCONFIG', 'Setting initial from %s: %O', opts.from || '[unknown]', colConfig);
+		self.logDebug(self.makeLogTag('colConfig') + ' Setting initial from %s: %O', opts.from || '[unknown]', colConfig);
 		self.initColConfig = colConfig.clone();
 	};
 
@@ -2021,7 +2017,7 @@ Grid.prototype.setColConfig = function (colConfig, opts) {
 
 	var addMissing = function (src, srcMsg, dst, dstMsg) {
 		var count = dst.mergeWith(src);
-		self.debug('COLCONFIG', 'Merged %d fields from %s into %s', count, srcMsg, dstMsg);
+		self.logDebug(self.makeLogTag('colConfig') + ' Merged %d fields from %s into %s', count, srcMsg, dstMsg);
 		return count;
 	};
 
@@ -2044,7 +2040,7 @@ Grid.prototype.setColConfig = function (colConfig, opts) {
 		});
 
 		if (absent.length > 0) {
-			self.debug('COLCONFIG', 'Removing %d fields from %s which are absent from %s: %O',
+			self.logDebug(self.makeLogTag('colConfig') + ' Removing %d fields from %s which are absent from %s: %O',
 				absent.length, dstMsg, srcMsg, absent);
 			_.each(absent, function (fieldName) {
 				dst.unset(fieldName);
@@ -2157,7 +2153,7 @@ Grid.prototype.getColConfig = function (colConfig) {
 Grid.prototype.resetColConfig = function (opts) {
 	var self = this;
 
-	self.debug('COLCONFIG', 'Resetting to: %O', self.initColConfig);
+	self.logDebug(self.makeLogTag('colConfig') + ' Resetting to: %O', self.initColConfig);
 
 	opts = deepDefaults(opts, {
 		from: 'reset',
@@ -2212,7 +2208,7 @@ Grid.prototype.colConfigFromTypeInfo = function (typeInfo, opts) {
 		});
 	});
 
-	self.debug(null, 'Creating colConfig from typeInfo: %O -> %O', typeInfo.asMap(), typeInfoColConfig.asMap());
+	self.logDebug(self.makeLogTag() + ' Creating colConfig from typeInfo: %O -> %O', typeInfo.asMap(), typeInfoColConfig.asMap());
 
 	//self.setColConfig(self.colConfig == null
 	//	? typeInfoColConfig
@@ -2243,7 +2239,7 @@ Grid.prototype.makeResponsive = function () {
 	var self = this;
 
 	if (window.ResizeObserver == null) {
-		log.warn('ResizeObserver is not supported; grid will not be responsive.');
+		self.logWarning(self.makeLogTag() + ' ResizeObserver is not supported; grid will not be responsive.');
 		return;
 	}
 
@@ -2260,7 +2256,7 @@ Grid.prototype.makeResponsive = function () {
 			timer = null;
 			var renderer = self.findRenderer(elts[0].contentRect.width, self.mode);
 			if (renderer.id !== self.rendererId) {
-				self.debug('Resize', 'Resized to ' + elts[0].contentRect.width + '; using renderer: %O', renderer);
+				self.logDebug(self.makeLogTag() + ' Resized to ' + elts[0].contentRect.width + '; using renderer: %O', renderer);
 				self.redraw();
 			}
 		}, 500);

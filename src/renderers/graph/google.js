@@ -7,13 +7,12 @@ import jQuery from 'jquery';
 
 import {
 	dataURItoBlob,
-	debug,
 	deepCopy,
 	deepDefaults,
 	getProp,
 	loadScript,
-	log,
 	makeSubclass,
+	mixinLogging,
 	setProp,
 } from '../../util/misc.js';
 import {AggregateInfo} from '../../aggregates';
@@ -22,6 +21,7 @@ import {GROUP_FUNCTION_REGISTRY} from '../../group_fun.js';
 import OrdMap from '../../util/ordmap.js';
 import { GraphRenderer } from '../../graph_renderer.js';
 import { Source } from '../../source.js';
+import { trans } from '../../trans.js';
 
 // GraphRendererGoogle {{{1
 
@@ -52,6 +52,8 @@ var GraphRendererGoogle = makeSubclass('GraphRendererGoogle', GraphRenderer, nul
 		modes: ['plain'],
 	}], 'value')
 });
+
+mixinLogging(GraphRendererGoogle);
 
 // #draw_plain {{{2
 
@@ -134,7 +136,7 @@ GraphRendererGoogle.prototype.draw_plain = function (data, typeInfo, dt, config)
 		var missingRequired = false;
 		_.each(cols, function (c) {
 			if (c.required && !typeInfo.isSet(c.field)) {
-				console.error('[DataVis // Graph(Google) // Gantt] Missing required data field: %s', c.field);
+				self.logError(self.makeLogTag() + ' Missing required data field: %s', c.field);
 				missingRequired = true;
 			}
 		});
@@ -218,11 +220,11 @@ GraphRendererGoogle.prototype.draw_group = function (data, typeInfo, dt, config)
 	if (config.aggType != null && config.aggNum != null) {
 		var aggInfo = getProp(data, 'agg', 'info', config.aggType, config.aggNum);
 		if (aggInfo == null) {
-			log.error('The specified aggregate does not exist: ' + config.aggType + '[' + config.aggNum + ']');
+			self.logError(self.makeLogTag() + ' The specified aggregate does not exist: ' + config.aggType + '[' + config.aggNum + ']');
 			return null;
 		}
 		if (data.agg.results[config.aggType][config.aggNum] == null) {
-			log.error('No results exist for the specified aggregate: ' + config.aggType + '[' + config.aggNum + ']');
+			self.logError(self.makeLogTag() + ' No results exist for the specified aggregate: ' + config.aggType + '[' + config.aggNum + ']');
 			return null;
 		}
 		var name = aggInfo.name || aggInfo.instance.getFullName();
@@ -269,7 +271,7 @@ GraphRendererGoogle.prototype.draw_group = function (data, typeInfo, dt, config)
 				var aggResult = aggInfo.instance.calculate(_.flatten(data.data[rowValIdx]));
 				newRow.push(aggResult);
 				if (aggInfo.debug) {
-					debug.info('GRAPH // GROUP // AGGREGATE', 'Group aggregate (%s) : Group [%s] = %s',
+					self.logDebug(self.makeLogTag() + ' Group aggregate (%s) : Group [%s] = %s',
 						aggInfo.instance.name + (aggInfo.name ? ' -> ' + aggInfo.name : ''),
 						rowVal.join(', '),
 						JSON.stringify(aggResult));
@@ -310,11 +312,11 @@ GraphRendererGoogle.prototype.draw_pivot = function (data, typeInfo, dt, config)
 	if (config.aggType != null && config.aggNum != null) {
 		var aggInfo = getProp(data, 'agg', 'info', config.aggType, config.aggNum);
 		if (aggInfo == null) {
-			log.error('The specified aggregate does not exist: ' + config.aggType + '[' + config.aggNum + ']');
+			self.logError(self.makeLogTag() + ' The specified aggregate does not exist: ' + config.aggType + '[' + config.aggNum + ']');
 			return null;
 		}
 		if (data.agg.results[config.aggType][config.aggNum] == null) {
-			log.error('No results exist for the specified aggregate: ' + config.aggType + '[' + config.aggNum + ']');
+			self.logError(self.makeLogTag() + ' No results exist for the specified aggregate: ' + config.aggType + '[' + config.aggNum + ']');
 			return null;
 		}
 		var name = aggInfo.name || aggInfo.instance.getFullName();
@@ -403,7 +405,7 @@ GraphRendererGoogle.prototype.draw_pivot = function (data, typeInfo, dt, config)
 					var aggResult = aggInfo.instance.calculate(data.data[rowValIndex][colValIndex]);
 					newRow.push(aggResult);
 					if (aggInfo.debug) {
-						debug.info('GRAPH // GROUP // AGGREGATE', 'Group aggregate (%s) : RowVal [%s] x ColVal [%s] = %s',
+						self.logDebug(self.makeLogTag() + ' Group aggregate (%s) : RowVal [%s] x ColVal [%s] = %s',
 							aggInfo.instance.name + (aggInfo.name ? ' -> ' + aggInfo.name : ''),
 							rowVal.join(', '),
 							colVal.join(', '),
@@ -422,13 +424,15 @@ GraphRendererGoogle.prototype.draw_pivot = function (data, typeInfo, dt, config)
 // #_ensureGoogleChartsLoaded {{{2
 
 GraphRendererGoogle.prototype._ensureGoogleChartsLoaded = function (cont) {
+	var self = this;
+
 	return loadScript('https://www.gstatic.com/charts/loader.js', function (wasAlreadyLoaded, k) {
 		var cb = function () {
 			k();
 			cont();
 		};
 		if (!wasAlreadyLoaded) {
-			debug.info('GRAPH // GOOGLE // DRAW', 'Loading support for Google Charts');
+			self.logDebug(self.makeLogTag() + ' Loading support for Google Charts');
 			window.google.charts.load('current', {'packages': ['corechart', 'gantt']});
 			window.google.charts.setOnLoadCallback(cb);
 		}
@@ -471,7 +475,7 @@ GraphRendererGoogle.prototype.draw = function (devConfig, userConfig) {
 				};
 
 				if (data.data.length === 0) {
-					makeMessage('No Data');
+					makeMessage(trans('DATA.NO_DATA'));
 					return;
 				}
 
@@ -489,7 +493,7 @@ GraphRendererGoogle.prototype.draw = function (devConfig, userConfig) {
 				}
 
 				if (config == null) {
-					makeMessage('Nothing to Graph');
+					makeMessage(trans('DATA.NOTHING_TO_GRAPH'));
 					return;
 				}
 
@@ -540,7 +544,7 @@ GraphRendererGoogle.prototype.draw = function (devConfig, userConfig) {
 				google.visualization.events.addListener(chart, 'select', function () {
 					var sel = chart.getSelection();
 					_.each(sel, function (o) {
-						debug.info('GRAPH // DRILL DOWN', 'User selected element in graph: row = %s, column = %s, value = %s, formattedValue = %s', o.row, o.column, dt.getValue(o.row, o.column), dt.getFormattedValue(o.row, o.column));
+						self.logDebug(self.makeLogTag() + ' User selected element in graph: row = %s, column = %s, value = %s, formattedValue = %s', o.row, o.column, dt.getValue(o.row, o.column), dt.getFormattedValue(o.row, o.column));
 
 						var filter = deepCopy(self.view.getFilter());
 
@@ -563,8 +567,7 @@ GraphRendererGoogle.prototype.draw = function (devConfig, userConfig) {
 							});
 						}
 
-						debug.info('GRAPH // DRILL DOWN',
-							'Creating new perspective: filter = %O', filter);
+						self.logDebug(self.makeLogTag() + ' Creating new perspective: filter = %O', filter);
 
 						window.setTimeout(function () {
 							self.view.prefs.addPerspective(null, 'Drill Down', { view: { filter: filter } }, { isTemporary: true }, null, { onDuplicate: 'replace' });
@@ -572,7 +575,7 @@ GraphRendererGoogle.prototype.draw = function (devConfig, userConfig) {
 					});
 				});
 
-				debug.info('GRAPH // GOOGLE // DRAW', 'Starting draw: [config = %O ; options = %O]', config, options);
+				self.logDebug(self.makeLogTag() + ' Starting draw: [config = %O ; options = %O]', config, options);
 				chart.draw(dt, options);
 				self.fire('draw', null, config);
 			});

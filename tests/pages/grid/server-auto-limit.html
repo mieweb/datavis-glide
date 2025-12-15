@@ -38,10 +38,10 @@ $(document).ready(function () {
 			}
 		})
 	]);
-	var computedView = new MIE.WC_DataVis.ComputedView(source);
+	var view = new MIE.WC_DataVis.ComputedView(source);
 	new MIE.WC_DataVis.Grid({
 		id: 'grid',
-		computedView: computedView,
+		computedView: view,
 	}, {
 		title: 'Test - Grid - Server Side Limit',
 		showControls: true

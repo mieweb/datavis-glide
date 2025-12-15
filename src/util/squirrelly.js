@@ -5,7 +5,6 @@ import Handlebars from 'handlebars';
 import jQuery from 'jquery';
 
 import {
-	debug,
 	format,
 	getPropDef,
 	objFromArray,

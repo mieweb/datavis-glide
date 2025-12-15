@@ -1,8 +1,6 @@
 /** @module util */
 
-const http = require('http');
-const server = require('./server.js');
-
+const vite = require('vite');
 const _ = require('lodash');
 const {By, Key} = require('selenium-webdriver');
 const child_process = require('child_process');
@@ -376,16 +374,13 @@ function sleep(time) {
 function setupServer() {
 	let s;
 
-	before(function () {
-		s = http.createServer(server.handler({
-      cleanUrls: false,
-			public: 'tests/pages'
-    }));
-		return s.listen(3000);
+	before(async function () {
+		s = await vite.createServer();
+		await s.listen(3000);
 	});
 
-	after(function () {
-		return s.close();
+	after(async function () {
+		await s.close();
 	});
 }
 

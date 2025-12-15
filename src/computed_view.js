@@ -13,7 +13,6 @@ import {
 	car,
 	cdr,
 	copyProps,
-	debug,
 	deepCopy,
 	deepDefaults,
 	delegate,
@@ -27,18 +26,16 @@ import {
 	I,
 	interleaveWith,
 	isElement,
-	log,
 	logAsync,
 	makeSubclass,
 	mergeSort4,
-	mixinDebugging,
 	mixinEventHandling,
+	mixinLogging,
 	mixinNameSetting,
 	objFromArray,
 	pigeonHoleSort,
 	setProp,
 	Timing,
-	mixinLogging,
 } from './util/misc.js';
 import OrdMap from './util/ordmap.js';
 import Lock from './util/lock.js';
@@ -170,7 +167,6 @@ mixinEventHandling(ComputedView, [
 
 delegate(ComputedView, 'source', ['getUniqueVals', 'decodeAll', 'setToolbar']);
 
-mixinDebugging(ComputedView);
 mixinLogging(ComputedView);
 mixinNameSetting(ComputedView);
 
@@ -438,7 +434,7 @@ ComputedView.prototype.setSort = function (spec, opts) {
 		savePrefs: true
 	});
 
-	self.debug('SET SORT', 'spec = %O', spec);
+	self.logDebug(self.makeLogTag('setSort') + ' spec = %O', spec);
 
 	isDifferent = !_.isEqual(self.sortSpec, spec);
 
@@ -494,7 +490,7 @@ ComputedView.prototype.sort = function (cont) {
 		return cont(false);
 	}
 
-	self.debug('SORT', 'Beginning sort: %s', JSON.stringify(self.sortSpec));
+	self.logDebug(self.makeLogTag('sort') + ' Beginning sort: %s', JSON.stringify(self.sortSpec));
 
 	/**
 	 * Determine the comparison function that should be used to perform the sort operation.
@@ -515,7 +511,7 @@ ComputedView.prototype.sort = function (cont) {
 		var cmp;
 
 		if (fti == null) {
-			log.error('Unable to sort: no type information {spec = %O}', spec);
+			self.logError(self.makeLogTag() + ' Unable to sort: no type information {spec = %O}', spec);
 			return null;
 		}
 
@@ -526,7 +522,7 @@ ComputedView.prototype.sort = function (cont) {
 		}
 
 		if (fti.type == null) {
-			log.error('Unable to sort: type unknown {spec = %O, fti = %O}', spec, fti);
+			self.logError(self.makeLogTag() + ' Unable to sort: type unknown {spec = %O, fti = %O}', spec, fti);
 			return null;
 		}
 
@@ -535,14 +531,14 @@ ComputedView.prototype.sort = function (cont) {
 		cmp = getComparisonFn.byType(fti.type);
 
 		if (cmp == null) {
-			log.error('Unable to sort: no comparison function for type {spec = %O, type = %s}', spec, fti.type);
+			self.logError(self.makeLogTag() + ' Unable to sort: no comparison function for type {spec = %O, type = %s}', spec, fti.type);
 			return null;
 		}
 
 		// This should never happen, because that would imply that getComparisonFn.byType() is broken.
 
 		if (typeof cmp !== 'function') {
-			log.error('Unable to sort: invalid comparison function for type {spec = %O, type = %s}', spec, fti.type);
+			self.logError(self.makeLogTag() + ' Unable to sort: invalid comparison function for type {spec = %O, type = %s}', spec, fti.type);
 			return null;
 		}
 
@@ -568,7 +564,7 @@ ComputedView.prototype.sort = function (cont) {
 		var bundle, len;
 
 		if (sortSourceFn == null) {
-			log.error('Unable to sort: no sort source function given {spec = %O}', spec);
+			self.logError(self.makeLogTag() + ' Unable to sort: no sort source function given {spec = %O}', spec);
 			return null;
 		}
 
@@ -604,7 +600,7 @@ ComputedView.prototype.sort = function (cont) {
 
 	var unpackBundle = function (orientation) {
 		return function (sorted) {
-			self.debug('SORT // UNPACK',
+			self.logDebug(self.makeLogTag() + ' SORT // UNPACK',
 				'Unpacking bundle of %d sorted chunks in %s orientation',
 				sorted.length, orientation);
 
@@ -807,7 +803,7 @@ ComputedView.prototype.sort = function (cont) {
 
 		if (self.data.isPlain) {
 			if (orientation === 'horizontal') {
-				log.error('Unable to sort: cannot perform horizontal sort on plain data');
+				self.logError(self.makeLogTag() + ' Unable to sort: cannot perform horizontal sort on plain data');
 				return next(false);
 			}
 			if (spec.field) {
@@ -828,14 +824,14 @@ ComputedView.prototype.sort = function (cont) {
 		}
 		else if (self.data.isGroup) {
 			if (orientation === 'horizontal') {
-				log.error('Unable to sort: cannot perform horizontal sort on grouped data');
+				self.logError(self.makeLogTag() + ' Unable to sort: cannot perform horizontal sort on grouped data');
 				return next(false);
 			}
 			if (spec.field != null) {
 				gfi = self.data.groupFields.indexOf(spec.field);
 
 				if (gfi < 0) {
-					log.error('Unable to sort: `field` property does not refer to a grouped field ' +
+					self.logError(self.makeLogTag() + ' Unable to sort: `field` property does not refer to a grouped field ' +
 						'{field = "%s", groupFields = %s}', spec.field, self.data.groupFields);
 				}
 				else {
@@ -855,7 +851,7 @@ ComputedView.prototype.sort = function (cont) {
 				//   This sorts groups by the value of one group field.
 
 				if (spec.groupFieldIndex < 0 || spec.groupFieldIndex >= self.data.groupFields.length) {
-					log.error('Unable to sort: groupFieldIndex out of range {spec = %O, range = [0,%d]}',
+					self.logError(self.makeLogTag() + ' Unable to sort: groupFieldIndex out of range {spec = %O, range = [0,%d]}',
 										spec, self.data.groupFields.length);
 					return next(false);
 				}
@@ -892,7 +888,7 @@ ComputedView.prototype.sort = function (cont) {
 				//   This sorts groups by the result of an aggregate function applied to a group.
 
 				if (spec.aggNum < 0 || spec.aggNum >= aggInfo.group.length) {
-					log.error('Unable to sort: aggNum out of range {spec = %O, range = [0,%d]}',
+					self.logError(self.makeLogTag() + ' Unable to sort: aggNum out of range {spec = %O, range = [0,%d]}',
 										spec, aggInfo.group.length);
 					return next(false);
 				}
@@ -920,7 +916,7 @@ ComputedView.prototype.sort = function (cont) {
 					gfi = self.data.groupFields.indexOf(spec.field);
 
 					if (gfi < 0) {
-						log.error('Unable to sort: `field` property does not refer to a grouped field ' +
+						self.logError(self.makeLogTag() + ' Unable to sort: `field` property does not refer to a grouped field ' +
 							'{field = "%s", groupFields = %s}', spec.field, self.data.groupFields);
 					}
 					else {
@@ -932,7 +928,7 @@ ComputedView.prototype.sort = function (cont) {
 					var pfi = self.data.pivotFields.indexOf(spec.field);
 
 					if (pfi < 0) {
-						log.error('Unable to sort: `field` property does not refer to a pivotted field ' +
+						self.logError(self.makeLogTag() + ' Unable to sort: `field` property does not refer to a pivotted field ' +
 							'{field = "%s", pivotFields = %s}', spec.field, self.data.pivotFields);
 					}
 					else {
@@ -950,7 +946,7 @@ ComputedView.prototype.sort = function (cont) {
 				//   * groupFieldIndex: number
 
 				if (spec.groupFieldIndex < 0 || spec.groupFieldIndex >= self.data.groupFields.length) {
-					log.error('Unable to sort: groupFieldIndex out of range {spec = %O, range = [0,%d]}',
+					self.logError(self.makeLogTag() + ' Unable to sort: groupFieldIndex out of range {spec = %O, range = [0,%d]}',
 										spec, self.data.groupFields.length);
 					return next(false);
 				}
@@ -992,19 +988,19 @@ ComputedView.prototype.sort = function (cont) {
 						}
 					}
 					if (spec.rowValIndex === -1) {
-						log.error('Unable to sort: invalid rowVal {spec = %O}', spec);
+						self.logError(self.makeLogTag() + ' Unable to sort: invalid rowVal {spec = %O}', spec);
 						return next(false);
 					}
 				}
 
 				if (spec.rowValIndex < 0 || spec.rowValIndex >= self.data.rowVals.length) {
-					log.error('Unable to sort: rowValIndex out of range {spec = %O, range = [0,%d]}',
+					self.logError(self.makeLogTag() + ' Unable to sort: rowValIndex out of range {spec = %O, range = [0,%d]}',
 										spec, self.data.rowVals.length);
 					return next(false);
 				}
 
 				if (spec.aggNum < 0 || spec.aggNum >= aggInfo.cell.length) {
-					log.error('Unable to sort: aggNum out of range {spec = %O, range = [0,%d]}',
+					self.logError(self.makeLogTag() + ' Unable to sort: aggNum out of range {spec = %O, range = [0,%d]}',
 										spec, aggInfo.cell.length);
 					return next(false);
 				}
@@ -1022,7 +1018,7 @@ ComputedView.prototype.sort = function (cont) {
 				//   * pivotFieldIndex: number
 
 				if (spec.pivotFieldIndex < 0 || spec.pivotFieldIndex >= self.data.pivotFields.length) {
-					log.error('Unable to sort: pivotFieldIndex out of range {spec = %O, range = [0,%d]}',
+					self.logError(self.makeLogTag() + ' Unable to sort: pivotFieldIndex out of range {spec = %O, range = [0,%d]}',
 										spec, self.data.pivotFields.length);
 					return next(false);
 				}
@@ -1064,19 +1060,19 @@ ComputedView.prototype.sort = function (cont) {
 						}
 					}
 					if (spec.colValIndex === -1) {
-						log.error('Unable to sort: invalid colVal {spec = %O}', spec);
+						self.logError(self.makeLogTag() + ' Unable to sort: invalid colVal {spec = %O}', spec);
 						return next(false);
 					}
 				}
 
 				if (spec.colValIndex < 0 || spec.colValIndex >= self.data.colVals.length) {
-					log.error('Unable to sort: colValIndex out of range {spec = %O, range = [0,%d]}',
+					self.logError(self.makeLogTag() + ' Unable to sort: colValIndex out of range {spec = %O, range = [0,%d]}',
 										spec, self.data.colVals.length);
 					return next(false);
 				}
 
 				if (spec.aggNum < 0 || spec.aggNum >= aggInfo.cell.length) {
-					log.error('Unable to sort: aggNum out of range {spec = %O, range = [0,%d]}',
+					self.logError(self.makeLogTag() + ' Unable to sort: aggNum out of range {spec = %O, range = [0,%d]}',
 										spec, aggInfo.cell.length);
 					return next(false);
 				}
@@ -1095,7 +1091,7 @@ ComputedView.prototype.sort = function (cont) {
 				//   * aggNum: number
 
 				if (spec.aggNum < 0 || spec.aggNum >= aggInfo.pivot.length) {
-					log.error('Unable to sort: aggNum out of range {spec = %O, range = [0,%d]}',
+					self.logError(self.makeLogTag() + ' Unable to sort: aggNum out of range {spec = %O, range = [0,%d]}',
 										spec, aggInfo.pivot.length);
 					return next(false);
 				}
@@ -1114,7 +1110,7 @@ ComputedView.prototype.sort = function (cont) {
 				//   * aggNum: number
 
 				if (spec.aggNum < 0 || spec.aggNum >= aggInfo.group.length) {
-					log.error('Unable to sort: aggNum out of range {spec = %O, range = [0,%d]}',
+					self.logError(self.makeLogTag() + ' Unable to sort: aggNum out of range {spec = %O, range = [0,%d]}',
 										spec, aggInfo.group.length);
 					return next(false);
 				}
@@ -1125,7 +1121,7 @@ ComputedView.prototype.sort = function (cont) {
 				};
 			}
 			else {
-				log.error('Invalid sort spec for pivotted data: ' + JSON.stringify(spec));
+				self.logError(self.makeLogTag() + ' Invalid sort spec for pivotted data: ' + JSON.stringify(spec));
 				return next(false);
 			}
 		}
@@ -1191,7 +1187,7 @@ ComputedView.prototype.sort = function (cont) {
 
 		var finish = makeFinishCb(unpackBundle(orientation), next);
 
-		self.debug('SORT', 'Performing sort using %s algorithm', sortAlgorithm);
+		self.logDebug(self.makeLogTag('sort') + ' Performing sort using %s algorithm', sortAlgorithm);
 
 		switch (sortAlgorithm) {
 		case 'mergeSort':
@@ -1289,7 +1285,7 @@ ComputedView.prototype.setFilter = function (spec, progress, opts) {
 		savePrefs: true
 	});
 
-	self.debug('SET FILTER', 'spec = %O ; options = %O', spec, opts);
+	self.logDebug(self.makeLogTag('setFilter') + ' spec = %O ; options = %O', spec, opts);
 
 	isDifferent = !_.isEqual(self.filterSpec, spec);
 
@@ -1307,7 +1303,7 @@ ComputedView.prototype.setFilter = function (spec, progress, opts) {
 
 		_.each(spec, function (fieldSpec, field) {
 			if (self.typeInfo.get(field) == null) {
-				log.error('Ignoring filter on field "' + field + '" because it doesn\'t exist in the data');
+				self.logError(self.makeLogTag() + ' Ignoring filter on field "' + field + '" because it doesn\'t exist in the data');
 				delete spec[field];
 			}
 		});
@@ -1404,14 +1400,14 @@ ComputedView.prototype.filter = function (cont) {
 		// us to filter.
 
 		if (fti === undefined) {
-			log.error('Filter field "' + field + '" does not exist in the source');
+			self.logError(self.makeLogTag() + ' Filter field "' + field + '" does not exist in the source');
 			self.fire('invalidFilterField', null, field);
 			delete self.filterSpec[field];
 			return;
 		}
 
 		if (fti.type === undefined) {
-			log.error('Unable to filter field "' + field + '", type is unknown');
+			self.logError(self.makeLogTag() + ' Unable to filter field "' + field + '", type is unknown');
 			self.fire('invalidFilterField', null, field);
 			delete self.filterSpec[field];
 			return;
@@ -1441,7 +1437,7 @@ ComputedView.prototype.filter = function (cont) {
 		// When there's no such column, automatically fail.
 
 		if (datum === undefined) {
-			debug.warn('VIEW (' + self.name + ') // FILTER',
+			self.logDebug(self.makeLogTag() + ' VIEW (' + self.name + ') // FILTER',
 				'Attempted to filter by non-existent column: ' + field);
 			return false;
 		}
@@ -1552,14 +1548,14 @@ ComputedView.prototype.filter = function (cont) {
 					var months = ['JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE', 'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER'];
 
 					if (fti.type !== 'date' && fti.type !== 'datetime') {
-						console.error('Invalid operator "$every" for field "' + field + '" of type "' + fti.type + '"');
+						self.logError(self.makeLogTag() + ' Invalid operator "$every" for field "' + field + '" of type "' + fti.type + '"');
 						return false;
 					}
 					var dayIdx = days.indexOf(operand);
 					var monthIdx = months.indexOf(operand);
 					d = isString ? moment(datum) : isMoment ? datum : null;
 					if (d == null) {
-						console.error('Operator "$every" cannot be applied to data in field "' + field + '" of type "' + fti.type + '" and internal type "' + fti.internalType + '"');
+						self.logError(self.makeLogTag() + ' Operator "$every" cannot be applied to data in field "' + field + '" of type "' + fti.type + '" and internal type "' + fti.internalType + '"');
 						return false;
 					}
 
@@ -1570,19 +1566,19 @@ ComputedView.prototype.filter = function (cont) {
 						return d.month() === monthIdx;
 					}
 					else {
-						console.error('Invalid "$every" operand "' + operand + '" for field "' + field + '"');
+						self.logError(self.makeLogTag() + ' Invalid "$every" operand "' + operand + '" for field "' + field + '"');
 						return false;
 					}
 					break;
 
 				case '$this':
 					if (fti.type !== 'date' && fti.type !== 'datetime') {
-						console.error('Invalid operator "$this" for field "' + field + '" of type "' + fti.type + '"');
+						self.logError(self.makeLogTag() + ' Invalid operator "$this" for field "' + field + '" of type "' + fti.type + '"');
 						return false;
 					}
 					d = isString ? moment(datum) : isMoment ? datum : null;
 					if (d == null) {
-						console.error('Operator "$this" cannot be applied to data in field "' + field + '" of type "' + fti.type + '" and internal type "' + fti.internalType + '"');
+						self.logError(self.makeLogTag() + ' Operator "$this" cannot be applied to data in field "' + field + '" of type "' + fti.type + '" and internal type "' + fti.internalType + '"');
 						return false;
 					}
 					switch (operand) {
@@ -1597,19 +1593,19 @@ ComputedView.prototype.filter = function (cont) {
 					case 'YEAR':
 						return d.format('YYYY') === now.format('YYYY');
 					default:
-						console.error('Invalid "$this" operand "' + operand + '" for field "' + field + '"');
+						self.logError(self.makeLogTag() + ' Invalid "$this" operand "' + operand + '" for field "' + field + '"');
 						return false;
 					}
 					break;
 
 				case '$last':
 					if (fti.type !== 'date' && fti.type !== 'datetime') {
-						console.error('Invalid operator "$last" for field "' + field + '" of type "' + fti.type + '"');
+						self.logError(self.makeLogTag() + ' Invalid operator "$last" for field "' + field + '" of type "' + fti.type + '"');
 						return false;
 					}
 					d = isString ? moment(datum) : isMoment ? datum : null;
 					if (d == null) {
-						console.error('Operator "$last" cannot be applied to data in field "' + field + '" of type "' + fti.type + '" and internal type "' + fti.internalType + '"');
+						self.logError(self.makeLogTag() + ' Operator "$last" cannot be applied to data in field "' + field + '" of type "' + fti.type + '" and internal type "' + fti.internalType + '"');
 						return false;
 					}
 					switch (operand) {
@@ -1624,7 +1620,7 @@ ComputedView.prototype.filter = function (cont) {
 					case 'YEAR':
 						return d.format('YYYY') === now.clone().subtract(1, 'years').format('YYYY');
 					default:
-						console.error('Invalid "$last" operand "' + operand + '" for field "' + field + '"');
+						self.logError(self.makeLogTag() + ' Invalid "$last" operand "' + operand + '" for field "' + field + '"');
 						return false;
 					}
 					break;
@@ -1770,16 +1766,16 @@ ComputedView.prototype.setGroup = function (spec, opts, cont) {
 		savePrefs: true
 	});
 
-	self.debug('SET GROUP', 'spec = %O', spec);
+	self.logDebug(self.makeLogTag('setGroup') + ' spec = %O', spec);
 
 	if (spec == null && self.pivotSpec != null) {
-		log.warn('VIEW (' + self.name + ') // SET GROUP', 'Having a pivot without a group is not allowed');
+		self.logWarning(self.makeLogTag('setGroup') + ' Having a pivot without a group is not allowed');
 		self.clearPivot(opts);
 	}
 
 	if (spec != null) {
 		if (!_.isArray(spec.fieldNames)) {
-			log.warn('VIEW (' + self.name + ') // SET GROUP', '`spec.fieldNames` is not an array');
+			self.logWarning(self.makeLogTag('setGroup') + ' `spec.fieldNames` is not an array');
 			spec.fieldNames = [];
 		}
 
@@ -1806,7 +1802,7 @@ ComputedView.prototype.setGroup = function (spec, opts, cont) {
 
 		spec.fieldNames = _.filter(spec.fieldNames, function (field) {
 			if (self.typeInfo.get(field) == null) {
-				log.error('Ignoring group on field "' + field + '" because it doesn\'t exist in the data');
+				self.logError(self.makeLogTag() + ' Ignoring group on field "' + field + '" because it doesn\'t exist in the data');
 				return false;
 			}
 			return true;
@@ -1898,7 +1894,7 @@ ComputedView.prototype.group = function () {
 	// It's not possible to just use the data, because there may be no rows.
 
 	if (self.typeInfo == null) {
-		log.error('Source type information is missing');
+		self.logError(self.makeLogTag() + ' Source type information is missing');
 		return false;
 	}
 
@@ -1908,11 +1904,11 @@ ComputedView.prototype.group = function () {
 	_.each(self.groupSpec.fieldNames, function (fieldObj) {
 		var fti = self.typeInfo.get(fieldObj.field);
 		if (fti == null) {
-			log.error('Group field does not exist in the source: ' + fieldObj.field);
+			self.logError(self.makeLogTag() + ' Group field does not exist in the source: ' + fieldObj.field);
 			self.fire('invalidGroupField', null, fieldObj.field);
 		}
 		else if (fti.type == null) {
-			log.error('Unable to group by field "%s": type is undefined');
+			self.logError(self.makeLogTag() + ' Unable to group by field "%s": type is undefined');
 		}
 		else {
 			Source.decodeAll(self.data.dataByRowId, fti.field, self.typeInfo);
@@ -2002,7 +1998,7 @@ ComputedView.prototype.group = function () {
 				rowVal = addRowVals[arvIndex];
 
 				if (rowVal.length != finalGroupSpec.length) {
-					log.error('Unable to add rowVal %s when grouping by %s: the lengths must be the same',
+					self.logError(self.makeLogTag() + ' Unable to add rowVal %s when grouping by %s: the lengths must be the same',
 						JSON.stringify(rowVal), JSON.stringify(finalGroupSpec));
 					continue;
 				}
@@ -2195,9 +2191,9 @@ ComputedView.prototype.group = function () {
 	newData = buildData(self.data.data, rowVals);
 	rowVals = convertRowVals(rowVals);
 
-	self.debug('GROUP', 'Group Spec: %O', finalGroupSpec);
-	self.debug('GROUP', 'Row Vals: %O', rowVals);
-	self.debug('GROUP', 'New Data: %O', newData.data);
+	self.logDebug(self.makeLogTag('group') + ' Group Spec: %O', finalGroupSpec);
+	self.logDebug(self.makeLogTag('group') + ' Row Vals: %O', rowVals);
+	self.logDebug(self.makeLogTag('group') + ' New Data: %O', newData.data);
 
 	self.data.isPlain = false;
 	self.data.isGroup = true;
@@ -2207,7 +2203,7 @@ ComputedView.prototype.group = function () {
 	self.data.data = newData.data;
 	self.data.groupMetadata = newData.metadata;
 
-	self.debug('GROUP', 'Final Data: %O', self.data);
+	self.logDebug(self.makeLogTag('group') + ' Final Data: %O', self.data);
 
 	return true;
 };
@@ -2250,17 +2246,17 @@ ComputedView.prototype.setPivot = function (spec, opts) {
 		savePrefs: true
 	});
 
-	self.debug('SET PIVOT', 'spec = %O', spec);
+	self.logDebug(self.makeLogTag('setPivot') + ' spec = %O', spec);
 
 	if (self.groupSpec == null && spec != null) {
-		log.warn('VIEW (' + self.name + ') // SET PIVOT', 'Having a pivot without a group is not allowed');
+		self.logWarning(self.makeLogTag('setPivot') + ' Having a pivot without a group is not allowed');
 		self.clearPivot(opts);
 		return false;
 	}
 
 	if (spec != null) {
 		if (!_.isArray(spec.fieldNames)) {
-			log.warn('VIEW (' + self.name + ') // SET PIVOT', '`spec.fieldNames` is not an array');
+			self.logWarning(self.makeLogTag('setPivot') + ' `spec.fieldNames` is not an array');
 			spec.fieldNames = [];
 		}
 
@@ -2287,7 +2283,7 @@ ComputedView.prototype.setPivot = function (spec, opts) {
 
 		spec.fieldNames = _.filter(spec.fieldNames, function (field) {
 			if (self.typeInfo.get(field) == null) {
-				log.error('Ignoring pivot on field "' + field + '" because it doesn\'t exist in the data');
+				self.logError(self.makeLogTag() + ' Ignoring pivot on field "' + field + '" because it doesn\'t exist in the data');
 				return false;
 			}
 			return true;
@@ -2317,7 +2313,7 @@ ComputedView.prototype.setPivot = function (spec, opts) {
 				// Don't update data when removing the horizontal sort because we're already in the middle
 				// of a possibly-data-updating operation.
 
-				log.warn('VIEW (' + self.name + ') // SET PIVOT', 'Removing horizontal sort configuration since pivot was cleared');
+				self.logWarning(self.makeLogTag('setPivot') + ' Removing horizontal sort configuration since pivot was cleared');
 				self.setSort(sortSpec, { updateData: false });
 			}
 		}
@@ -2399,7 +2395,7 @@ ComputedView.prototype.pivot_orig = function () {
 	// It's not possible to just use the data, because there may be no rows.
 
 	if (self.typeInfo == null) {
-		log.error('Source type information is missing');
+		self.logError(self.makeLogTag() + ' Source type information is missing');
 		return false;
 	}
 
@@ -2407,7 +2403,7 @@ ComputedView.prototype.pivot_orig = function () {
 
 	_.each(self.pivotSpec.fieldNames, function (field, fieldIdx) {
 		if (!self.typeInfo.isSet(field)) {
-			log.error('Pivot field does not exist in the source: ' + field);
+			self.logError(self.makeLogTag() + ' Pivot field does not exist in the source: ' + field);
 			self.fire('invalidPivotField', null, field);
 		}
 		else {
@@ -2506,10 +2502,10 @@ ComputedView.prototype.pivot_orig = function () {
 	colVals = buildColVals(colValsTree);
 	self.data.data = buildData(self.data.data, colVals);
 
-	self.debug('PIVOT', 'Pivot Fields: %O', pivotFields);
-	self.debug('PIVOT', 'Col Vals Tree: %O', colValsTree);
-	self.debug('PIVOT', 'Col Vals: %O', colVals);
-	self.debug('PIVOT', 'New Data: %O', self.data);
+	self.logDebug(self.makeLogTag('pivot') + ' Pivot Fields: %O', pivotFields);
+	self.logDebug(self.makeLogTag('pivot') + ' Col Vals Tree: %O', colValsTree);
+	self.logDebug(self.makeLogTag('pivot') + ' Col Vals: %O', colVals);
+	self.logDebug(self.makeLogTag('pivot') + ' New Data: %O', self.data);
 
 	self.data.isPlain = false;
 	self.data.isGroup = false;
@@ -2546,7 +2542,7 @@ ComputedView.prototype.pivot = function () {
 	// It's not possible to just use the data, because there may be no rows.
 
 	if (self.typeInfo == null) {
-		log.error('Source type information is missing');
+		self.logError(self.makeLogTag() + ' Source type information is missing');
 		return false;
 	}
 
@@ -2556,11 +2552,11 @@ ComputedView.prototype.pivot = function () {
 	_.each(self.pivotSpec.fieldNames, function (fieldObj) {
 		var fti = self.typeInfo.get(fieldObj.field);
 		if (fti == null) {
-			log.error('Pivot field does not exist in the source: ' + fieldObj.field);
+			self.logError(self.makeLogTag() + ' Pivot field does not exist in the source: ' + fieldObj.field);
 			self.fire('invalidPivotField', null, fieldObj.field);
 		}
 		else if (fti.type == null) {
-			log.error('Unable to pivot by field "%s": type is undefined');
+			self.logError(self.makeLogTag() + ' Unable to pivot by field "%s": type is undefined');
 		}
 		else {
 			Source.decodeAll(self.data.dataByRowId, fti.field, self.typeInfo);
@@ -2630,7 +2626,7 @@ ComputedView.prototype.pivot = function () {
 				colVal = addColVals[acvIndex];
 
 				if (colVal.length != finalPivotSpec.length) {
-					log.error('Unable to add colVal %s when pivotting by %s: the lengths must be the same',
+					self.logError(self.makeLogTag() + ' Unable to add colVal %s when pivotting by %s: the lengths must be the same',
 						JSON.stringify(colVal), JSON.stringify(finalPivotSpec));
 					continue;
 				}
@@ -2713,10 +2709,10 @@ ComputedView.prototype.pivot = function () {
 	newData = buildData(self.data.data, colVals);
 	colVals = convertColVals(colVals);
 
-	self.debug('PIVOT', 'Pivot Spec: %O', finalPivotSpec);
-	self.debug('PIVOT', 'Orig Keys: %O', origKeys);
-	self.debug('PIVOT', 'Col Vals: %O', colVals);
-	self.debug('PIVOT', 'New Data: %O', newData);
+	self.logDebug(self.makeLogTag('pivot') + ' Pivot Spec: %O', finalPivotSpec);
+	self.logDebug(self.makeLogTag('pivot') + ' Orig Keys: %O', origKeys);
+	self.logDebug(self.makeLogTag('pivot') + ' Col Vals: %O', colVals);
+	self.logDebug(self.makeLogTag('pivot') + ' New Data: %O', newData);
 
 	self.data.isPlain = false;
 	self.data.isGroup = false;
@@ -2726,7 +2722,7 @@ ComputedView.prototype.pivot = function () {
 	self.data.colVals = colVals;
 	self.data.data = newData;
 
-	self.debug('GROUP', 'Final Data: %O', self.data);
+	self.logDebug(self.makeLogTag('pivot') + ' Final Data: %O', self.data);
 
 	return true;
 };
@@ -2774,7 +2770,7 @@ ComputedView.prototype.setAggregate = function (spec, opts) {
 		savePrefs: true
 	});
 
-	self.debug('SET AGGREGATE', 'spec = %O ; options = %O', spec, opts);
+	self.logDebug(self.makeLogTag('setAggregate') + ' spec = %O ; options = %O', spec, opts);
 
 	/*
 	if (spec == null || self.aggregateSpec == null) {
@@ -2806,22 +2802,22 @@ ComputedView.prototype.setAggregate = function (spec, opts) {
 			aggSpec = _.filter(aggSpec, function(agg) {
 				var a = AGGREGATE_REGISTRY.get(agg.fun);
 				if (a == null) {
-					log.error('Ignoring aggregate "' + agg.fun + '" because no such aggregate function exists');
+					self.logError(self.makeLogTag() + ' Ignoring aggregate "' + agg.fun + '" because no such aggregate function exists');
 					return false;
 				}
 				/*
 				if (a.prototype.fieldCount > 0) {
 					if (agg.fields == null) {
-						log.error('Ignoring aggregate "' + agg.fun + '" because no fields have been specified');
+						self.logError(self.makeLogTag() + ' Ignoring aggregate "' + agg.fun + '" because no fields have been specified');
 						return false;
 					}
 					if (agg.fields.length < a.prototype.fieldCount) {
-						log.error('Ignoring aggregate "' + agg.fun + '" because there aren\'t enough fields');
+						self.logError(self.makeLogTag() + ' Ignoring aggregate "' + agg.fun + '" because there aren\'t enough fields');
 						return false;
 					}
 					for (var i = 0; i < agg.fields.length; i += 1) {
 						if (self.typeInfo.get(agg.fields[i]) == null) {
-							log.error('Ignoring aggregate "' + agg.fun + '" because field "' + agg.fields[i] + '" doesn\'t exist in the data');
+							self.logError(self.makeLogTag() + ' Ignoring aggregate "' + agg.fun + '" because field "' + agg.fields[i] + '" doesn\'t exist in the data');
 							return false;
 						}
 					}
@@ -2902,7 +2898,7 @@ ComputedView.prototype.aggregate = function (cont) {
 	}
 
 	_.each(['group', 'pivot', 'cell', 'all'], function (what) {
-		self.debug('AGGREGATE', 'Computing %s aggregate functions: %s',
+		self.logDebug(self.makeLogTag('aggregate') + ' Computing %s aggregate functions: %s',
 			what, _.pluck(getProp(self, 'aggregateSpec', what), 'fun').join(', '));
 	});
 
@@ -2930,7 +2926,7 @@ ComputedView.prototype.aggregate = function (cont) {
 				});
 			}
 			catch (e) {
-				log.error('Invalid Aggregate: ' + what + '[' + aggNum + '] - ' + e.message);
+				self.logError(self.makeLogTag() + ' Invalid Aggregate: ' + what + '[' + aggNum + '] - ' + e.message);
 
 				// Set the aggregate to null so it can be removed later.
 				info[what][aggNum] = null;
@@ -2953,7 +2949,7 @@ ComputedView.prototype.aggregate = function (cont) {
 			var aggResult = aggInfo.instance.calculate(_.flatten(self.data.data[rowValIdx]));
 			groupResults[aggNum][rowValIdx] = aggResult;
 			if (aggInfo.debug) {
-				self.debug('AGGREGATE', 'Group aggregate [%d] (%s) : Group [%s] = %s',
+				self.logDebug(self.makeLogTag('aggregate') + ' Group aggregate [%d] (%s) : Group [%s] = %s',
 					aggNum,
 					info.group[aggNum].instance.name + (info.group[aggNum].name ? ' -> ' + info.group[aggNum].name : ''),
 					rowVal.join(', '),
@@ -2972,7 +2968,7 @@ ComputedView.prototype.aggregate = function (cont) {
 					var aggResult = aggInfo.instance.calculate(self.data.data[rowValIdx][colValIdx]);
 					cellResults[aggNum][rowValIdx][colValIdx] = aggResult;
 					if (aggInfo.debug) {
-						self.debug('AGGREGATE', 'Cell aggregate [%d] (%s) : Cell [%s ; %s] = %s',
+						self.logDebug(self.makeLogTag('aggregate') + ' Cell aggregate [%d] (%s) : Cell [%s ; %s] = %s',
 							aggNum,
 							info.cell[aggNum].instance.name + (info.cell[aggNum].name ? ' -> ' + info.cell[aggNum].name : ''),
 							rowVal.join(', '),
@@ -2992,7 +2988,7 @@ ComputedView.prototype.aggregate = function (cont) {
 				var aggResult = aggInfo.instance.calculate(_.flatten(_.pluck(self.data.data, colValIdx)));
 				pivotResults[aggNum][colValIdx] = aggResult;
 				if (aggInfo.debug) {
-					self.debug('AGGREGATE', 'Pivot aggregate [%d] (%s) : Col Val [%s] = %s',
+					self.logDebug(self.makeLogTag('aggregate') + ' Pivot aggregate [%d] (%s) : Col Val [%s] = %s',
 						aggNum,
 						info.pivot[aggNum].instance.name + (info.pivot[aggNum].name ? ' -> ' + info.pivot[aggNum].name : ''),
 						colVal.join(', '),
@@ -3007,7 +3003,7 @@ ComputedView.prototype.aggregate = function (cont) {
 			var aggResult = aggInfo.instance.calculate(_.flatten(self.data.data));
 			allResults[aggNum] = aggResult;
 			if (aggInfo.debug) {
-				self.debug('AGGREGATE', 'All aggregate [%d] (%s) = %s',
+				self.logDebug(self.makeLogTag('aggregate') + ' All aggregate [%d] (%s) = %s',
 					aggNum,
 					info.all[aggNum].instance.name + (info.all[aggNum].name ? ' -> ' + info.all[aggNum].name : ''),
 					JSON.stringify(aggResult));
@@ -3064,11 +3060,11 @@ ComputedView.prototype.getData = function (cont, reason) {
 		if (reason != null) {
 			lockMsg += ': ' + reason;
 		}
-		self.debug(lockMsg);
+		self.logDebug(lockMsg);
 	}
 
 	if (self.data !== undefined) {
-		self.debug(null, 'Got cached data: %O', self.data);
+		self.logDebug(self.makeLogTag() + ' Got cached data: %O', self.data);
 		if (typeof cont === 'function') {
 			return cont(true, self.data);
 		}
@@ -3158,7 +3154,7 @@ ComputedView.prototype.getData = function (cont, reason) {
 						self.fire('workEnd', null, workEndObj, ops);
 
 						self.lock.unlock();
-						self.debug(null, 'Got new data: %O', self.data);
+						self.logDebug(self.makeLogTag() + ' Got new data: %O', self.data);
 						if (typeof cont === 'function') {
 							return cont(true, self.data);
 						}
@@ -3205,7 +3201,7 @@ ComputedView.prototype.clearCache = function () {
 	self.data = undefined;
 	self.typeInfo = undefined;
 
-	self.debug(null, 'Cleared cache');
+	self.logDebug(self.makeLogTag() + ' Cleared cache');
 };
 
 // #clearSourceData {{{2
@@ -3220,7 +3216,7 @@ ComputedView.prototype.clearSourceData = function () {
 		self.source.clearSourceData();
 	}
 
-	self.debug(null, 'Cleared source data');
+	self.logDebug(self.makeLogTag() + ' Cleared source data');
 };
 
 // #refresh {{{2
@@ -3228,7 +3224,7 @@ ComputedView.prototype.clearSourceData = function () {
 ComputedView.prototype.refresh = function () {
 	var self = this;
 
-	self.debug(null, 'Refreshing...');
+	self.logDebug(self.makeLogTag() + ' Refreshing...');
 	self.source.refresh();
 };
 
@@ -3253,7 +3249,7 @@ ComputedView.prototype.reset = function (opts) {
 		updateData: false
 	});
 
-	self.debug(null, 'RESET!');
+	self.logDebug(self.makeLogTag() + ' RESET!');
 
 	self.clearSort(clearOpts);
 	self.clearFilter(clearOpts);
@@ -3304,7 +3300,7 @@ ComputedView.prototype.setColConfig = function (colConfig) {
 		throw new Error('Call Error: `colConfig` must be an instance of OrdMap');
 	}
 
-	self.debug(null, 'Setting column configuration');
+	self.logDebug(self.makeLogTag() + ' Setting column configuration');
 
 	self.colConfig = colConfig;
 };

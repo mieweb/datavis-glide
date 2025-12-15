@@ -31,11 +31,12 @@ $(document).ready(function () {
 			type: 'temporary'
 		}
 	});
-	var view = new MIE.WC_DataVis.View(source, 'TEST:GRID:FIXED-HEIGHT', {
+	var view = new MIE.WC_DataVis.ComputedView(source, {
 		prefs: prefs
 	});
-	new MIE.WC_DataVis.Grid('grid', view, {
+	new MIE.WC_DataVis.Grid({
 		id: 'grid',
+		computedView: view,
 		table: {
 			features: {
 				limit: false,

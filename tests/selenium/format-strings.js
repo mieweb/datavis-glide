@@ -19,7 +19,7 @@ describe('Format Strings', function () {
 	});
 
 	before(async function () {
-		await driver.get('http://localhost:3000/grid/format-strings.html');
+		await driver.get('http://localhost:3000/tests/pages/grid/format-strings.html');
 		grid = new Grid(driver);
 		await grid.waitForIdle();
 		data = await grid.getPlainData_asObjects(['test'], {result: 'element'});

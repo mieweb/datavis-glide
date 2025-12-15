@@ -136,7 +136,7 @@ export var getComparisonFn = (function () {
 			return a.isBefore(b) ? -1 : a.isAfter(b) ? 1 : 0;
 		}
 		else {
-			log.warn('Cannot compare Moment w/ non-Moment');
+			console.warn('Cannot compare Moment w/ non-Moment');
 			return 0;
 		}
 	};
@@ -1705,7 +1705,7 @@ export var makeSubclass = function (name, parent, ctor, ptype) {
 		// the current instance as `this`.
 
 		if (parent !== Object) {
-			console.log('[DataVis / Obj / Super] Creating %s#super[\'%s\']', childInst.constructor.name, parent.name);
+			console.log('[DataVis // Obj // Super] Creating %s#super[\'%s\']', childInst.constructor.name, parent.name);
 			if (childInst.super == null) {
 				childInst.super = {};
 			}
@@ -2063,82 +2063,100 @@ export var mixinEventHandling = (function () {
 	};
 })();
 
-// mixinDebugging {{{2
-
-export function mixinDebugging(obj, tagStart) {
-	if (tagStart != null && typeof tagStart !== 'string' && typeof tagStart !== 'function') {
-		throw new Error('Call Error: `tagStart` must be null, a string, or a function');
-	}
-
-	var getTag = function (self) {
-		if (typeof tagStart === 'function') {
-			return tagStart.call(self);
-		}
-		else if (typeof tagStart === 'string') {
-			return tagStart;
-		}
-		else if (typeof self.getDebugTag === 'function') {
-			return self.getDebugTag();
-		}
-		else if (typeof self.toString === 'function' && self.toString !== Object.prototype.toString) {
-			return self.toString();
-		}
-		else {
-			return obj.prototype.constructor.name.toUpperCase();
-		}
-	};
-
-	obj.prototype.debug = function () {
-		var args = Array.prototype.slice.call(arguments);
-		var tag = args.shift();
-		var fullTag = getTag(this);
-		if (tag != null) {
-			fullTag += ' // ' + tag;
-		}
-		debug.info.apply(null, Array.prototype.concat.call([fullTag], args));
-	};
-}
-
 // mixinLogging {{{2
+
+/**
+ * Adds logging methods to a class.
+ *
+ * @example
+ * mixinLogging(ClassName);
+ * mixinLogging(ClassName, 'Foo');
+ * mixinLogging(ClassName, () => { return 'Foo(' + this.name + ')'; });
+ *
+ * this.logInfo(this.makeLogTag('Doing Stuff'), 'Log message goes here');
+ *   => [DataVis // Foo(name) // Doing Stuff] Log message goes here
+ *
+ * this.disableDebugLog();
+ * this.enableDebugLog();
+ */
 
 export function mixinLogging(obj, tagPrefix) {
 	if (tagPrefix != null && typeof tagPrefix !== 'string' && typeof tagPrefix !== 'function') {
 		throw new Error('Call Error: `tagPrefix` must be null, a string, or a function');
 	}
 
-	var getTag = function (self) {
-		if (typeof tagPrefix === 'function') {
-			return tagPrefix.call(self);
+	obj.prototype.makeLogTag = function (extra) {
+		var self = this
+			, prefix
+			, tag = ['DataVis']
+			, stack
+			, m
+			, lvl;
+
+		if (typeof tagPrefix === 'string') {
+			prefix = tagPrefix;
 		}
-		else if (typeof tagPrefix === 'string') {
-			return tagPrefix;
-		}
-		else if (typeof self.getDebugTag === 'function') {
-			return self.getDebugTag();
+		else if (typeof tagPrefix === 'function') {
+			prefix = tagPrefix.call(self);
 		}
 		else if (typeof self.toString === 'function' && self.toString !== Object.prototype.toString) {
-			return self.toString();
+			prefix = self.toString();
 		}
 		else {
-			return obj.prototype.constructor.name.toUpperCase();
+			prefix = obj.prototype.constructor.name;
+			// Stack analysis works only on Chromium.
+			//   0 : exception message
+			//   1 : this function
+			//   2 : caller
+			//   3 : caller's caller &c
+			// Named function in stack: "at foo (source)"
+			// Anonymous function in stack: "at source"
+			//   e.g. inside _.each(),
+			//        keep going up stack until we find a named function
+			// Keep in mind this is only when there's no toString() method.
+			try {
+				throw new Error;
+			}
+			catch (e) {
+				stack = e.stack.split('\n');
+				for (lvl = 2; lvl < stack.length; lvl += 1) {
+					if ((m = stack[2].match(/^\s*at ([^\s]+) \(http[^)]+\)$/)) != null) {
+						prefix += ' @ ' + m[1];
+						break;
+					}
+					else if ((m = stack[2].match(/^\s*at http/)) != null) {
+						// Lambda function... not useful at all?
+						continue;
+					}
+					else {
+						break;
+					}
+				}
+			}
 		}
+
+		if (typeof prefix === 'string' && prefix.length > 0) {
+			tag.push(prefix);
+		}
+		if (typeof extra === 'string' && extra.length > 0) {
+			tag.push(extra);
+		}
+
+		return '[' + tag.join(' // ') + ']';
 	};
 
-	var makeLogger = function (loggerType) {
-		return function () {
-			var args = Array.prototype.slice.call(arguments);
-			var tag = args.shift();
-			var msg = args.shift();
-			var prefix = ['[' + getTag(this) + (tag != null ? ' // ' + tag : '') + '] ' + msg];
-			var call = Function.prototype.call;
-			call.apply(call, [console[loggerType], console].concat(prefix, args));
-		};
+	obj.prototype.disableDebugLog = function () {
+		obj.prototype.logDebug = function () {};
 	};
 
-	obj.prototype.logDebug = makeLogger('debug');
-	obj.prototype.logInfo = makeLogger('log');
-	obj.prototype.logWarning = makeLogger('warn');
-	obj.prototype.logError = makeLogger('error');
+	obj.prototype.enableDebugLog = function () {
+		obj.prototype.logDebug = window.console.debug.bind(window.console);
+	};
+
+	obj.prototype.logDebug = window.console.debug.bind(window.console);
+	obj.prototype.logInfo = window.console.log.bind(window.console);
+	obj.prototype.logWarning = window.console.warn.bind(window.console);
+	obj.prototype.logError = window.console.error.bind(window.console);
 }
 
 // makeSetters {{{2
@@ -2194,11 +2212,11 @@ export function mixinNameSetting(cls) {
 
 		if (name != null && !_.isString(name)) {
 			self.name = self.constructor.name + ' #' + (++cls.prototype.__namesGenerated);
-			self.logWarning(null, 'Name provided for this ' + self.constructor.name + ' instance is not a string.');
+			self.logWarning(self.makeLogTag() + ' Name provided for this ' + self.constructor.name + ' instance is not a string.');
 		}
 		else if (name == null || name === '') {
 			self.name = self.constructor.name + ' #' + (++cls.prototype.__namesGenerated);
-			self.logWarning(null, 'Providing a name for this ' + self.constructor.name + ' instance is strongly recommended to improve logging.');
+			self.logWarning(self.makeLogTag() + ' Providing a name for this ' + self.constructor.name + ' instance is strongly recommended to improve logging.');
 		}
 		else {
 			self.name = name;
@@ -2886,69 +2904,6 @@ export function addSrcInfo(srcIndex, field) {
 	return ':' + srcIndex + ':' + field;
 }
 
-/**
- * Logging wrappers.
- */
-
-export var log = {
-	info: Function.prototype.bind.call(window.console.log, window.console),
-	warn: Function.prototype.bind.call(window.console.warn, window.console),
-	error: Function.prototype.bind.call(window.console.error, window.console)
-};
-
-/**
- * More logging wrappers.
- */
-
-export var concatLog = {
-	info: function () {
-		log.info.apply(window.console, _.flatten(arguments, true));
-	},
-	warn: function () {
-		log.warn.apply(window.console, _.flatten(arguments, true));
-	},
-	error: function () {
-		log.error.apply(window.console, _.flatten(arguments, true));
-	}
-};
-
-/**
- * Debug logging.
- */
-
-export var debug = {
-	info: function (tag) {
-		if (!(window.MIE && window.MIE.DEBUGGING)) {
-			return;
-		}
-
-		var rest = Array.prototype.slice.call(arguments, 1);
-		var args = Array.prototype.concat.call(['[DEBUG // ' + tag + '] ' + rest[0]], rest.slice(1));
-
-		return log.info.apply(window.console, args);
-	},
-	warn: function (tag) {
-		if (!(window.MIE && window.MIE.DEBUGGING)) {
-			return;
-		}
-
-		var rest = Array.prototype.slice.call(arguments, 1);
-		var args = Array.prototype.concat.call(['[DEBUG // ' + tag + '] ' + rest[0]], rest.slice(1));
-
-		return log.warn.apply(window.console, args);
-	},
-	error: function (tag) {
-		if (!(window.MIE && window.MIE.DEBUGGING)) {
-			return;
-		}
-
-		var rest = Array.prototype.slice.call(arguments, 1);
-		var args = Array.prototype.concat.call(['[DEBUG // ' + tag + '] ' + rest[0]], rest.slice(1));
-
-		return log.error.apply(window.console, args);
-	},
-};
-
 export var logAsync = (function () {
 	var ids = {};
 	return function (id) {
@@ -3246,7 +3201,7 @@ export var format = (function () {
 				result = cell.value;
 				break;
 			default:
-				log.error('Unable to format - unknown type: { field = "%s", type = "%s", value = "%s" }',
+				console.error('Unable to format - unknown type: { field = "%s", type = "%s", value = "%s" }',
 					fti.field, t, cell.value);
 			}
 		}
@@ -3712,7 +3667,7 @@ Timing.prototype.stop = function (what) {
 	console.debug('[DataVis // Timing] Received <STOP> event for [' + subject + ' ] ' + event);
 
 	if (getProp(self.data, subject, event, 'start') === undefined) {
-		log.warn('Received <STOP> event for [' + subject + ' : ' + event + '] with no <START> event');
+		console.warn('Received <STOP> event for [' + subject + ' : ' + event + '] with no <START> event');
 		return;
 	}
 
@@ -3739,7 +3694,7 @@ Timing.prototype.dump = function (subject) {
 			var start = getProp(self.data, sub, evt, 'start')
 				, end = getProp(self.data, sub, evt, 'end');
 
-			log.info('[TIMING] ' + sub + ' : ' + evt + ' >> ' + (end - start) + 'ms');
+			console.log('[TIMING] ' + sub + ' : ' + evt + ' >> ' + (end - start) + 'ms');
 		});
 	};
 
@@ -3787,23 +3742,23 @@ export function validateColConfig(colConfig, data) {
 	}
 
 	if (data == null) {
-		log.warn('Unable to validate column configuration without data');
+		console.warn('Unable to validate column configuration without data');
 		return false;
 	}
 
 	if (!data.isPlain) {
-		log.info('Can only validate column config for plain output');
+		console.log('Can only validate column config for plain output');
 		return false;
 	}
 
 	if (data.data.length === 0) {
-		log.info('Unable to validate column configuration using data with no rows');
+		console.log('Unable to validate column configuration using data with no rows');
 		return false;
 	}
 
 	colConfig.each(function (fcc, field) {
 		if (data.data[0].rowData[field] === undefined) {
-			log.warn('Column configuration refers to field "' + field + '" which does not exist in the data');
+			console.warn('Column configuration refers to field "' + field + '" which does not exist in the data');
 			return false;
 		}
 	});

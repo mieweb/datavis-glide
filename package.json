@@ -1,6 +1,6 @@
 {
   "name": "wcdatavis",
-  "version": "3.2.0",
+  "version": "3.2.1",
   "description": "Data visualization library",
   "keywords": [
     "grid",
@@ -38,6 +38,7 @@
     "chart.js": "=4.5.0",
     "core-js": "=3.44.0",
     "css.escape": "=1.5.1",
+    "es6-symbol": "=3.1.4",
     "flatpickr": "=4.6.13",
     "handlebars": "=4.7.8",
     "jquery": "=3.7.1",
@@ -68,7 +69,6 @@
     "bluebird": "=3.7.2",
     "chai": "=5.2.1",
     "chromedriver": "latest",
-    "es6-symbol": "=3.1.4",
     "eslint": "=9.31.0",
     "globals": "=16.3.0",
     "jsdoc": "=4.0.4",

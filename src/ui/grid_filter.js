@@ -5,20 +5,20 @@ import jQuery from 'jquery';
 import BigNumber from 'bignumber.js';
 
 import {
-	debug,
 	deepDefaults,
 	fontAwesome,
 	gensym,
 	getPropDef,
 	isFloat,
 	isInt,
-	log,
 	makeSubclass,
 	makeSuper,
 	mixinEventHandling,
+	mixinLogging,
 	toFloat,
 	toInt,
 } from '../util/misc.js';
+import { trans } from '../trans.js';
 
 /**
  * @file
@@ -128,6 +128,8 @@ var GridFilter = (function () {
 		}
 	});
 })();
+
+mixinLogging(GridFilter);
 
 // #getValue {{{3
 
@@ -247,25 +249,25 @@ GridFilter.prototype.makeOperatorDrop = function (include) {
 	// These are all the operators that are possible.
 
 	var operators = [
-		['$contains', '∈'],
-		['$notcontains', '∉'],
-		['$eq', '='],
-		['$ne', '≠'],
-		['$gt', '>'],
-		['$gte', '≥'],
-		['$lt', '<'],
-		['$lte', '≤'],
-		['$in', 'in'],
-		['$nin', 'not in'],
-		['$exists', 'not blank'],
-		['$notexists', 'blank']
+		{value: '$contains', text: '∈'},
+		{value: '$notcontains', text: '∉'},
+		{value: '$eq', text: '='},
+		{value: '$ne', text: '≠'},
+		{value: '$gt', text: '>'},
+		{value: '$gte', text: '≥'},
+		{value: '$lt', text: '<'},
+		{value: '$lte', text: '≤'},
+		{value: '$in', text: 'in', transLabel: 'FILTER.STRING.OPERATOR.IN'},
+		{value: '$nin', text: 'not in', transLabel: 'FILTER.STRING.OPERATOR.NOT_IN'},
+		{value: '$exists', text: 'not blank', transLabel: 'FILTER.STRING.OPERATOR.NOT_BLANK'},
+		{value: '$notexists', text: 'blank', transLabel: 'FILTER.STRING.OPERATOR.BLANK'}
 	];
 
 	// Remove anything that user didn't ask for.
 
 	if (include !== undefined && _.isArray(include)) {
 		operators = _.reject(operators, function (elt) {
-			return include.indexOf(elt[0]) < 0;
+			return include.indexOf(elt.value) < 0;
 		});
 	}
 
@@ -276,9 +278,7 @@ GridFilter.prototype.makeOperatorDrop = function (include) {
 	// Add all the operators as options within the <SELECT>.
 
 	_.each(operators, function (op) {
-		var value = op[0]
-			, name = op[1];
-		operatorDrop.append(jQuery('<option>', { value: value }).text(name));
+		operatorDrop.append(jQuery('<option>', { value: op.value }).text(op.transLabel != null ? trans(op.transLabel) : op.text));
 	});
 
 	// Hook up the event to update the filter when the operator is changed.
@@ -360,22 +360,22 @@ GridFilter.prototype.adjustInputWidth = function (opts) {
 		input: self.input
 	});
 
-	console.debug('[DataVis // Grid Filter // Adjust Input Width] Target: %O', opts.input);
+	self.logDebug(self.makeLogTag() + ' Target: %O', opts.input);
 
 	var targetWidth = opts.useSizingElement ? self.opts.sizingElement.width() : self.div.width();
-	console.debug('[DataVis // Grid Filter // Adjust Input Width] Available Space: ' + targetWidth + 'px ' + (opts.useSizingElement ? '[sizing element]' : '[div]'));
+	self.logDebug(self.makeLogTag() + ' Available Space: ' + targetWidth + 'px ' + (opts.useSizingElement ? '[sizing element]' : '[div]'));
 
 	if (self.removeBtn) {
 		targetWidth -= self.removeBtn.outerWidth();
-		console.debug('[DataVis // Grid Filter // Adjust Input Width] Remove Button: ' + self.removeBtn.outerWidth() + 'px');
+		self.logDebug(self.makeLogTag() + ' Remove Button: ' + self.removeBtn.outerWidth() + 'px');
 	}
 
 	if (self.operatorDrop !== undefined) {
 		targetWidth -= self.operatorDrop.outerWidth();
-		console.debug('[DataVis // Grid Filter // Adjust Input Width] Operator Drop: ' + self.operatorDrop.outerWidth() + 'px');
+		self.logDebug(self.makeLogTag() + ' Operator Drop: ' + self.operatorDrop.outerWidth() + 'px');
 	}
 
-	console.debug('[DataVis // Grid Filter' + (opts.fromColumnResize ? ' // Handler(columnResize)' : '') + '] Adjusting ' + self.field + ' filter widget width to ' + targetWidth + 'px to match column width');
+	self.logDebug(self.makeLogTag() + ' Adjusting ' + self.field + ' filter widget width to ' + targetWidth + 'px to match column width');
 
 	opts.input.outerWidth(targetWidth);
 

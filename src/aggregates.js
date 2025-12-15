@@ -16,8 +16,8 @@ import {
 	isElement,
 	isFloat,
 	isInt,
-	log,
 	makeSubclass,
+	mixinLogging,
 	toFloat,
 	toInt,
 } from './util/misc.js';
@@ -197,6 +197,9 @@ function checkAggregate(defn, agg, source) {
  * @property {string} name
  * Name of the aggregate function used in the dropdown menu by the grid.
  *
+ * @property {string} transLabel
+ * Translation label for the displayed name of the aggregate function.
+ *
  * @property {int} [fieldCount=0]
  * Number of fields required.  Usually zero or one.
  *
@@ -238,6 +241,8 @@ var Aggregate = makeSubclass('Aggregate', Object, function (opts) {
 	inheritFormatting: false,
 	numItems: 0
 });
+
+mixinLogging(Aggregate, function () { return 'Aggregate(' + this.name + ')'; });
 
 // JSDoc {{{2
 
@@ -335,7 +340,7 @@ Aggregate.prototype.calculate = function (data) {
 			acc = self.calculateStep(acc, data[i].rowData, data, i);
 		}
 		catch (e) {
-			log.error('Aggregate ' + self.name + ': Error occurred at data index [' + i + ']: ' + e.toString());
+			self.logError(self.makeLogTag() + ' Error occurred at data index [' + i + ']: ' + e.toString());
 			return self.bottomValue;
 		}
 	}
@@ -358,28 +363,28 @@ Aggregate.prototype.checkOpts = function () {
 
 	if (self.fieldCount > 0) {
 		if (self.opts.fields == null) {
-			log.error('Aggregate ' + self.name + ': Missing `opts.fields`');
+			self.logError(self.makeLogTag() + ' Missing `opts.fields`');
 			return false;
 		}
 		else if (!_.isArray(self.opts.fields)) {
-			log.error('Aggregate ' + self.name + ': `opts.fields` must be an array');
+			self.logError(self.makeLogTag() + ' `opts.fields` must be an array');
 			return false;
 		}
 		else if (self.opts.fields.length !== self.fieldCount) {
-			log.error('Aggregate ' + self.name + ': `opts.fields` must include ' + self.fieldCount + ' elements');
+			self.logError(self.makeLogTag() + ' `opts.fields` must include ' + self.fieldCount + ' elements');
 			return false;
 		}
 
 		if (self.opts.typeInfo == null) {
-			log.error('Aggregate ' + self.name + ': Missing `opts.typeInfo`');
+			self.logError(self.makeLogTag() + ' Missing `opts.typeInfo`');
 			return false;
 		}
 		else if (!_.isArray(self.opts.typeInfo)) {
-			log.error('Aggregate ' + self.name + ': `opts.typeInfo` must be an array');
+			self.logError(self.makeLogTag() + ' `opts.typeInfo` must be an array');
 			return false;
 		}
 		else if (self.opts.typeInfo.length !== self.fieldCount) {
-			log.error('Aggregate ' + self.name + ': `opts.typeInfo` must include ' + self.fieldCount + ' elements');
+			self.logError(self.makeLogTag() + ' `opts.typeInfo` must include ' + self.fieldCount + ' elements');
 			return false;
 		}
 	}
@@ -400,7 +405,7 @@ Aggregate.prototype.checkData = function (data) {
 	var self = this;
 
 	if (!_.isArray(data)) {
-		log.error('Aggregate ' + self.name + ': `data` must be an array');
+		self.logError(self.makeLogTag() + ' `data` must be an array');
 		return false;
 	}
 
@@ -505,15 +510,23 @@ Aggregate.prototype.getFullName = function () {
 		return self.opts.name;
 	}
 	else if (self.fieldCount > 0 && _.isArray(self.opts.fields) && self.opts.fields.length > 0) {
-		return trans('AGGREGATE.HEADER_DISPLAY', self.name, (
+		return trans('AGGREGATE.HEADER_DISPLAY', self.getTransName(), (
 			_.map(self.opts.fields, function (field, fieldIdx) {
 				var fcc = getPropDef({}, self.opts, 'colConfig', fieldIdx);
 				return fcc.displayText || field;
 			}).join(', ')));
 	}
 	else {
-		return self.name;
+		return self.getTransName();
 	}
+};
+
+// #getTransName {{{2
+
+Aggregate.prototype.getTransName = function () {
+	var self = this;
+
+	return trans(self.transLabel);
 };
 
 // #getType {{{2
@@ -566,7 +579,8 @@ Aggregate.prototype.getType = function () {
 // Count {{{1
 
 var CountAggregate = makeSubclass('CountAggregate', Aggregate, null, {
-	name: trans('AGGREGATE.NAME.COUNT'),
+	name: 'count',
+	transLabel: 'AGGREGATE.NAME.COUNT',
 	fieldCount: 0,
 	type: 'number',
 	inheritFormatting: false,
@@ -593,7 +607,8 @@ var CountDistinctAggregate = makeSubclass('CountDistinctAggregate', Aggregate, f
 	self.set = {};
 	self.super['Aggregate'].ctor.apply(self, arguments);
 }, {
-	name: trans('AGGREGATE.NAME.COUNT_DISTINCT'),
+	name: 'countDistinct',
+	transLabel: 'AGGREGATE.NAME.COUNT_DISTINCT',
 	fieldCount: 1,
 	type: 'number',
 	inheritFormatting: false,
@@ -629,7 +644,8 @@ CountDistinctAggregate.prototype.calculateDone = function (acc) {
 // Values {{{1
 
 var ValuesAggregate = makeSubclass('ValuesAggregate', Aggregate, null, {
-	name: trans('AGGREGATE.NAME.VALUES'),
+	name: 'values',
+	transLabel: 'AGGREGATE.NAME.VALUES',
 	fieldCount: 1,
 	inheritFormatting: false,
 	type: 'string',
@@ -686,7 +702,8 @@ ValuesAggregate.prototype.calculateDone = function (acc) {
 // Values w/ Counts {{{1
 
 var ValuesWithCountsAggregate = makeSubclass('ValuesWithCountsAggregate', Aggregate, null, {
-	name: trans('AGGREGATE.NAME.VALUES_WITH_COUNTS'),
+	name: 'valuesWithCounts',
+	transLabel: 'AGGREGATE.NAME.VALUES_WITH_COUNTS',
 	fieldCount: 1,
 	inheritFormatting: false,
 	type: 'string',
@@ -758,7 +775,8 @@ ValuesWithCountsAggregate.prototype.calculateDone = function (acc) {
 // Distinct Values {{{1
 
 var DistinctValuesAggregate = makeSubclass('DistinctValuesAggregate', ValuesWithCountsAggregate, null, {
-	name: trans('AGGREGATE.NAME.DISTINCT_VALUES')
+	name: 'distinctValues',
+	transLabel: 'AGGREGATE.NAME.DISTINCT_VALUES',
 });
 
 // #calculateDone {{{2
@@ -790,7 +808,8 @@ DistinctValuesAggregate.prototype.calculateDone = function (acc) {
 // Sum {{{1
 
 var SumAggregate = makeSubclass('SumAggregate', Aggregate, null, {
-	name: trans('AGGREGATE.NAME.SUM'),
+	name: 'sum',
+	transLabel: 'AGGREGATE.NAME.SUM',
 	fieldCount: 1,
 	// type: 'number',
 	allowedTypes: ['number', 'currency', 'duration'],
@@ -861,7 +880,8 @@ var AverageAggregate = makeSubclass('AverageAggregate', Aggregate, function (opt
 	self.sumAgg = new SumAggregate(opts);
 	self.super['Aggregate'].ctor.apply(self, arguments);
 }, {
-	name: trans('AGGREGATE.NAME.AVERAGE'),
+	name: 'average',
+	transLabel: 'AGGREGATE.NAME.AVERAGE',
 	fieldCount: 1,
 	type: 'number',
 	allowedTypes: ['number', 'currency'],
@@ -920,7 +940,8 @@ AverageAggregate.prototype.calculate = function (data) {
 // Min {{{1
 
 var MinAggregate = makeSubclass('MinAggregate', Aggregate, null, {
-	name: trans('AGGREGATE.NAME.MIN'),
+	name: 'min',
+	transLabel: 'AGGREGATE.NAME.MIN',
 	fieldCount: 1,
 	inheritFormatting: true
 });
@@ -931,7 +952,7 @@ MinAggregate.prototype.checkOpts = function () {
 	var self = this;
 
 	if (self.opts.typeInfo == null) {
-		log.error('Aggregate ' + self.name + ': Missing `opts.typeInfo`');
+		self.logError(self.makeLogTag() + ' Missing `opts.typeInfo`');
 		return false;
 	}
 
@@ -940,7 +961,7 @@ MinAggregate.prototype.checkOpts = function () {
 	}
 
 	if (typeof self.opts.compare !== 'function') {
-		log.error('Aggregate ' + self.name + ': Missing `opts.compare`');
+		self.logError(self.makeLogTag() + ' Missing `opts.compare`');
 		return false;
 	}
 
@@ -964,7 +985,8 @@ MinAggregate.prototype.calculateStep = function (acc, next) {
 // Max {{{1
 
 var MaxAggregate = makeSubclass('MaxAggregate', Aggregate, null, {
-	name: trans('AGGREGATE.NAME.MAX'),
+	name: 'max',
+	transLabel: 'AGGREGATE.NAME.MAX',
 	fieldCount: 1,
 	inheritFormatting: true
 });
@@ -975,7 +997,7 @@ MaxAggregate.prototype.checkOpts = function () {
 	var self = this;
 
 	if (self.opts.typeInfo == null) {
-		log.error('Aggregate ' + self.name + ': Missing `opts.typeInfo`');
+		self.logError(self.makeLogTag() + ' Missing `opts.typeInfo`');
 		return false;
 	}
 
@@ -984,7 +1006,7 @@ MaxAggregate.prototype.checkOpts = function () {
 	}
 
 	if (typeof self.opts.compare !== 'function') {
-		log.error('Aggregate ' + self.name + ': Missing `opts.compare`');
+		self.logError(self.makeLogTag() + ' Missing `opts.compare`');
 		return false;
 	}
 
@@ -1008,7 +1030,8 @@ MaxAggregate.prototype.calculateStep = function (acc, next) {
 // First {{{1
 
 var FirstAggregate = makeSubclass('FirstAggregate', Aggregate, null, {
-	name: trans('AGGREGATE.NAME.FIRST'),
+	name: 'first',
+	transLabel: 'AGGREGATE.NAME.FIRST',
 	fieldCount: 1,
 	inheritFormatting: true
 });
@@ -1019,7 +1042,7 @@ FirstAggregate.prototype.checkData = function (data) {
 	var self = this;
 
 	if (data.length === 0) {
-		//log.error('Aggregate ' + self.name + ': `data` has no elements');
+		//self.logError(self.makeLogTag() + ' `data` has no elements');
 		return false;
 	}
 
@@ -1041,7 +1064,8 @@ FirstAggregate.prototype.calculate = function (data) {
 // Last {{{1
 
 var LastAggregate = makeSubclass('LastAggregate', Aggregate, null, {
-	name: trans('AGGREGATE.NAME.LAST'),
+	name: 'last',
+	transLabel: 'AGGREGATE.NAME.LAST',
 	fieldCount: 1,
 	inheritFormatting: true
 });
@@ -1052,7 +1076,7 @@ LastAggregate.prototype.checkData = function (data) {
 	var self = this;
 
 	if (data.length === 0) {
-		//log.error('Aggregate ' + self.name + ': `data` has no elements');
+		//self.logError(self.makeLogTag() + ' `data` has no elements');
 		return false;
 	}
 
@@ -1074,7 +1098,8 @@ LastAggregate.prototype.calculate = function (data) {
 // Nth {{{1
 
 var NthAggregate = makeSubclass('NthAggregate', Aggregate, null, {
-	name: trans('AGGREGATE.NAME.NTH'),
+	name: 'nth',
+	transLabel: 'AGGREGATE.NAME.NTH',
 	enabled: false,
 	fieldCount: 1,
 	inheritFormatting: true
@@ -1086,12 +1111,12 @@ NthAggregate.prototype.checkOpts = function () {
 	var self = this;
 
 	if (self.opts.index == null) {
-		log.error('Aggregate ' + self.name + ': Missing `opts.index`');
+		self.logError(self.makeLogTag() + ' Missing `opts.index`');
 		return false;
 	}
 
 	if (!_.isNumber(self.opts.index)) {
-		log.error('Aggregate ' + self.name + ': `opts.index` must be a number');
+		self.logError(self.makeLogTag() + ' `opts.index` must be a number');
 		return false;
 	}
 
@@ -1104,12 +1129,12 @@ NthAggregate.prototype.checkData = function (data) {
 	var self = this;
 
 	if (data.length === 0) {
-		//log.error('Aggregate ' + self.name + ': `data` has no elements');
+		//self.logError(self.makeLogTag() + ' `data` has no elements');
 		return false;
 	}
 
 	if (data.length <= self.opts.index) {
-		log.error('Aggregate ' + self.name + ': `data` has insufficient number of elements');
+		self.logError(self.makeLogTag() + ' `data` has insufficient number of elements');
 		return self.bottomValue;
 	}
 
@@ -1131,12 +1156,13 @@ NthAggregate.prototype.calculate = function (data) {
 // Sum / Sum {{{1
 
 var SumOverSumAggregate = makeSubclass('SumOverSumAggregate', Aggregate, null, {
-	name: trans('AGGREGATE.NAME.SUM_OVER_SUM'),
+	name: 'sumOverSum',
+	transLabel: 'AGGREGATE.NAME.SUM_OVER_SUM',
 	fieldCount: 2,
 	fieldInfo: [{
-		name: trans('AGGREGATE.FIELD.NUMERATOR')
+		transLabel: 'AGGREGATE.FIELD.NUMERATOR',
 	}, {
-		name: trans('AGGREGATE.FIELD.DENOMINATOR')
+		transLabel: 'AGGREGATE.FIELD.DENOMINATOR',
 	}],
 	type: 'string',
 	inheritFormatting: false,
@@ -1197,12 +1223,13 @@ SumOverSumAggregate.prototype.getFullName = function () {
 // Count / Count {{{1
 
 var CountOverCountAggregate = makeSubclass('CountOverCountAggregate', Aggregate, null, {
-	name: trans('AGGREGATE.NAME.COUNT_OVER_COUNT'),
+	name: 'countOverCount',
+	transLabel: 'AGGREGATE.NAME.COUNT_OVER_COUNT',
 	fieldCount: 2,
 	fieldInfo: [{
-		name: trans('AGGREGATE.FIELD.NUMERATOR')
+		transLabel: 'AGGREGATE.FIELD.NUMERATOR',
 	}, {
-		name: trans('AGGREGATE.FIELD.DENOMINATOR')
+		transLabel: 'AGGREGATE.FIELD.DENOMINATOR',
 	}],
 	type: 'number',
 	inheritFormatting: false,
@@ -1225,6 +1252,7 @@ AGGREGATE_REGISTRY.set('first', FirstAggregate);
 AGGREGATE_REGISTRY.set('last', LastAggregate);
 AGGREGATE_REGISTRY.set('nth', NthAggregate);
 AGGREGATE_REGISTRY.set('sumOverSum', SumOverSumAggregate);
+AGGREGATE_REGISTRY.set('countOverCount', CountOverCountAggregate);
 
 // AggregateInfo {{{1
 
@@ -1347,7 +1375,7 @@ var AggregateInfo = makeSubclass('AggregateInfo', Object, function (aggType, spe
 	// function class.
 
 	if (self.fields.length !== aggClass.prototype.fieldCount) {
-		log.warn('Creating ' + aggType + '[' + aggNum + '] aggregate function "' + spec.fun + '" to be applied over fields ' + JSON.stringify(self.fields) + ', which doesn\'t match the number of fields supported by the aggregate function (' + aggClass.prototype.fieldCount + ')... expect trouble.');
+		self.logWarning(self.makeLogTag() + ' Creating ' + aggType + '[' + aggNum + '] aggregate function "' + spec.fun + '" to be applied over fields ' + JSON.stringify(self.fields) + ', which doesn\'t match the number of fields supported by the aggregate function (' + aggClass.prototype.fieldCount + ')... expect trouble.');
 	}
 
 	if (self.fields.length > 0) {
@@ -1359,7 +1387,7 @@ var AggregateInfo = makeSubclass('AggregateInfo', Object, function (aggType, spe
 			});
 		}
 		else {
-			log.warn('Creating ' + aggType + '[' + aggNum + '] aggregate function "' + spec.fun + '" to be applied over fields ' + JSON.stringify(self.fields) + ', but no column config was provided.');
+			self.logWarning(self.makeLogTag() + ' Creating ' + aggType + '[' + aggNum + '] aggregate function "' + spec.fun + '" to be applied over fields ' + JSON.stringify(self.fields) + ', but no column config was provided.');
 		}
 
 		// Set the typeInfo array for the supplied fields.
@@ -1370,7 +1398,7 @@ var AggregateInfo = makeSubclass('AggregateInfo', Object, function (aggType, spe
 			});
 		}
 		else {
-			log.warn('Creating ' + aggType + '[' + aggNum + '] aggregate function "' + spec.fun + '" to be applied over fields ' + JSON.stringify(self.fields) + ', but no type info was provided.');
+			self.logWarning(self.makeLogTag() + ' Creating ' + aggType + '[' + aggNum + '] aggregate function "' + spec.fun + '" to be applied over fields ' + JSON.stringify(self.fields) + ', but no type info was provided.');
 		}
 
 		// Perform type decoding if needed, before we calculate the aggregate results.  This is
@@ -1387,7 +1415,7 @@ var AggregateInfo = makeSubclass('AggregateInfo', Object, function (aggType, spe
 					decode(fti.field, fti);
 				}
 				else {
-					log.warn('Unable to decode field "' + fti.field + '" on demand for aggregate function, no decoding function provided.');
+					self.logWarning(self.makeLogTag() + ' Unable to decode field "' + fti.field + '" on demand for aggregate function, no decoding function provided.');
 				}
 			}
 		});
@@ -1402,6 +1430,8 @@ var AggregateInfo = makeSubclass('AggregateInfo', Object, function (aggType, spe
 
 	self.instance = new aggClass(ctorOpts);
 });
+
+mixinLogging(AggregateInfo);
 
 // Exports {{{1
 

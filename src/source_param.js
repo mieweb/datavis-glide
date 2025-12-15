@@ -4,12 +4,12 @@ import jQuery from 'jquery';
 
 import {
 	arrayCopy,
-	debug,
 	delegate,
 	getProp,
 	getPropDef,
 	isEmpty,
 	makeSubclass,
+	mixinLogging,
 	setProp,
 } from './util/misc.js';
 
@@ -63,16 +63,6 @@ import {
  * @property {string} json.operand When absent, the user's input is sent as the value.  When
  * present, this is sent instead, and any empty array is replaced with the user's input.
  */
-
-// FilterError {{{1
-
-/**
- * @class
- */
-
-var FilterError = makeSubclass('FilterError', Error, function (msg) {
-	this.message = msg;
-});
 
 // Filter {{{1
 
@@ -154,9 +144,11 @@ var Filter = function (config) {
 	if (self.type === 'multi-autocomplete'
 		&& (self.method === 'json_where' || self.method === 'json_having')
 		&& (self.json.operator !== '$in' && self.json.operator !== '$nin')) {
-			throw new FilterError('Filter "' + self.paramName + '" is a multi-autocomplete, so the operator must be either "$in" or "$nin" (right now it\'s "' + self.json.operator + '").');
+			throw new Error('Filter "' + self.paramName + '" is a multi-autocomplete, so the operator must be either "$in" or "$nin" (right now it\'s "' + self.json.operator + '").');
 		}
 };
+
+mixinLogging(Filter);
 
 // #store {{{2
 
@@ -258,7 +250,7 @@ Filter.prototype.store = function (id) {
 		}
 	}
 
-	console.debug('[DataVis // Filter // Store] Input Type = %s, Input Name = %s, Param Name = %s, Value = %s', self.type, self.inputName, self.paramName, self.value);
+	self.logDebug(self.makeLogTag() + ' Input Type = %s, Input Name = %s, Param Name = %s, Value = %s', self.type, self.inputName, self.paramName, self.value);
 
 	// if (self.required && (self.value === '' || self.value === [])) {
 	//	throw new MissingRequiredParameterError(self.paramName);
@@ -473,15 +465,15 @@ Filter.prototype.addJsonParam = function (obj) {
 		, operand;
 
 	if (self.json == null) {
-		throw new FilterError('Missing configuration object for JSON grid parameter.');
+		throw new Error('Missing configuration object for JSON grid parameter.');
 	}
 
 	if (self.json.name == null || self.json.name === '') {
-		throw new FilterError('Missing constraint set name for JSON grid parameter.');
+		throw new Error('Missing constraint set name for JSON grid parameter.');
 	}
 
 	if (self.json.column == null || self.json.column === '') {
-		throw new FilterError('Missing column name for JSON grid parameter.');
+		throw new Error('Missing column name for JSON grid parameter.');
 	}
 
 	if (self.json.operator == null || self.json.operator === '') {

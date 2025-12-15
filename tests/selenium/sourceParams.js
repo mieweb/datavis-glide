@@ -139,7 +139,7 @@ describe('Source Parameters', function () {
 	}
 
 	describe('using individual inputs', function () {
-		befores('http://localhost:3000/grid/sourceParams/form.html');
+		befores('http://localhost:3000/tests/pages/grid/sourceParams/form.html');
 		afters();
 		it('shows initial values of all form elements', async function () {
 			let actual = await grid.getPlainData_asArrays();
@@ -157,7 +157,7 @@ describe('Source Parameters', function () {
 	});
 
 	describe('using the whole form', function () {
-		befores('http://localhost:3000/grid/sourceParams/inputs.html');
+		befores('http://localhost:3000/tests/pages/grid/sourceParams/inputs.html');
 		afters();
 		it('shows initial values of specified inputs', async function () {
 			let actual = await grid.getPlainData_asArrays();

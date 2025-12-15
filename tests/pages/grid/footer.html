@@ -19,10 +19,10 @@ document.addEventListener('DOMContentLoaded', function () {
 			format: 'M/D/YYYY'
 		}
 	});
-	var computedView = new MIE.WC_DataVis.ComputedView(source);
+	var view = new MIE.WC_DataVis.ComputedView(source);
 	new MIE.WC_DataVis.Grid({
 		id: 'grid',
-		computedView: computedView,
+		computedView: view,
 		table: {
 			features: {
 				rowSelect: true,

@@ -43,13 +43,13 @@ document.addEventListener('DOMContentLoaded', function () {
 		isEssential: true
 	});
 
-	var computedView = new MIE.WC_DataVis.ComputedView(source, {
+	var view = new MIE.WC_DataVis.ComputedView(source, {
 		prefs: prefs
 	});
 
 	var grid = new MIE.WC_DataVis.Grid({
 		id: 'grid',
-		computedView: computedView,
+		computedView: view,
 		prefs: prefs,
 		table: {
 			features: {

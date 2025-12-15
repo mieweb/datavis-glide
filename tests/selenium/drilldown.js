@@ -27,7 +27,7 @@ describe('Drill Down', function() {
 		let grid;
 
 		before(async function () {
-			await driver.get('http://localhost:3000/grid/default.html');
+			await driver.get('http://localhost:3000/tests/pages/grid/default.html');
 			grid = new Grid(driver);
 			await grid.waitForIdle();
 

@@ -6,7 +6,6 @@ import jQuery from 'jquery';
 
 import { trans } from '../../../trans.js';
 import {
-	debug,
 	deepCopy,
 	determineColumns,
 	fontAwesome,
@@ -17,11 +16,11 @@ import {
 	getPropDef,
 	isElement,
 	isVisible,
-	log,
 	makeOperationButton,
 	makeSubclass,
 	mergeSort2,
 	mixinEventHandling,
+	mixinLogging,
 	objFromArray,
 	onVisibilityChange,
 	setPropDef,
@@ -53,8 +52,10 @@ var GridTableGroupDetail = makeSubclass('GridTableGroupDetail', GridTable, funct
 
 	self.features.sort = false;
 
-	console.debug('DataVis // %s // Constructing grid table; features = %O', self.toString(), features);
+	self.logDebug(self.makeLogTag() + ' DataVis // %s // Constructing grid table; features = %O', self.toString(), features);
 });
+
+mixinLogging(GridTableGroupDetail);
 
 // #canRender {{{2
 
@@ -342,7 +343,7 @@ GridTableGroupDetail.prototype.drawBody = function (data, typeInfo, columns, con
 		var rowValIndex = +tr.attr('data-wcdv-rowValIndex');
 		var rowValMetadata = data.groupMetadata.lookup.byRowValIndex[rowValIndex];
 
-		console.debug('DataVis // ' + 'GRID TABLE // GROUP - DETAIL // SELECT',
+		self.logDebug(self.makeLogTag() + ' DataVis // ' + 'GRID TABLE // GROUP - DETAIL // SELECT',
 			'Selecting data row: rowNum = %d, rowValIndex = %d, parentGroupId = %s, parentGroupInfo = %O',
 			rowNum, rowValIndex, rowValMetadata.id, self.groupInfo[rowValMetadata.id]);
 
@@ -419,14 +420,14 @@ GridTableGroupDetail.prototype.drawBody = function (data, typeInfo, columns, con
 
 			var rowValIndex = self.data.groupMetadata.lookup.byId[metadataId].rowValIndex;
 
-			console.debug('[DataVis // %s // Toggle] show = %s, id = %s, rowValIndex = %s',
+			self.logDebug(self.makeLogTag() + ' show = %s, id = %s, rowValIndex = %s',
 				self.toString(), show, metadataId, rowValIndex);
 
 			// Check if we're expanding a leaf, thus fully expanding an entire group, and see if we need
 			// to render table rows for all the records in that group.
 
 			if (show && !isRendered[metadataId]) {
-				console.debug('[DataVis // %s // Toggle] Rendering: group metadata ID = %s',
+				self.logDebug(self.makeLogTag() + ' Rendering: group metadata ID = %s',
 					self.toString(), metadataId);
 				render(metadataId, 0, tr);
 			}
@@ -1010,12 +1011,12 @@ GridTableGroupDetail.prototype.drawFooter = function (columns, data, typeInfo) {
 					footerConfig.fields = [field];
 				}
 
-				console.debug('[DataVis // %s // Footer(%s)] Creating footer using config: %O',
+				self.logDebug(self.makeLogTag() + ' Creating footer using config: %O',
 					self.toString(), field, footerConfig);
 
 				var aggInfo = new AggregateInfo('all', footerConfig, 0, self.colConfig, typeInfo, function (tag, fti) {
 					if (fti.needsDecoding) {
-						console.debug('[DataVis // %s // Footer(%s) // %s] Converting data: { field = "%s", type = "%s" }',
+						self.logDebug(self.makeLogTag() + ' Converting data: { field = "%s", type = "%s" }',
 							self.toString(), field, tag, fti.field, fti.type);
 
 						Source.decodeAll(data.dataByRowId, fti.field);
@@ -1044,7 +1045,7 @@ GridTableGroupDetail.prototype.drawFooter = function (columns, data, typeInfo) {
 					}
 
 					if (aggInfo.debug) {
-						console.debug('[DataVis // %s // Footer(%s)] Aggregate result: %s',
+						self.logDebug(self.makeLogTag() + ' Aggregate result: %s',
 							self.toString(), field, JSON.stringify(aggResult));
 					}
 
@@ -1117,14 +1118,14 @@ GridTableGroupDetail.prototype.addWorkHandler = function () {
 	var self = this;
 
 	self.view.on(ComputedView.events.workEnd, function (info, ops) {
-		console.debug('DataVis // ' + 'GRID TABLE - GROUP - DETAIL // HANDLER (ComputedView.workEnd)', 'ComputedView has finished doing work');
+		self.logDebug(self.makeLogTag('handler(workEnd)') + ' ComputedView has finished doing work');
 
 		if (!ops.group || ops.pivot) {
 			self.fire('unableToRender', null, ops);
 			return;
 		}
 
-		console.debug('DataVis // ' + 'GRID TABLE - GROUP - DETAIL // HANDLER (ComputedView.workEnd)', 'Redrawing because the view has done work');
+		self.logDebug(self.makeLogTag('handler(workEnd)') + ' Redrawing because the view has done work');
 		self.draw(self.root);
 	}, { who: self });
 };
@@ -1337,7 +1338,7 @@ GridTableGroupDetail.prototype.addDataToCsv = function (data) {
 	var self = this;
 	var columns = determineColumns(self.colConfig, data, self.typeInfo);
 
-	console.debug('[DataVis // %s // Generate CSV] Started generating CSV file', self.toString());
+	self.logDebug(self.makeLogTag() + ' Started generating CSV file', self.toString());
 	self.fire('generateCsvProgress', null, 0);
 
 	self.csv.start();
@@ -1397,7 +1398,7 @@ GridTableGroupDetail.prototype.addDataToCsv = function (data) {
 	recur(0, data.groupMetadata);
 
 	self.csv.finish(function () {
-		console.debug('[DataVis // %s // Generate CSV] Finished generating CSV file', self.toString());
+		self.logDebug(self.makeLogTag() + ' Finished generating CSV file', self.toString());
 		self.csvLock.unlock();
 		self.fire('generateCsvProgress', null, 100);
 		self.fire('csvReady');

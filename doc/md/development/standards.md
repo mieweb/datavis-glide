@@ -53,7 +53,7 @@ The number one convention is to avoid making unnecessary diffs.  Follow the styl
 
 ### Object Orientation
 
-* The first line of any method should be `var self = this`.
+* The first line of any method should be `var self = this`. Exceptional cases are when methods are one or two lines, then you can just use `this` instead.
 * Never use `this` unless within an event handler or something like that.  Always use `self` to refer to the instance that the method is being invoked on.
 * Use `makeSubclass` to create class hierarchies.  Toplevel classes should have `Object` as their superclass.
-* Use `self.super` to access methods in superclasses.
+* Use `self.super[SuperClassName]` to access methods in superclasses. You can skip up the inheritance chain like this if you need to.

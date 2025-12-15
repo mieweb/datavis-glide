@@ -26,10 +26,10 @@ MIE.WC_DataVis.jQuery(document).ready(function () {
 		'Completion': 'number',
 		'Dependencies': 'string'
 	});
-	var computedView = new MIE.WC_DataVis.ComputedView(source);
-	new MIE.WC_DataVis.Graph('graph', computedView, {
+	var view = new MIE.WC_DataVis.ComputedView(source);
+	new MIE.WC_DataVis.Graph('graph', view, {
 		id: 'graph',
-		computedView: computedView,
+		computedView: view,
 		whenPlain: {
 			graphType: 'gantt'
 		},
@@ -40,7 +40,7 @@ MIE.WC_DataVis.jQuery(document).ready(function () {
 	});
 	new MIE.WC_DataVis.Grid({
 		id: 'grid',
-		computedView: computedView,
+		computedView: view,
 		table: {
 			features: {
 				sort: true,

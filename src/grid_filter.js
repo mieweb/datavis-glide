@@ -6,16 +6,15 @@ import BigNumber from 'bignumber.js';
 import jQuery from 'jquery';
 
 import {
-	debug,
 	deepDefaults,
 	fontAwesome,
 	gensym,
 	getPropDef,
 	isFloat,
 	isInt,
-	log,
 	makeSubclass,
 	mixinEventHandling,
+	mixinLogging,
 	toFloat,
 	toInt,
 } from './util/misc.js';
@@ -105,7 +104,7 @@ var StringDropdownGridFilterChosen = makeSubclass('StringDropdownGridFilterChose
 	if (self.gridFilterSet.gridTable) {
 		self.gridFilterSet.gridTable.on('columnResize', function () {
 			var targetWidth = self.opts.sizingElement.innerWidth() - self.removeBtn.outerWidth() - 14;
-			console.debug('[DataVis // Grid Filter // Handler(GridTablePlain.columnResize)] Adjusting Chosen widget width to ' + targetWidth + 'px to match column width');
+			self.logDebug(self.makeLogTag() + ' Adjusting Chosen widget width to ' + targetWidth + 'px to match column width');
 			self.chosen.innerWidth(targetWidth);
 		});
 	}
@@ -705,6 +704,8 @@ var GridFilterSet = makeSubclass('GridFilterSet', Object, function (view, prefs,
 	self.delayUpdate = false;
 });
 
+mixinLogging(GridFilterSet);
+
 // Events {{{2
 
 /**
@@ -839,14 +840,14 @@ GridFilterSet.prototype.build = function (field, target, opts) {//filterType, fi
 	// Make sure that we are able to get the column type.
 
 	if (colType == null) {
-		console.error('[DataVis // GridFilterSet // build] Unable to determine type of column "' + field + '"');
+		self.logError(self.makeLogTag() + ' Unable to determine type of column "' + field + '"');
 		return null;
 	}
 
 	// Make sure that we know what kinds of filters are allowed for the column type.
 
 	if (GridFilter.widgets[colType] === undefined) {
-		console.error('[DataVis // GridFilterSet // build] Unknown type "' + colType + '" for column "' + field + '"');
+		self.logError(self.makeLogTag() + ' Unknown type "' + colType + '" for column "' + field + '"');
 		return null;
 	}
 
@@ -860,7 +861,7 @@ GridFilterSet.prototype.build = function (field, target, opts) {//filterType, fi
 		throw new Error('Invalid filter type "' + filterType + '" for type "' + colType + '" of column "' + field + '"');
 	}
 
-	console.debug('[DataVis // Grid Filter] Creating new widget: column type = "' + colType + '" ; filter type = "' + filterType + '"');
+	self.logDebug(self.makeLogTag() + ' Creating new widget: column type = "' + colType + '" ; filter type = "' + filterType + '"');
 
 	return new ctor(field, self, fti, opts);
 };
@@ -885,7 +886,7 @@ GridFilterSet.prototype.remove = function (id, filterBtn, noEvent) {
 	// Make sure that a filter with that ID exists.
 
 	if (filter === undefined) {
-		log.warn('Attempted to remove filter with ID "' + id + '" from the grid, but it doesn\'t exist');
+		self.logWarning(self.makeLogTag() + ' Attempted to remove filter with ID "' + id + '" from the grid, but it doesn\'t exist');
 		return;
 	}
 
@@ -1020,7 +1021,7 @@ GridFilterSet.prototype.update = function () {
 		});
 	});
 
-	console.debug('[DataVis // Grid Filter Set] Updating with ' + self.filters.all.length + ' filters: ', spec);
+	self.logDebug(self.makeLogTag() + ' Updating with ' + self.filters.all.length + ' filters: ', spec);
 
 	self.view.setFilter(spec, self.progress, self.opts);
 };
@@ -1059,7 +1060,7 @@ GridFilterSet.prototype.set = function (field, fieldSpec, opts) {
 	}
 	else {
 		_.each(fieldSpec, function (val, op) {
-			console.debug('[DataVis // Grid Filter Set] Setting filter: { field = %s ; operator = %s ; value = %s }',
+			self.logDebug(self.makeLogTag() + ' Setting filter: { field = %s ; operator = %s ; value = %s }',
 				field, op, typeof val === 'object' ? JSON.stringify(val) : val);
 
 			widget.setOperator(op);

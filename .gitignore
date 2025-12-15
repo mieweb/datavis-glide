@@ -19,6 +19,7 @@ examples/wcdatavis.css
 examples/wcdatavis-extra.css
 examples/test/*.json
 trans-missing/*.tsv
+trans-missing/*.json
 tests/data/*.csv
 tests/data/*.json
 tests/data/*.xml

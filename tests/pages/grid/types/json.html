@@ -25,10 +25,10 @@ $(document).ready(function () {
 		type: 'http',
 		url: '../../json.json'
 	});
-	var computedView = new MIE.WC_DataVis.ComputedView(source);
+	var view = new MIE.WC_DataVis.ComputedView(source);
 	new MIE.WC_DataVis.Grid({
 		id: 'test-grid-types-json',
-		computedView: computedView,
+		computedView: view,
 		table: {
 			features: {
 				limit: false,

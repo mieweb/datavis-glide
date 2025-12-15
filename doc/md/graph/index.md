@@ -1,11 +1,8 @@
 # Graph
 
-Just like \[grids\]\[Grid\], graphs are bound to views which manage the
-data. This means that a graph and grid can show the same data. Graphs
-tend to show aggregate values, making them perfect for summarizing data
-which has been grouped or pivotted. For this reason, it’s easy to
-configure a graph to behave differently depending on how the data has
-been organized.
+Just like [grids](../grid/index.md), graphs are bound to views which manage the data and perform operations on it. This means that a graph and grid can show the same data by sharing a view, and this is the main use case. By grouping, pivotting, and calculating aggregate functions in a grid, a graph connected to the same view can depict the results.
+
+It is also possible, by defining a perspective in the source code, to use a graph without any connected grid. The perspective replaces the interactive configuration of the view by the grid. Here’s [an example of that](site:../examples/graph/google-no-grid.html).
 
 # Graph Types
 

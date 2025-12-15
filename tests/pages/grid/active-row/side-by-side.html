@@ -14,10 +14,10 @@ document.addEventListener('DOMContentLoaded', function () {
 		type: 'http',
 		url: '../../random100.json'
 	});
-	var computedView1 = new MIE.WC_DataVis.ComputedView(source);
+	var view1 = new MIE.WC_DataVis.ComputedView(source);
 	new MIE.WC_DataVis.Grid({
 		id: 'test-grid-active-row-side-by-side-1',
-		computedView: computedView1,
+		computedView: view1,
 		table: {
 			features: {
 				limit: false,
@@ -49,10 +49,10 @@ document.addEventListener('DOMContentLoaded', function () {
 		title: 'Test - Grid - Active Row - Side by Side 1',
 		showControls: true
 	});
-	var computedView2 = new MIE.WC_DataVis.ComputedView(source);
+	var view2 = new MIE.WC_DataVis.ComputedView(source);
 	new MIE.WC_DataVis.Grid({
 		id: 'test-grid-active-row-side-by-side-2',
-		computedView: computedView2,
+		computedView: view2,
 		table: {
 			features: {
 				limit: false,

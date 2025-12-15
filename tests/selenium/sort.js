@@ -167,7 +167,7 @@ describe('Sort', function() {
 		_.each(sortInfo.plain, (tests, typeName) => {
 			describe(`${typeName} type`, function () {
 				before(async function () {
-					await driver.get(`http://localhost:3000/grid/types/${typeName}.html`);
+					await driver.get(`http://localhost:3000/tests/pages/grid/types/${typeName}.html`);
 					grid = new Grid(driver, `test-grid-types-${typeName}`);
 					await grid.waitForIdle();
 				});
@@ -212,7 +212,7 @@ describe('Sort', function() {
 		_.each(sortInfo.group, (si) => {
 			describe(`grouping by ${JSON.stringify(si.groupBy)}`, function () {
 				before(async function () {
-					await driver.get('http://localhost:3000/grid/basic/random1000.html');
+					await driver.get('http://localhost:3000/tests/pages/grid/basic/random1000.html');
 					grid = new Grid(driver);
 					await grid.waitForIdle();
 

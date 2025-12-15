@@ -11,9 +11,7 @@ import {
 	getProp,
 	getPropDef,
 	I,
-	log,
 	makeSubclass,
-	mixinDebugging,
 	mixinEventHandling,
 	mixinLogging,
 	setProp,
@@ -150,7 +148,7 @@ var Perspective = makeSubclass('Perspective', Object, function (id, name, config
 			break;
 		// Add new perspective object version migration here.
 		default:
-			self.logError('UPGRADE VERSION', 'No way to upgrade from v' + self.config.version + ' to v' + v);
+			self.logError(self.makeLogTag('upgrade') + ' No way to upgrade from v' + self.config.version + ' to v' + v);
 		}
 	}
 
@@ -158,10 +156,6 @@ var Perspective = makeSubclass('Perspective', Object, function (id, name, config
 	*/
 }, {
 	CURRENT_VERSION: 2
-});
-
-mixinDebugging(Perspective, function () {
-	return sprintf.sprintf('PREFS // PERSPECTIVE (%s)', this.id);
 });
 
 mixinLogging(Perspective);
@@ -187,7 +181,7 @@ Perspective.prototype.load = function (moduleNames, cont) {
 		moduleNames = _.keys(self.modules);
 	}
 
-	self.debug(null, 'Loading perspective using these modules: %s', JSON.stringify(moduleNames));
+	self.logDebug(self.makeLogTag() + ' Loading perspective using these modules: %s', JSON.stringify(moduleNames));
 
 	// Go through every module that we have preferences for and load them into the bound components.
 
@@ -195,10 +189,10 @@ Perspective.prototype.load = function (moduleNames, cont) {
 		var m = self.modules[moduleName];
 		var c = self.config[moduleName];
 		if (c == null && m.defaultConfig != null) {
-			self.debug(null, 'Using default config for module: moduleName = %s ; config = %O', moduleName, m.defaultConfig);
+			self.logDebug(self.makeLogTag() + ' Using default config for module: moduleName = %s ; config = %O', moduleName, m.defaultConfig);
 			c = m.defaultConfig;
 		}
-		self.debug(null, 'Loading module: moduleName = %s ; config = %O', moduleName, c);
+		self.logDebug(self.makeLogTag() + ' Loading module: moduleName = %s ; config = %O', moduleName, c);
 		m.load(c);
 	});
 
@@ -222,13 +216,13 @@ Perspective.prototype.save = function (cont) {
 
 	cont = cont || I;
 
-	self.debug(null, 'Saving perspective');
+	self.logDebug(self.makeLogTag() + ' Saving perspective');
 
 	// Go through every module that we have preferences for and save them from the bound components.
 
 	_.each(self.modules, function (module, moduleName) {
 		self.config[moduleName] = module.save();
-		self.debug(null, 'Saving module: moduleName = %s ; config = %O', moduleName, self.config[moduleName]);
+		self.logDebug(self.makeLogTag() + ' Saving module: moduleName = %s ; config = %O', moduleName, self.config[moduleName]);
 	});
 
 	return cont(self.config);

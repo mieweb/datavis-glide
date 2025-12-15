@@ -25,7 +25,7 @@ describe('Active Row', function() {
 
 	describe('basic', function () {
 		before(async function () {
-			await driver.get('http://localhost:3000/grid/active-row/basic.html');
+			await driver.get('http://localhost:3000/tests/pages/grid/active-row/basic.html');
 			grid = new Grid(driver, 'test-grid-active-row');
 			await grid.waitForIdle();
 		});
@@ -86,7 +86,7 @@ describe('Active Row', function() {
 
 	describe('default-slider', function () {
 		before(async function () {
-			await driver.get('http://localhost:3000/grid/active-row/default-slider.html');
+			await driver.get('http://localhost:3000/tests/pages/grid/active-row/default-slider.html');
 			grid = new Grid(driver, 'test-grid-active-row-default-slider');
 			await grid.waitForIdle();
 		});
@@ -157,7 +157,7 @@ describe('Active Row', function() {
 
 	describe('custom-slider', function () {
 		before(async function () {
-			await driver.get('http://localhost:3000/grid/active-row/custom-slider.html');
+			await driver.get('http://localhost:3000/tests/pages/grid/active-row/custom-slider.html');
 			grid = new Grid(driver, 'test-grid-active-row-custom-slider');
 			await grid.waitForIdle();
 		});

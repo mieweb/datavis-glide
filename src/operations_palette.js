@@ -8,7 +8,7 @@ import { trans } from './trans.js';
 import {
 	fontAwesome,
 	makeSubclass,
-	mixinDebugging,
+	mixinLogging,
 } from './util/misc.js';
 
 import { Grid } from './grid.js';
@@ -33,7 +33,7 @@ var OperationsPalette = makeSubclass('OperationsPalette', Object, function (grid
 	self.parent = null;
 });
 
-mixinDebugging(OperationsPalette);
+mixinLogging(OperationsPalette);
 
 // #draw {{{2
 
@@ -163,7 +163,7 @@ OperationsPalette.prototype.setOperations = function (ops) {
 
 	self.operations = ops.all;
 
-	self.debug('setOperations', 'New operations = %O', self.operations);
+	self.logDebug(self.makeLogTag('setOperations') + ' New operations = %O', self.operations);
 
 	if (self.ui.palette != null) {
 		self.autoReveal();

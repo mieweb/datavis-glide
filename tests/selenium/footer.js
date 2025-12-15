@@ -27,7 +27,7 @@ describe('Footer', function() {
 		let grid;
 
 		before(async function () {
-			await driver.get('http://localhost:3000/grid/footer.html');
+			await driver.get('http://localhost:3000/tests/pages/grid/footer.html');
 			grid = new Grid(driver);
 			await grid.waitForIdle();
 		});

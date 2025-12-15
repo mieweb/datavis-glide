@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8"/>
+		<script type="module" src="/index.js"></script>
+		<link rel="stylesheet" href="../../font-awesome.css"/>
+		<link rel="stylesheet" href="../../base.css"/>
+		<link rel="stylesheet" href="../../wcdatavis.css"/>
+		<script type="module">
+import { Source, ComputedView, Grid } from '/index.js';
+document.addEventListener('DOMContentLoaded', function () {
+	window.MIE = window.MIE || {};
+	window.MIE.DEBUGGING = true;
+	window.DATAVIS_LANG = 'es-MX';
+
+	var source = new Source({
+		type: 'http',
+		url: '../../random100.json'
+	});
+	var view = new ComputedView(source);
+	new Grid({
+		id: 'test-lang-es-mx',
+		computedView: view,
+		table: {
+			features: {
+				limit: false,
+				rowSelect: true,
+				activeRow: true,
+			},
+			activeRow: {
+				slider: false
+			},
+			columns: [
+					'rowId'
+				, 'string1'
+				, 'country'
+				, 'state'
+				, 'fruit'
+				, 'link'
+				, 'int1'
+				, 'float1'
+				, 'currency1'
+				, 'date1'
+				, 'time1'
+				, 'datetime1'
+				, 'fixedPrecision1'
+				, 'boolean1'
+				, 'duration1'
+			]
+		}
+	}, {
+		title: 'Test - Lang - Spanish (Mexico)',
+		showControls: true
+	});
+});
+		</script>
+	</head>
+	<body>
+		<div id="test-lang-es-mx"></div>
+	</body>
+</html>

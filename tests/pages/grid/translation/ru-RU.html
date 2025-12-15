@@ -8,7 +8,7 @@
 		<script src="../../jquery.contextMenu.min.js"></script>
 		<script src="../../jquery.sumoselect.min.js"></script>
 		<script src="../../flatpickr.min.js"></script>
-		<script>window.DATAVIS_LANG = 'es'</script>
+		<script>window.DATAVIS_LANG = 'ru-RU'</script>
 		<script src="../../wcdatavis.js"></script>
 		<link rel="stylesheet" href="../../font-awesome.css"/>
 		<link rel="stylesheet" href="../../jquery-ui.min.css"/>
@@ -25,10 +25,10 @@ $(document).ready(function () {
 		type: 'http',
 		url: '../../random100.json'
 	});
-	var computedView = new MIE.WC_DataVis.ComputedView(source);
+	var view = new MIE.WC_DataVis.ComputedView(source);
 	new MIE.WC_DataVis.Grid({
 		id: 'grid',
-		computedView: computedView,
+		computedView: view,
 		table: {
 			features: {
 				limit: false,

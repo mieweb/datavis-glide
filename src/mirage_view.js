@@ -180,7 +180,7 @@ MirageView.prototype.getData = function (cont, reason) {
 
 		return cont(true, self.data);
 	}, function (msg) {
-		self.logError('GET DATA', msg);
+		self.logError(self.makeLogTag() + ' GET DATA', msg);
 		return cont(false);
 	});
 };

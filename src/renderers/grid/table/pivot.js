@@ -6,7 +6,6 @@ import jQuery from 'jquery';
 
 import { trans } from '../../../trans.js';
 import {
-	debug,
 	deepCopy,
 	determineColumns,
 	fontAwesome,
@@ -17,11 +16,11 @@ import {
 	getPropDef,
 	isElement,
 	isVisible,
-	log,
 	makeOperationButton,
 	makeSubclass,
 	mergeSort2,
 	mixinEventHandling,
+	mixinLogging,
 	objFromArray,
 	onVisibilityChange,
 	setPropDef,
@@ -56,10 +55,12 @@ var GridTablePivot = makeSubclass('GridTablePivot', GridTable, function (grid, d
 	self.features.limit = false;
 	self.features.footer = false;
 
-	console.debug('DataVis // ' + 'GRID TABLE - PIVOT', 'Constructing grid table; features = %O', features);
+	self.logDebug(self.makeLogTag() + ' Constructing grid table; features = %O', features);
 
 	setPropDef(['rowVals', 'cells', 'groupAggregates', 'addCols'], self.opts, 'displayOrder');
 });
+
+mixinLogging(GridTablePivot);
 
 // #canRender {{{2
 
@@ -884,7 +885,7 @@ GridTablePivot.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 	});
 
 	self.csv.finish(function () {
-		console.debug('[DataVis // %s // Generate CSV] Finished generating CSV file', self.toString());
+		self.logDebug(self.makeLogTag() + ' Finished generating CSV file', self.toString());
 		self.csvLock.unlock();
 		self.fire('generateCsvProgress', null, 100);
 		self.fire('csvReady');
@@ -901,15 +902,15 @@ GridTablePivot.prototype.addWorkHandler = function () {
 	var self = this;
 
 	self.view.on(ComputedView.events.workEnd, function (info, ops) {
-		console.debug('DataVis // ' + self.toString() + ' // HANDLER (ComputedView.workEnd)', 'ComputedView has finished doing work');
+		self.logDebug(self.makeLogTag('handler(workEnd)') + ' ComputedView has finished doing work');
 
 		if (!ops.pivot) {
-			console.debug('DataVis // ' + self.toString() + ' // HANDLER (ComputedView.workEnd)', 'Unable to render this data: %O', ops);
+			self.logDebug(self.makeLogTag('handler(workEnd)') + ' Unable to render this data: %O', ops);
 			self.fire('unableToRender', null, ops);
 			return;
 		}
 
-		console.debug('DataVis // ' + self.toString() + ' // HANDLER (ComputedView.workEnd)', 'Redrawing because the view has done work');
+		self.logDebug(self.makeLogTag('handler(workEnd)') + ' Redrawing because the view has done work');
 		self.draw(self.root);
 	}, { who: self });
 };

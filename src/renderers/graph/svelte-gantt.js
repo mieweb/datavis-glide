@@ -14,13 +14,12 @@ import { SvelteGantt, SvelteGanttTable, SvelteGanttDependencies } from 'svelte-g
 
 import {
 	dataURItoBlob,
-	debug,
 	deepCopy,
 	deepDefaults,
 	getProp,
 	loadScript,
-	log,
 	makeSubclass,
+	mixinLogging,
 	setProp,
 } from '../../util/misc.js';
 import {AggregateInfo} from '../../aggregates';
@@ -32,6 +31,8 @@ import { Source } from '../../source.js';
 // GraphRendererSvelteGantt {{{1
 
 var GraphRendererSvelteGantt = makeSubclass('GraphRendererSvelteGantt', GraphRenderer);
+
+mixinLogging(GraphRendererSvelteGantt);
 
 // #draw {{{2
 
@@ -80,7 +81,7 @@ GraphRendererSvelteGantt.prototype.draw = function () {
 			var missingRequired = false;
 			_.each(cols, function (c) {
 				if (c.required && !typeInfo.isSet(c.field)) {
-					console.error('[DataVis // Graph(SvelteGantt) // Gantt] Missing required data field: %s', c.field);
+					self.logError(self.makeLogTag() + ' Missing required data field: %s', c.field);
 					missingRequired = true;
 				}
 			});

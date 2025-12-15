@@ -13,7 +13,6 @@ import {
 	car,
 	cdr,
 	copyProps,
-	debug,
 	deepCopy,
 	deepDefaults,
 	delegate,
@@ -27,18 +26,16 @@ import {
 	I,
 	interleaveWith,
 	isElement,
-	log,
 	logAsync,
 	makeSetters,
 	makeSubclass,
 	mergeSort4,
-	mixinDebugging,
 	mixinEventHandling,
+	mixinLogging,
 	objFromArray,
 	pigeonHoleSort,
 	setProp,
 	Timing,
-	mixinLogging,
 } from './util/misc.js';
 import OrdMap from './util/ordmap.js';
 import Lock from './util/lock.js';
@@ -696,7 +693,6 @@ makeSetters(View, [
 	{ name: 'setSort',      prop: 'sortSpec',      event: 'sortSet'      },
 ]);
 
-mixinDebugging(View);
 mixinLogging(View);
 
 // Event JSDoc {{{3
@@ -1058,7 +1054,7 @@ View.prototype.sort = function (cont) {
 		var cmp;
 
 		if (fti == null) {
-			log.error('Unable to sort: no type information {spec = %O}', spec);
+			self.logError(self.makeLogTag() + ' Unable to sort: no type information {spec = %O}', spec);
 			return null;
 		}
 
@@ -1069,7 +1065,7 @@ View.prototype.sort = function (cont) {
 		}
 
 		if (fti.type == null) {
-			log.error('Unable to sort: type unknown {spec = %O, fti = %O}', spec, fti);
+			self.logError(self.makeLogTag() + ' Unable to sort: type unknown {spec = %O, fti = %O}', spec, fti);
 			return null;
 		}
 
@@ -1078,14 +1074,14 @@ View.prototype.sort = function (cont) {
 		cmp = getComparisonFn.byType(fti.type);
 
 		if (cmp == null) {
-			log.error('Unable to sort: no comparison function for type {spec = %O, type = %s}', spec, fti.type);
+			self.logError(self.makeLogTag() + ' Unable to sort: no comparison function for type {spec = %O, type = %s}', spec, fti.type);
 			return null;
 		}
 
 		// This should never happen, because that would imply that getComparisonFn.byType() is broken.
 
 		if (typeof cmp !== 'function') {
-			log.error('Unable to sort: invalid comparison function for type {spec = %O, type = %s}', spec, fti.type);
+			self.logError(self.makeLogTag() + ' Unable to sort: invalid comparison function for type {spec = %O, type = %s}', spec, fti.type);
 			return null;
 		}
 
@@ -1109,7 +1105,7 @@ View.prototype.sort = function (cont) {
 		var bundle, len;
 
 		if (sortSourceFn == null) {
-			log.error('Unable to sort: no sort source function given {spec = %O}', spec);
+			self.logError(self.makeLogTag() + ' Unable to sort: no sort source function given {spec = %O}', spec);
 			return null;
 		}
 
@@ -1348,7 +1344,7 @@ View.prototype.sort = function (cont) {
 
 		if (self.data.isPlain) {
 			if (orientation === 'horizontal') {
-				log.error('Unable to sort: cannot perform horizontal sort on plain data');
+				self.logError(self.makeLogTag() + ' Unable to sort: cannot perform horizontal sort on plain data');
 				return next(false);
 			}
 			if (spec.field) {
@@ -1369,14 +1365,14 @@ View.prototype.sort = function (cont) {
 		}
 		else if (self.data.isGroup) {
 			if (orientation === 'horizontal') {
-				log.error('Unable to sort: cannot perform horizontal sort on grouped data');
+				self.logError(self.makeLogTag() + ' Unable to sort: cannot perform horizontal sort on grouped data');
 				return next(false);
 			}
 			if (spec.field != null) {
 				gfi = self.data.groupFields.indexOf(spec.field);
 
 				if (gfi < 0) {
-					log.error('Unable to sort: `field` property does not refer to a grouped field ' +
+					self.logError(self.makeLogTag() + ' Unable to sort: `field` property does not refer to a grouped field ' +
 						'{field = "%s", groupFields = %s}', spec.field, self.data.groupFields);
 				}
 				else {
@@ -1396,7 +1392,7 @@ View.prototype.sort = function (cont) {
 				//   This sorts groups by the value of one group field.
 
 				if (spec.groupFieldIndex < 0 || spec.groupFieldIndex >= self.data.groupFields.length) {
-					log.error('Unable to sort: groupFieldIndex out of range {spec = %O, range = [0,%d]}',
+					self.logError(self.makeLogTag() + ' Unable to sort: groupFieldIndex out of range {spec = %O, range = [0,%d]}',
 										spec, self.data.groupFields.length);
 					return next(false);
 				}
@@ -1433,7 +1429,7 @@ View.prototype.sort = function (cont) {
 				//   This sorts groups by the result of an aggregate function applied to a group.
 
 				if (spec.aggNum < 0 || spec.aggNum >= aggInfo.group.length) {
-					log.error('Unable to sort: aggNum out of range {spec = %O, range = [0,%d]}',
+					self.logError(self.makeLogTag() + ' Unable to sort: aggNum out of range {spec = %O, range = [0,%d]}',
 										spec, aggInfo.group.length);
 					return next(false);
 				}
@@ -1461,7 +1457,7 @@ View.prototype.sort = function (cont) {
 					gfi = self.data.groupFields.indexOf(spec.field);
 
 					if (gfi < 0) {
-						log.error('Unable to sort: `field` property does not refer to a grouped field ' +
+						self.logError(self.makeLogTag() + ' Unable to sort: `field` property does not refer to a grouped field ' +
 							'{field = "%s", groupFields = %s}', spec.field, self.data.groupFields);
 					}
 					else {
@@ -1473,7 +1469,7 @@ View.prototype.sort = function (cont) {
 					var pfi = self.data.pivotFields.indexOf(spec.field);
 
 					if (pfi < 0) {
-						log.error('Unable to sort: `field` property does not refer to a pivotted field ' +
+						self.logError(self.makeLogTag() + ' Unable to sort: `field` property does not refer to a pivotted field ' +
 							'{field = "%s", pivotFields = %s}', spec.field, self.data.pivotFields);
 					}
 					else {
@@ -1491,7 +1487,7 @@ View.prototype.sort = function (cont) {
 				//   * groupFieldIndex: number
 
 				if (spec.groupFieldIndex < 0 || spec.groupFieldIndex >= self.data.groupFields.length) {
-					log.error('Unable to sort: groupFieldIndex out of range {spec = %O, range = [0,%d]}',
+					self.logError(self.makeLogTag() + ' Unable to sort: groupFieldIndex out of range {spec = %O, range = [0,%d]}',
 										spec, self.data.groupFields.length);
 					return next(false);
 				}
@@ -1533,19 +1529,19 @@ View.prototype.sort = function (cont) {
 						}
 					}
 					if (spec.rowValIndex === -1) {
-						log.error('Unable to sort: invalid rowVal {spec = %O}', spec);
+						self.logError(self.makeLogTag() + ' Unable to sort: invalid rowVal {spec = %O}', spec);
 						return next(false);
 					}
 				}
 
 				if (spec.rowValIndex < 0 || spec.rowValIndex >= self.data.rowVals.length) {
-					log.error('Unable to sort: rowValIndex out of range {spec = %O, range = [0,%d]}',
+					self.logError(self.makeLogTag() + ' Unable to sort: rowValIndex out of range {spec = %O, range = [0,%d]}',
 										spec, self.data.rowVals.length);
 					return next(false);
 				}
 
 				if (spec.aggNum < 0 || spec.aggNum >= aggInfo.cell.length) {
-					log.error('Unable to sort: aggNum out of range {spec = %O, range = [0,%d]}',
+					self.logError(self.makeLogTag() + ' Unable to sort: aggNum out of range {spec = %O, range = [0,%d]}',
 										spec, aggInfo.cell.length);
 					return next(false);
 				}
@@ -1563,7 +1559,7 @@ View.prototype.sort = function (cont) {
 				//   * pivotFieldIndex: number
 
 				if (spec.pivotFieldIndex < 0 || spec.pivotFieldIndex >= self.data.pivotFields.length) {
-					log.error('Unable to sort: pivotFieldIndex out of range {spec = %O, range = [0,%d]}',
+					self.logError(self.makeLogTag() + ' Unable to sort: pivotFieldIndex out of range {spec = %O, range = [0,%d]}',
 										spec, self.data.pivotFields.length);
 					return next(false);
 				}
@@ -1605,19 +1601,19 @@ View.prototype.sort = function (cont) {
 						}
 					}
 					if (spec.colValIndex === -1) {
-						log.error('Unable to sort: invalid colVal {spec = %O}', spec);
+						self.logError(self.makeLogTag() + ' Unable to sort: invalid colVal {spec = %O}', spec);
 						return next(false);
 					}
 				}
 
 				if (spec.colValIndex < 0 || spec.colValIndex >= self.data.colVals.length) {
-					log.error('Unable to sort: colValIndex out of range {spec = %O, range = [0,%d]}',
+					self.logError(self.makeLogTag() + ' Unable to sort: colValIndex out of range {spec = %O, range = [0,%d]}',
 										spec, self.data.colVals.length);
 					return next(false);
 				}
 
 				if (spec.aggNum < 0 || spec.aggNum >= aggInfo.cell.length) {
-					log.error('Unable to sort: aggNum out of range {spec = %O, range = [0,%d]}',
+					self.logError(self.makeLogTag() + ' Unable to sort: aggNum out of range {spec = %O, range = [0,%d]}',
 										spec, aggInfo.cell.length);
 					return next(false);
 				}
@@ -1636,7 +1632,7 @@ View.prototype.sort = function (cont) {
 				//   * aggNum: number
 
 				if (spec.aggNum < 0 || spec.aggNum >= aggInfo.pivot.length) {
-					log.error('Unable to sort: aggNum out of range {spec = %O, range = [0,%d]}',
+					self.logError(self.makeLogTag() + ' Unable to sort: aggNum out of range {spec = %O, range = [0,%d]}',
 										spec, aggInfo.pivot.length);
 					return next(false);
 				}
@@ -1655,7 +1651,7 @@ View.prototype.sort = function (cont) {
 				//   * aggNum: number
 
 				if (spec.aggNum < 0 || spec.aggNum >= aggInfo.group.length) {
-					log.error('Unable to sort: aggNum out of range {spec = %O, range = [0,%d]}',
+					self.logError(self.makeLogTag() + ' Unable to sort: aggNum out of range {spec = %O, range = [0,%d]}',
 										spec, aggInfo.group.length);
 					return next(false);
 				}
@@ -1666,7 +1662,7 @@ View.prototype.sort = function (cont) {
 				};
 			}
 			else {
-				log.error('Invalid sort spec for pivotted data: ' + JSON.stringify(spec));
+				self.logError(self.makeLogTag() + ' Invalid sort spec for pivotted data: ' + JSON.stringify(spec));
 				return next(false);
 			}
 		}
@@ -1837,7 +1833,7 @@ View.prototype._setFilter = function (spec, progress, opts) {
 
 		_.each(spec, function (fieldSpec, field) {
 			if (self.typeInfo.get(field) == null) {
-				log.error('Ignoring filter on field "' + field + '" because it doesn\'t exist in the data');
+				self.logError(self.makeLogTag() + ' Ignoring filter on field "' + field + '" because it doesn\'t exist in the data');
 				delete spec[field];
 			}
 		});
@@ -1937,14 +1933,14 @@ View.prototype.filter = function (cont) {
 		// us to filter.
 
 		if (fti === undefined) {
-			log.error('Filter field "' + field + '" does not exist in the source');
+			self.logError(self.makeLogTag() + ' Filter field "' + field + '" does not exist in the source');
 			self.fire('invalidFilterField', null, field);
 			delete self.filterSpec[field];
 			return;
 		}
 
 		if (fti.type === undefined) {
-			log.error('Unable to filter field "' + field + '", type is unknown');
+			self.logError(self.makeLogTag() + ' Unable to filter field "' + field + '", type is unknown');
 			self.fire('invalidFilterField', null, field);
 			delete self.filterSpec[field];
 			return;
@@ -2215,13 +2211,13 @@ View.prototype._setGroup = function (spec, opts, cont) {
 	self.debug('SET GROUP', 'spec = %O', spec);
 
 	if (spec == null && self.pivotSpec != null) {
-		log.warn('VIEW (' + self.name + ') // SET GROUP', 'Having a pivot without a group is not allowed');
+		self.logWarning(self.makeLogTag('setGroup') + ' Having a pivot without a group is not allowed');
 		self.clearPivot(opts);
 	}
 
 	if (spec != null) {
 		if (!_.isArray(spec.fieldNames)) {
-			log.warn('VIEW (' + self.name + ') // SET GROUP', '`spec.fieldNames` is not an array');
+			self.logWarning(self.makeLogTag('setGroup') + ' `spec.fieldNames` is not an array');
 			spec.fieldNames = [];
 		}
 
@@ -2248,7 +2244,7 @@ View.prototype._setGroup = function (spec, opts, cont) {
 
 		spec.fieldNames = _.filter(spec.fieldNames, function (field) {
 			if (self.typeInfo.get(field) == null) {
-				log.error('Ignoring group on field "' + field + '" because it doesn\'t exist in the data');
+				self.logError(self.makeLogTag() + ' Ignoring group on field "' + field + '" because it doesn\'t exist in the data');
 				return false;
 			}
 			return true;
@@ -2346,7 +2342,7 @@ View.prototype.group = function () {
 	// It's not possible to just use the data, because there may be no rows.
 
 	if (self.typeInfo == null) {
-		log.error('Source type information is missing');
+		self.logError(self.makeLogTag() + ' Source type information is missing');
 		return false;
 	}
 
@@ -2356,11 +2352,11 @@ View.prototype.group = function () {
 	_.each(self.groupSpec.fieldNames, function (fieldObj) {
 		var fti = self.typeInfo.get(fieldObj.field);
 		if (fti == null) {
-			log.error('Group field does not exist in the source: ' + fieldObj.field);
+			self.logError(self.makeLogTag() + ' Group field does not exist in the source: ' + fieldObj.field);
 			self.fire('invalidGroupField', null, fieldObj.field);
 		}
 		else if (fti.type == null) {
-			log.error('Unable to group by field "%s": type is undefined');
+			self.logError(self.makeLogTag() + ' Unable to group by field "%s": type is undefined');
 		}
 		else {
 			self._maybeDecode('GROUP', fti);
@@ -2446,7 +2442,7 @@ View.prototype.group = function () {
 				rowVal = addRowVals[arvIndex];
 
 				if (rowVal.length != finalGroupSpec.length) {
-					log.error('Unable to add rowVal %s when grouping by %s: the lengths must be the same',
+					self.logError(self.makeLogTag() + ' Unable to add rowVal %s when grouping by %s: the lengths must be the same',
 						JSON.stringify(rowVal), JSON.stringify(finalGroupSpec));
 					continue;
 				}
@@ -2672,14 +2668,14 @@ View.prototype._setPivot = function (spec, opts) {
 	self.debug('SET PIVOT', 'spec = %O', spec);
 
 	if (self.groupSpec == null && spec != null) {
-		log.warn('VIEW (' + self.name + ') // SET PIVOT', 'Having a pivot without a group is not allowed');
+		self.logWarning(self.makeLogTag('setPivot') + ' Having a pivot without a group is not allowed');
 		self.clearPivot(opts);
 		return false;
 	}
 
 	if (spec != null) {
 		if (!_.isArray(spec.fieldNames)) {
-			log.warn('VIEW (' + self.name + ') // SET PIVOT', '`spec.fieldNames` is not an array');
+			self.logWarning(self.makeLogTag('setPivot') + ' `spec.fieldNames` is not an array');
 			spec.fieldNames = [];
 		}
 
@@ -2706,7 +2702,7 @@ View.prototype._setPivot = function (spec, opts) {
 
 		spec.fieldNames = _.filter(spec.fieldNames, function (field) {
 			if (self.typeInfo.get(field) == null) {
-				log.error('Ignoring pivot on field "' + field + '" because it doesn\'t exist in the data');
+				self.logError(self.makeLogTag() + ' Ignoring pivot on field "' + field + '" because it doesn\'t exist in the data');
 				return false;
 			}
 			return true;
@@ -2806,7 +2802,7 @@ View.prototype.pivot_orig = function () {
 	// It's not possible to just use the data, because there may be no rows.
 
 	if (self.typeInfo == null) {
-		log.error('Source type information is missing');
+		self.logError(self.makeLogTag() + ' Source type information is missing');
 		return false;
 	}
 
@@ -2814,7 +2810,7 @@ View.prototype.pivot_orig = function () {
 
 	_.each(self.pivotSpec.fieldNames, function (field, fieldIdx) {
 		if (!self.typeInfo.isSet(field)) {
-			log.error('Pivot field does not exist in the source: ' + field);
+			self.logError(self.makeLogTag() + ' Pivot field does not exist in the source: ' + field);
 			self.fire('invalidPivotField', null, field);
 		}
 		else {
@@ -2950,7 +2946,7 @@ View.prototype.pivot = function () {
 	// It's not possible to just use the data, because there may be no rows.
 
 	if (self.typeInfo == null) {
-		log.error('Source type information is missing');
+		self.logError(self.makeLogTag() + ' Source type information is missing');
 		return false;
 	}
 
@@ -2960,11 +2956,11 @@ View.prototype.pivot = function () {
 	_.each(self.pivotSpec.fieldNames, function (fieldObj) {
 		var fti = self.typeInfo.get(fieldObj.field);
 		if (fti == null) {
-			log.error('Pivot field does not exist in the source: ' + fieldObj.field);
+			self.logError(self.makeLogTag() + ' Pivot field does not exist in the source: ' + fieldObj.field);
 			self.fire('invalidPivotField', null, fieldObj.field);
 		}
 		else if (fti.type == null) {
-			log.error('Unable to pivot by field "%s": type is undefined');
+			self.logError(self.makeLogTag() + ' Unable to pivot by field "%s": type is undefined');
 		}
 		else {
 			self._maybeDecode('PIVOT', fti);
@@ -3030,7 +3026,7 @@ View.prototype.pivot = function () {
 				colVal = addColVals[acvIndex];
 
 				if (colVal.length != finalPivotSpec.length) {
-					log.error('Unable to add colVal %s when pivotting by %s: the lengths must be the same',
+					self.logError(self.makeLogTag() + ' Unable to add colVal %s when pivotting by %s: the lengths must be the same',
 						JSON.stringify(colVal), JSON.stringify(finalPivotSpec));
 					continue;
 				}
@@ -3202,22 +3198,22 @@ View.prototype._setAggregate = function (spec, opts) {
 			aggSpec = _.filter(aggSpec, function(agg) {
 				var a = AGGREGATE_REGISTRY.get(agg.fun);
 				if (a == null) {
-					log.error('Ignoring aggregate "' + agg.fun + '" because no such aggregate function exists');
+					self.logError(self.makeLogTag() + ' Ignoring aggregate "' + agg.fun + '" because no such aggregate function exists');
 					return false;
 				}
 				/*
 				if (a.prototype.fieldCount > 0) {
 					if (agg.fields == null) {
-						log.error('Ignoring aggregate "' + agg.fun + '" because no fields have been specified');
+						self.logError(self.makeLogTag() + ' Ignoring aggregate "' + agg.fun + '" because no fields have been specified');
 						return false;
 					}
 					if (agg.fields.length < a.prototype.fieldCount) {
-						log.error('Ignoring aggregate "' + agg.fun + '" because there aren\'t enough fields');
+						self.logError(self.makeLogTag() + ' Ignoring aggregate "' + agg.fun + '" because there aren\'t enough fields');
 						return false;
 					}
 					for (var i = 0; i < agg.fields.length; i += 1) {
 						if (self.typeInfo.get(agg.fields[i]) == null) {
-							log.error('Ignoring aggregate "' + agg.fun + '" because field "' + agg.fields[i] + '" doesn\'t exist in the data');
+							self.logError(self.makeLogTag() + ' Ignoring aggregate "' + agg.fun + '" because field "' + agg.fields[i] + '" doesn\'t exist in the data');
 							return false;
 						}
 					}
@@ -3311,7 +3307,7 @@ View.prototype.aggregate = function (cont) {
 				info[what][aggNum] = new AggregateInfo(what, spec, aggNum, self.colConfig, self.typeInfo, _.bind(self._maybeDecode, self));
 			}
 			catch (e) {
-				log.error('Invalid Aggregate: ' + what + '[' + aggNum + '] - ' + e.message);
+				self.logError(self.makeLogTag() + ' Invalid Aggregate: ' + what + '[' + aggNum + '] - ' + e.message);
 
 				// Set the aggregate to null so it can be removed later.
 				info[what][aggNum] = null;

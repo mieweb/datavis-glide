@@ -36,7 +36,7 @@ describe('Aggregate', function() {
 		let floatMaxs = [9096.552813426433, 9826.871974900494, 9020.757338445388, 9665.097071339816, 9229.901315761948, 9637.421621192036, 6183.071597756641, 9961.582135696373, 9327.40540844484];
 
 		before(async function () {
-			await driver.get('http://localhost:3000/grid/default.html');
+			await driver.get('http://localhost:3000/tests/pages/grid/default.html');
 			grid = new Grid(driver);
 			await grid.waitForIdle();
 			await grid.addGroup('fruit');
@@ -486,7 +486,7 @@ describe('Aggregate', function() {
 		let grid;
 
 		before(async function () {
-			await driver.get('http://localhost:3000/grid/default.html');
+			await driver.get('http://localhost:3000/tests/pages/grid/default.html');
 			grid = new Grid(driver);
 			await grid.waitForIdle();
 

@@ -6,7 +6,6 @@ import jQuery from 'jquery';
 
 import { trans } from '../../../trans.js';
 import {
-	debug,
 	deepCopy,
 	determineColumns,
 	fontAwesome,
@@ -17,11 +16,11 @@ import {
 	getPropDef,
 	isElement,
 	isVisible,
-	log,
 	makeOperationButton,
 	makeSubclass,
 	mergeSort2,
 	mixinEventHandling,
+	mixinLogging,
 	objFromArray,
 	onVisibilityChange,
 	setPropDef,
@@ -55,10 +54,12 @@ var GridTableGroupSummary = makeSubclass('GridTableGroupSummary', GridTable, fun
 	self.features.rowSelect = false;
 	self.features.footer = false;
 
-	console.debug('DataVis // ' + 'GRID TABLE - GROUP - SUMMARY', 'Constructing grid table; features = %O', features);
+	self.logDebug(self.makeLogTag() + ' Constructing grid table; features = %O', features);
 
 	setPropDef(['rowVals', 'addCols', 'groupAggregates'], self.opts, 'displayOrder');
 });
+
+mixinLogging(GridTableGroupSummary);
 
 // #canRender {{{2
 
@@ -324,7 +325,7 @@ GridTableGroupSummary.prototype.drawBody = function (data, typeInfo, columns, co
 	}
 
 	self.csv.finish(function () {
-		console.debug('[DataVis // %s // Generate CSV] Finished generating CSV file', self.toString());
+		self.logDebug(self.makeLogTag() + ' Finished generating CSV file', self.toString());
 		self.csvLock.unlock();
 		self.fire('generateCsvProgress', null, 100);
 		self.fire('csvReady');
@@ -373,14 +374,14 @@ GridTableGroupSummary.prototype.addWorkHandler = function () {
 	var self = this;
 
 	self.view.on(ComputedView.events.workEnd, function (info, ops) {
-		console.debug('DataVis // ' + 'GRID TABLE - GROUP - SUMMARY // HANDLER (ComputedView.workEnd)', 'ComputedView has finished doing work');
+		self.logDebug(self.makeLogTag('handler(workEnd)') + ' ComputedView has finished doing work');
 
 		if (!ops.group || ops.pivot) {
 			self.fire('unableToRender', null, ops);
 			return;
 		}
 
-		console.debug('DataVis // ' + 'GRID TABLE - GROUP - SUMMARY // HANDLER (ComputedView.workEnd)', 'Redrawing because the view has done work');
+		self.logDebug(self.makeLogTag('handler(workEnd)') + ' Redrawing because the view has done work');
 		self.draw(self.root);
 	}, { who: self });
 };

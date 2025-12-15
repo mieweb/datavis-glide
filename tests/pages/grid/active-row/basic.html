@@ -14,10 +14,10 @@ document.addEventListener('DOMContentLoaded', function () {
 		type: 'http',
 		url: '../../random100.json'
 	});
-	var computedView = new MIE.WC_DataVis.ComputedView(source);
+	var view = new MIE.WC_DataVis.ComputedView(source);
 	new MIE.WC_DataVis.Grid({
 		id: 'test-grid-active-row',
-		computedView: computedView,
+		computedView: view,
 		table: {
 			features: {
 				limit: false,

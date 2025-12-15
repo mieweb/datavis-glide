@@ -7,7 +7,6 @@ import {trans} from '../../trans.js';
 import {
 	deepCopy,
 	fontAwesome,
-	log,
 	makeRadioButtons,
 	makeSubclass,
 	makeToggleCheckbox,
@@ -808,10 +807,10 @@ var ComputedViewToolbar = makeSubclass('ComputedViewToolbar', ToolbarSection, fu
 							}
 						});
 					}, function (msg) {
-						log.error('Failed to save mirage view: ' + msg);
+						self.logError(self.makeLogTag() + ' Failed to save mirage view: ' + msg);
 					});
 				}, function (msg) {
-					log.error('Failed to initialize mirage view: ' + msg);
+					self.logError(self.makeLogTag() + ' Failed to initialize mirage view: ' + msg);
 				});
 			}
 		})

@@ -11,9 +11,7 @@ import {
 	getProp,
 	getPropDef,
 	I,
-	log,
 	makeSubclass,
-	mixinDebugging,
 	mixinEventHandling,
 	mixinLogging,
 	setProp,
@@ -55,6 +53,8 @@ var PrefsBackend = makeSubclass('PrefsBackend', Object, function (id, prefs, opt
 	self.prefs = prefs;
 	self.opts = opts;
 });
+
+mixinLogging(PrefsBackend);
 
 // #load {{{2
 
@@ -236,7 +236,7 @@ var PrefsBackendLocalStorage = makeSubclass('PrefsBackendLocalStorage', PrefsBac
 		var storage = window.localStorage;
 	}
 	catch (e) {
-		log.error('Access to localStorage is denied; prefs disabled');
+		self.logError(self.makeLogTag() + ' Access to localStorage is denied; prefs disabled');
 		throw e;
 	}
 
@@ -249,10 +249,6 @@ var PrefsBackendLocalStorage = makeSubclass('PrefsBackendLocalStorage', PrefsBac
 	self.localStorageKey = self.opts.key;
 }, {
 	version: 3
-});
-
-mixinDebugging(PrefsBackendLocalStorage, function () {
-	return 'PREFS (' + this.id + ') // BACKEND - LOCAL';
 });
 
 // #load {{{2
@@ -288,11 +284,11 @@ PrefsBackendLocalStorage.prototype.load = function (id, cont) {
 	var perspective = getProp(storedPrefObj, self.id, 'perspectives', id);
 
 	if (perspective == null) {
-		self.debug(null, 'Perspective does not exist: id = "%s"', id);
+		self.logDebug(self.makeLogTag() + ' Perspective does not exist: id = "%s"', id);
 		return cont(null);
 	}
 
-	self.debug(null, 'Loaded perspective: id = "%s" ; name = "%s" ; config = %O',
+	self.logDebug(self.makeLogTag() + ' Loaded perspective: id = "%s" ; name = "%s" ; config = %O',
 		perspective.id, perspective.name, perspective.config);
 
 	return cont(perspective);
@@ -326,7 +322,7 @@ PrefsBackendLocalStorage.prototype.loadAll = function (cont) {
 	}
 
 	var perspectives = getPropDef({}, storedPrefObj, self.id, 'perspectives');
-	self.debug(null, 'Loaded all perspectives: %O', perspectives);
+	self.logDebug(self.makeLogTag() + ' Loaded all perspectives: %O', perspectives);
 	return cont(perspectives);
 };
 
@@ -335,7 +331,7 @@ PrefsBackendLocalStorage.prototype.loadAll = function (cont) {
 PrefsBackendLocalStorage.prototype.migrate = function (version, cont) {
 	var self = this;
 
-	self.debug(null, 'Migrating prefs: v%d -> v%d', version, self.version);
+	self.logDebug(self.makeLogTag() + ' Migrating prefs: v%d -> v%d', version, self.version);
 
 	var readConfig = function () {
 		var localStorageStr = localStorage.getItem(self.localStorageKey);
@@ -468,7 +464,7 @@ PrefsBackendLocalStorage.prototype.save = function (perspective, cont) {
 
 	cont = cont || I;
 
-	self.debug(null, 'Saving perspective: id = "%s" ; name = "%s" ; config = %O',
+	self.logDebug(self.makeLogTag() + ' Saving perspective: id = "%s" ; name = "%s" ; config = %O',
 		perspective.id, perspective.name, perspective.config);
 
 	var storedPrefData = JSON.parse(localStorage.getItem(self.localStorageKey) || '{}');
@@ -495,7 +491,7 @@ PrefsBackendLocalStorage.prototype.getPerspectives = function (cont) {
 	var storedPrefData = JSON.parse(localStorage.getItem(self.localStorageKey) || '{}');
 	var perspectives = _.keys(getPropDef({}, storedPrefData, self.id, 'perspectives'));
 
-	self.debug(null, 'Found %d perspectives: %s', perspectives.length, JSON.stringify(perspectives));
+	self.logDebug(self.makeLogTag() + ' Found %d perspectives: %s', perspectives.length, JSON.stringify(perspectives));
 
 	return cont(perspectives);
 };
@@ -512,7 +508,7 @@ PrefsBackendLocalStorage.prototype.getCurrent = function (cont) {
 	var storedPrefData = JSON.parse(localStorage.getItem(self.localStorageKey) || '{}');
 	var current = getProp(storedPrefData, self.id, 'current');
 
-	self.debug(null, 'Current perspective is "%s"', current);
+	self.logDebug(self.makeLogTag() + ' Current perspective is "%s"', current);
 
 	return cont(current);
 };
@@ -531,7 +527,7 @@ PrefsBackendLocalStorage.prototype.setCurrent = function (id, cont) {
 
 	cont = cont || I;
 
-	self.debug(null, 'Setting current perspective to "%s"', id);
+	self.logDebug(self.makeLogTag() + ' Setting current perspective to "%s"', id);
 
 	var storedPrefData = JSON.parse(localStorage.getItem(self.localStorageKey) || '{}');
 	setProp(self.version, storedPrefData, self.id, 'version');
@@ -558,7 +554,7 @@ PrefsBackendLocalStorage.prototype.rename = function (oldName, newName, cont) {
 
 	cont = cont || I;
 
-	self.debug(null, 'Renaming perspective: "%s" -> "%s"', oldName, newName);
+	self.logDebug(self.makeLogTag() + ' Renaming perspective: "%s" -> "%s"', oldName, newName);
 
 	var storedPrefData = JSON.parse(localStorage.getItem(self.localStorageKey) || '{}');
 	storedPrefData[self.id]['perspectives'][newName] = storedPrefData[self.id]['perspectives'][oldName];
@@ -582,7 +578,7 @@ PrefsBackendLocalStorage.prototype.deletePerspective = function (id, cont) {
 
 	cont = cont || I;
 
-	self.debug(null, 'Deleting perspective: "%s"', id);
+	self.logDebug(self.makeLogTag() + ' Deleting perspective: "%s"', id);
 
 	var storedPrefData = JSON.parse(localStorage.getItem(self.localStorageKey) || '{}');
 	delete storedPrefData[self.id]['perspectives'][id];
@@ -602,7 +598,7 @@ PrefsBackendLocalStorage.prototype.reset = function (cont) {
 
 	cont = cont || I;
 
-	self.debug(null, 'Resetting perspectives');
+	self.logDebug(self.makeLogTag() + ' Resetting perspectives');
 
 	var storedPrefData = JSON.parse(localStorage.getItem(self.localStorageKey) || '{}');
 	delete storedPrefData[self.id];
@@ -632,10 +628,6 @@ var PrefsBackendTemporary = makeSubclass('PrefsBackendTemporary', PrefsBackend, 
 	};
 });
 
-mixinDebugging(PrefsBackendTemporary, function () {
-	return 'PREFS (' + this.id + ') // BACKEND - TEMPORARY';
-});
-
 // #load {{{2
 
 PrefsBackendTemporary.prototype.load = function (id, cont) {
@@ -651,11 +643,11 @@ PrefsBackendTemporary.prototype.load = function (id, cont) {
 	var perspective = self.storage.perspectives[id];
 
 	if (perspective == null) {
-		self.debug(null, 'Perspective does not exist: id = "%s"', id);
+		self.logDebug(self.makeLogTag() + ' Perspective does not exist: id = "%s"', id);
 		return cont(null);
 	}
 
-	self.debug(null, 'Loaded perspective: id = "%s" ; name = "%s" ; config = %O',
+	self.logDebug(self.makeLogTag() + ' Loaded perspective: id = "%s" ; name = "%s" ; config = %O',
 		perspective.id, perspective.name, perspective.config);
 
 	return cont(perspective);
@@ -671,7 +663,7 @@ PrefsBackendTemporary.prototype.loadAll = function (cont) {
 	}
 
 	var perspectives = self.storage.perspectives;
-	self.debug(null, 'Loaded all perspectives: %O', perspectives);
+	self.logDebug(self.makeLogTag() + ' Loaded all perspectives: %O', perspectives);
 	return cont(perspectives);
 };
 
@@ -689,7 +681,7 @@ PrefsBackendTemporary.prototype.save = function (perspective, cont) {
 
 	cont = cont || I;
 
-	self.debug(null, 'Saving perspective: id = "%s" ; name = "%s" ; config = %O',
+	self.logDebug(self.makeLogTag() + ' Saving perspective: id = "%s" ; name = "%s" ; config = %O',
 		perspective.id, perspective.name, perspective.config);
 
 	self.storage.perspectives[perspective.id] = {
@@ -712,7 +704,7 @@ PrefsBackendTemporary.prototype.getPerspectives = function (cont) {
 
 	var perspectives = _.keys(self.storage.perspectives);
 
-	self.debug(null, 'Found %d perspectives: %s', perspectives.length, JSON.stringify(perspectives));
+	self.logDebug(self.makeLogTag() + ' Found %d perspectives: %s', perspectives.length, JSON.stringify(perspectives));
 
 	return cont(perspectives);
 };
@@ -728,7 +720,7 @@ PrefsBackendTemporary.prototype.getCurrent = function (cont) {
 
 	var current = self.storage.current;
 
-	self.debug(null, 'Current perspective is "%s"', current);
+	self.logDebug(self.makeLogTag() + ' Current perspective is "%s"', current);
 
 	return cont(current);
 };
@@ -747,7 +739,7 @@ PrefsBackendTemporary.prototype.setCurrent = function (id, cont) {
 
 	cont = cont || I;
 
-	self.debug(null, 'Setting current perspective to "%s"', id);
+	self.logDebug(self.makeLogTag() + ' Setting current perspective to "%s"', id);
 
 	self.storage.current = id;
 
@@ -771,7 +763,7 @@ PrefsBackendTemporary.prototype.rename = function (oldName, newName, cont) {
 
 	cont = cont || I;
 
-	self.debug(null, 'Renaming perspective: "%s" -> "%s"', oldName, newName);
+	self.logDebug(self.makeLogTag() + ' Renaming perspective: "%s" -> "%s"', oldName, newName);
 
 	self.storage.perspectives[newName] = self.storage.perspectives[oldName];
 	delete self.storage.perspectives[oldName];
@@ -793,7 +785,7 @@ PrefsBackendTemporary.prototype.deletePerspective = function (id, cont) {
 
 	cont = cont || I;
 
-	self.debug(null, 'Deleting perspective: "%s"', id);
+	self.logDebug(self.makeLogTag() + ' Deleting perspective: "%s"', id);
 
 	delete self.storage.perspectives[id];
 
@@ -811,7 +803,7 @@ PrefsBackendTemporary.prototype.reset = function (cont) {
 
 	cont = cont || I;
 
-	self.debug(null, 'Resetting perspectives');
+	self.logDebug(self.makeLogTag() + ' Resetting perspectives');
 
 	self.storage = {
 		perspectives: {}
