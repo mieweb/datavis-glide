@@ -27,11 +27,11 @@ $(document).ready(function () {
 		discriminatorField: 'rowId',
 		discriminatorParameter: 'start',
 	});
-	var computedView = new MIE.WC_DataVis.ComputedView(source, { prefs: prefs });
+	var view = new MIE.WC_DataVis.ComputedView(source, { prefs: prefs });
 	var mirageView = new MIE.WC_DataVis.MirageView({ prefs: prefs });
 	new MIE.WC_DataVis.Grid({
 		id: 'grid',
-		computedView: computedView,
+		computedView: view,
 		mirageView: mirageView,
 		prefs: prefs,
 		table: {

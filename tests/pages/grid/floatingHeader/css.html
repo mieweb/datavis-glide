@@ -24,16 +24,16 @@ $(document).ready(function () {
 		type: 'http',
 		url: '../../random100.json'
 	});
-	var computedView = new MIE.WC_DataVis.ComputedView(source);
+	var view = new MIE.WC_DataVis.ComputedView(source);
 	new MIE.WC_DataVis.Grid({
 		id: 'grid1',
-		computedView: computedView,
+		computedView: view,
 	}, {
 		title: 'Test // Grid // Floating Header // CSS // Fixed Height'
 	});
 	new MIE.WC_DataVis.Grid({
 		id: 'grid2',
-		computedView: computedView,
+		computedView: view,
 	}, {
 		title: 'Test // Grid // Floating Header // CSS // Variable Height'
 	});

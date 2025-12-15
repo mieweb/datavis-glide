@@ -19,14 +19,14 @@ document.addEventListener('DOMContentLoaded', function () {
 			format: 'M/D/YYYY'
 		}
 	});
-	var computedView = new MIE.WC_DataVis.ComputedView(source);
-	new MIE.WC_DataVis.Graph('graph', computedView, null, {
+	var view = new MIE.WC_DataVis.ComputedView(source);
+	new MIE.WC_DataVis.Graph('graph', view, null, {
 		title: 'Test - Graph - Google',
 		renderer: 'google'
 	});
 	new MIE.WC_DataVis.Grid({
 		id: 'grid',
-		computedView: computedView,
+		computedView: view,
 		table: {
 			features: {
 				limit: false,

@@ -17,10 +17,10 @@ document.addEventListener('DOMContentLoaded', function () {
 		type: 'http',
 		url: '../../random100.json'
 	});
-	var computedView = new ComputedView(source);
+	var view = new ComputedView(source);
 	new Grid({
 		id: 'test-lang-pt-br',
-		computedView: computedView,
+		computedView: view,
 		table: {
 			features: {
 				limit: false,

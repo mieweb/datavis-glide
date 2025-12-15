@@ -24,9 +24,10 @@ $(document).ready(function () {
 		type: 'http',
 		url: '../../random100.xml'
 	});
-	var view = new MIE.WC_DataVis.View(source, 'TEST:GRID:DEFAULT');
-	new MIE.WC_DataVis.Grid('grid', view, {
+	var view = new MIE.WC_DataVis.ComputedView(source);
+	new MIE.WC_DataVis.Grid({
 		id: 'grid',
+		computedView: view,
 		table: {
 			features: {
 				limit: false,

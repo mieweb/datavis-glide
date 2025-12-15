@@ -49,12 +49,13 @@ $(document).ready(function () {
 		varName: 'localData'
 	});
 
-	var view = new MIE.WC_DataVis.View(source, 'TEST:GRID:CHANGING-FIELDS', {
+	var view = new MIE.WC_DataVis.ComputedView(source, {
 		prefs: prefs
 	});
 
-	var grid = new MIE.WC_DataVis.Grid('grid', view, {
+	var grid = new MIE.WC_DataVis.Grid({
 		id: 'grid',
+		computedView: view,
 		table: {
 			features: {
 				limit: false
