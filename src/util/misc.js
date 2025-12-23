@@ -2918,23 +2918,6 @@ export var logAsync = (function () {
 	};
 })();
 
-/**
- * Issue a warning about deprecated usage.  This also sends an email at the warning level, so that
- * we can see any systems which are using deprecated features.
- *
- * @param {object} defn The grid definition.
- * @param {string} msg The explanatory message.
- * @param {string} ref Section in the wiki that describes this deprecated usage.
- *
- * @example
- * deprecated(defn, 'Usage of [showColumns] and [hideColumns] is deprecated.', 'Showing_.26_Hiding_Columns');
- */
-
-export function deprecated(defn, msg, ref) {
-	var output = msg + ' See https://miewiki.med-web.com/wiki/index.php/Advanced_Reports:_Filtering,_Graphing,_Comparing#' + ref + ' for more information.';
-	emailWarning(defn, output);
-}
-
 var decode = function (cell, fti) {
 	if (cell.decoded) {
 		// We already did this one.
