@@ -5,8 +5,9 @@ import os.path
 
 from babel.dates import format_date, format_datetime, format_time
 from babel.numbers import format_decimal
-from datetime import date, datetime, time
+from datetime import date, datetime, time, timezone
 
+import calendar
 import copy
 import csv
 import decimal
@@ -85,9 +86,9 @@ def random_float(name='random_float', min=0, max=1, **opts):
 def random_date(name='random_date', min='1900-01-01', max='2100-01-01', **opts):
     global LAST
     r = init_random(name)
-    min = int(time.mktime(time.strptime(min, '%Y-%m-%d')))
-    max = int(time.mktime(time.strptime(max, '%Y-%m-%d')))
-    val = date.fromtimestamp(r.randint(min, max))
+    min = int(calendar.timegm(time.strptime(min, '%Y-%m-%d')))
+    max = int(calendar.timegm(time.strptime(max, '%Y-%m-%d')))
+    val = datetime.fromtimestamp(r.randint(min, max), timezone.utc)
     if 'format' in opts:
         ret = format_date(val, opts['format'], locale=opts.get('locale', 'en_US'))
     else:
@@ -98,24 +99,24 @@ def random_date(name='random_date', min='1900-01-01', max='2100-01-01', **opts):
 def random_time(name='random_time', min='00:00:00', max='23:59:59', **opts):
     global LAST
     r = init_random(name)
-    min = int(time.mktime(time.strptime('2000-01-01 ' + min, '%Y-%m-%d %H:%M:%S')))
-    max = int(time.mktime(time.strptime('2000-01-01 ' + max, '%Y-%m-%d %H:%M:%S')))
-    val = datetime.fromtimestamp(r.randint(min, max))
+    min = int(calendar.timegm(time.strptime('2000-01-01 ' + min, '%Y-%m-%d %H:%M:%S')))
+    max = int(calendar.timegm(time.strptime('2000-01-01 ' + max, '%Y-%m-%d %H:%M:%S')))
+    val = datetime.fromtimestamp(r.randint(min, max), timezone.utc)
     if 'format' in opts:
-        ret = format_datetime(val, opts['format'], locale=opts.get('locale', 'en_US'))
+        ret = format_datetime(val, opts['format'], locale=opts.get('locale', 'en_US'), tzinfo='UTC')
     else:
-        ret = format_datetime(val, 'HH:mm:ss', locale=opts.get('locale', 'en_US'))
+        ret = format_datetime(val, 'HH:mm:ss', locale=opts.get('locale', 'en_US'), tzinfo='UTC')
     LAST[name] = ret
     return ret
 
 def random_datetime(name='random_datetime', min='1900-01-01 00:00:00', max='2099-12-31 23:59:59', **opts):
     global LAST
     r = init_random(name)
-    min = int(time.mktime(time.strptime(min, '%Y-%m-%d %H:%M:%S')))
-    max = int(time.mktime(time.strptime(max, '%Y-%m-%d %H:%M:%S')))
-    val = datetime.fromtimestamp(r.randint(min, max))
+    min = int(calendar.timegm(time.strptime(min, '%Y-%m-%d %H:%M:%S')))
+    max = int(calendar.timegm(time.strptime(max, '%Y-%m-%d %H:%M:%S')))
+    val = datetime.fromtimestamp(r.randint(min, max), timezone.utc)
     if 'format' in opts:
-        ret = format_datetime(val, opts['format'], locale=opts.get('locale', 'en_US'))
+        ret = format_datetime(val, opts['format'], locale=opts.get('locale', 'en_US'), tzinfo='UTC')
     else:
         ret = str(val)
     LAST[name] = ret

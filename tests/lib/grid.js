@@ -248,7 +248,7 @@ class Grid {
 			if (opts.debug) {
 				process.stdout.write('.');
 			}
-			const x = await this.driver.executeScript(`console.log('### IDLE [${attempt}]'); return MIE.WC_DataVis.grids['${this.id}'].isIdle()`);
+			const x = await this.driver.executeScript(`console.log('### IDLE [${attempt}]'); try { return MIE.WC_DataVis.grids['${this.id}'].isIdle() } catch (e) { return false }`);
 			attempt += 1;
 			if (opts.showLogs) {
 				await this.dumpLogs();

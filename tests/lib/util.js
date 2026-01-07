@@ -2,9 +2,11 @@
 
 const vite = require('vite');
 const _ = require('lodash');
-const {By, Key} = require('selenium-webdriver');
+const {By, Key, Builder} = require('selenium-webdriver');
 const child_process = require('child_process');
 const Promise = require('bluebird');
+const chrome = require('selenium-webdriver/chrome');
+const {Preferences: LoggingPrefs, Type: LoggingType, Level: LoggingLevel} = require('selenium-webdriver/lib/logging');
 
 function decToHex(s, padLen) {
 	let result = (+s).toString(16).toUpperCase();
@@ -384,6 +386,30 @@ function setupServer() {
 	});
 }
 
+/**
+ * Creates a WebDriver with appropriate options for CI/local environments.
+ */
+function createDriver() {
+	const options = new chrome.Options();
+	const logging = new LoggingPrefs();
+
+	logging.setLevel(LoggingType.BROWSER, LoggingLevel.ALL);
+
+	// Configure for headless CI environment
+	if (process.env.CI || process.env.DISPLAY === ':99') {
+		options.addArguments('--headless');
+		options.addArguments('--no-sandbox');
+		options.addArguments('--disable-dev-shm-usage');
+		options.addArguments('--disable-gpu');
+	}
+
+	return new Builder()
+		.forBrowser('chrome')
+		.setChromeOptions(options)
+		.setLoggingPrefs(logging)
+		.build();
+}
+
 module.exports = {
 	rgbToHex,
 	asyncMap,
@@ -404,4 +430,5 @@ module.exports = {
 	sleep,
 	isVisible,
 	setupServer,
+	createDriver,
 };

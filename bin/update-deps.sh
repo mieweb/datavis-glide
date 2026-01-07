@@ -13,7 +13,7 @@ copy_npm() {
 	local -a files
 	files+=(jquery/dist/jquery.min.js)
 	files+=(jquery-ui/dist/jquery-ui.min.js jquery-ui/dist/themes/base/jquery-ui.min.css)
-	files+=(jquery-contextmenu/dist/jquery.contextMenu.min.{js,css})
+	files+=(jquery-contextmenu/dist/jquery.contextMenu.min.{js,css}{,.map})
 	files+=(flatpickr/dist/flatpickr.min.{js,css})
 	files+=(sumoselect/jquery.sumoselect.min.js sumoselect/sumoselect.min.css)
 	cp -v "${files[@]/#/$src/}" $dest

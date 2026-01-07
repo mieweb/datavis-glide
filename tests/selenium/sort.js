@@ -2,20 +2,17 @@ const Promise = require('bluebird');
 const assert = require('chai').assert;
 const _ = require('lodash');
 const Grid = require('../lib/grid.js');
-const {asyncEach, setupServer, sleep} = require('../lib/util.js');
+const {asyncEach, setupServer, sleep, createDriver} = require('../lib/util.js');
 
 const {Builder, Browser, By, Key, until} = require('selenium-webdriver');
-const {Preferences: LoggingPrefs, Type: LoggingType, Level: LoggingLevel} = require('selenium-webdriver/lib/logging');
 
 describe('Sort', function() {
 	setupServer();
-	const logging = new LoggingPrefs();
-	logging.setLevel(LoggingType.BROWSER, LoggingLevel.ALL);
 	let driver;
 	let grid;
 
 	before(async function () {
-		driver = new Builder().forBrowser('chrome').setLoggingPrefs(logging).build();
+		driver = await createDriver();
 	});
 
 	after(async function () {
@@ -80,9 +77,9 @@ describe('Sort', function() {
 				['time6', '12:02:00 AM', '11:54:00 PM', 'time (string → moment)'],
 			],
 			'datetime': [
-				['datetime1', 'November 30, 1901 12:24 AM', 'January 10, 2094 10:31 PM', 'datetime'],
-				['datetime2', 'November 30, 1901 12:24 AM', 'January 10, 2094 10:31 PM', 'datetime'],
-				['datetime3', 'November 30, 1901 12:24 AM', 'January 10, 2094 10:31 PM', 'datetime'],
+				['datetime1', 'November 30, 1901 12:24 AM', 'January 10, 2094 9:31 PM', 'datetime'],
+				['datetime2', 'November 30, 1901 12:24 AM', 'January 10, 2094 9:31 PM', 'datetime'],
+				['datetime3', 'November 30, 1901 12:24 AM', 'January 10, 2094 9:31 PM', 'datetime'],
 				['datetime16', 'January 1, 2010 10:39 AM', 'December 23, 2010 4:42 PM', 'datetime'],
 				['datetime17', 'January 1, 2010 10:39 AM', 'December 23, 2010 4:42 PM', 'datetime'],
 				['datetime18', 'January 1, 2010 10:39 AM', 'December 23, 2010 4:42 PM', 'datetime'],

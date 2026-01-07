@@ -1,0 +1,65 @@
+name: Selenium Tests
+
+on:
+  push:
+    branches: [ master, 'v*.*' ]
+  pull_request:
+    branches: '*'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12.2'
+
+      - name: Install pyenv
+        run: |
+          curl https://pyenv.run | bash
+          echo "$HOME/.pyenv/bin" >> $GITHUB_PATH
+          echo "$HOME/.pyenv/shims" >> $GITHUB_PATH
+
+      - name: Install Chrome and ChromeDriver
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y chromium-browser chromium-chromedriver xvfb
+          sudo ln -s /usr/lib/chromium-browser/chromedriver /usr/local/bin/chromedriver
+          chromium-browser --version
+          chromedriver --version
+          echo "CHROME_BIN=/usr/bin/chromium-browser" >> $GITHUB_ENV
+          echo "CHROMEDRIVER_PATH=/usr/local/bin/chromedriver" >> $GITHUB_ENV
+
+      - name: Install dependencies
+        run: make setup
+
+      - name: Build DataVis
+        run: make datavis
+
+      - name: Generate test data
+        run: make tests
+
+      - name: Start display
+        run: |
+          Xvfb :99 -ac -screen 0 1280x1024x24 &
+          echo "DISPLAY=:99" >> $GITHUB_ENV
+
+      - name: Run tests
+        run: ./bin/run-tests.sh
+        continue-on-error: true
+        id: selenium_tests
+
+      - name: Fail if tests failed
+        if: steps.selenium_tests.outcome == 'failure'
+        run: exit 1

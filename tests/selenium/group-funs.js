@@ -1,20 +1,17 @@
 const {assert} = require('chai');
 const _ = require('lodash');
 const Grid = require('../lib/grid.js');
-const {setupServer, asyncEach, sleep} = require('../lib/util.js');
+const {setupServer, asyncEach, sleep, createDriver} = require('../lib/util.js');
 
 const {Builder, Browser, By, Key, until} = require('selenium-webdriver');
-const {Preferences: LoggingPrefs, Type: LoggingType, Level: LoggingLevel} = require('selenium-webdriver/lib/logging');
 
 describe('Group Functions', function () {
 	setupServer();
-	const logging = new LoggingPrefs();
-	logging.setLevel(LoggingType.BROWSER, LoggingLevel.ALL);
 	let driver;
 	let grid;
 
-	before(function () {
-		driver = new Builder().forBrowser('chrome').setLoggingPrefs(logging).build();
+	before(async function () {
+		driver = await createDriver();
 	});
 
 	after(async function () {
@@ -51,20 +48,29 @@ describe('Group Functions', function () {
 		},
 		month: {
 			counts: {
-				'Apr': 9,
 				'Jan': 13,
+				'Feb': 5,
+				'Mar': 9,
+				'Apr': 9,
+				'May': 14,
+				'Jun': 7,
+				'Jul': 8,
+				'Aug': 8,
 				'Sep': 5,
+				'Oct': 4,
+				'Nov': 9,
+				'Dec': 9
 			}
 		},
 		day_of_week: {
 			counts: {
-				'Mon': 13,
+				'Mon': 12,
 				'Tue': 13,
-				'Wed': 10,
-				'Thu': 15,
-				'Fri': 20,
-				'Sat': 14,
-				'Sun': 15,
+				'Wed': 11,
+				'Thu': 14,
+				'Fri': 21,
+				'Sat': 13,
+				'Sun': 16,
 			}
 		},
 	};

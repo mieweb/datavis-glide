@@ -28,7 +28,7 @@
   "scripts": {
     "dev": "vite",
     "lint": "eslint src tests/lib tests/selenium",
-    "test": "mocha -t 10000 tests/selenium/*.js",
+    "test": "node scripts/run-tests.js",
     "rollup": "rollup --bundleConfigAsCjs -c rollup.config.js",
     "uglify": "uglifyjs -c -o dist/wcdatavis.min.js dist/wcdatavis.js"
   },
@@ -44,14 +44,14 @@
     "jquery": "=3.7.1",
     "jquery-contextmenu": "=2.9.2",
     "jquery-ui": "=1.14.1",
-    "json-formatter-js": "git+ssh://git@github.mieweb.com:datavis/json-formatter-js.git",
+    "json-formatter-js": "https://github.com/mieweb/json-formatter-js.git",
     "moment": "=2.30.1",
     "numeral": "=2.0.6",
     "papaparse": "=5.5.3",
     "sprintf-js": "=1.1.3",
     "squirrelly": "=9.1.0",
     "svelte-gantt": "=4.4.3",
-    "sumoselect": "git+ssh://git@github.mieweb.com:datavis/jquery.sumoselect.git",
+    "sumoselect": "https://github.com/mieweb/jquery.sumoselect.git",
     "underscore": "=1.13.7"
   },
   "devDependencies": {
