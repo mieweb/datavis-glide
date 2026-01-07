@@ -2,7 +2,7 @@ name: Selenium Tests
 
 on:
   push:
-    branches: [ master, 'v*.*' ]
+    branches: [ master, 'v*.*', next ]
   pull_request:
     branches: '*'
 
