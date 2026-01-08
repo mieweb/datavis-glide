@@ -25,6 +25,8 @@ import {
 import OrdMap from './util/ordmap.js';
 import Lock from './util/lock.js';
 
+import { trans } from './trans.js';
+
 import { Grid } from './grid.js';
 import { Graph } from './graph.js';
 
@@ -192,13 +194,6 @@ var Prefs = makeSubclass('Prefs', Object, function (name, moduleBindings, opts) 
 		});
 	}
 });
-
-/**
- * Default name of the "main perspective" which is used when no other perspectives exist.  It's a
- * fallback, to ensure that there's always something present.
- */
-
-Prefs.MAIN_PERSPECTIVE_NAME = 'Main Perspective';
 
 /**
  * Default backend type, for when none is specified.  Must be a valid key of something in {@link
@@ -762,12 +757,12 @@ Prefs.prototype.addMainPerspective = function (cont) {
 
 	for (var i = 0; i < self.availablePerspectives.length; i += 1) {
 		var id = self.availablePerspectives[i];
-		if (self.perspectives[id].name === Prefs.MAIN_PERSPECTIVE_NAME) {
+		if (self.perspectives[id].name === trans('PREFS.MAIN_PERSPECTIVE')) {
 			return self.setCurrentPerspective(id, cont);
 		}
 	}
 
-	self.addPerspective(null, Prefs.MAIN_PERSPECTIVE_NAME, {}, null, cont);
+	self.addPerspective(null, trans('PREFS.MAIN_PERSPECTIVE'), {}, null, cont);
 };
 
 // #deletePerspective {{{2

@@ -171,4 +171,5 @@ export default {
   'GRID_TOOLBAR.PREFS.SAVE_AS.HELP': '此预定义视角不能用此名称保存。点击以新名称保存。之后，所有更改都将保存到新名称下。',
   'GRID_TOOLBAR.PREFS.SAVE_AS.TOOLTIP': '另存为...',
   'GRID_TOOLBAR.RENDERER.DISPLAY_OPTIONS': '显示选项',
+  'PREFS.MAIN_PERSPECTIVE': '主视角',
 };

@@ -171,4 +171,5 @@ export default {
   'GRID_TOOLBAR.PREFS.SAVE_AS.HELP': 'Dit vooraf gedefinieerde perspectief kan niet met deze naam worden opgeslagen. Klik om op te slaan met een nieuwe naam. Daarna worden wijzigingen onder de nieuwe naam opgeslagen.',
   'GRID_TOOLBAR.PREFS.SAVE_AS.TOOLTIP': 'Opslaan als...',
   'GRID_TOOLBAR.RENDERER.DISPLAY_OPTIONS': 'Weergaveopties',
+  'PREFS.MAIN_PERSPECTIVE': 'Hoofdperspectief',
 };

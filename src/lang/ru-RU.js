@@ -171,4 +171,5 @@ export default {
   'GRID_TOOLBAR.PREFS.SAVE_AS.HELP': 'Эту предопределённую перспективу нельзя сохранить под этим именем. Нажмите, чтобы сохранить под новым именем. После этого все изменения будут сохраняться под новым именем.',
   'GRID_TOOLBAR.PREFS.SAVE_AS.TOOLTIP': 'Сохранить как...',
   'GRID_TOOLBAR.RENDERER.DISPLAY_OPTIONS': 'Параметры отображения',
+  'PREFS.MAIN_PERSPECTIVE': 'Основная перспектива',
 };

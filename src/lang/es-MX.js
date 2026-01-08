@@ -171,4 +171,5 @@ export default {
   'GRID_TOOLBAR.PREFS.SAVE_AS.HELP': 'Esta perspectiva predefinida no puede guardarse con este nombre. Haz clic para guardar con un nuevo nombre. Después de eso, cualquier cambio se guardará bajo el nuevo nombre.',
   'GRID_TOOLBAR.PREFS.SAVE_AS.TOOLTIP': 'Guardar como...',
   'GRID_TOOLBAR.RENDERER.DISPLAY_OPTIONS': 'Opciones de visualización',
+  'PREFS.MAIN_PERSPECTIVE': 'Perspectiva principal',
 };

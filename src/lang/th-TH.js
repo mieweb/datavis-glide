@@ -171,4 +171,5 @@ export default {
   'GRID_TOOLBAR.PREFS.SAVE_AS.HELP': 'มุมมองที่กำหนดไว้ล่วงหน้านี้ไม่สามารถบันทึกด้วยชื่อนี้ได้ คลิกเพื่อบันทึกด้วยชื่อใหม่ หลังจากนั้นการเปลี่ยนแปลงจะถูกบันทึกภายใต้ชื่อใหม่',
   'GRID_TOOLBAR.PREFS.SAVE_AS.TOOLTIP': 'บันทึกเป็น...',
   'GRID_TOOLBAR.RENDERER.DISPLAY_OPTIONS': 'ตัวเลือกการแสดงผล',
+  'PREFS.MAIN_PERSPECTIVE': 'มุมมองหลัก',
 };

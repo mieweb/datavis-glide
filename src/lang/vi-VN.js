@@ -171,4 +171,5 @@ export default {
   'GRID_TOOLBAR.PREFS.SAVE_AS.HELP': 'Góc nhìn được định nghĩa sẵn này không thể lưu với tên này. Nhấn để lưu với tên mới. Sau đó, mọi thay đổi sẽ được lưu dưới tên mới.',
   'GRID_TOOLBAR.PREFS.SAVE_AS.TOOLTIP': 'Lưu thành...',
   'GRID_TOOLBAR.RENDERER.DISPLAY_OPTIONS': 'Tùy chọn hiển thị',
+  'PREFS.MAIN_PERSPECTIVE': 'Góc Nhìn Chính',
 };
