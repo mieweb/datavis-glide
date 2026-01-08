@@ -690,17 +690,57 @@ var Grid = makeSubclass('Grid', Object, function (defn, opts, cb) {
 	// Group <-> Pivot (Drag & Drop) {{{5
 
 	self.groupControl.getListElement().sortable({
-		connectWith: '#' + self.pivotControl.getListElement().attr('id')
-	})
-		.on('sortupdate', function () {
+		connectWith: '#' + self.pivotControl.getListElement().attr('id'),
+		placeholder: 'ui-state-highlight',
+		forcePlaceholderSize: true,
+		cursor: 'move',
+		start: function (evt, ui) {
+			ui.placeholder.css('height', ui.item.get(0).offsetHeight);
+			ui.helper.addClass('wcdv_sortable_helper');
+		},
+		activate: function (evt, ui) {
+			// Leave room for item to be added to empty list.
+			jQuery(this).addClass('wcdv_sortable_sender');
+		},
+		deactivate: function (evt, ui) {
+			jQuery(this).removeClass('wcdv_sortable_sender');
+			ui.item.removeClass('wcdv_sortable_helper');
+		},
+		update: function (evt, ui) {
+			// If dragging from group list to pivot list, and there was only one item in the group list,
+			// prevent the action (because this would be pivot w/o group).
+			if (ui.sender === null && self.groupControl.controlFields.length === 1) {
+				jQuery(this).sortable('cancel');
+				return;
+			}
+			jQuery(this).removeClass('wcdv_sortable_sender');
+			ui.item.removeClass('wcdv_sortable_helper');
 			self.groupControl.sortableSync();
-		});
+		},
+	});
 	self.pivotControl.getListElement().sortable({
-		connectWith: '#' + self.groupControl.getListElement().attr('id')
-	})
-		.on('sortupdate', function () {
+		connectWith: '#' + self.groupControl.getListElement().attr('id'),
+		placeholder: 'ui-state-highlight',
+		forcePlaceholderSize: true,
+		cursor: 'move',
+		start: function (evt, ui) {
+			ui.placeholder.css('height', ui.item.get(0).offsetHeight);
+			ui.helper.addClass('wcdv_sortable_helper');
+		},
+		activate: function (evt, ui) {
+			// Leave room for item to be added to empty list.
+			jQuery(this).addClass('wcdv_sortable_sender');
+		},
+		deactivate: function (evt, ui) {
+			jQuery(this).removeClass('wcdv_sortable_sender');
+			ui.item.removeClass('wcdv_sortable_helper');
+		},
+		update: function (evt, ui) {
+			jQuery(this).removeClass('wcdv_sortable_sender');
+			ui.item.removeClass('wcdv_sortable_helper');
 			self.pivotControl.sortableSync();
-		});
+		}
+	});
 
 	self.operationsPalette = new OperationsPalette(self);
 	self.operationsPalette.setOperations(self.defn.operations);

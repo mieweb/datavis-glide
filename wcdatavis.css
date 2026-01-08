@@ -390,11 +390,21 @@ hr.wcdv_hr_gradient {
 }
 */
 
+.wcdv_control_pane > div {
+	display: flex;
+	height: 100%;
+	flex-direction: column;
+}
+
 .wcdv_control_pane > div > ul {
 	list-style-type: none;
 	padding: 0px;
 	margin-top: 1ex;
 	margin-bottom: 1ex;
+	width: 100%;
+}
+
+.wcdv_control_pane > div select.wcdv_control_addField {
 	width: 100%;
 }
 
@@ -443,15 +453,36 @@ hr.wcdv_hr_gradient {
 
 /* VERTICAL CONTROLS */
 
+.wcdv_control_pane > div > ul.wcdv_control_vertical {
+	flex-grow: 1;
+}
+
+.wcdv_control_pane > div > ul.wcdv_control_vertical.ui-sortable > li span.wcdv_field_name {
+	cursor: pointer;
+}
+
+/*
 .wcdv_control_pane .wcdv_control_vertical li:first-child .wcdv_field {
 	border-top: none;
 }
+*/
 
 .wcdv_control_pane .wcdv_control_vertical li .wcdv_field {
 	display: flex;
 	align-items: center;
-	border-top: dashed 1px #c7c7c7;
+	/* border-top: dashed 1px #c7c7c7; */
 	padding: 4px;
+}
+
+.wcdv_sortable_helper {
+	border-radius: 8px;
+	box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1),
+		0 2px 4px rgba(0, 0, 0, 0.06);
+	background: white; /* Ensures shadow is visible */
+}
+
+.ui-state-highlight {
+	box-sizing: border-box;
 }
 
 /*
@@ -697,6 +728,13 @@ tr.wcdv_grid_filterrow th.wcdv_grid_filtercol {
 	 */
 
 	margin: -10px;
+}
+
+.wcdv_control_vertical.ui-sortable.wcdv_sortable_sender {
+	min-height: 3ex;
+}
+
+.wcdv_sortable_helper {
 }
 
 /******************************************************************************/

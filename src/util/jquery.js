@@ -1,4 +1,5 @@
 import jQuery from 'jquery';
+import _ from 'underscore';
 
 import { trans } from '../trans.js';
 
@@ -267,53 +268,38 @@ jQuery.fn.extend({
 	 */
 
 	_addEventDebugging: function (what, tag) {
+		var elt = this;
 		switch (what) {
 		case 'drag':
-			this.on('dragstart', function (evt, ui) {
+			elt.on('dragstart', function (evt, ui) {
 				console.log('### ' + tag + ' > DRAG.START: evt = %O, ui = %O', evt, ui);
 			});
-			this.on('dragstop', function (evt, ui) {
+			elt.on('dragstop', function (evt, ui) {
 				console.log('### ' + tag + ' > DRAG.STOP: evt = %O, ui = %O', evt, ui);
 			});
 			break;
 		case 'drop':
-			this.on('dropactivate', function (evt, ui) {
+			elt.on('dropactivate', function (evt, ui) {
 				console.log('### ' + tag + ' > DROP.ACTIVATE: evt = %O, ui = %O', evt, ui);
 			});
-			this.on('dropdeactivate', function (evt, ui) {
+			elt.on('dropdeactivate', function (evt, ui) {
 				console.log('### ' + tag + ' > DROP.DEACTIVATE: evt = %O, ui = %O', evt, ui);
 			});
-			this.on('drop', function (evt, ui) {
+			elt.on('drop', function (evt, ui) {
 				console.log('### ' + tag + ' > DROP.DROP: evt = %O, ui = %O', evt, ui);
 			});
 			break;
 		case 'sort':
-			this.on('sortreceive', function (evt, ui) {
-				console.log('### ' + tag + ' > SORT.RECEIVE: evt = %O, ui = %O', evt, ui);
-			});
-			this.on('sortremove', function (evt, ui) {
-				console.log('### ' + tag + ' > SORT.REMOVE: evt = %O, ui = %O', evt, ui);
-			});
-			this.on('sortstart', function (evt, ui) {
-				console.log('### ' + tag + ' > SORT.START: evt = %O, ui = %O', evt, ui);
-			});
-			this.on('sortstop', function (evt, ui) {
-				console.log('### ' + tag + ' > SORT.STOP: evt = %O, ui = %O', evt, ui);
-			});
-			this.on('sortactivate', function (evt, ui) {
-				console.log('### ' + tag + ' > SORT.ACTIVATE: evt = %O, ui = %O', evt, ui);
-			});
-			this.on('sortdeactivate', function (evt, ui) {
-				console.log('### ' + tag + ' > SORT.DEACTIVATE: evt = %O, ui = %O', evt, ui);
-			});
-			this.on('sortupdate', function (evt, ui) {
-				console.log('### ' + tag + ' > SORT.UPDATE: evt = %O, ui = %O', evt, ui);
+			_.each(['activate', 'change', 'deactivate', 'out', 'over', 'receive', 'remove', 'sort', 'start', 'stop', 'update'], function (eventName) {
+				elt.on('sort' + eventName, function (evt, ui) {
+					console.log('### ' + tag + ' > SORT.' + eventName.toUpperCase() + ': evt = %O, ui = %O', evt, ui);
+				});
 			});
 			break;
 		default:
 			throw new Error('Call Error: Event type must be one of: ["drag", "drop", "sort"]');
 		}
-		return this;
+		return elt;
 	},
 
 	/**
