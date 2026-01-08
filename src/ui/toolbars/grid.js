@@ -141,11 +141,13 @@ var GroupToolbar = makeSubclass('GroupToolbar', ToolbarSection, function (grid) 
 			self.ui.showTotalRow.prop('disabled', false);
 			self.ui.pinRowVals.prop('disabled', false);
 			self.ui.columnConfig.prop('disabled', true);
+			self.ui.showExpandedGroups.prop('disabled', true);
 			break;
 		case 'detail':
 			self.ui.showTotalRow.prop('disabled', true);
 			self.ui.pinRowVals.prop('disabled', true);
 			self.ui.columnConfig.prop('disabled', false);
+			self.ui.showExpandedGroups.prop('disabled', false);
 			break;
 		}
 	};
