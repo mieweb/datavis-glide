@@ -803,6 +803,10 @@ Graph.prototype.refresh = function () {
 Graph.prototype.redraw = function () {
 	var self = this;
 
+	if (self.renderer != null) {
+		self.renderer.destroy();
+	}
+
 	self.prefs.prime(function () {
 		self.checkGraphConfig();
 		var ctor = getProp(self.opts, 'renderer') && GRAPH_RENDERER_REGISTRY.isSet(self.opts.renderer)
