@@ -76,7 +76,7 @@ GraphRenderer.prototype.addRedrawHandlers = function () {
 	self.view.on('workEnd', function () {
 		debug.info('GRAPH RENDERER // HANDLER (View.dataUpdated)',
 			'Redrawing graph because the view has finished doing work');
-		self.draw();
+		self.draw(self.graph.devConfig, self.graph.userConfig);
 	}, { who: self });
 };
 

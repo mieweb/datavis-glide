@@ -172,7 +172,14 @@ var Graph = makeSubclass('Graph', Object, function (id, view, devConfig, opts) {
 		if (self.opts.showOnDataChange && !self.isVisible()) {
 			self.show({ redraw: false });
 		}
-		self.redraw();
+
+		// Only need to redraw if there's no renderer. If there is, the renderer's own View
+		// (workEnd) handler will take care of it.
+
+		if (self.renderer == null) {
+			self.redraw();
+		}
+
 		/*
 		switch (self.lastDrawnFrom) {
 		case 'config':

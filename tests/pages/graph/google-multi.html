@@ -7,7 +7,7 @@
 		<link rel="stylesheet" href="../base.css"/>
 		<link rel="stylesheet" href="../wcdatavis.css"/>
 		<script type="module">
-import { Source, ComputedView, Graph, Prefs } from '/index.js';
+import { Source, ComputedView, Grid, Graph, Prefs } from '/index.js';
 document.addEventListener('DOMContentLoaded', function () {
 	var prefs = new Prefs('TEST:GRAPH:GOOGLE:MULTI', null, {
 		backend: {
@@ -68,11 +68,27 @@ document.addEventListener('DOMContentLoaded', function () {
 		title: 'Test - Graph - Google №2',
 		renderer: 'google'
 	});
+	new Grid({
+		id: 'grid',
+		computedView: view,
+		prefs: prefs,
+		table: {
+			features: {
+				limit: false,
+				rowSelect: true,
+			}
+		},
+		source: source,
+	}, {
+		title: 'Test - Graph - Google',
+		showControls: true
+	});
 });
 		</script>
 	</head>
 	<body>
 		<div id="multi-graph-1" style="height: 800px"></div>
 		<div id="multi-graph-2" style="height: 800px"></div>
+		<div id="grid"></div>
 	</body>
 </html>
