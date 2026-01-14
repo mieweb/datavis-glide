@@ -893,18 +893,18 @@ Source.prototype.getData = function (cont) {
 	}
 
 	self.locks.getData.lock();
-	self.fire('fetchDataBegin', {async: true});
+	self.fire('fetchDataBegin');
 	return self.origin.getData(self.createParams(), function (ok, data) {
 		if (!ok) {
+			self.fire('fetchDataEnd');
 			self.locks.getData.unlock();
-			self.fire('fetchDataEnd', {async: true});
 			return cont(false);
 		}
 
 		self.postProcess(data, function (finalData) {
 			self.cache.data = finalData;
+			self.fire('fetchDataEnd');
 			self.locks.getData.unlock();
-			self.fire('fetchDataEnd', {async: true});
 			return cont(true, finalData);
 		});
 	});
