@@ -889,28 +889,20 @@ Source.prototype.getData = function (cont) {
 	}
 
 	self.locks.getData.lock();
-	self.fire('fetchDataBegin', {async: true});
+	self.fire('fetchDataBegin');
 	return self.origin.getData(self.createParams(), function (ok, data) {
 		if (!ok) {
+			self.fire('fetchDataEnd');
 			self.locks.getData.unlock();
-			self.fire('fetchDataEnd', {async: true});
 			return cont(false);
 		}
 
-		if (/* TODO: Add option to disable post-processing */ false && self.type === 'local') {
-			self.cache.data = data;
+		self.postProcess(data, function (finalData) {
+			self.cache.data = finalData;
+			self.fire('fetchDataEnd');
 			self.locks.getData.unlock();
-			self.fire('fetchDataEnd', {async: true});
-			return cont(true, data);
-		}
-		else {
-			self.postProcess(data, function (finalData) {
-				self.cache.data = finalData;
-				self.locks.getData.unlock();
-				self.fire('fetchDataEnd', {async: true});
-				return cont(true, finalData);
-			});
-		}
+			return cont(true, finalData);
+		});
 	});
 };
 
