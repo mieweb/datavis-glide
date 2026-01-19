@@ -571,7 +571,7 @@ GridTable.prototype._addColumnResizeHandle = function (headingTh, field, colInde
 		// Notify the grid about the colConfig update
 		if (self.grid && typeof self.grid.setColConfig === 'function') {
 			self.grid.setColConfig(self.colConfig, {
-				from: 'resize',
+				from: 'ui',
 				savePrefs: true
 			});
 		}
@@ -707,20 +707,12 @@ GridTable.prototype._reorderColumn = function (sourceField, fromIndex, toIndex) 
 		newColConfig.set(key, self.colConfig.get(key));
 	});
 
-	self.colConfig = newColConfig;
+	self.grid.setColConfig(self.colConfig, {
+		from: 'ui',
+		savePrefs: true
+	});
 
-	// Notify the grid about the colConfig update
-	if (self.grid && typeof self.grid.setColConfig === 'function') {
-		self.grid.setColConfig(self.colConfig, {
-			from: 'reorder',
-			savePrefs: true
-		});
-	}
-
-	// Redraw the table with the new column order
-	if (self.grid && typeof self.grid.redraw === 'function') {
-		self.grid.redraw();
-	}
+	self.redraw();
 };
 
 // #_addSortingToHeader {{{2
