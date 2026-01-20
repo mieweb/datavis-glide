@@ -39,6 +39,7 @@ GRID_TOOLBAR.PLAIN.TEMPLATES_EDITOR	Templates Editor	"Handlebars" is the name of
 GRID_TOOLBAR.PLAIN.ROW_MODE	Row Mode
 GRID_TOOLBAR.PLAIN.ROW_MODE.WRAPPED	Wrapped	Cells wrap text to multiple lines
 GRID_TOOLBAR.PLAIN.ROW_MODE.CLIPPED	Clipped	Single-line cells with text truncated
+GRID_TOOLBAR.PLAIN.AUTO_RESIZE_COLUMNS	Auto-resize Columns
 		
 GRID_TOOLBAR.GROUP.MODE.SUMMARY	Summary	
 GRID_TOOLBAR.GROUP.MODE.DETAIL	Detail	

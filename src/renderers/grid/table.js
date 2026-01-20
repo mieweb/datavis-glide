@@ -516,6 +516,8 @@ GridTable.prototype._addColumnResizeHandle = function (headingTh, field, colInde
 	var startX = 0;
 	var startWidth = 0;
 	var isResizing = false;
+	var resizeIndicator = null;
+	var targetWidth = 0;
 
 	var onMouseDown = function (e) {
 		e.preventDefault();
@@ -524,6 +526,26 @@ GridTable.prototype._addColumnResizeHandle = function (headingTh, field, colInde
 		isResizing = true;
 		startX = e.pageX;
 		startWidth = headingTh.outerWidth();
+
+		// Create a dotted line indicator
+		resizeIndicator = document.createElement('div');
+		resizeIndicator.className = 'wcdv_column_resize_indicator';
+		resizeIndicator.style.position = 'absolute';
+		resizeIndicator.style.top = '0';
+		resizeIndicator.style.bottom = '0';
+		resizeIndicator.style.width = '2px';
+		resizeIndicator.style.borderLeft = '2px dotted #666';
+		resizeIndicator.style.pointerEvents = 'none';
+		resizeIndicator.style.zIndex = '1000';
+
+		// Position the indicator at the current column edge
+		var tableOffset = self.ui.tbl.offset();
+		var thOffset = headingTh.offset();
+		var initialLeft = thOffset.left - tableOffset.left + startWidth;
+		resizeIndicator.style.left = initialLeft + 'px';
+
+		self.ui.tbl.css('position', 'relative');
+		self.ui.tbl.get(0).appendChild(resizeIndicator);
 
 		// Add a class to the table to indicate we're resizing
 		self.ui.tbl.addClass('wcdv_resizing');
@@ -536,18 +558,15 @@ GridTable.prototype._addColumnResizeHandle = function (headingTh, field, colInde
 		if (!isResizing) return;
 
 		var diff = e.pageX - startX;
-		var newWidth = Math.max(50, startWidth + diff); // Minimum width of 50px
+		targetWidth = Math.max(50, startWidth + diff); // Minimum width of 50px
 
-		headingTh.css('width', newWidth + 'px');
-		headingTh.css('min-width', newWidth + 'px');
-
-		// Also update all cells in this column
-		var thIndex = headingTh.index();
-		self.ui.tbody.find('tr').each(function () {
-			var td = jQuery(this).children().eq(thIndex);
-			td.css('width', newWidth + 'px');
-			td.css('min-width', newWidth + 'px');
-		});
+		// Update the position of the dotted line indicator
+		if (resizeIndicator) {
+			var tableOffset = self.ui.tbl.offset();
+			var thOffset = headingTh.offset();
+			var newLeft = thOffset.left - tableOffset.left + targetWidth;
+			resizeIndicator.style.left = newLeft + 'px';
+		}
 	};
 
 	var onMouseUp = function (e) {
@@ -556,17 +575,41 @@ GridTable.prototype._addColumnResizeHandle = function (headingTh, field, colInde
 		isResizing = false;
 		self.ui.tbl.removeClass('wcdv_resizing');
 
+		// Remove the indicator
+		if (resizeIndicator && resizeIndicator.parentNode) {
+			resizeIndicator.parentNode.removeChild(resizeIndicator);
+			resizeIndicator = null;
+		}
+
 		document.removeEventListener('mousemove', onMouseMove);
 		document.removeEventListener('mouseup', onMouseUp);
 
+		// Not honestly sure why, but the targetWidth is always 9 pixels bigger than where the dotted
+		// line is ending up, so if we don't put this in, the column actually ends up 9 pixels wider
+		// than where the indicator was. Not a good experience.
+
+		targetWidth -= 9;
+
+		// Now actually resize the column
+		headingTh.css('width', targetWidth + 'px');
+		headingTh.css('min-width', targetWidth + 'px');
+
+		// Also update all cells in this column
+		// var thIndex = headingTh.index();
+		// self.ui.tbody.find('tr').each(function () {
+		// 	var td = jQuery(this).children().eq(thIndex);
+		// 	td.css('width', targetWidth + 'px');
+		// 	td.css('min-width', targetWidth + 'px');
+		// });
+
 		// Save the new width to colConfig
-		var newWidth = headingTh.outerWidth();
-		var fcc = self.colConfig.get(field) || {};
-		fcc.width = newWidth + 'px';
-		self.colConfig.set(field, fcc);
+		var fcc = self.colConfig.get(field);
+		if (fcc != null) {
+			fcc.width = targetWidth;
+		}
 
 		// Fire columnResize event
-		self.fire('columnResize', { field: field, width: newWidth });
+		self.fire('columnResize', { field: field, width: targetWidth });
 
 		// Notify the grid about the colConfig update
 		if (self.grid && typeof self.grid.setColConfig === 'function') {
@@ -1778,6 +1821,7 @@ GridTable.prototype.draw = function (root, opts, cont) {
 			// 	}
 			// });
 
+			self.makeResponsive();
 			self.addWorkHandler();
 
 			self.timing.stop(['Grid Table', 'Draw']);
@@ -2417,6 +2461,75 @@ GridTable.prototype.isSelected = function (what) {
 GridTable.prototype._updateSelectionGui = function () {
 	var self = this;
 	self.logError(self.makeLogTag() + ' GridTable#_updateSelectionGui(): Must be implemented by subclass');
+};
+
+GridTable.prototype.autoResizeColumns = function () {
+	var self = this;
+
+	// Make the browser lay out the table and pick the widths.
+	self.ui.tbl.css('table-layout', 'auto');
+
+	_.each(self.ui.thead.children('tr:nth(0)').children('th'), function (th) {
+		th = jQuery(th);
+		var fieldName = th.find('span.wcdv_heading_title').attr('data-wcdv-field');
+
+		if (fieldName != null) {
+			var fcc = self.colConfig.get(fieldName);
+
+			// If there's no explicit width set, update the element's CSS `width` property to be
+			// whatever the browser has automatically chosen during layout.
+
+			if (fcc != null && fcc.width != null) {
+				return;
+			}
+		}
+
+		th.css('width', th.children().get(0).getBoundingClientRect().width + 8 + 'px');
+	});
+
+	// Use the widths we just set on the elements.
+	self.ui.tbl.css('table-layout', 'fixed');
+};
+
+// #makeResponsive {{{2
+
+/**
+ * Set up a ResizeObserver to automatically adjust column widths when the table is resized.
+ * When the table size changes, this method:
+ * 1. Temporarily sets table-layout to "auto"
+ * 2. Adjusts each th width to match its inner content
+ * 3. Sets table-layout back to "fixed"
+ *
+ * The callback is debounced to prevent infinite loops from self-triggered resizes.
+ */
+
+GridTable.prototype.makeResponsive = function () {
+	var self = this;
+
+	if (window.ResizeObserver == null) {
+		self.logWarning(self.makeLogTag() + ' ResizeObserver is not supported; table will not be responsive.');
+		return;
+	}
+
+	if (self.ui == null || self.ui.tbl == null) {
+		self.logWarning(self.makeLogTag() + ' Table not initialized; cannot make responsive.');
+		return;
+	}
+
+	// Flag to prevent recursive ResizeObserver callbacks.
+	var isAdjusting = false;
+
+	self.resizeObserver = new ResizeObserver(function (entries) {
+		if (isAdjusting) {
+			return;
+		}
+
+		isAdjusting = true;
+		self.autoResizeColumns();
+		isAdjusting = false;
+	});
+
+	self.resizeObserver.observe(self.ui.tbl.get(0));
 };
 
 export default GridTable;

@@ -106,6 +106,25 @@ var PlainToolbar = makeSubclass('PlainToolbar', ToolbarSection, function (grid) 
 		}
 		, self.ui.root
 	);
+
+	self.ui.autoResizeColumns = jQuery('<button>', {
+		'type': 'button',
+		'title': trans('GRID_TOOLBAR.PLAIN.AUTO_RESIZE_COLUMNS')
+	})
+		.append(fontAwesome('fa-arrows-h'))
+		.append(trans('GRID_TOOLBAR.PLAIN.AUTO_RESIZE_COLUMNS'))
+		.on('click', function (evt) {
+			var colConfig = grid.colConfig.clone();
+			colConfig.each(function (fcc) {
+				delete fcc.width;
+			});
+			grid.setColConfig(colConfig, {from: 'ui'});
+			if (grid.renderer.autoResizeColumns != null) {
+				grid.renderer.autoResizeColumns();
+			}
+		})
+		.appendTo(self.ui.root)
+	;
 });
 
 // #update {{{2
