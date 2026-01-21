@@ -199,6 +199,7 @@ var GridTable = makeSubclass('GridTable', GridRenderer, function () {
 	self.needsRedraw = false;
 	self.contextMenuSelectors = [];
 	self.csvLock = new Lock('GridTable/csv');
+	self.autoResizeColsLock = new Lock('GridTable/autoResizeCols');
 	self.focus = {
 		rvi: [],
 		cvi: []
@@ -2466,6 +2467,12 @@ GridTable.prototype._updateSelectionGui = function () {
 GridTable.prototype.autoResizeColumns = function () {
 	var self = this;
 
+	if (self.autoResizeColsLock.isLocked()) {
+		return;
+	}
+	self.autoResizeColsLock.lock();
+	self.logDebug(self.makeLogTag('Auto Resize Cols') + ' Fitting column widths...');
+
 	// Make the browser lay out the table and pick the widths.
 	self.ui.tbl.css('table-layout', 'auto');
 
@@ -2489,6 +2496,9 @@ GridTable.prototype.autoResizeColumns = function () {
 
 	// Use the widths we just set on the elements.
 	self.ui.tbl.css('table-layout', 'fixed');
+	window.setTimeout(function () {
+		self.autoResizeColsLock.unlock();
+	});
 };
 
 // #makeResponsive {{{2
@@ -2516,17 +2526,8 @@ GridTable.prototype.makeResponsive = function () {
 		return;
 	}
 
-	// Flag to prevent recursive ResizeObserver callbacks.
-	var isAdjusting = false;
-
-	self.resizeObserver = new ResizeObserver(function (entries) {
-		if (isAdjusting) {
-			return;
-		}
-
-		isAdjusting = true;
+	self.resizeObserver = new ResizeObserver(function () {
 		self.autoResizeColumns();
-		isAdjusting = false;
 	});
 
 	self.resizeObserver.observe(self.ui.tbl.get(0));
