@@ -814,7 +814,6 @@ tr.wcdv_grid_filterrow th.wcdv_grid_filtercol {
 }
 
 .wcdv_column_dragging {
-	opacity: 0.5;
 	background-color: #E3F2FD !important;
 }
 

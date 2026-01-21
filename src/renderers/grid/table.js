@@ -659,20 +659,21 @@ GridTable.prototype._addColumnReorderHandler = function (headingTh, field, colIn
 
 	// Make the heading draggable using jQuery UI to be compatible with droppable group/pivot controls
 	dragHandle.draggable({
+		classes: {
+			'ui-draggable-handle': 'wcdv_drag_handle'
+		},
+		distance: 8, // FIXME Deprecated [1.12]: replacement will be in 1.13
 		helper: 'clone',
 		appendTo: document.body,
-		revert: 'invalid',
-		revertDuration: 200,
-		distance: 8,
-		cursor: 'grabbing',
+		revert: true,
+		revertDuration: 0,
 		start: function (event, ui) {
 			headingTh.addClass('wcdv_column_dragging');
 			self._dragSourceField = field;
 			self._dragSourceIndex = colIndex;
-			ui.helper.css({
-				'z-index': 1000,
-				'opacity': 0.8
-			});
+			// ui.helper.css({
+			// 	'z-index': 1000
+			// });
 		},
 		stop: function (event, ui) {
 			headingTh.removeClass('wcdv_column_dragging');
@@ -759,12 +760,10 @@ GridTable.prototype._reorderColumn = function (sourceField, fromIndex, toIndex) 
 		newColConfig.set(key, self.colConfig.get(key));
 	});
 
-	self.grid.setColConfig(self.colConfig, {
+	self.grid.setColConfig(newColConfig, {
 		from: 'ui',
 		savePrefs: true
 	});
-
-	self.grid.redraw();
 };
 
 // #_addSortingToHeader {{{2
