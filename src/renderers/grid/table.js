@@ -629,10 +629,12 @@ GridTable.prototype._addColumnResizeHandle = function (headingTh, field, colInde
 // #_addColumnReorderHandler {{{2
 
 /**
- * Makes a column header draggable to allow reordering columns via drag-and-drop.
+ * Makes a column header draggable using jQuery UI to allow reordering columns via drag-and-drop.
+ * Also makes it droppable to accept other column headers. This implementation is compatible with
+ * the jQuery UI droppable group control panel for dragging headers to group/pivot controls.
  *
  * @param {jQuery} headingTh
- * The TH element to make draggable.
+ * The TH element to make draggable and droppable.
  *
  * @param {string} field
  * The field name for this column.
@@ -652,56 +654,62 @@ GridTable.prototype._addColumnReorderHandler = function (headingTh, field, colIn
 		dragHandle = headingTh;
 	}
 
-	dragHandle.attr('title', trans('GRID.TABLE.REORDER_COLUMN'));
 	dragHandle.css('cursor', 'grab');
-
-	headingTh.attr('draggable', 'true');
 	headingTh.addClass('wcdv_reorderable_column');
 
-	headingTh.on('dragstart', function (e) {
-		e.originalEvent.dataTransfer.effectAllowed = 'move';
-		e.originalEvent.dataTransfer.setData('text/plain', field);
-		headingTh.addClass('wcdv_column_dragging');
-		self._dragSourceField = field;
-		self._dragSourceIndex = colIndex;
-	});
-
-	headingTh.on('dragend', function (e) {
-		headingTh.removeClass('wcdv_column_dragging');
-		jQuery('.wcdv_column_drop_target').removeClass('wcdv_column_drop_target');
-		delete self._dragSourceField;
-		delete self._dragSourceIndex;
-	});
-
-	headingTh.on('dragover', function (e) {
-		e.preventDefault();
-		e.originalEvent.dataTransfer.dropEffect = 'move';
-
-		if (self._dragSourceField && self._dragSourceField !== field) {
-			headingTh.addClass('wcdv_column_drop_target');
+	// Make the heading draggable using jQuery UI to be compatible with droppable group/pivot controls
+	dragHandle.draggable({
+		helper: 'clone',
+		appendTo: document.body,
+		revert: 'invalid',
+		revertDuration: 200,
+		distance: 8,
+		cursor: 'grabbing',
+		start: function (event, ui) {
+			headingTh.addClass('wcdv_column_dragging');
+			self._dragSourceField = field;
+			self._dragSourceIndex = colIndex;
+			ui.helper.css({
+				'z-index': 1000,
+				'opacity': 0.8
+			});
+		},
+		stop: function (event, ui) {
+			headingTh.removeClass('wcdv_column_dragging');
+			jQuery('.wcdv_column_drop_target').removeClass('wcdv_column_drop_target');
+			delete self._dragSourceField;
+			delete self._dragSourceIndex;
 		}
 	});
 
-	headingTh.on('dragleave', function (e) {
-		headingTh.removeClass('wcdv_column_drop_target');
-	});
+	// Make the heading droppable to accept other column headers
+	headingTh.droppable({
+		accept: '.wcdv_heading_title, .wcdv_reorderable_column',
+		tolerance: 'pointer',
+		over: function (event, ui) {
+			if (self._dragSourceField && self._dragSourceField !== field) {
+				headingTh.addClass('wcdv_column_drop_target');
+			}
+		},
+		out: function (event, ui) {
+			headingTh.removeClass('wcdv_column_drop_target');
+		},
+		drop: function (event, ui) {
+			headingTh.removeClass('wcdv_column_drop_target');
 
-	headingTh.on('drop', function (e) {
-		e.preventDefault();
-		headingTh.removeClass('wcdv_column_drop_target');
+			var sourceField = self._dragSourceField;
+			var sourceIndex = self._dragSourceIndex;
 
-		var sourceField = self._dragSourceField;
-		var sourceIndex = self._dragSourceIndex;
+			if (!sourceField || sourceField === field) {
+				return;
+			}
 
-		if (!sourceField || sourceField === field) {
-			return;
+			// Find the target index
+			var targetIndex = colIndex;
+
+			// Reorder the columns in colConfig
+			self._reorderColumn(sourceField, sourceIndex, targetIndex);
 		}
-
-		// Find the target index
-		var targetIndex = colIndex;
-
-		// Reorder the columns in colConfig
-		self._reorderColumn(sourceField, sourceIndex, targetIndex);
 	});
 };
 
@@ -756,7 +764,7 @@ GridTable.prototype._reorderColumn = function (sourceField, fromIndex, toIndex) 
 		savePrefs: true
 	});
 
-	self.redraw();
+	self.grid.redraw();
 };
 
 // #_addSortingToHeader {{{2
@@ -2518,7 +2526,7 @@ GridTable.prototype.autoResizeColumns = function () {
 		}
 
 		// Measure the width from the cloned table
-		var measuredWidth = measureHeaders[i].getBoundingClientRect().width + 8;
+		var measuredWidth = measureHeaders[i].getBoundingClientRect().width;
 		widthsToSet.push(measuredWidth);
 	}
 
