@@ -2473,29 +2473,62 @@ GridTable.prototype.autoResizeColumns = function () {
 	self.autoResizeColsLock.lock();
 	self.logDebug(self.makeLogTag('Auto Resize Cols') + ' Fitting column widths...');
 
-	// Make the browser lay out the table and pick the widths.
-	self.ui.tbl.css('table-layout', 'auto');
+	// Cache the header cells to avoid repeated DOM queries
+	var headerCells = self.ui.thead.children('tr:nth(0)').children('th');
+	var widthsToSet = [];
+	var i, len, th, thElt, fieldName, fcc;
 
-	_.each(self.ui.thead.children('tr:nth(0)').children('th'), function (th) {
-		th = jQuery(th);
-		var fieldName = th.find('span.wcdv_heading_title').attr('data-wcdv-field');
+	// Clone the entire table for measurement with table-layout: auto
+	// This avoids changing the main table's layout which would force a reflow of all visible cells
+	var measureTable = self.ui.tbl.get(0).cloneNode(true);
+
+	measureTable.style.position = 'absolute';
+	measureTable.style.visibility = 'hidden';
+	measureTable.style.tableLayout = 'auto';
+	measureTable.style.width = 'auto';
+
+	// Clear all explicit column widths in the clone
+	var measureHeaders = measureTable.tHead.rows[0].cells;
+	for (i = 0, len = measureHeaders.length; i < len; i++) {
+		measureHeaders[i].style.width = 'auto';
+	}
+
+	// Add to DOM (causes one reflow of the hidden clone)
+	self.root.get(0).appendChild(measureTable);
+
+	// Measure all column widths (batched read)
+	for (i = 0, len = headerCells.length; i < len; i++) {
+		thElt = headerCells[i];
+		th = jQuery(thElt);
+
+		// Check if this column has an explicit width set
+		fieldName = th.find('span.wcdv_heading_title').attr('data-wcdv-field');
 
 		if (fieldName != null) {
-			var fcc = self.colConfig.get(fieldName);
-
-			// If there's no explicit width set, update the element's CSS `width` property to be
-			// whatever the browser has automatically chosen during layout.
+			fcc = self.colConfig.get(fieldName);
 
 			if (fcc != null && fcc.width != null) {
-				return;
+				self.logDebug(self.makeLogTag('Auto Resize Columns') + ' Width of "' + fieldName + '" already set to ' + fcc.width + 'px');
+				widthsToSet.push(null); // Skip this column
+				continue;
 			}
 		}
 
-		th.css('width', th.children().get(0).getBoundingClientRect().width + 8 + 'px');
-	});
+		// Measure the width from the cloned table
+		var measuredWidth = measureHeaders[i].getBoundingClientRect().width + 8;
+		widthsToSet.push(measuredWidth);
+	}
 
-	// Use the widths we just set on the elements.
-	self.ui.tbl.css('table-layout', 'fixed');
+	// Remove measurement table
+	self.root.get(0).removeChild(measureTable);
+
+	// Apply all width changes (batched write)
+	for (i = 0, len = headerCells.length; i < len; i++) {
+		if (widthsToSet[i] != null) {
+			headerCells[i].style.width = widthsToSet[i] + 'px';
+		}
+	}
+
 	window.setTimeout(function () {
 		self.autoResizeColsLock.unlock();
 	});
@@ -2506,9 +2539,9 @@ GridTable.prototype.autoResizeColumns = function () {
 /**
  * Set up a ResizeObserver to automatically adjust column widths when the table is resized.
  * When the table size changes, this method:
- * 1. Temporarily sets table-layout to "auto"
- * 2. Adjusts each th width to match its inner content
- * 3. Sets table-layout back to "fixed"
+ * 1. Creates a temporary hidden table with table-layout: auto
+ * 2. Measures the optimal widths for each column header
+ * 3. Applies those widths to the actual table headers
  *
  * The callback is debounced to prevent infinite loops from self-triggered resizes.
  */
