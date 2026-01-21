@@ -55,6 +55,8 @@ var GridTablePivot = makeSubclass('GridTablePivot', GridTable, function (grid, d
 	self.features.limit = false;
 	self.features.footer = false;
 	self.features.rowSelect = false;
+	self.features.columnResize = false;
+	self.features.columnReorder = false;
 
 	self.logDebug(self.makeLogTag() + ' Constructing grid table; features = %O', features);
 

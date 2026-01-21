@@ -51,6 +51,8 @@ var GridTableGroupDetail = makeSubclass('GridTableGroupDetail', GridTable, funct
 	self.super['GridTable'].ctor.apply(self, arguments);
 
 	self.features.sort = false;
+	self.features.columnResize = false;
+	self.features.columnReorder = false;
 
 	self.logDebug(self.makeLogTag() + ' DataVis // %s // Constructing grid table; features = %O', self.toString(), features);
 });

@@ -797,7 +797,7 @@ tr.wcdv_grid_filterrow th.wcdv_grid_filtercol {
 }
 
 /* Use table-layout: fixed for proper column width control */
-.wcdv_grid_table table {
+.wcdv_grid_table table.wcdv-resizable-cols {
 	table-layout: fixed;
 }
 

@@ -1822,7 +1822,10 @@ GridTable.prototype.draw = function (root, opts, cont) {
 			// 	}
 			// });
 
-			self.makeResponsive();
+			if (self.features.columnResize) {
+				self.ui.tbl.addClass('wcdv-resizable-cols');
+				self.makeResponsive();
+			}
 			self.addWorkHandler();
 
 			self.timing.stop(['Grid Table', 'Draw']);
