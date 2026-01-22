@@ -1716,7 +1716,7 @@ Grid.prototype._setSpinner = function (what) {
 		self.ui.spinner.html(fontAwesome('fa-ban', null, trans('GRID.TITLEBAR.NOT_LOADED')));
 		break;
 	case 'working':
-		self.ui.spinner.html(fontAwesome('fa-circle-o-notch', 'fa-spin', trans('GRID.TITLEBAR.WORKING')));
+		self.ui.spinner.html(fontAwesome('fa-circle-notch', 'fa-spin', trans('GRID.TITLEBAR.WORKING')));
 		break;
 	}
 };
@@ -1916,7 +1916,7 @@ Grid.prototype._setExportStatus = function (status) {
 		self.csvReady = false;
 		self.ui.exportBtn.attr('title', trans('GRID.TITLEBAR.GENERATE_CSV'));
 		self.ui.exportBtn.children('span.fa, svg.svg-inline--fa').remove();
-		self.ui.exportBtn.append(fontAwesome('fa-file-o'));
+		self.ui.exportBtn.append(fontAwesome('fa-file'));
 		break;
 	case 'ready':
 		self.csvReady = true;

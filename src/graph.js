@@ -926,7 +926,7 @@ Graph.prototype._setSpinner = function (what) {
 		self.ui.spinner.html(fontAwesome('fa-ban', null, 'Not Loaded'));
 		break;
 	case 'working':
-		self.ui.spinner.html(fontAwesome('fa-circle-o-notch', 'fa-spin', 'Working...'));
+		self.ui.spinner.html(fontAwesome('fa-circle-notch', 'fa-spin', 'Working...'));
 		break;
 	}
 };
