@@ -838,6 +838,7 @@ var Grid = makeSubclass('Grid', Object, function (defn, opts, cb) {
 	});
 
 	self.view.on('dataUpdated', function () {
+		self._hideSpinner();
 		if (self.opts.showOnDataChange && !self.isVisible()) {
 			self.show({ redraw: false });
 		}
