@@ -495,7 +495,7 @@ Filter.prototype.addJsonParam = function (obj) {
 	// When there's no value, remove it from the JSON object that we might have already constructed
 	// (e.g. if loading the grid a second time) and make sure we don't end up with any empty stuff.
 
-	if (self.value === null || (self.type === 'date' && self.value === '') || (self.type === 'multi-autocomplete' && self.value.length === 0)) {
+	if (!self.sendEmpty && (self.value === null || self.value === self.emptyValue || (self.json.operator === '$in' && self.value.length === 0))) {
 		if (getProp(obj, name, column, operator)) {
 			delete obj[name][column][operator];
 			if (isEmpty(obj[name][column])) {
