@@ -2,36 +2,34 @@
 <html>
 	<head>
 		<meta charset="utf-8"/>
-		<script src="../../jquery.min.js"></script>
-		<script src="../../jquery-ui.min.js"></script>
-		<script src="../../jquery.blockUI.js"></script>
-		<script src="../../jquery.contextMenu.min.js"></script>
-		<script src="../../jquery.sumoselect.min.js"></script>
-		<script src="../../flatpickr.min.js"></script>
-		<script src="../../wcdatavis.js"></script>
+		<script type="module" src="/index.js"></script>
 		<link rel="stylesheet" href="../../font-awesome.css"/>
-		<link rel="stylesheet" href="../../jquery-ui.min.css"/>
-		<link rel="stylesheet" href="../../jquery.contextMenu.min.css"/>
-		<link rel="stylesheet" href="../../sumoselect.min.css"/>
-		<link rel="stylesheet" href="../../flatpickr.min.css"/>
 		<link rel="stylesheet" href="../../base.css"/>
 		<link rel="stylesheet" href="../../wcdatavis.css"/>
-		<script>
-$(document).ready(function () {
-	MIE.DEBUGGING = true;
+		<script type="module">
+import { Source, ComputedView, Grid, ParamInput } from '/index.js';
+document.addEventListener('DOMContentLoaded', function () {
+	window.MIE = window.MIE || {};
+	window.MIE.DEBUGGING = true;
 
-	var source = new MIE.WC_DataVis.Source({
+	let params = new URLSearchParams(document.location.search);
+	let sendEmpty = params.has('send-empty');
+	let emptyValue = params.get('empty-value') ?? '';
+
+	var source = new Source({
 		type: 'http',
 		url: '/reflect/cgi'
 	}, [
-		new MIE.WC_DataVis.ParamInput('report', {
+		new ParamInput('report', {
 			inputType: 'form',
+			inputName: 'form',
 			reportMethod: 'cgi',
-			cgi: {}
+			sendEmpty: sendEmpty,
+			emptyValue: emptyValue
 		})
 	]);
-	var view = new MIE.WC_DataVis.ComputedView(source);
-	new MIE.WC_DataVis.Grid({
+	var view = new ComputedView(source);
+	new Grid({
 		id: 'grid',
 		computedView: view,
 		table: {
@@ -41,14 +39,14 @@ $(document).ready(function () {
 		},
 		source: source,
 	}, {
-		title: 'Test - Grid - Form',
+		title: 'Test // Grid // Source Params // Form CGI',
 		showControls: true
 	});
 });
 		</script>
 	</head>
 	<body>
-		<form id="form">
+		<form name="form">
 			<input type="hidden" name="hidden" value="hidden"/>
 			<input type="text" name="text" value="test"/><hr/>
 			<input id="checkbox1" type="checkbox" name="checkbox" value="ham"><label for="checkbox1">Ham</label>
@@ -60,9 +58,10 @@ $(document).ready(function () {
 			<input id="radio2" type="radio" name="radio" value="hand-tossed"><label for="radio2">Hand-Tossed</label>
 			<input id="radio3" type="radio" name="radio" value="pan"><label for="radio3">Pan</label><hr/>
 			<select name="select">
-				<option value="black">Black</option>
-				<option value="blue">Blue</option>
-				<option value="red">Red</option>
+				<option value="garlic-parm">Garlic Parm</option>
+				<option value="hot-honey">Hot Honey</option>
+				<option value="">None</option>
+				<option value="[empty-value]">Really, Nothing</option>
 			</select><hr/>
 			<textarea name="textarea">
 				hello frendo
