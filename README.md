@@ -6,6 +6,68 @@ DataVis is a tool for exploring, manipulating, and visualizing data. It can impo
 
 ## How to Use
 
+### Vite
+
+Stick this in your `package.json` obviously.
+
+```
+"dependencies": {
+  "wcdatavis": "git+ssh://git@github.com:mieweb/wcdatavis.git",
+  "vite": "=7.3.1"
+}
+```
+
+#### Building a Page
+
+Import FontAwesome 4.7 CSS somehow (this example uses a CDN).
+
+Inside a module script tag, import the CSS for DataVis and its dependents. This is necessary when using Vite in this configuration, but not if using a version of DataVis built via Rollup (which uses the PostCSS plugin to automatically extract and bundle all CSS files imported from JS).
+
+```
+import 'jquery-ui/dist/themes/base/jquery-ui.min.css';
+import 'jquery-contextmenu/dist/jquery.contextMenu.min.css';
+import 'sumoselect/sumoselect.min.css';
+import 'wcdatavis/wcdatavis.css';
+```
+
+Then just use DataVis like normal:
+
+```
+import { Source, ComputedView, Grid } from 'wcdatavis/index.js';
+
+document.addEventListener('DOMContentLoaded', () => {
+  const source = new Source({
+    type: 'http',
+    url: 'fruit.csv'
+  });
+  const computedView = new ComputedView(source);
+  new Grid({
+    id: 'grid',
+    computedView: computedView
+  }, {
+    title: 'DataVis NPM Example (Using Vite)'
+  });
+});
+```
+
+Make sure you also have a div to contain the grid on the page.
+
+```
+<div id=”grid”></div>
+```
+
+#### Available Exports
+
+| Export | Description |
+|--------|-------------|
+| `Source` | Fetches and decodes data from HTTP, files, or local JavaScript |
+| `ComputedView` | Implements filtering, grouping, pivoting, and aggregation |
+| `Grid` | Renders data in a table with interactive controls |
+| `Graph` | Renders data as charts using Chart.js |
+| `Prefs` | User preferences management |
+| `Perspective` | Save and restore view configurations |
+| `ParamInput` | Parameter input handling for sources |
+
 ### Traditional Website
 
 1. Run `make setup` to get dependencies.
