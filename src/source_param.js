@@ -157,11 +157,20 @@ mixinLogging(Filter);
  */
 
 Filter.prototype.store = function (id) {
-	var form = id ? document.getElementById(id) : null;
-	var findInput = form ? function (s) {
-		return jQuery(form).find(s);
-	} : jQuery;
 	var self = this;
+
+	var findInput = jQuery;
+
+	if (id) {
+		findInput = function (s) {
+			return jQuery(document.getElementById(id)).find(s);
+		};
+	}
+	else if (self.type === 'form' && self.inputName != null) {
+		findInput = function (s) {
+			return jQuery(document.forms[self.inputName]).find(s);
+		};
+	}
 
 	if (self.type === undefined) {
 		self.value = typeof self.defaultValue === 'function'
