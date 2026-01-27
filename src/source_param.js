@@ -969,8 +969,8 @@ var ParamInput = function (sourceType, opts) {
 
 		switch (self.reportMethod) {
 		case 'cgi':
-			self.cgiName = opts.cgi.name;
-			self.cgiValue = opts.cgi.value;
+			self.cgiName = getPropDef(self.inputName, opts, 'cgi', 'name');
+			self.cgiValue = getProp(opts, 'cgi', 'value');
 
 			filterOpts.paramName = self.cgiName; // TODO: Remove after self.filter is gone.
 			filterOpts.defaultValue = self.cgiValue;
