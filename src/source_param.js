@@ -962,6 +962,8 @@ var ParamInput = function (sourceType, opts) {
 			type: self.inputType,
 			method: self.reportMethod,
 			inputName: self.inputName,
+			sendEmpty: opts.sendEmpty,
+			emptyValue: opts.emptyValue,
 		};
 
 		switch (self.reportMethod) {
@@ -1002,6 +1004,8 @@ var ParamInput = function (sourceType, opts) {
 			type: self.inputType,
 			method: self.reportMethod,
 			inputName: self.inputName,
+			sendEmpty: opts.sendEmpty,
+			emptyValue: opts.emptyValue,
 		};
 
 		self.cgiName = getPropDef(self.inputName, opts, 'cgi', 'name');
