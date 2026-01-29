@@ -2,7 +2,7 @@
 site_name = "DataVis"
 repo_url = "https://github.com/mieweb/wcdatavis/"
 site_author = "Taylor Venable <tvenable@mieweb.com>"
-site_url = "https://zeus.med-web.com/~tvenable/datavis/manual/"
+site_url = "https://mieweb.github.io/wcdatavis/"
 docs_dir = "doc/md"
 site_dir = "doc/html"
 plugins = ["site_urls"]
