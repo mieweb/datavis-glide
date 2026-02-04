@@ -551,8 +551,8 @@ GridTable.prototype._addColumnResizeHandle = function (headingTh, field, colInde
 		// Add a class to the table to indicate we're resizing
 		self.ui.tbl.addClass('wcdv_resizing');
 
-		document.addEventListener('mousemove', onMouseMove);
-		document.addEventListener('mouseup', onMouseUp);
+		jQuery(document).on('mousemove.wcdv_col_resize', onMouseMove);
+		jQuery(document).on('mouseup.wcdv_col_resize', onMouseUp);
 	};
 
 	var onMouseMove = function (e) {
@@ -582,8 +582,8 @@ GridTable.prototype._addColumnResizeHandle = function (headingTh, field, colInde
 			resizeIndicator = null;
 		}
 
-		document.removeEventListener('mousemove', onMouseMove);
-		document.removeEventListener('mouseup', onMouseUp);
+		jQuery(document).off('mousemove.wcdv_col_resize');
+		jQuery(document).off('mouseup.wcdv_col_resize');
 
 		// Not honestly sure why, but the targetWidth is always 9 pixels bigger than where the dotted
 		// line is ending up, so if we don't put this in, the column actually ends up 9 pixels wider
@@ -621,7 +621,7 @@ GridTable.prototype._addColumnResizeHandle = function (headingTh, field, colInde
 		}
 	};
 
-	resizeHandle.addEventListener('mousedown', onMouseDown);
+	jQuery(resizeHandle).on('mousedown.wcdv_col_resize', onMouseDown);
 	headingTh.get(0).appendChild(resizeHandle);
 	headingTh.addClass('wcdv_resizable_column');
 };
