@@ -6,11 +6,11 @@ This example shows how to pull in DataVis via NPM dependency, using it from your
 
     Using Vite disables any Svelte components. Our Svelte gantt chart component requires an old version of Svelte, which is incompatible with the Svelte plugin for Vite.
 
-Here is what you’ll need in your `package.json` file.
+An official DataVis NPM package is now published in GitHub. See [the NPM page](./npm.md) to get setup; here is what you’ll need in your `package.json` file.
 
 ```javascript
 "dependencies": {
-  "wcdatavis": "git+ssh://git@github.com:mieweb/wcdatavis.git",
+  "@mieweb/wcdatavis": "=3.2.3",
   "vite": "=7.3.1"
 }
 ```
@@ -25,13 +25,13 @@ Inside a module script tag, import the CSS for DataVis and its dependents. This 
 import 'jquery-ui/dist/themes/base/jquery-ui.min.css';
 import 'jquery-contextmenu/dist/jquery.contextMenu.min.css';
 import 'sumoselect/sumoselect.min.css';
-import 'wcdatavis/wcdatavis.css';
+import '@mieweb/wcdatavis/wcdatavis.css';
 ```
 
 Then just use DataVis like normal:
 
 ```javascript
-import { Source, ComputedView, Grid } from 'wcdatavis/index.js';
+import { Source, ComputedView, Grid } from '@mieweb/wcdatavis/index.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   const source = new Source({
