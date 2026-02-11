@@ -2513,6 +2513,7 @@ GridTable.prototype.autoResizeColumns = function () {
 	if (self.autoResizeColsLock.isLocked()) {
 		return;
 	}
+
 	self.autoResizeColsLock.lock();
 	if (getProp(self.features, 'floatingHeader') &&
 			getProp(self.defn, 'table', 'floatingHeader', 'method') === 'tabletool' &&
@@ -2577,12 +2578,14 @@ GridTable.prototype.autoResizeColumns = function () {
 		}
 	}
 
+	if (getProp(self.features, 'floatingHeader') &&
+			getProp(self.defn, 'table', 'floatingHeader', 'method') === 'tabletool' &&
+			window.TableTool != null) {
+		window.TableTool.enable();
+	}
+
+	// Give TableTool a chance to redraw itself before we go allowing ResizeObserver events again.
 	window.setTimeout(function () {
-		if (getProp(self.features, 'floatingHeader') &&
-				getProp(self.defn, 'table', 'floatingHeader', 'method') === 'tabletool' &&
-				window.TableTool != null) {
-			window.TableTool.enable();
-		}
 		self.autoResizeColsLock.unlock();
 	});
 };
@@ -2615,9 +2618,16 @@ GridTable.prototype.makeResponsive = function () {
 	var timer;
 
 	self.resizeObserver = new ResizeObserver(function () {
+		if (self.autoResizeColsLock.isLocked()) {
+			return;
+		}
+
 		if (timer != null) {
+			// Stop the previous event handler, resetting the 100ms wait time.
 			clearTimeout(timer);
 		}
+
+		// Wait 100ms and then deal with the resize event.
 		timer = setTimeout(function () {
 			timer = null;
 			self.autoResizeColumns();
