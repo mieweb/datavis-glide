@@ -12,6 +12,11 @@ import 'jquery-ui/dist/jquery-ui.min.js';
 import 'jquery-contextmenu';
 import 'sumoselect';
 
+import 'jquery-ui/dist/themes/base/jquery-ui.min.css';
+import 'jquery-contextmenu/dist/jquery.contextMenu.min.css';
+import 'sumoselect/sumoselect.min.css';
+import './wcdatavis.css';
+
 import { ParamInput } from './src/source_param.js';
 import { Source } from './src/source.js';
 import { ComputedView } from './src/computed_view.js';
