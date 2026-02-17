@@ -90,6 +90,41 @@ var PlainToolbar = makeSubclass('PlainToolbar', ToolbarSection, function (grid) 
 		})
 		.appendTo(self.ui.root)
 	;
+
+	// Row Mode toggle (Clipped vs Wrapped)
+	self.ui.rowMode = makeRadioButtons(
+		grid.defn
+		, ['table', 'rowMode']
+		, 'wrapped'
+		, null
+		, 'rowMode'
+		, [{label: trans('GRID_TOOLBAR.PLAIN.ROW_MODE.WRAPPED'), value: 'wrapped'}
+			, {label: trans('GRID_TOOLBAR.PLAIN.ROW_MODE.CLIPPED'), value: 'clipped'}]
+		, trans('GRID_TOOLBAR.PLAIN.ROW_MODE')
+		, function (selected) {
+			grid.setRowMode(selected);
+		}
+		, self.ui.root
+	);
+
+	self.ui.autoResizeColumns = jQuery('<button>', {
+		'type': 'button',
+		'title': trans('GRID_TOOLBAR.PLAIN.AUTO_RESIZE_COLUMNS')
+	})
+		.append(fontAwesome('fa-arrows-h'))
+		.append(trans('GRID_TOOLBAR.PLAIN.AUTO_RESIZE_COLUMNS'))
+		.on('click', function (evt) {
+			var colConfig = grid.colConfig.clone();
+			colConfig.each(function (fcc) {
+				delete fcc.width;
+			});
+			grid.setColConfig(colConfig, {from: 'ui'});
+			if (grid.renderer.autoResizeColumns != null) {
+				grid.renderer.autoResizeColumns();
+			}
+		})
+		.appendTo(self.ui.root)
+	;
 });
 
 // #update {{{2
@@ -110,10 +145,12 @@ PlainToolbar.prototype.update = function () {
 	case 'table':
 		self.ui.columnConfig.show();
 		self.ui.TemplatesEditor.hide();
+		self.ui.rowMode.show();
 		break;
 	case 'handlebars':
 		self.ui.columnConfig.hide();
 		self.ui.TemplatesEditor.show();
+		self.ui.rowMode.hide();
 		break;
 	}
 };

@@ -5,12 +5,14 @@
 		<script type="module" src="/index.js"></script>
 		<link rel="stylesheet" href="../font-awesome.css"/>
 		<link rel="stylesheet" href="../base.css"/>
-		<link rel="stylesheet" href="../wcdatavis.css"/>
 		<script type="module">
 import { Source, ComputedView, Grid } from '/index.js';
 document.addEventListener('DOMContentLoaded', function () {
 	window.MIE = window.MIE || {};
 	window.MIE.DEBUGGING = true;
+
+	let params = new URLSearchParams(document.location.search);
+	let dnd = params.has('dnd');
 
 	var source = new Source({
 		type: 'http',
@@ -24,6 +26,8 @@ document.addEventListener('DOMContentLoaded', function () {
 			features: {
 				limit: false,
 				rowSelect: true,
+				columnResize: dnd,
+				columnReorder: dnd,
 			},
 			columns: [
 					'rowId'

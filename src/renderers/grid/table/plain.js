@@ -482,6 +482,16 @@ GridTablePlain.prototype.drawHeader = function (columns, data, typeInfo, opts) {
 		self.setCss(headingTh, field);
 		self.setAlignment(headingTh, fcc, typeInfo.get(field));
 
+		// Add column resize handle
+		if (self.features.columnResize !== false) {
+			self._addColumnResizeHandle(headingTh, field, colIndex);
+		}
+
+		// Add column reorder handler
+		if (self.features.columnReorder !== false) {
+			self._addColumnReorderHandler(headingTh, field, colIndex, columns);
+		}
+
 		self.ui.thMap[field] = headingTh;
 		headingTr.append(headingTh);
 	});

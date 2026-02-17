@@ -53,6 +53,8 @@ var GridTableGroupSummary = makeSubclass('GridTableGroupSummary', GridTable, fun
 	self.features.limit = false;
 	self.features.rowSelect = false;
 	self.features.footer = false;
+	self.features.columnResize = false;
+	self.features.columnReorder = false;
 
 	self.logDebug(self.makeLogTag() + ' Constructing grid table; features = %O', features);
 

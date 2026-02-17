@@ -29,7 +29,7 @@ The language pack files are built automatically by the Awk script in `bin/make-l
 
 3. Add the following to `src/trans.js` to enable the language pack. For example, if we were adding German:
 
-   ```javascript
+   ``` javascript
    import trans_deDE from './lang/de-DE.js';
    
    // ... other code ...

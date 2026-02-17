@@ -59,10 +59,10 @@ var GridRenderer = (function () {
 
 		self.drawLock = new Lock('GridRenderer/draw');
 
-		self.grid.on('colConfigUpdate', function (newColConfig) {
+		self.grid.on('colConfigUpdate', function (newColConfig, initColConfig, shouldRedraw) {
 			self.logDebug(self.makeLogTag() + ' Received new colConfig: %O', newColConfig);
 			self.colConfig = newColConfig;
-			if (self.hasRendered) {
+			if (self.hasRendered && shouldRedraw) {
 				self.logDebug(self.makeLogTag() + ' Redrawing with new colConfig');
 				self.draw(self.root, self.drawOpts);
 			}

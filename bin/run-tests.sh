@@ -11,18 +11,19 @@ errmsg() {
 
 main() {
     local -a tests=(
-        # 'active-row'
+        'active-row'
         'aggregate'
         'allowHtml'
         'auto-limit'
         'cancel'
         'colconfig'
         'date_filter'
+        'dnd'
         'drilldown'
         'filter'
         'footer'
         'format-strings'
-        # 'google-chart'
+        # 'google-chart' -- completely unreliable on GitHub
         'group-funs'
         'multi-grid'
         'no-auto-save'

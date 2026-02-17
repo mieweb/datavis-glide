@@ -4,7 +4,7 @@ Writing support for your own data source backends is easy, you just need to make
 
 ## Constructor
 
-```javascript
+``` javascript
 var MySource = makeSubclass('MySource', Object, function (spec) {
   // ... store spec fields ...
 });
@@ -14,7 +14,7 @@ var MySource = makeSubclass('MySource', Object, function (spec) {
 
 Data and type info might come together (e.g. as part of a JSON payload with separate properties for each) or the type info might be derived from the data (e.g. CSV contains no metadata itself, but we can build some based on the columns). The methods to get each are separated, and must be callable independently — you can’t rely on one being called before the other.
 
-```javascript
+``` javascript
 MySource.prototype.getData = function (params, cont) {
   // ... try to get data ...
   return gotData ? cont(true, data) : cont(false);
@@ -30,7 +30,7 @@ MySource.prototype.getTypeInfo = function (cont) {
 
 If there is a way to cancel the data request, you can define the `cancel()` method. If this method exists, it puts a button in the titlebar that lets users abort the process. Here’s an example:
 
-```javascript
+``` javascript
 HttpSource.prototype.cancel = function () {
 	this.xhr.abort();
 };
@@ -40,13 +40,13 @@ HttpSource.prototype.cancel = function () {
 
 After defining the class and its methods, you need to add it to the Source registry.
 
-```javascript
+``` javascript
 MIE.WC_DataVis.Source.sources.mySource = MySource;
 ```
 
 ## Using the Source
 
-```javascript
+``` javascript
 var source = new MIE.WC_DataVis.Source({
   type: 'mySource'
 });

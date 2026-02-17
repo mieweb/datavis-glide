@@ -2,7 +2,7 @@
 
 You can set up a grid to switch renderers on the fly according to how wide the grid is. This is done by setting both a minimum width and the data modes (i.e. plain, group, or pivot) that the renderer supports.
 
-```javascript
+``` javascript
 grid.addRenderer(800, ['plain'], {
 	name: 'squirrelly',
   opts: {
@@ -23,7 +23,7 @@ This example adds a renderer using Squirrelly that will be used at 800px and wid
 
 The renderer is typically specified with a string, but if needed you can supply a function instead. The result of that function determines the renderer, and it’s evaluated whenever the grid is resized. In fact, the out of the box group rendering works this way:
 
-```javascript
+``` javascript
 grid.addRenderer(1024, ['group'], {
   fn: function () {
 		switch (grid.defn.table.groupMode) {
@@ -40,7 +40,7 @@ grid.addRenderer(1024, ['group'], {
 
 There are builtin renderers for tabular output, with minimum sizes set at 1024px. If you want to clear out the builtin renderers and only use your own, there’s a way to do that.
 
-```javascript
+``` javascript
 grid.clearRenderers();
 ```
 
@@ -53,7 +53,7 @@ When the grid is resized, it follows an algorithm to choose a renderer.
 
 ### Examples
 
-```javascript
+``` javascript
 grid.clearRenderers();
 grid.addRenderer(400, ['plain'], { name: 'A', ... });
 grid.addRenderer(600, ['plain'], { name: 'B', ... });
@@ -71,7 +71,7 @@ grid.addRenderer(800, null, { name: 'C', ... });
 
 Responsive renderers are now the default and preferred way to set up grid renderers. If you use the old method like so:
 
-```javascript
+``` javascript
 new MIE.WC_DataVis.Grid({
   ...
   renderer: 'squirrelly',

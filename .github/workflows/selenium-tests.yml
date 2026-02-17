@@ -56,10 +56,23 @@ jobs:
           echo "DISPLAY=:99" >> $GITHUB_ENV
 
       - name: Run tests
-        run: ./bin/run-tests.sh
+        run: |
+          set -o pipefail
+          ./bin/run-tests.sh 2>&1 | tee test-output.log
         continue-on-error: true
         id: selenium_tests
 
-      - name: Fail if tests failed
+      - name: Report test results
         if: steps.selenium_tests.outcome == 'failure'
-        run: exit 1
+        run: |
+          # Extract Mocha summary: from "N passing" line to end of output
+          SUMMARY=$(sed -n '/[0-9]\+ passing/,$p' test-output.log)
+
+          echo "## :x: Selenium Tests Failed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "$SUMMARY" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+          echo "$SUMMARY"
+          exit 1

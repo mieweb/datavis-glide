@@ -90,7 +90,7 @@ We use GNU Make to provide a simple interface to the various tools to build and 
 * `make test` — Same as `make tests`, then run automated tests using Mocha & Selenium.
 * `make doc` — Build all documentation.
   * `make jsdoc` — Build JS API documentation from comments in the source.
-  * `make mkdocs` — Build the Manual from Markdown files.
+  * `make manual` — Build the Manual from Markdown files.
 * `make clean` — Remove all build products and generated test data.
 * `make teardown` — Resets the development environment.
 

@@ -7,6 +7,8 @@
 //Pass in a number greater than 0 to signify the cells acting as a side column with data-tttype="sidescroll" tables.
 //jQuery Event handlers are maintained in cloned headers and footer. Events should be attached before the TableTool script runs in order to capture attached events.
 
+import { jQuery } from '/index.js';
+
 //API access
 var TableTool = {};
 
@@ -869,10 +871,33 @@ var TableTool = {};
 
 					// account for scrollbar when setting sidescroll clone footer height
 					sizeTo(sidescroll.cloneSide.tfoot, sidescroll.stickyTfootRefs, true);
+
+					// Constrain headerTbl's column widths to match the body table layout.
+					// Use table-layout:fixed with a cloned colgroup from the sticky header
+					// (not sizeTo) because col widths in fixed-layout are border-box, while
+					// sizeTo sets content-box CSS width that inflates cells by their padding.
+					sidescroll.headerTbl.css({
+						'table-layout': 'fixed',
+						'width': widthCalc(sidescroll.bodyTbl)
+					});
+					var stickyColgroup = sidescroll.sticky.theadTable.find('colgroup');
+					if (stickyColgroup[0]) {
+						var headerColgroup = sidescroll.headerTbl.find('> colgroup');
+						if (headerColgroup[0]) {
+							headerColgroup.replaceWith(stickyColgroup.clone());
+						} else {
+							sidescroll.headerTbl.prepend(stickyColgroup.clone());
+						}
+					}
 				}
 			} else { // header column wrapper is >= 50% of parent ttsidescroll wrapper
 				resetSideTbl();
 			}
+
+			// DataVis column resize sets position:relative on all tables. Clear it
+			// from the floating header/footer clones so CSS can control their
+			// position (fixed when sticky, absolute when touching tfoot, etc.).
+			add([sidescroll.headerClone, sidescroll.footerClone]).css('position', '');
 		};
 
 		sidescroll.resize = function() {
@@ -1251,10 +1276,12 @@ var TableTool = {};
 		//loop through all sticky tables, apply "disabled" class to outermost layer.
 		for (var ast=0; ast<allStickies.length; ast++) {
 			var stickyTable = allStickies[ast];
+			var stickyType = stickyTable.table.attr('data-ttsidecells') ? 'sidescroll' : 'sticky';
 
 			stickyTable.table
-				.clone()
-				.attr('data-ttdisabled', 'stickydisabled')
+				// .clone(true)
+				.attr('data-ttdisabled', stickyType + 'disabled')
+				.css('margin-left', 'inherit')
 				.insertBefore(stickyTable.parent);
 
 			stickyTable.parent.remove();
@@ -1293,7 +1320,8 @@ var TableTool = {};
 
 			tt
 				.attr('data-tttype', tt.data('ttdisabled').replace('disabled', ''))
-				.removeAttr('data-ttdisabled');
+				.removeAttr('data-ttdisabled')
+				.removeAttr('data-ttmanaged');
 		});
 
 		TableTool.update();
@@ -1334,3 +1362,4 @@ var TableTool = {};
 
 })(jQuery);
 
+export default TableTool;

@@ -126,6 +126,28 @@ DataVis is a library for data visualization with presentation via charts and tab
 - Use clear cross-references between related documentation files
 - Update the main architecture document when workflow structure changes
 
+## Terminal Commands & Process Management
+
+### 🛡️ Safe Process Termination
+- **Never use broad `pkill`**: Do not use `pkill -f "vite"` or `pkill -f "node"` — this kills ALL matching processes system-wide
+- **Kill by port only**: When stopping a dev server, kill only the specific port:
+  ```bash
+  lsof -ti:PORT | xargs kill 2>/dev/null   # Kill process on specific port
+  ```
+- **Examples**:
+  ```bash
+  lsof -ti:5123 | xargs kill 2>/dev/null   # Kill only port 5123
+  lsof -ti:8099 | xargs kill 2>/dev/null   # Kill only port 8099
+  ```
+- **Why this matters**: Developers often run multiple Vite/Node apps simultaneously — killing by process name disrupts unrelated work
+
+### Dev Server for Test Pages
+- **Vite HMR issue**: Vite's Hot Module Replacement causes infinite iframe recursion on legacy test HTML pages
+- **Use static server for tests**: For testing pages in `tests/pages/`, use Python's HTTP server:
+  ```bash
+  python3 -m http.server 8099
+  ```
+
 ## Working with GitHub Actions Workflows
 
 ### Development Philosophy

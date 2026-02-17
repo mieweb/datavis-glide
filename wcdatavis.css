@@ -761,7 +761,102 @@ tr.wcdv_grid_filterrow th.wcdv_grid_filtercol {
 }
 
 .wcdv_nowrap {
+	white-space: nowrap !important;
+}
+
+/******************************************************************************/
+/* COLUMN RESIZING                                                            */
+/******************************************************************************/
+
+.wcdv_resizable_column {
+	position: relative;
+}
+
+.wcdv_column_resize_handle {
+	position: absolute;
+	right: 0;
+	top: 0;
+	bottom: 0;
+	width: 5px;
+	cursor: col-resize;
+	background-color: transparent;
+	z-index: 10;
+}
+
+.wcdv_column_resize_handle:hover {
+	background-color: #0095D6;
+}
+
+.wcdv_resizing {
+	cursor: col-resize !important;
+	user-select: none;
+}
+
+.wcdv_resizing * {
+	cursor: col-resize !important;
+}
+
+/* Use table-layout: fixed for proper column width control */
+.wcdv_grid_table table.wcdv-resizable-cols {
+	table-layout: fixed;
+}
+
+/******************************************************************************/
+/* COLUMN REORDERING                                                          */
+/******************************************************************************/
+
+.wcdv_reorderable_column {
+	cursor: grab;
+}
+
+.wcdv_reorderable_column:active {
+	cursor: grabbing;
+}
+
+.wcdv_column_dragging {
+	background-color: #E3F2FD !important;
+}
+
+.wcdv_column_drop_target {
+	background-color: #BBDEFB !important;
+	box-shadow: inset 0 0 0 2px #0095D6;
+}
+
+.wcdv_column_drop_indicator {
+    position: absolute;
+    width: 3px;
+    border-left: 3px dashed #4CAF50;
+    pointer-events: none;
+    z-index: 1000;
+    display: none;
+}
+
+/******************************************************************************/
+/* ROW MODE (CLIPPED vs WRAPPED)                                              */
+/******************************************************************************/
+
+/* Wrapped mode (default) - cells can wrap to multiple lines */
+.wcdv_grid_table.wcdv_row_mode_wrapped td {
+	white-space: normal;
+	word-wrap: break-word;
+	overflow-wrap: break-word;
+}
+
+/* Clipped mode - single line cells with text truncated */
+.wcdv_grid_table.wcdv_row_mode_clipped td {
 	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	max-width: 300px;
+}
+
+.wcdv_grid_table.wcdv_row_mode_clipped th {
+	white-space: nowrap;
+}
+
+/* Allow overflow visible on headers for resize handles */
+.wcdv_grid_table.wcdv_row_mode_clipped th.wcdv_resizable_column {
+	overflow: visible;
 }
 
 /*

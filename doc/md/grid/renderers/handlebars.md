@@ -2,7 +2,7 @@
 
 The Handlebars grid renderer gives you almost total freedom to tailor DataVis' output.  The registry name for this renderer is `handlebars`.
 
-```javascript
+``` javascript
 new MIE.WC_DataVis.Grid('grid', view, {
   id: 'grid',
   renderer: 'handlebars',

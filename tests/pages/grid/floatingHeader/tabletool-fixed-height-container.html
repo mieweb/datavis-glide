@@ -3,31 +3,48 @@
 	<head>
 		<meta charset="utf-8"/>
 		<script type="module" src="/index.js"></script>
+		<script type="module" src="../../tabletool.esm.js"></script>
 		<link rel="stylesheet" href="../../font-awesome.css"/>
 		<link rel="stylesheet" href="../../base.css"/>
+		<link rel="stylesheet" href="../../wcdatavis.css"/>
+		<link rel="stylesheet" href="../../tabletool.css"/>
 		<script type="module">
 import { Source, ComputedView, Grid } from '/index.js';
+import TableTool from '../../tabletool.esm.js';
+
+window.TableTool = TableTool;
 document.addEventListener('DOMContentLoaded', function () {
 	window.MIE = window.MIE || {};
 	window.MIE.DEBUGGING = true;
 
+	let params = new URLSearchParams(document.location.search);
+	let dnd = params.has('dnd');
+
 	var source = new Source({
 		type: 'http',
-		url: '../../random10000.json'
+		url: '../../random100.json'
 	});
 	var view = new ComputedView(source);
 	new Grid({
 		id: 'grid',
+		computedView: view,
+		table: {
+			features: {
+				limit: false,
+				rowSelect: true,
+				columnResize: dnd,
+				columnReorder: dnd,
+			}
+		},
 		source: source,
-		computedView: view
 	}, {
-		title: 'Test / Grid / Basic / Random 10000',
+		title: 'Test // Grid // TableTool // Fixed Height Container',
 		showControls: true
 	});
 });
 		</script>
 	</head>
 	<body>
-		<div id="grid"></div>
+		<div id="grid" style="height: 400px"></div>
 	</body>
 </html>

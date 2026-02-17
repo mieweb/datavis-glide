@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8"/>
+		<script type="module" src="/index.js"></script>
+		<link rel="stylesheet" href="../../font-awesome.css"/>
+		<link rel="stylesheet" href="../../base.css"/>
+		<script type="module">
+import { Source, ComputedView, Grid, ParamInput } from '/index.js';
+document.addEventListener('DOMContentLoaded', function () {
+	window.MIE = window.MIE || {};
+	window.MIE.DEBUGGING = true;
+
+	let params = new URLSearchParams(document.location.search);
+	let sendEmpty = params.has('send-empty');
+	let emptyValue = params.get('empty-value') ?? '';
+
+	var source = new Source({
+		type: 'http',
+		url: '/reflect/json_where'
+	}, [
+		new ParamInput('report', {
+			reportMethod: 'json_where',
+			inputType: 'form',
+			inputName: 'form',
+			json: {
+				name: 'model'
+			},
+			sendEmpty: sendEmpty,
+			emptyValue: emptyValue
+		})
+	]);
+	var view = new ComputedView(source);
+	new Grid({
+		id: 'grid',
+		computedView: view,
+		table: {
+			features: {
+				limit: false
+			}
+		},
+		source: source,
+	}, {
+		title: 'Test // Grid // Source Params // Form JSON WHERE',
+		showControls: true
+	});
+});
+		</script>
+	</head>
+	<body>
+		<form name="form">
+			<input type="hidden" name="hidden" value="hidden"/>
+			<input type="text" name="text" value="test"/><hr/>
+			<input id="checkbox1" type="checkbox" name="checkbox" value="ham"><label for="checkbox1">Ham</label>
+			<input id="checkbox2" type="checkbox" name="checkbox" value="pepperoni" checked><label for="checkbox2">Pepperoni</label>
+			<input id="checkbox3" type="checkbox" name="checkbox" value="mushrooms" checked><label for="checkbox3">Mushrooms</label>
+			<input id="checkbox4" type="checkbox" name="checkbox" value="pineapple"><label for="checkbox4">Pineapple</label><hr/>
+			<input id="toggle-checkbox" type="checkbox" name="toggle-checkbox" value="toggle_checkbox"><label for="toggle-checkbox">Toggle Checkbox</label><hr/>
+			<input id="radio1" type="radio" name="radio" value="thin"><label for="radio1">Thin Crust</label>
+			<input id="radio2" type="radio" name="radio" value="hand-tossed"><label for="radio2">Hand-Tossed</label>
+			<input id="radio3" type="radio" name="radio" value="pan"><label for="radio3">Pan</label><hr/>
+			<select name="select">
+				<option value="garlic-parm">Garlic Parm</option>
+				<option value="hot-honey">Hot Honey</option>
+				<option value="">None</option>
+				<option value="[empty-value]">Really, Nothing</option>
+			</select><hr/>
+			<textarea name="textarea">
+				hello frendo
+			</textarea>
+		</form>
+		<div id="grid"></div>
+	</body>
+</html>

@@ -1,0 +1,87 @@
+[project]
+site_name = "DataVis"
+repo_url = "https://github.com/mieweb/wcdatavis/"
+site_author = "Taylor Venable <tvenable@mieweb.com>"
+site_url = "https://mieweb.github.io/wcdatavis/"
+docs_dir = "doc/md"
+site_dir = "doc/html"
+plugins = ["site_urls"]
+extra_css = ["style.css"]
+nav = [
+  { "Introduction" = "index.md" },
+  { "Getting Started" = "getting_started.md" },
+  { "Using It" = [
+    { "NPM Package" = "using/npm.md" },
+    { "Static JS + HTML" = "using/static.md" },
+    { "Building with Rollup" = "using/rollup.md" },
+    { "Using Vite" = "using/vite.md" }
+  ]},
+  { "Architectural Overview" = "overview.md" },
+  { "Sources" = [
+    { "Source Basics" = "source/index.md" },
+    { "Builtin Sources" = "source/builtin.md" },
+    { "Writing Your Own" = "source/custom.md" },
+  ]},
+  { "View" = [
+    { "Primary Operations" = "view/view.md" },
+    { "Group Functions" = "view/group_funs.md" },
+  ]},
+  { "Grid" = [
+    { "Overview" = "grid/index.md" },
+    { "Renderers" = [
+      { "Responsive" = "grid/renderers/responsive.md" },
+      { "Table" = "grid/renderers/table.md" },
+      { "Handlebars" = "grid/renderers/handlebars.md" },
+    ]},
+    { "Operations" = "grid/operations.md" },
+    { "Active Row" = "grid/active-row.md" },
+  ]},
+  { "Graph" = [
+    { "Overview" = "graph/index.md" },
+    { "Gantt Charts" = "graph/gantt.md" },
+  ]},
+  { "Types" = "types.md" },
+  { "Preferences" = "prefs.md" },
+  { "Performance" = "performance.md" },
+  { "Errors & Debugging" = "debugging.md" },
+  { "Localization" = "localization.md" },
+  { "Development" = [
+    { "Getting Started" = "development/index.md" },
+    { "Best Practices" = "development/standards.md" },
+    { "Supporting Localization" = "development/localization.md" },
+    { "Generating Data" = "development/json_gen.md" },
+    { "Testing" = "development/testing.md" },
+    { "Documentation" = "development/docs.md" },
+    { "Making a Release" = "development/release.md" },
+  ]},
+  { "Utilization" = [
+    { "Known Issues" = "known_issues.md" },
+  ]},
+  { "Glossary" = "glossary.md" },
+  { "About DataVis" = "about.md" },
+]
+
+[project.theme]
+variant = "classic"
+palette.theme = "material"
+palette.primary = "blue grey"
+palette.accent = "deep orange"
+font.text = "National Park"
+font.code = "JetBrains Mono"
+features = [
+  "content.code.copy"
+]
+
+[project.markdown_extensions.def_list]
+[project.markdown_extensions.admonition]
+[project.markdown_extensions.pymdownx.highlight]
+[project.markdown_extensions.smarty]
+
+[project.markdown_extensions.toc]
+permalink = true
+
+[project.markdown_extensions.pymdownx.details]
+[project.markdown_extensions.pymdownx.superfences]
+custom_fences = [
+  { name = "mermaid", class = "mermaid", format = "pymdownx.superfences.fence_code_format" }
+]

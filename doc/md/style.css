@@ -7,6 +7,10 @@
   padding-right: 0.3em;
 }
 
+.md-typeset dt code {
+  background-color: transparent;
+}
+
 .md-typeset h1, .md-typeset h2 {
   font-weight: 700;
 }

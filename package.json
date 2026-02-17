@@ -1,6 +1,6 @@
 {
-  "name": "wcdatavis",
-  "version": "3.2.1",
+  "name": "@mieweb/wcdatavis",
+  "version": "3.3.0",
   "description": "Data visualization library",
   "keywords": [
     "grid",
@@ -8,22 +8,25 @@
     "data",
     "visualization"
   ],
-  "license": "UNLICENSED",
-  "private": true,
+  "license": "PROPRIETARY",
   "author": "Taylor Venable <tvenable@mieweb.com>",
   "files": [
     "index.js",
-    "meteor.js",
     "global-jquery.js",
+    "ie-fixes.js",
+    "meteor.js",
     "src/*.js",
     "src/**/*.js",
-    "wcdatavis.css"
+    "datavis.js",
+    "wcdatavis.css",
+    "dist/wcdatavis.min.js",
+    "dist/wcdatavis.css"
   ],
   "main": "index.js",
   "browser": "datavis.js",
   "repository": {
     "type": "git",
-    "url": "https://github.mieweb.com/datavis/wcdatavis.git"
+    "url": "https://github.com/mieweb/wcdatavis.git"
   },
   "scripts": {
     "dev": "vite",

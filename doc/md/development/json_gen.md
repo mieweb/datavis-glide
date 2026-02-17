@@ -1,6 +1,6 @@
 # Generating Data
 
-Test data is generated using a Python program called `json-gen.py` which takes a JSON5 file on stdin and generates data on stdout.  Most importantly, the data created by this program is reproducible, so the test files are the same no matter where or when they are generated.
+Test data is generated using a Python program called `json-gen.py` which takes a JSON5 file on stdin and generates data on stdout.  Most importantly, **the test data created by this program is reproducible,** so the test files are the same no matter where or when they are generated.
 
 ## Usage
 
@@ -87,15 +87,15 @@ The following functions are used to generate test data.  In all of the following
 : Uses the last value produced by the generator specified.  Used to duplicate the contents of another field in the same row.
 
     ??? example
-
+    
         ``` javascript
         {
           foo: "$< random_int('foo', 0, 255) >$",
           bar: "$< last('foo') >$"
         }
-
+    
         /* produces */
-
+    
         {
           foo: 42,
           bar: 42

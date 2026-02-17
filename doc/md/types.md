@@ -113,7 +113,7 @@ If you’re writing a custom type, and it (b) supports more than one internal re
 
 Create the functions specified above, then add it to the types registry like so:
 
-```javascript
+``` javascript
 import types from 'types.js';
 
 (function () {
@@ -141,7 +141,7 @@ import types from 'types.js';
 
 Here’s a brief example of how to use the type registry to: (1) guess the type that can represent a string value, (2) convert it into a native object, and (3) print out the formatted version.
 
-```javascript
+``` javascript
 import types from 'types.js';
 
 switch (types.guess(str)) {

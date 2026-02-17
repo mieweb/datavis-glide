@@ -157,11 +157,20 @@ mixinLogging(Filter);
  */
 
 Filter.prototype.store = function (id) {
-	var form = id ? document.getElementById(id) : null;
-	var findInput = form ? function (s) {
-		return jQuery(form).find(s);
-	} : jQuery;
 	var self = this;
+
+	var findInput = jQuery;
+
+	if (id) {
+		findInput = function (s) {
+			return jQuery(document.getElementById(id)).find(s);
+		};
+	}
+	else if (self.type === 'form' && self.inputName != null) {
+		findInput = function (s) {
+			return jQuery(document.forms[self.inputName]).find(s);
+		};
+	}
 
 	if (self.type === undefined) {
 		self.value = typeof self.defaultValue === 'function'
@@ -462,61 +471,117 @@ Filter.prototype.buildInput = function (form) {
 
 Filter.prototype.addJsonParam = function (obj) {
 	var self = this
+		, name
+		, column
+		, operator
 		, operand;
 
-	if (self.json == null) {
-		throw new Error('Missing configuration object for JSON grid parameter.');
-	}
+	var setValue = function (val, name, column, operator, operand) {
+		var finalVal;
 
-	if (self.json.name == null || self.json.name === '') {
-		throw new Error('Missing constraint set name for JSON grid parameter.');
-	}
+		// When there's no value, remove it from the JSON object that we might have already constructed
+		// (e.g. if loading the grid a second time) and make sure we don't end up with any empty stuff.
 
-	if (self.json.column == null || self.json.column === '') {
-		throw new Error('Missing column name for JSON grid parameter.');
-	}
-
-	if (self.json.operator == null || self.json.operator === '') {
-		self.json.operator = '$eq';
-	}
-
-	var name = self.json.name;
-	var column = self.json.column;
-	var operator = self.json.operator;
-
-	// When there's no value, remove it from the JSON object that we might have already constructed
-	// (e.g. if loading the grid a second time) and make sure we don't end up with any empty stuff.
-
-	if (self.value === null || (self.type === 'date' && self.value === '') || (self.type === 'multi-autocomplete' && self.value.length === 0)) {
-		if (getProp(obj, name, column, operator)) {
-			delete obj[name][column][operator];
-			if (isEmpty(obj[name][column])) {
-				delete obj[name][column];
+		if (!self.sendEmpty && (val === null || val === self.emptyValue || (operator === '$in' && val.length === 0))) {
+			if (getProp(obj, name, column, operator)) {
+				delete obj[name][column][operator];
+				if (isEmpty(obj[name][column])) {
+					delete obj[name][column];
+				}
+				if (isEmpty(obj[name])) {
+					delete obj[name];
+				}
 			}
-			if (isEmpty(obj[name])) {
-				delete obj[name];
-			}
+			return;
 		}
-		return;
-	}
 
-	// Handle when the operand is an array, in which case we replace any instance of the empty array
-	// with the value of the parameter.  A good example of this is how we modify a date to make it a
-	// time for the end of the day: ['concat', [], ' 23:59:59'].
+		// Handle when the operand is an array, in which case we replace any instance of the empty array
+		// with the value of the parameter.  A good example of this is how we modify a date to make it a
+		// time for the end of the day: ['concat', [], ' 23:59:59'].
 
-	if (_.isArray(self.json.operand)) {
-		operand = arrayCopy(self.json.operand);
-		_.each(operand, function (elt, i) {
-			if (_.isArray(elt) && elt.length === 0) {
-				operand[i] = self.value;
+		if (_.isArray(operand)) {
+			finalVal = arrayCopy(operand);
+			_.each(finalVal, function (elt, i) {
+				if (_.isArray(elt) && elt.length === 0) {
+					finalVal[i] = finalVal;
+				}
+			});
+		}
+		else {
+			finalVal = operand != null ? operand : val;
+		}
+
+		setProp(finalVal, obj, name, column, operator);
+	};
+
+	if (self.type === 'form') {
+		var findInput = jQuery;
+
+		// Sending all items from a form to a source using the JSON method is tricky. The values, as
+		// they would normally be sent to a source using CGI, are already stored as a object in
+		// `self.value` but we need more information to build our JSON object, which we'll pull from
+		// the input elements if possible. First, we try to narrow our search to a specific form.
+
+		if (self.inputName != null) {
+			findInput = function (s) {
+				return jQuery(document.forms[self.inputName]).find(s);
+			};
+		}
+
+		// Next we go through all the values we would send if it were the CGI method. The first input
+		// element that matches the name if where we look for configuration (i.e. constraint name,
+		// column, operator, operand). The CGI values may come from more than one input in the case of
+		// checkboxes (multiple inputs with the same name), but only the first one is going to matter
+		// here. Yes, this is a slight limitation. Advise putting the same attributes on each checkbox
+		// just to avoid confusion.
+		//
+		// Here are the attributes:
+		//
+		//   - wcdv-json-name: The constraint set name (e.g. "model").
+		//   - wcdv-json-column: The column name (e.g. "order_date").
+		//   - wcdv-json-operator: The comparison operator (e.g. "$lte").
+		//   - wcdv-json-operand: The value modifier (e.g. "['concat', [], ' 23:59:59']").
+		//
+		// Obviously the specific usefulness of some of these will depend on the backend.
+
+		var allInputs = findInput('input,select,textarea');
+		_.each(self.value, function (v, k) {
+			var elt = findInput('input,select,textarea').filter(function (i, e) {
+				return e.getAttribute('name') === k;
+			}).get(0);
+			if (elt != null) {
+				var name = elt.getAttribute('wcdv-json-name') || getProp(self, 'json', 'name');
+				var column = elt.getAttribute('wcdv-json-column') || k;
+				var operator = elt.getAttribute('wcdv-json-operator') || (_.isArray(v) ? '$in' : '$eq');
+				var operand = elt.getAttribute('wcdv-json-operand');
+				var val = v;
+				if (name == null) {
+					self.logError(self.makeLogTag('Add JSON Param') + ' Missing JSON constraint set name. Omitting input [name = "' + k + '"] from parameters.');
+					return;
+				}
+				setValue(val, name, column, operator, operand);
 			}
 		});
 	}
 	else {
-		operand = self.json.operand == null ? self.value : self.json.operand;
-	}
+		if (self.json == null) {
+			throw new Error('Missing configuration object for source parameter using JSON method.');
+		}
 
-	setProp(operand, obj, name, column, operator);
+		if (self.json.name == null || self.json.name === '') {
+			throw new Error('Missing `name` property (constraint set name) for source parameter using JSON method.');
+		}
+
+		if (self.json.column == null || self.json.column === '') {
+			throw new Error('Missing `column` property for source parameter using JSON method.');
+		}
+
+		if (self.json.operator == null || self.json.operator === '') {
+			self.json.operator = '$eq';
+		}
+
+		setValue(self.value, self.json.name, self.json.column, self.json.operator, self.json.operand);
+	}
 };
 
 // #toParams {{{2
@@ -954,12 +1019,14 @@ var ParamInput = function (sourceType, opts) {
 			type: self.inputType,
 			method: self.reportMethod,
 			inputName: self.inputName,
+			sendEmpty: opts.sendEmpty,
+			emptyValue: opts.emptyValue,
 		};
 
 		switch (self.reportMethod) {
 		case 'cgi':
-			self.cgiName = opts.cgi.name;
-			self.cgiValue = opts.cgi.value;
+			self.cgiName = getPropDef(self.inputName, opts, 'cgi', 'name');
+			self.cgiValue = getProp(opts, 'cgi', 'value');
 
 			filterOpts.paramName = self.cgiName; // TODO: Remove after self.filter is gone.
 			filterOpts.defaultValue = self.cgiValue;
@@ -994,6 +1061,8 @@ var ParamInput = function (sourceType, opts) {
 			type: self.inputType,
 			method: self.reportMethod,
 			inputName: self.inputName,
+			sendEmpty: opts.sendEmpty,
+			emptyValue: opts.emptyValue,
 		};
 
 		self.cgiName = getPropDef(self.inputName, opts, 'cgi', 'name');

@@ -809,7 +809,7 @@ GridControl.prototype.addField = function (field, displayText, opts, controlFiel
 
 	fieldName = typeof field === 'string' ? field : field.field;
 
-	if (fieldName == null || fieldName === '' || (self.disableUsedItems && self.fields.indexOf(fieldName) >= 0)) {
+	if (fieldName == null || fieldName === '') {
 		return typeof next === 'function' ? next(false) : undefined;
 	}
 
@@ -830,6 +830,10 @@ GridControl.prototype.addField = function (field, displayText, opts, controlFiel
 
 	if (opts.openControls) {
 		self.grid.showControls();
+	}
+
+	if (self.disableUsedItems && self.fields.indexOf(fieldName) >= 0) {
+		return typeof next === 'function' ? next(false) : undefined;
 	}
 
 	// Check to see if we are supposed to update the 'canHide' property of the column config.  Since

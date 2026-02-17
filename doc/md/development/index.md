@@ -38,35 +38,7 @@ After installing the [Pre-Requisites](#pre-requisites), run `make datavis` to bu
 
 As of DataVis v3.3 you no longer need to compile every time you want to test changes. `make serve` now runs Vite, so as long as you’re using a test page written to take advantage of hot module reloading, the page will refresh automatically as soon as you edit a source file.
 
-??? example "An example page using Vite"
-
-	```html
-	<!DOCTYPE html>
-	<html>
-	  <head>
-	    <meta charset="utf-8"/>
-	    <script type="module" src="/index.js"></script>
-	    <link rel="stylesheet" href="../font-awesome.css"/>
-	    <link rel="stylesheet" href="../base.css"/>
-	    <link rel="stylesheet" href="../wcdatavis.css"/>
-	    <script type="module">
-	import { Source, ComputedView, Grid } from '/index.js';
-	document.addEventListener('DOMContentLoaded', function () {
-	  window.MIE = window.MIE || {};
-	  window.MIE.DEBUGGING = true;
-	
-	  // build the grid using the imported classes
-	});
-	    </script>
-	  </head>
-	  <body>
-	    <div id="grid"></div>
-	  </body>
-	</html>
-	```
-NB № 1: Using Vite disables any Svelte components. Our Svelte gantt chart component requires an old version of Svelte, which is incompatible with the Svelte plugin for Vite.
-
-NB № 2: Pages used for automated testing should still use the statically compiled DataVis JS and CSS files, as this is how DataVis is most often deployed.
+See [Using Vite](../using/vite.md) for an example Vite page.
 
 ## Running the Local Server
 

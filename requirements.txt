@@ -1,7 +1,4 @@
 babel==2.17.0
 dicttoxml==1.7.16
 json5==0.10.0
-mkdocs==1.6.1
-mkdocs-material==9.6.8
-mkdocs-site-urls==0.3.0
-pymdown-extensions==10.14.3
+zensical==0.0.20

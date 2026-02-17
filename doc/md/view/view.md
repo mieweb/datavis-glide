@@ -186,7 +186,7 @@ operators, values are operands). All of the operators are AND-ed
 together. For example, this would show anybody who has an age between 18
 and 65:
 
-``` sourceCode javascript
+``` javascript
 {
     'Age': {
         '$lte': '65',
@@ -197,33 +197,52 @@ and 65:
 
 Here are the supported operators:
 
-| Internal Name | Descripton               | Notes                       |
-| :------------ | :----------------------- | :-------------------------- |
-| $contains     | Contains                 | Supports array of operands. |
-| $notcontains  | Doesn't contain          | Supports array of operands. |
-| $eq           | Equality                 |                             |
-| $ne           | Inequality               | Supports array of operands. |
-| $gt           | Greater-than             |                             |
-| $gte          | Greater-than or Equal-to |                             |
-| $lt           | Less-than                |                             |
-| $lte          | Less-than or Equal-to    |                             |
+| Descripton                 | Operator     | Operand                                                    | Types                                                    |
+| :------------------------- | :----------- | ---------------------------------------------------------- | -------------------------------------------------------- |
+| Contains                   | $contains    | substring                                                  | string                                                   |
+| Not Contains               | $notcontains | substring                                                  | string                                                   |
+| Exists                     | $exists      |                                                            | any                                                      |
+| Not Exists                 | $notexists   |                                                            | any                                                      |
+| Equality                   | $eq          | value                                                      |                                                          |
+| Inequality                 | $ne          | value                                                      |                                                          |
+| Greater-than               | $gt          | value                                                      | string<br />number<br />currency<br />date<br />datetime |
+| Greater-than or Equal-to   | $gte         | value                                                      | string<br />number<br />currency<br />date<br />datetime |
+| Less-than                  | $lt          | value                                                      | string<br />number<br />currency<br />date<br />datetime |
+| Less-than or Equal-to      | $lte         | value                                                      | string<br />number<br />currency<br />date<br />datetime |
+| In (member of set)         | $in          | array                                                      | string                                                   |
+| Not In (not member of set) | $nin         | array                                                      | string                                                   |
+| Every                      | $every       | day name<br />month name                                   | date<br />datetime                                       |
+| This                       | $this        | “DATE”<br />“WEEK”<br />“MONTH”<br />“QUARTER”<br />“YEAR” | date<br />datetime                                       |
+| Last                       | $last        | “DATE”<br />“WEEK”<br />“MONTH”<br />“QUARTER”<br />“YEAR” | date<br />datetime                                       |
 
-When an array of operands is supposed, the condition on the row must
-"pass" for all operands.
+When an array of operands is supposed, the condition on the row must “pass” for all operands.
+
+### Examples
+
+`{"name": {"$contains": "Smith"}}`
+: Matches any row where the `name` field contains the substring “Smith.”
+
+`{"price": {"$gte": 50, "$lte": 100}}`
+: Matches any row where the `price` field is between 50 and 100.
+
+`{"location": {"$in": ["main office", "remote office"]}}`
+: Matches any row where the `location` field is either “main office” or “remote office.”
+
+`{"due": {"$every": "MONDAY"}}`
+: Matches any row where the `due` field is a date/time that occurred on a Monday.
+
+`{"finished": {"$this": "MONTH"}}`
+: Matches any row where the `finished` field is a date/time that occurred during the current month (at the time of evaluation).
 
 ## Events
 
   - `dataUpdated`  
     Fired when there has been a change in the data at the source.
-
   - `sortBegin`  
     Fired when a sort operation begins.
-
   - `sortEnd`  
     Fired when a sort operation ends.
-
   - `filterBegin`  
     Fired when a filter operation begins.
-
   - `filterEnd`  
     Fired when a filter operation ends.

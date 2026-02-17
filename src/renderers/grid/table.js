@@ -199,6 +199,7 @@ var GridTable = makeSubclass('GridTable', GridRenderer, function () {
 	self.needsRedraw = false;
 	self.contextMenuSelectors = [];
 	self.csvLock = new Lock('GridTable/csv');
+	self.autoResizeColsLock = new Lock('GridTable/autoResizeCols');
 	self.focus = {
 		rvi: [],
 		cvi: []
@@ -488,6 +489,300 @@ GridTable.prototype.setAlignment = function (elt, fcc, fti, overrideType, fallba
 		// those cases.  This should be extremely rare, given what we've covered above.
 		elt.style.setProperty('text-align', alignment);
 	}
+};
+
+// #_addColumnResizeHandle {{{2
+
+/**
+ * Adds a resize handle to a column header that allows the user to drag to resize the column.
+ *
+ * @param {jQuery} headingTh
+ * The TH element to add the resize handle to.
+ *
+ * @param {string} field
+ * The field name for this column.
+ *
+ * @param {number} colIndex
+ * The column index.
+ */
+
+GridTable.prototype._addColumnResizeHandle = function (headingTh, field, colIndex) {
+	var self = this;
+
+	var resizeHandle = document.createElement('div');
+	resizeHandle.className = 'wcdv_column_resize_handle';
+	resizeHandle.setAttribute('title', trans('GRID.TABLE.RESIZE_COLUMN'));
+	resizeHandle.setAttribute('aria-label', trans('GRID.TABLE.RESIZE_COLUMN'));
+
+	var startX = 0;
+	var startWidth = 0;
+	var isResizing = false;
+	var resizeIndicator = null;
+	var targetWidth = 0;
+
+	var onMouseDown = function (e) {
+		e.preventDefault();
+		e.stopPropagation();
+
+		isResizing = true;
+		startX = e.pageX;
+		startWidth = headingTh.outerWidth();
+
+		// Create a dotted line indicator
+		resizeIndicator = document.createElement('div');
+		resizeIndicator.className = 'wcdv_column_resize_indicator';
+		resizeIndicator.style.position = 'absolute';
+		resizeIndicator.style.top = '0';
+		resizeIndicator.style.bottom = '0';
+		resizeIndicator.style.width = '2px';
+		resizeIndicator.style.borderLeft = '2px dotted #666';
+		resizeIndicator.style.pointerEvents = 'none';
+		resizeIndicator.style.zIndex = '1000';
+
+		// Position the indicator at the current column edge
+		var tableOffset = self.ui.tbl.offset();
+		var thOffset = headingTh.offset();
+		var initialLeft = thOffset.left - tableOffset.left + startWidth;
+		resizeIndicator.style.left = initialLeft + 'px';
+
+		self.ui.tbl.css('position', 'relative');
+		self.ui.tbl.get(0).appendChild(resizeIndicator);
+
+		// Add a class to the table to indicate we're resizing
+		self.ui.tbl.addClass('wcdv_resizing');
+
+		jQuery(document).on('mousemove.wcdv_col_resize', onMouseMove);
+		jQuery(document).on('mouseup.wcdv_col_resize', onMouseUp);
+	};
+
+	var onMouseMove = function (e) {
+		if (!isResizing) return;
+
+		var diff = e.pageX - startX;
+		targetWidth = Math.max(50, startWidth + diff); // Minimum width of 50px
+
+		// Update the position of the dotted line indicator
+		if (resizeIndicator) {
+			var tableOffset = self.ui.tbl.offset();
+			var thOffset = headingTh.offset();
+			var newLeft = thOffset.left - tableOffset.left + targetWidth;
+			resizeIndicator.style.left = newLeft + 'px';
+		}
+	};
+
+	var onMouseUp = function (e) {
+		if (!isResizing) return;
+
+		isResizing = false;
+		self.ui.tbl.removeClass('wcdv_resizing');
+
+		// Remove the indicator
+		if (resizeIndicator && resizeIndicator.parentNode) {
+			resizeIndicator.parentNode.removeChild(resizeIndicator);
+			resizeIndicator = null;
+		}
+
+		jQuery(document).off('mousemove.wcdv_col_resize');
+		jQuery(document).off('mouseup.wcdv_col_resize');
+
+		// Not honestly sure why, but the targetWidth is always 9 pixels bigger than where the dotted
+		// line is ending up, so if we don't put this in, the column actually ends up 9 pixels wider
+		// than where the indicator was. Not a good experience.
+
+		targetWidth -= 9;
+
+		headingTh.css('width', targetWidth + 'px');
+		headingTh.css('min-width', targetWidth + 'px');
+
+		var fcc = self.colConfig.get(field);
+		if (fcc != null) {
+			fcc.width = targetWidth;
+		}
+
+		self.fire('columnResize', { field: field, width: targetWidth });
+
+		if (self.grid && typeof self.grid.setColConfig === 'function') {
+			self.grid.setColConfig(self.colConfig, {
+				from: 'ui',
+				savePrefs: true,
+				dontSendEventTo: [self]
+			});
+		}
+	};
+
+	jQuery(resizeHandle).on('mousedown.wcdv_col_resize', onMouseDown);
+	headingTh.get(0).appendChild(resizeHandle);
+	headingTh.addClass('wcdv_resizable_column');
+};
+
+// #_addColumnReorderHandler {{{2
+
+/**
+ * Makes a column header draggable using jQuery UI to allow reordering columns via drag-and-drop.
+ * Also makes it droppable to accept other column headers. This implementation is compatible with
+ * the jQuery UI droppable group control panel for dragging headers to group/pivot controls.
+ *
+ * @param {jQuery} headingTh
+ * The TH element to make draggable and droppable.
+ *
+ * @param {string} field
+ * The field name for this column.
+ *
+ * @param {number} colIndex
+ * The column index.
+ *
+ * @param {Array.<string>} columns
+ * The array of column field names.
+ */
+
+GridTable.prototype._addColumnReorderHandler = function (headingTh, field, colIndex, columns) {
+	var self = this;
+	var dragHandle = headingTh.find('.wcdv_heading_title');
+
+	if (dragHandle.length === 0) {
+		dragHandle = headingTh;
+	}
+
+	dragHandle.css('cursor', 'grab');
+	headingTh.addClass('wcdv_reorderable_column');
+
+	// Create the drop indicator line if it doesn't exist yet
+	if (!self.ui.columnDropIndicator) {
+		self.ui.columnDropIndicator = jQuery('<div>', {
+			'class': 'wcdv_column_drop_indicator'
+		});
+		self.root.append(self.ui.columnDropIndicator);
+	}
+
+	// Make the heading draggable using jQuery UI to be compatible with droppable group/pivot controls
+	dragHandle.draggable({
+		classes: {
+			'ui-draggable-handle': 'wcdv_drag_handle'
+		},
+		distance: 8, // FIXME Deprecated [1.12]: replacement will be in 1.13
+		helper: 'clone',
+		appendTo: document.body,
+		revert: true,
+		revertDuration: 0,
+		start: function (event, ui) {
+			headingTh.addClass('wcdv_column_dragging');
+			self._dragSourceField = field;
+			self._dragSourceIndex = colIndex;
+			// ui.helper.css({
+			// 	'z-index': 1000
+			// });
+		},
+		stop: function (event, ui) {
+			headingTh.removeClass('wcdv_column_dragging');
+			jQuery('.wcdv_column_drop_target').removeClass('wcdv_column_drop_target');
+			self.ui.columnDropIndicator.hide();
+			delete self._dragSourceField;
+			delete self._dragSourceIndex;
+		}
+	});
+
+	// Make the heading droppable to accept other column headers
+	headingTh.droppable({
+		accept: '.wcdv_heading_title, .wcdv_reorderable_column',
+		tolerance: 'pointer',
+		over: function (event, ui) {
+			if (self._dragSourceField && self._dragSourceField !== field) {
+				headingTh.addClass('wcdv_column_drop_target');
+				// Calculate the position for the drop indicator
+				var thOffset = headingTh.offset();
+				var rootOffset = self.root.offset();
+				var tableHeight = self.ui.tbl.outerHeight();
+				var thWidth = headingTh.outerWidth();
+
+				// Imagine columns: A B C. When dragging field "A" from over "C" to over "B", the events
+				// fire in the order of columns, so moving backwards fires B's <over> before C's <out>,
+				// meaning the indicator is moved and immediately hidden. This slight delay ensures the
+				// indicator is always hidden by "C" before being moved and shown by "B".
+
+				window.setTimeout(function () {
+					// Position the indicator at the right edge of the target column
+					self.ui.columnDropIndicator.css({
+						left: (thOffset.left - rootOffset.left + thWidth) + 8 + 'px',
+						top: thOffset.top + 'px',
+						height: tableHeight + 'px'
+					}).show();
+				});
+			}
+		},
+		out: function (event, ui) {
+			headingTh.removeClass('wcdv_column_drop_target');
+			self.ui.columnDropIndicator.hide();
+		},
+		drop: function (event, ui) {
+			headingTh.removeClass('wcdv_column_drop_target');
+			self.ui.columnDropIndicator.hide();
+
+			var sourceField = self._dragSourceField;
+			var sourceIndex = self._dragSourceIndex;
+
+			if (!sourceField || sourceField === field) {
+				return;
+			}
+
+			// Find the target index
+			var targetIndex = colIndex;
+
+			// Reorder the columns in colConfig
+			self._reorderColumn(sourceField, sourceIndex, targetIndex);
+		}
+	});
+};
+
+// #_reorderColumn {{{2
+
+/**
+ * Reorders a column from one position to another.
+ *
+ * @param {string} sourceField
+ * The field being moved.
+ *
+ * @param {number} fromIndex
+ * The original index of the column.
+ *
+ * @param {number} toIndex
+ * The target index for the column.
+ */
+
+GridTable.prototype._reorderColumn = function (sourceField, fromIndex, toIndex) {
+	var self = this;
+
+	// Get all keys in order
+	var keys = self.colConfig.keys();
+
+	// Remove the source field from its current position
+	var actualFromIndex = keys.indexOf(sourceField);
+	if (actualFromIndex === -1) {
+		return;
+	}
+
+	keys.splice(actualFromIndex, 1);
+
+	// Insert at the new position
+	// Adjust target index if needed (if we removed an item before the target)
+	var adjustedToIndex = toIndex;
+	if (actualFromIndex < toIndex) {
+		adjustedToIndex -= 1;
+	}
+
+	keys.splice(adjustedToIndex, 0, sourceField);
+
+	// Rebuild colConfig with new order
+	var OrdMap = self.colConfig.constructor;
+	var newColConfig = new OrdMap();
+
+	keys.forEach(function (key) {
+		newColConfig.set(key, self.colConfig.get(key));
+	});
+
+	self.grid.setColConfig(newColConfig, {
+		from: 'ui',
+		savePrefs: true
+	});
 };
 
 // #_addSortingToHeader {{{2
@@ -1341,26 +1636,27 @@ GridTable.prototype.draw = function (root, opts, cont) {
 			thMap: {},
 			tr: {},
 			progress: jQuery('<div>'),
-			contextMenus: jQuery('<div>')
+		contextMenus: jQuery('<div>'),
+		columnDropIndicator: null
+	};
+
+	self._addDrillDownHandler(self.ui.tbl, data);
+	self._addFocusHandler(self.ui.tbl, data);
+
+	if (self.features.block) {
+		var blockConfig = {
+			overlayCSS: {
+				opacity: 0.9,
+				backgroundColor: '#FFF'
+			}
 		};
 
-		self._addDrillDownHandler(self.ui.tbl, data);
-		self._addFocusHandler(self.ui.tbl, data);
-
-		if (self.features.block) {
-			var blockConfig = {
-				overlayCSS: {
-					opacity: 0.9,
-					backgroundColor: '#FFF'
-				}
-			};
-
-			if (self.features.progress && getProp(self.defn, 'table', 'progress', 'method') === 'jQueryUI') {
-				blockConfig.message = jQuery('<div>')
-					.append(jQuery('<h1>').text('Working...'))
-					.append(self.ui.progress);
-			}
+		if (self.features.progress && getProp(self.defn, 'table', 'progress', 'method') === 'jQueryUI') {
+			blockConfig.message = jQuery('<div>')
+				.append(jQuery('<h1>').text('Working...'))
+				.append(self.ui.progress);
 		}
+	}
 
 		self.ui.contextMenus.appendTo(document.body);
 
@@ -1531,6 +1827,14 @@ GridTable.prototype.draw = function (root, opts, cont) {
 						self.ui.tbl.attr('data-tttype', 'sidescroll');
 						self.ui.tbl.attr('data-ttsidecells', data.groupFields.length);
 					}
+					if (window.TableTool != null) {
+						self.on('columnResize', function () {
+							// Without this, resizing the columns updates the width in the body of the table but
+							// leaves the headers in their original size.
+
+							window.TableTool.update();
+						});
+					}
 					break;
 				case 'css':
 					self.ui.thead.addClass('sticky');
@@ -1553,6 +1857,10 @@ GridTable.prototype.draw = function (root, opts, cont) {
 			// 	}
 			// });
 
+			if (self.features.columnResize) {
+				self.ui.tbl.addClass('wcdv-resizable-cols');
+				self.makeResponsive();
+			}
 			self.addWorkHandler();
 
 			self.timing.stop(['Grid Table', 'Draw']);
@@ -1903,6 +2211,11 @@ GridTable.prototype.clear = function () {
 
 	self.view.off('*', self, {silent: true});
 
+	if (self.resizeObserver != null) {
+		self.resizeObserver.disconnect();
+		self.resizeObserver = null;
+	}
+
 	if (self.opts.footer != null && self.opts.stealGridFooter) {
 		self.grid.ui.content.get(0).appendChild(self.opts.footer.get(0));
 	}
@@ -2017,6 +2330,10 @@ GridTable.prototype.getSelection = function () {
 GridTable.prototype.setSelection = function (what) {
 	var self = this;
 	var data = self.data.data;
+
+	if (!self.features.rowSelect) {
+		return;
+	}
 
 	if (self.data.isGroup) {
 		data = _.flatten(data);
@@ -2188,6 +2505,136 @@ GridTable.prototype.isSelected = function (what) {
 GridTable.prototype._updateSelectionGui = function () {
 	var self = this;
 	self.logError(self.makeLogTag() + ' GridTable#_updateSelectionGui(): Must be implemented by subclass');
+};
+
+GridTable.prototype.autoResizeColumns = function () {
+	var self = this;
+
+	if (self.autoResizeColsLock.isLocked()) {
+		return;
+	}
+
+	self.autoResizeColsLock.lock();
+	if (getProp(self.features, 'floatingHeader') &&
+			getProp(self.defn, 'table', 'floatingHeader', 'method') === 'tabletool' &&
+			window.TableTool != null) {
+		window.TableTool.disable();
+	}
+	self.logDebug(self.makeLogTag('Auto Resize Cols') + ' Fitting column widths...');
+
+	// Cache the header cells to avoid repeated DOM queries
+	var headerCells = self.ui.thead.children('tr:nth(0)').children('th');
+	var widthsToSet = [];
+	var i, len, th, thElt, fieldName, fcc;
+
+	// Clone the entire table for measurement with table-layout: auto
+	// This avoids changing the main table's layout which would force a reflow of all visible cells
+	var measureTable = self.ui.tbl.get(0).cloneNode(true);
+
+	measureTable.style.position = 'absolute';
+	measureTable.style.visibility = 'hidden';
+	measureTable.style.tableLayout = 'auto';
+	measureTable.style.width = 'auto';
+
+	// Clear all explicit column widths in the clone
+	var measureHeaders = measureTable.tHead.rows[0].cells;
+	for (i = 0, len = measureHeaders.length; i < len; i++) {
+		measureHeaders[i].style.width = 'auto';
+	}
+
+	// Add to DOM (causes one reflow of the hidden clone)
+	self.root.get(0).appendChild(measureTable);
+
+	// Measure all column widths (batched read)
+	for (i = 0, len = headerCells.length; i < len; i++) {
+		thElt = headerCells[i];
+		th = jQuery(thElt);
+
+		// Check if this column has an explicit width set
+		fieldName = th.find('span.wcdv_heading_title').attr('data-wcdv-field');
+
+		if (fieldName != null) {
+			fcc = self.colConfig.get(fieldName);
+
+			if (fcc != null && fcc.width != null) {
+				self.logDebug(self.makeLogTag('Auto Resize Columns') + ' Width of "' + fieldName + '" already set to ' + fcc.width + 'px');
+				widthsToSet.push(null); // Skip this column
+				continue;
+			}
+		}
+
+		// Measure the width from the cloned table
+		var measuredWidth = measureHeaders[i].getBoundingClientRect().width;
+		widthsToSet.push(measuredWidth);
+	}
+
+	// Remove measurement table
+	self.root.get(0).removeChild(measureTable);
+
+	// Apply all width changes (batched write)
+	for (i = 0, len = headerCells.length; i < len; i++) {
+		if (widthsToSet[i] != null) {
+			headerCells[i].style.width = widthsToSet[i] + 'px';
+		}
+	}
+
+	if (getProp(self.features, 'floatingHeader') &&
+			getProp(self.defn, 'table', 'floatingHeader', 'method') === 'tabletool' &&
+			window.TableTool != null) {
+		window.TableTool.enable();
+	}
+
+	// Give TableTool a chance to redraw itself before we go allowing ResizeObserver events again.
+	window.setTimeout(function () {
+		self.autoResizeColsLock.unlock();
+	});
+};
+
+// #makeResponsive {{{2
+
+/**
+ * Set up a ResizeObserver to automatically adjust column widths when the table is resized.
+ * When the table size changes, this method:
+ * 1. Creates a temporary hidden table with table-layout: auto
+ * 2. Measures the optimal widths for each column header
+ * 3. Applies those widths to the actual table headers
+ *
+ * The callback is debounced to prevent infinite loops from self-triggered resizes.
+ */
+
+GridTable.prototype.makeResponsive = function () {
+	var self = this;
+
+	if (window.ResizeObserver == null) {
+		self.logWarning(self.makeLogTag() + ' ResizeObserver is not supported; table will not be responsive.');
+		return;
+	}
+
+	if (self.ui == null || self.ui.tbl == null) {
+		self.logWarning(self.makeLogTag() + ' Table not initialized; cannot make responsive.');
+		return;
+	}
+
+	var timer;
+
+	self.resizeObserver = new ResizeObserver(function () {
+		if (self.autoResizeColsLock.isLocked()) {
+			return;
+		}
+
+		if (timer != null) {
+			// Stop the previous event handler, resetting the 100ms wait time.
+			clearTimeout(timer);
+		}
+
+		// Wait 100ms and then deal with the resize event.
+		timer = setTimeout(function () {
+			timer = null;
+			self.autoResizeColumns();
+		}, 100);
+	});
+
+	self.resizeObserver.observe(self.ui.tbl.get(0));
 };
 
 export default GridTable;

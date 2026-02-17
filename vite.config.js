@@ -30,6 +30,43 @@ const reflectCgi = (req, res, u) => {
   res.end(JSON.stringify(o));
 };
 
+const reflectJsonWhere = (req, res, u) => {
+  const jsonWhere = JSON.parse(u.query.report_json_where);
+  let data = [];
+  for (let k1 of Object.keys(jsonWhere.model).sort()) {
+    if (typeof jsonWhere.model[k1] === 'string') {
+      data.push({
+        name: k1,
+        operator: '$eq (implicit)',
+        value: jsonWhere.model[k1]
+      });
+      continue;
+    }
+    for (let k2 of Object.keys(jsonWhere.model[k1]).sort()) {
+      let x = jsonWhere.model[k1][k2];
+      data.push({
+        name: k1,
+        operator: k2,
+        value: typeof x === 'string' ? x
+          : Array.isArray(x) ? x.join(',')
+          : JSON.stringify(x)
+      });
+    }
+  }
+  let o = {
+    data: data,
+    typeInfo: [{
+      field: 'name',
+      type: 'string'
+    }, {
+      field: 'value',
+      type: 'string'
+    }]
+  };
+  res.setHeader('Content-Type', 'application/json');
+  res.end(JSON.stringify(o));
+}
+
 const autoLimit = (req, res, u) => {
   res.setHeader('Content-Type', 'application/json');
   fs.readFile('tests/data/random1000.json', 'utf8', (err, data) => {
@@ -71,6 +108,8 @@ const testScaffold = () => ({
         switch (u.pathname) {
         case '/reflect/cgi':
           return reflectCgi(req, res, u);
+        case '/reflect/json_where':
+          return reflectJsonWhere(req, res, u);
         case '/ds/autolimit':
           return autoLimit(req, res, u);
         case '/source/delayed':
@@ -110,6 +149,15 @@ export default defineConfig({
     testScaffold()
   ],
   appType: 'mpa',
+  build: {
+    lib: {
+      entry: 'index.js',
+      formats: ['es', 'iife'],
+      name: 'MIE.WC_DataVis',
+      fileName: 'vite/wcdatavis',
+      cssFileName: 'vite/wcdatavis'
+    }
+  },
   server: {
     port: process.env['PORT']
   }

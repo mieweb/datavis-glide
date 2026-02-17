@@ -971,7 +971,7 @@ View.prototype._setSort = function (spec, opts) {
 		savePrefs: true
 	});
 
-	self.debug('SET SORT', 'spec = %O', spec);
+	self.logDebug(self.makeLogTag('SET SORT') + ' spec = %O', spec);
 
 	isDifferent = !_.isEqual(self.sortSpec, spec);
 
@@ -1033,7 +1033,7 @@ View.prototype.sort = function (cont) {
 		return cont(false);
 	}
 
-	self.debug('SORT', 'Beginning sort: %s', JSON.stringify(self.sortSpec));
+	self.logDebug(self.makeLogTag('SORT') + ' Beginning sort: %s', JSON.stringify(self.sortSpec));
 
 	/**
 	 * Determine the comparison function that should be used to perform the sort operation.
@@ -1141,8 +1141,8 @@ View.prototype.sort = function (cont) {
 
 	var unpackBundle = function (orientation) {
 		return function (sorted) {
-			self.debug('SORT // UNPACK',
-				'Unpacking bundle of %d sorted chunks in %s orientation',
+			self.logDebug(self.makeLogTag('SORT // UNPACK') +
+				' Unpacking bundle of %d sorted chunks in %s orientation',
 				sorted.length, orientation);
 
 			var origData = self.data.data;
@@ -1728,7 +1728,7 @@ View.prototype.sort = function (cont) {
 
 		var finish = makeFinishCb(unpackBundle(orientation), next);
 
-		self.debug('SORT', 'Performing sort using %s algorithm', sortAlgorithm);
+		self.logDebug(self.makeLogTag('SORT') + ' Performing sort using %s algorithm', sortAlgorithm);
 
 		switch (sortAlgorithm) {
 		case 'mergeSort':
@@ -1815,7 +1815,7 @@ View.prototype._setFilter = function (spec, progress, opts) {
 		savePrefs: true
 	});
 
-	self.debug('SET FILTER', 'spec = %O ; options = %O', spec, opts);
+	self.logDebug(self.makeLogTag('SET FILTER') + ' spec = %O ; options = %O', spec, opts);
 
 	isDifferent = !_.isEqual(self.filterSpec, spec);
 
@@ -2033,7 +2033,7 @@ View.prototype.filter = function (cont) {
 			}
 
 			var operand = fltr[operator];
-			//self.debug('FILTER', 'field = ' + field + ' ; Datum = ' + datum + ' ; Operator = ' + operator + ' ; Operand = ' + operand);
+			//self.logDebug(self.makeLogTag() + ' FILTER', 'field = ' + field + ' ; Datum = ' + datum + ' ; Operator = ' + operator + ' ; Operand = ' + operand);
 
 			if (pred[operator] !== undefined) {
 				if (_.isArray(operand)) {
@@ -2117,7 +2117,7 @@ View.prototype.filter = function (cont) {
 	var doFilter = function () {
 		var i;
 
-		//self.debug('FILTER',
+		//self.logDebug(self.makeLogTag() + ' FILTER',
 		//					 'Filtering rows ' + i0.val + ' through ' + (i0.val + i_step));
 
 		for (i = i0.val; i < self.data.data.length && i < i0.val + i_step; i += 1) {
@@ -2208,7 +2208,7 @@ View.prototype._setGroup = function (spec, opts, cont) {
 		savePrefs: true
 	});
 
-	self.debug('SET GROUP', 'spec = %O', spec);
+	self.logDebug(self.makeLogTag('SET GROUP') + ' spec = %O', spec);
 
 	if (spec == null && self.pivotSpec != null) {
 		self.logWarning(self.makeLogTag('setGroup') + ' Having a pivot without a group is not allowed');
@@ -2610,9 +2610,9 @@ View.prototype.group = function () {
 	newData = buildData(self.data.data, rowVals);
 	rowVals = convertRowVals(rowVals);
 
-	self.debug('GROUP', 'Group Spec: %O', finalGroupSpec);
-	self.debug('GROUP', 'Row Vals: %O', rowVals);
-	self.debug('GROUP', 'New Data: %O', newData.data);
+	self.logDebug(self.makeLogTag('GROUP') + ' Group Spec: %O', finalGroupSpec);
+	self.logDebug(self.makeLogTag('GROUP') + ' Row Vals: %O', rowVals);
+	self.logDebug(self.makeLogTag('GROUP') + ' New Data: %O', newData.data);
 
 	self.data.isPlain = false;
 	self.data.isGroup = true;
@@ -2622,7 +2622,7 @@ View.prototype.group = function () {
 	self.data.data = newData.data;
 	self.data.groupMetadata = newData.metadata;
 
-	self.debug('GROUP', 'Final Data: %O', self.data);
+	self.logDebug(self.makeLogTag('GROUP') + ' Final Data: %O', self.data);
 
 	return true;
 };
@@ -2665,7 +2665,7 @@ View.prototype._setPivot = function (spec, opts) {
 		savePrefs: true
 	});
 
-	self.debug('SET PIVOT', 'spec = %O', spec);
+	self.logDebug(self.makeLogTag('SET PIVOT') + ' spec = %O', spec);
 
 	if (self.groupSpec == null && spec != null) {
 		self.logWarning(self.makeLogTag('setPivot') + ' Having a pivot without a group is not allowed');
@@ -2906,10 +2906,10 @@ View.prototype.pivot_orig = function () {
 	colVals = buildColVals(colValsTree);
 	self.data.data = buildData(self.data.data, colVals);
 
-	self.debug('PIVOT', 'Pivot Fields: %O', pivotFields);
-	self.debug('PIVOT', 'Col Vals Tree: %O', colValsTree);
-	self.debug('PIVOT', 'Col Vals: %O', colVals);
-	self.debug('PIVOT', 'New Data: %O', self.data);
+	self.logDebug(self.makeLogTag('PIVOT') + ' Pivot Fields: %O', pivotFields);
+	self.logDebug(self.makeLogTag('PIVOT') + ' Col Vals Tree: %O', colValsTree);
+	self.logDebug(self.makeLogTag('PIVOT') + ' Col Vals: %O', colVals);
+	self.logDebug(self.makeLogTag('PIVOT') + ' New Data: %O', self.data);
 
 	self.data.isPlain = false;
 	self.data.isGroup = false;
@@ -3105,10 +3105,10 @@ View.prototype.pivot = function () {
 	newData = buildData(self.data.data, colVals);
 	colVals = convertColVals(colVals);
 
-	self.debug('PIVOT', 'Pivot Spec: %O', finalPivotSpec);
-	self.debug('PIVOT', 'Orig Keys: %O', origKeys);
-	self.debug('PIVOT', 'Col Vals: %O', colVals);
-	self.debug('PIVOT', 'New Data: %O', newData);
+	self.logDebug(self.makeLogTag('PIVOT') + ' Pivot Spec: %O', finalPivotSpec);
+	self.logDebug(self.makeLogTag('PIVOT') + ' Orig Keys: %O', origKeys);
+	self.logDebug(self.makeLogTag('PIVOT') + ' Col Vals: %O', colVals);
+	self.logDebug(self.makeLogTag('PIVOT') + ' New Data: %O', newData);
 
 	self.data.isPlain = false;
 	self.data.isGroup = false;
@@ -3118,7 +3118,7 @@ View.prototype.pivot = function () {
 	self.data.colVals = colVals;
 	self.data.data = newData;
 
-	self.debug('GROUP', 'Final Data: %O', self.data);
+	self.logDebug(self.makeLogTag('GROUP') + ' Final Data: %O', self.data);
 
 	return true;
 };
@@ -3166,7 +3166,7 @@ View.prototype._setAggregate = function (spec, opts) {
 		savePrefs: true
 	});
 
-	self.debug('SET AGGREGATE', 'spec = %O ; options = %O', spec, opts);
+	self.logDebug(self.makeLogTag('SET AGGREGATE') + ' spec = %O ; options = %O', spec, opts);
 
 	/*
 	if (spec == null || self.aggregateSpec == null) {
@@ -3281,7 +3281,7 @@ View.prototype.aggregate = function (cont) {
 	}
 
 	_.each(['group', 'pivot', 'cell', 'all'], function (what) {
-		self.debug('AGGREGATE', 'Computing %s aggregate functions: %s',
+		self.logDebug(self.makeLogTag('AGGREGATE') + ' Computing %s aggregate functions: %s',
 			what, _.pluck(getProp(self, 'aggregateSpec', what), 'fun').join(', '));
 	});
 
@@ -3330,7 +3330,7 @@ View.prototype.aggregate = function (cont) {
 			var aggResult = aggInfo.instance.calculate(_.flatten(self.data.data[rowValIdx]));
 			groupResults[aggNum][rowValIdx] = aggResult;
 			if (aggInfo.debug) {
-				self.debug('AGGREGATE', 'Group aggregate [%d] (%s) : Group [%s] = %s',
+				self.logDebug(self.makeLogTag('AGGREGATE') + ' Group aggregate [%d] (%s) : Group [%s] = %s',
 					aggNum,
 					info.group[aggNum].instance.name + (info.group[aggNum].name ? ' -> ' + info.group[aggNum].name : ''),
 					rowVal.join(', '),
@@ -3349,7 +3349,7 @@ View.prototype.aggregate = function (cont) {
 					var aggResult = aggInfo.instance.calculate(self.data.data[rowValIdx][colValIdx]);
 					cellResults[aggNum][rowValIdx][colValIdx] = aggResult;
 					if (aggInfo.debug) {
-						self.debug('AGGREGATE', 'Cell aggregate [%d] (%s) : Cell [%s ; %s] = %s',
+						self.logDebug(self.makeLogTag('AGGREGATE') + ' Cell aggregate [%d] (%s) : Cell [%s ; %s] = %s',
 							aggNum,
 							info.cell[aggNum].instance.name + (info.cell[aggNum].name ? ' -> ' + info.cell[aggNum].name : ''),
 							rowVal.join(', '),
@@ -3369,7 +3369,7 @@ View.prototype.aggregate = function (cont) {
 				var aggResult = aggInfo.instance.calculate(_.flatten(_.pluck(self.data.data, colValIdx)));
 				pivotResults[aggNum][colValIdx] = aggResult;
 				if (aggInfo.debug) {
-					self.debug('AGGREGATE', 'Pivot aggregate [%d] (%s) : Col Val [%s] = %s',
+					self.logDebug(self.makeLogTag('AGGREGATE') + ' Pivot aggregate [%d] (%s) : Col Val [%s] = %s',
 						aggNum,
 						info.pivot[aggNum].instance.name + (info.pivot[aggNum].name ? ' -> ' + info.pivot[aggNum].name : ''),
 						colVal.join(', '),
@@ -3384,7 +3384,7 @@ View.prototype.aggregate = function (cont) {
 			var aggResult = aggInfo.instance.calculate(_.flatten(self.data.data));
 			allResults[aggNum] = aggResult;
 			if (aggInfo.debug) {
-				self.debug('AGGREGATE', 'All aggregate [%d] (%s) = %s',
+				self.logDebug(self.makeLogTag('AGGREGATE') + ' All aggregate [%d] (%s) = %s',
 					aggNum,
 					info.all[aggNum].instance.name + (info.all[aggNum].name ? ' -> ' + info.all[aggNum].name : ''),
 					JSON.stringify(aggResult));
@@ -3438,7 +3438,7 @@ View.prototype.clearCache = function () {
 	self.data = undefined;
 	self.typeInfo = undefined;
 
-	self.debug(null, 'Cleared cache');
+	self.logDebug(self.makeLogTag() + ' Cleared cache');
 };
 
 // #clearSourceData {{{2
@@ -3453,7 +3453,7 @@ View.prototype.clearSourceData = function () {
 		self.source.clearSourceData();
 	}
 
-	self.debug(null, 'Cleared source data');
+	self.logDebug(self.makeLogTag() + ' Cleared source data');
 };
 
 // #refresh {{{2
@@ -3461,7 +3461,7 @@ View.prototype.clearSourceData = function () {
 View.prototype.refresh = function () {
 	var self = this;
 
-	self.debug(null, 'Refreshing...');
+	self.logDebug(self.makeLogTag() + ' Refreshing...');
 	self.source.refresh();
 };
 
@@ -3486,7 +3486,7 @@ View.prototype.reset = function (opts) {
 		updateData: false
 	});
 
-	self.debug(null, 'RESET!');
+	self.logDebug(self.makeLogTag() + ' RESET!');
 
 	self.clearSort(clearOpts);
 	self.clearFilter(clearOpts);
@@ -3529,7 +3529,7 @@ View.prototype.setColConfig = function (colConfig) {
 		throw new Error('Call Error: `colConfig` must be an instance of OrdMap');
 	}
 
-	self.debug(null, 'Setting column configuration');
+	self.logDebug(self.makeLogTag() + ' Setting column configuration');
 
 	self.colConfig = colConfig;
 };

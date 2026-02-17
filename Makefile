@@ -89,7 +89,7 @@ dist/wcdatavis.css:	wcdatavis.css
 # Documentation {{{1
 
 .PHONY:	doc
-doc:	jsdoc mkdocs
+doc:	jsdoc manual
 	@printf '\033[32;1mRun `make doc-publish` to publish documentation to $(PUB_PATH)\033[0m\n'
 
 .PHONY:	doc-publish
@@ -106,16 +106,16 @@ doc-clean:
 
 .PHONY:	doc-serve
 doc-serve:
-	mkdocs serve
+	zensical serve
 
 .PHONY:	jsdoc
 jsdoc:
 	$(JSDOC) -p -c jsdoc_conf.json -r src
 	$(MAKE) -C tests $@
 
-.PHONY:	mkdocs
-mkdocs:
-	mkdocs build
+.PHONY:	manual
+manual:
+	zensical build
 
 .PHONY:	publish
 publish:	doc-publish tests-publish
@@ -185,4 +185,4 @@ help:
 	@printf -- '- \033[1mmake test\033[0m — Same as \033[1mmake tests\033[0m, then run automated tests using Mocha & Selenium.\n'
 	@printf -- '- \033[1mmake doc\033[0m — Build all documentation.\n'
 	@printf -- '  - \033[1mmake jsdoc\033[0m — Build JS API documentation from comments in the source.\n'
-	@printf -- '  - \033[1mmake mkdocs\033[0m — Build the Manual from Markdown files.\n'
+	@printf -- '  - \033[1mmake manual\033[0m — Build the Manual from Markdown files.\n'

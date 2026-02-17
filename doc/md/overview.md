@@ -4,7 +4,7 @@ This is a reference for all the main classes involved in the datavis library, an
 
 This diagram shows the flow of data broadly through the system.
 
-```mermaid
+``` mermaid
 graph TD
   Source --> View
   View --> Grid
@@ -21,7 +21,7 @@ graph TD
 
 ## Source
 
-```mermaid
+``` mermaid
 graph LR
   Source --- SourceParam
   Source --- Origin["HttpSource<br>FileSource<br>LocalSource"]
@@ -42,7 +42,7 @@ See [the source section of the manual](../source/) for more information.
 
 ## View
 
-```mermaid
+``` mermaid
 graph LR
   View --- Source
   View --- Aggregate["AGGREGATE_REGISTRY<br>AggregateInfo"]
@@ -51,7 +51,7 @@ graph LR
 
 ## Grid
 
-```mermaid
+``` mermaid
 graph LR
   Grid --- View
   Grid --- GridRenderer
