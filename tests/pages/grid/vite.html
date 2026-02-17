@@ -11,6 +11,9 @@ document.addEventListener('DOMContentLoaded', function () {
 	window.MIE = window.MIE || {};
 	window.MIE.DEBUGGING = true;
 
+	let params = new URLSearchParams(document.location.search);
+	let dnd = params.has('dnd');
+
 	var source = new Source({
 		type: 'http',
 		url: '../random100.json'
@@ -23,6 +26,8 @@ document.addEventListener('DOMContentLoaded', function () {
 			features: {
 				limit: false,
 				rowSelect: true,
+				columnResize: dnd,
+				columnReorder: dnd,
 			},
 			columns: [
 					'rowId'

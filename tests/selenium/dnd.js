@@ -12,7 +12,7 @@ describe('Drag and Drop', function () {
 
 	before(async function () {
 		driver = await createDriver();
-		await driver.get('http://localhost:3000/tests/pages/grid/vite.html');
+		await driver.get('http://localhost:3000/tests/pages/grid/vite.html?dnd');
 		grid = new Grid(driver);
 		await grid.waitForIdle();
 	});
