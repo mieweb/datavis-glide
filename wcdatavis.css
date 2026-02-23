@@ -163,6 +163,54 @@ hr.wcdv_hr_gradient {
 
 /******************************************************************************/
 
+.wcdv_omnifilter {
+	display: inline-flex;
+	align-items: center;
+	height: 30px;
+	padding: 0 4px;
+	vertical-align: top;
+}
+
+.wcdv_omnifilter_input_wrap {
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+}
+
+.wcdv_omnifilter_input {
+	border: 1px solid #ddd;
+	border-radius: 3px;
+	padding: 2px 22px 2px 6px;
+	font-size: 0.85em;
+	outline: none;
+	width: 150px;
+}
+
+.wcdv_omnifilter_input:focus {
+	border-color: #66afe9;
+	box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 4px rgba(102,175,233,.6);
+}
+
+.wcdv_omnifilter_clear {
+	position: absolute;
+	right: 2px;
+	top: 50%;
+	transform: translateY(-50%);
+	background: transparent;
+	border: none;
+	cursor: pointer;
+	color: #999;
+	padding: 0 3px;
+	font-size: 0.8em;
+	line-height: 1;
+}
+
+.wcdv_omnifilter_clear:hover {
+	color: #333;
+}
+
+/******************************************************************************/
+
 .wcdv_grid_titlebar {
 	border: 1px solid #c7c7c7;
 	padding: 0 0 0 8px;
@@ -977,7 +1025,7 @@ tr.wcdvgrid_more td {
 	border-bottom: none;
 }
 
-.wcdv_grid_table table.zebra > tbody > tr:nth-child(even), .wcdv_grid_table table > tbody > tr.even {
+.wcdv_grid_table table > tbody > tr.even {
 	/* blue: background-color: #e3f2fd; */
 	background-color: #e8f5e9;
 }
@@ -1189,7 +1237,7 @@ html:not(.ie11) .wcdv_grid_table table th.wcdv_cell_empty div {
 	border-color: #0095D6 !important;
 }
 
-.wcdv_grid_table table.zebra > tbody > tr:nth-child(even), .wcdv_grid_table table > tbody > tr.even{
+.wcdv_grid_table table > tbody > tr.even{
 	background-color: #f0f0f5;
 }
 

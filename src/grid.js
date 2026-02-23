@@ -363,6 +363,12 @@ function makeJsonOrderBy(o) {
  * If true, then clicking a row in plain output makes the row "active." An active row is highlighted
  * and causes other configurable behavior to occur. By default, the slider appears on the right side
  * of the page to show information about the active row.
+ *
+ * @property {boolean} [omnifilter=false]
+ * If true, a text input is shown above the titlebar that filters visible table rows in plain
+ * output. Typing into the omnifilter hides all rows whose cell values do not contain the search
+ * text. This is a visual-only filter and does not affect the underlying data in the view. The
+ * omnifilter is automatically hidden when the output is grouped or pivoted.
  */
 
 /**
@@ -593,6 +599,85 @@ var Grid = makeSubclass('Grid', Object, function (defn, opts, cb) {
 		});
 
 	self._addTitleWidgets(self.ui.titlebar, doingServerFilter, self.id);
+
+	// Omnifilter {{{4
+
+	if (self.features.omnifilter) {
+		self.ui.omnifilter = jQuery('<div class="wcdv_omnifilter">')
+			.on('click', function (evt) {
+				evt.stopPropagation();
+			})
+			.hide();
+
+		self._omnifilterDebounceTimer = null;
+
+		self.ui.omnifilterInput = jQuery('<input>', {
+			'type': 'text',
+			'class': 'wcdv_omnifilter_input',
+			'placeholder': trans('GRID.OMNIFILTER.PLACEHOLDER'),
+			'aria-label': trans('GRID.OMNIFILTER.ARIA_LABEL')
+		})
+			.on('input', function () {
+				clearTimeout(self._omnifilterDebounceTimer);
+				self._omnifilterDebounceTimer = setTimeout(function () {
+					self._applyOmnifilter();
+				}, 500);
+			})
+			.on('keydown', function (evt) {
+				if (evt.key === 'Escape') {
+					clearTimeout(self._omnifilterDebounceTimer);
+					self.ui.omnifilterInput.val('');
+					self._applyOmnifilter();
+					self.ui.omnifilter.hide();
+				}
+			});
+
+		self.ui.omnifilterClear = jQuery('<button>', {
+			'class': 'wcdv_omnifilter_clear wcdv_icon_button',
+			'type': 'button',
+			'aria-label': trans('GRID.OMNIFILTER.CLEAR')
+		})
+			.append(fontAwesome('fa-times'))
+			.on('click', function () {
+				clearTimeout(self._omnifilterDebounceTimer);
+				self.ui.omnifilterInput.val('');
+				self._applyOmnifilter();
+			})
+			.hide();
+
+		self.ui.omnifilterInputWrap = jQuery('<div class="wcdv_omnifilter_input_wrap">')
+			.append(self.ui.omnifilterInput)
+			.append(self.ui.omnifilterClear);
+
+		self.ui.omnifilter
+			.append(self.ui.omnifilterInputWrap);
+
+		self.ui.omnifilterToggle = jQuery('<button>', {
+			'type': 'button',
+			'style': 'font-size: 18px',
+			'class': 'wcdv_icon_button wcdv_text-primary wcdv_omnifilter_toggle',
+			'aria-label': trans('GRID.OMNIFILTER.TOGGLE')
+		})
+			.append(fontAwesome('fa-search'))
+			.on('click', function (evt) {
+				evt.stopPropagation();
+				if (self.ui.omnifilter.is(':visible')) {
+					clearTimeout(self._omnifilterDebounceTimer);
+					self.ui.omnifilterInput.val('');
+					self._applyOmnifilter();
+					self.ui.omnifilter.hide();
+				}
+				else {
+					self.ui.omnifilter.show();
+					self.ui.omnifilterInput.focus();
+				}
+			});
+
+		// Insert into titlebar controls, before the debug/export/refresh buttons.
+		self.ui.titlebar_controls
+			.prepend(self.ui.omnifilterToggle)
+			.prepend(self.ui.omnifilter);
+	}
 
 	self.ui.autoLimit = jQuery('<div>', {
 		'class': 'wcdv_warning_banner auto_limit_warning'
@@ -1033,7 +1118,8 @@ Grid.prototype._validateFeatures = function () {
 		'operations',
 		'columnResize',
 		'columnReorder',
-		'activeRow'
+		'activeRow',
+		'omnifilter'
 	];
 
 	// When the user has specified the `footer` option, enable the footer feature (if it hasn't
@@ -1400,16 +1486,27 @@ Grid.prototype.redraw = function (contOk, contFail) {
 			self.ui.toolbar_plain.show();
 			self.ui.toolbar_group.hide();
 			self.ui.toolbar_pivot.hide();
+			if (self.features.omnifilter) {
+				self.ui.omnifilterToggle.show();
+			}
 		}
 		else if (data.isGroup) {
 			self.ui.toolbar_plain.hide();
 			self.ui.toolbar_group.show();
 			self.ui.toolbar_pivot.hide();
+			if (self.features.omnifilter) {
+				self.ui.omnifilterToggle.hide();
+				self.ui.omnifilter.hide();
+			}
 		}
 		else if (data.isPivot) {
 			self.ui.toolbar_plain.hide();
 			self.ui.toolbar_group.hide();
 			self.ui.toolbar_pivot.show();
+			if (self.features.omnifilter) {
+				self.ui.omnifilterToggle.hide();
+				self.ui.omnifilter.hide();
+			}
 		}
 
 		self.renderer.on('renderBegin', function () {
@@ -1469,8 +1566,120 @@ Grid.prototype.redraw = function (contOk, contFail) {
 			}
 			self.setSelection();
 			self.ui.exportBtn.attr('disabled', false);
+			if (self.features.omnifilter) {
+				self._applyOmnifilter();
+			}
 			self.tableDoneCont();
 		});
+	});
+};
+
+// #_applyOmnifilter {{{2
+
+/**
+ * Apply the omnifilter to the currently rendered table. Hides all rows in the table body that do
+ * not contain the search text in any cell. This is a visual-only operation and does not affect the
+ * underlying data in the view.
+ *
+ * @method
+ * @memberof Grid
+ * @private
+ */
+
+Grid.prototype._applyOmnifilter = function () {
+	var self = this;
+
+	if (!self.features.omnifilter) {
+		return;
+	}
+
+	var query = (self.ui.omnifilterInput.val() || '').toLowerCase();
+	var tbody = self.ui.grid.find('tbody');
+
+	if (!tbody.length) {
+		return;
+	}
+
+	// Show or hide the clear button based on whether there is text in the input.
+
+	if (query.length > 0) {
+		self.ui.omnifilterClear.show();
+	}
+	else {
+		self.ui.omnifilterClear.hide();
+	}
+
+	// Determine which column indices contain string data by inspecting the TH elements for the
+	// data-wcdv-field-type attribute output by the renderer.
+
+	var stringColIndices = [];
+	var thead = self.ui.grid.find('thead');
+
+	if (thead.length) {
+		var ths = thead.find('tr:first th');
+
+		ths.each(function (i) {
+			var fieldType = this.getAttribute('data-wcdv-field-type');
+
+			if (fieldType === 'string') {
+				stringColIndices.push(i);
+			}
+		});
+	}
+
+	// Iterate through all data rows (not "show more" rows) and toggle visibility based on whether
+	// any cell text in the row contains the query string.
+
+	var even = false;
+	var hasStringCols = stringColIndices.length > 0;
+
+	tbody.children('tr').each(function () {
+		var tr = jQuery(this);
+
+		// Skip non-data rows (e.g. "show more rows" button).
+		if (tr.hasClass('wcdvgrid_more')) {
+			return;
+		}
+
+		if (query.length === 0) {
+			tr.show();
+			tr.removeClass('even odd').addClass(even ? 'even' : 'odd');
+			even = !even;
+			return;
+		}
+
+		var matched = false;
+		var cells = this.children;
+		var cellText;
+
+		if (hasStringCols) {
+			for (var i = 0; i < stringColIndices.length; i++) {
+				var cell = cells[stringColIndices[i]];
+
+				if (cell != null) {
+					cellText = cell.textContent || cell.innerText || '';
+
+					if (cellText.toLowerCase().indexOf(query) >= 0) {
+						matched = true;
+						break;
+					}
+				}
+			}
+		}
+		else {
+			// Fallback: if no string columns were identified, search the entire row.
+			cellText = this.textContent || this.innerText || '';
+			matched = cellText.toLowerCase().indexOf(query) >= 0;
+		}
+
+		if (matched) {
+			tr.show();
+			tr.removeClass('even odd').addClass(even ? 'even' : 'odd');
+			even = !even;
+		}
+		else {
+			tr.hide();
+		}
 	});
 };
 
@@ -1874,7 +2083,8 @@ Grid.prototype._normalize = function (defn) {
 				progress: false,
 				columnResize: false,
 				columnReorder: false,
-				activeRow: false
+				activeRow: false,
+				omnifilter: false
 			},
 			limit: {
 				appendBodyLast: false,
