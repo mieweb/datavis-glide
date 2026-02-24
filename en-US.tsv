@@ -37,6 +37,11 @@ GRID.OMNIFILTER.ARIA_LABEL	Filter all rows by text	Accessible label for the omni
 GRID.OMNIFILTER.CLEAR	Clear filter	Accessible label for the clear button in the omnifilter
 GRID.OMNIFILTER.TOGGLE	Toggle search filter	Accessible label for the button that shows or hides the omnifilter input
 		
+// Pagination		
+		
+GRID.PAGINATION.ARIA_LABEL	Page navigation	Accessible label for the pagination navigation bar
+GRID.PAGINATION.GO_TO_PAGE	Go to page %s	Accessible label for each page button; %s is the page number
+		
 // Grid toolbar		
 		
 GRID_TOOLBAR.PLAIN.SHOW_MORE_ON_SCROLL	Show More on Scroll	

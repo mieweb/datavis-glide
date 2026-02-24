@@ -98,6 +98,8 @@ export default {
   'GRID.OMNIFILTER.CLEAR': 'Очистить фильтр',
   'GRID.OMNIFILTER.PLACEHOLDER': 'Введите для фильтрации строк...',
   'GRID.OMNIFILTER.TOGGLE': 'Переключить фильтр поиска',
+  'GRID.PAGINATION.ARIA_LABEL': 'Навигация по страницам',
+  'GRID.PAGINATION.GO_TO_PAGE': 'Перейти на страницу %s',
   'GRID.PERSPECTIVE_WIN.TEMP_PERSPECTIVE_WARNING': 'Эта перспектива временная; конфигурация ниже не отражает текущее состояние связанных модулей настроек.',
   'GRID.PERSPECTIVE_WIN.TITLE': 'Перспектива',
   'GRID.TABLE.ADD_FILTER_HELP': 'Нажмите, чтобы добавить фильтр для «%s»',

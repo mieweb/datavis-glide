@@ -369,6 +369,12 @@ function makeJsonOrderBy(o) {
  * output. Typing into the omnifilter hides all rows whose cell values do not contain the search
  * text. This is a visual-only filter and does not affect the underlying data in the view. The
  * omnifilter is automatically hidden when the output is grouped or pivoted.
+ *
+ * @property {boolean} [pagination=false]
+ * If true, rows in plain output are divided into pages of 40 rows each. All rows are rendered
+ * into the DOM but only the rows belonging to the current page are visible. Navigation controls
+ * at the bottom of the table allow the user to switch pages. Because every row already exists
+ * in the DOM, page changes are near-instant (just show/hide TR elements).
  */
 
 /**
@@ -1122,7 +1128,8 @@ Grid.prototype._validateFeatures = function () {
 		'columnResize',
 		'columnReorder',
 		'activeRow',
-		'omnifilter'
+		'omnifilter',
+		'pagination'
 	];
 
 	// When the user has specified the `footer` option, enable the footer feature (if it hasn't

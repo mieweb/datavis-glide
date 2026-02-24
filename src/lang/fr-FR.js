@@ -98,6 +98,8 @@ export default {
   'GRID.OMNIFILTER.CLEAR': 'Effacer le filtre',
   'GRID.OMNIFILTER.PLACEHOLDER': 'Saisissez pour filtrer les lignes...',
   'GRID.OMNIFILTER.TOGGLE': 'Basculer le filtre de recherche',
+  'GRID.PAGINATION.ARIA_LABEL': 'Navigation par page',
+  'GRID.PAGINATION.GO_TO_PAGE': 'Aller à la page %s',
   'GRID.PERSPECTIVE_WIN.TEMP_PERSPECTIVE_WARNING': 'Cette perspective est temporaire ; la configuration ci-dessous ne reflète pas l\'état actuel des modules de préférences liés.',
   'GRID.PERSPECTIVE_WIN.TITLE': 'Perspective',
   'GRID.TABLE.ADD_FILTER_HELP': 'Cliquez pour ajouter un filtre pour "%s"',

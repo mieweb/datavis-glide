@@ -98,6 +98,8 @@ export default {
   'GRID.OMNIFILTER.CLEAR': 'ล้างตัวกรอง',
   'GRID.OMNIFILTER.PLACEHOLDER': 'พิมพ์เพื่อกรองแถว...',
   'GRID.OMNIFILTER.TOGGLE': 'สลับตัวกรองการค้นหา',
+  'GRID.PAGINATION.ARIA_LABEL': 'การนำทางหน้า',
+  'GRID.PAGINATION.GO_TO_PAGE': 'ไปยังหน้า %s',
   'GRID.PERSPECTIVE_WIN.TEMP_PERSPECTIVE_WARNING': 'มุมมองนี้เป็นแบบชั่วคราว การตั้งค่าด้านล่างไม่ตรงกับสถานะปัจจุบันของโมดูลการตั้งค่าใด ๆ',
   'GRID.PERSPECTIVE_WIN.TITLE': 'มุมมอง',
   'GRID.TABLE.ADD_FILTER_HELP': 'คลิกเพื่อเพิ่มตัวกรองสำหรับ "%s"',

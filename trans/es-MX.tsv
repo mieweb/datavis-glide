@@ -37,6 +37,11 @@ GRID.OMNIFILTER.ARIA_LABEL	Filtrar todas las filas por texto
 GRID.OMNIFILTER.CLEAR	Limpiar filtro	
 GRID.OMNIFILTER.TOGGLE	Alternar filtro de búsqueda	
 		
+// Pagination		
+		
+GRID.PAGINATION.ARIA_LABEL	Navegación de páginas	
+GRID.PAGINATION.GO_TO_PAGE	Ir a la página %s	
+		
 // Grid toolbar		
 		
 GRID_TOOLBAR.PLAIN.SHOW_MORE_ON_SCROLL	Mostrar más al desplazar	

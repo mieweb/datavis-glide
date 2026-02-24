@@ -18,3 +18,6 @@ tab_width = 2
 
 [*.{json5,md,py,yaml,yml}]
 indent_style = space
+
+[*.tsv]
+trim_trailing_whitespace = false

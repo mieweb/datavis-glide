@@ -929,6 +929,56 @@ tr.wcdvgrid_more td {
 }
 
 /*
+ * Pagination controls, shown below the table when the pagination feature is enabled.
+ */
+
+.wcdv_pagination {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	gap: 4px;
+	padding: 8px 0;
+	user-select: none;
+}
+
+.wcdv_pagination_btn {
+	min-width: 32px;
+	height: 32px;
+	padding: 0 8px;
+	border: 1px solid #CCCCCC;
+	border-radius: 4px;
+	background-color: #FFFFFF;
+	color: #333333;
+	font-size: 0.85em;
+	cursor: pointer;
+	line-height: 30px;
+	text-align: center;
+}
+
+.wcdv_pagination_btn:hover:not(:disabled) {
+	background-color: #E8E8E8;
+}
+
+.wcdv_pagination_btn:disabled {
+	cursor: default;
+}
+
+.wcdv_pagination_btn.wcdv_pagination_current {
+	background-color: #337AB7;
+	border-color: #337AB7;
+	color: #FFFFFF;
+	font-weight: bold;
+}
+
+.wcdv_pagination_ellipsis {
+	min-width: 24px;
+	text-align: center;
+	color: #999999;
+	font-size: 0.85em;
+	line-height: 32px;
+}
+
+/*
 .wcdv_grid .tabletool .thead {
 	overflow: initial;
 }

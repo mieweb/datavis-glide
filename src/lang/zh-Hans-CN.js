@@ -98,6 +98,8 @@ export default {
   'GRID.OMNIFILTER.CLEAR': '清除筛选',
   'GRID.OMNIFILTER.PLACEHOLDER': '输入以筛选行...',
   'GRID.OMNIFILTER.TOGGLE': '切换搜索筛选',
+  'GRID.PAGINATION.ARIA_LABEL': '页面导航',
+  'GRID.PAGINATION.GO_TO_PAGE': '前往第 %s 页',
   'GRID.PERSPECTIVE_WIN.TEMP_PERSPECTIVE_WARNING': '此视角为临时视角；下方配置不反映任何绑定首选项模块的当前状态。',
   'GRID.PERSPECTIVE_WIN.TITLE': '视角',
   'GRID.TABLE.ADD_FILTER_HELP': '点击为“%s”添加筛选器',

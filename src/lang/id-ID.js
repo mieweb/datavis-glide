@@ -98,6 +98,8 @@ export default {
   'GRID.OMNIFILTER.CLEAR': 'Hapus filter',
   'GRID.OMNIFILTER.PLACEHOLDER': 'Ketik untuk memfilter baris...',
   'GRID.OMNIFILTER.TOGGLE': 'Alihkan filter pencarian',
+  'GRID.PAGINATION.ARIA_LABEL': 'Navigasi halaman',
+  'GRID.PAGINATION.GO_TO_PAGE': 'Pergi ke halaman %s',
   'GRID.PERSPECTIVE_WIN.TEMP_PERSPECTIVE_WARNING': 'Perspektif ini bersifat sementara; konfigurasi di bawah ini tidak mencerminkan status saat ini dari modul preferensi yang terikat.',
   'GRID.PERSPECTIVE_WIN.TITLE': 'Perspektif',
   'GRID.TABLE.ADD_FILTER_HELP': 'Klik untuk menambah filter untuk "%s"',

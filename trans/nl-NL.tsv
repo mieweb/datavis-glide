@@ -37,6 +37,11 @@ GRID.OMNIFILTER.ARIA_LABEL	Filter alle rijen op tekst
 GRID.OMNIFILTER.CLEAR	Filter wissen	
 GRID.OMNIFILTER.TOGGLE	Zoekfilter in-/uitschakelen	
 		
+// Pagination		
+		
+GRID.PAGINATION.ARIA_LABEL	Paginanavigatie	
+GRID.PAGINATION.GO_TO_PAGE	Ga naar pagina %s	
+		
 // Grid toolbar	
 	
 GRID_TOOLBAR.PLAIN.SHOW_MORE_ON_SCROLL	Meer tonen bij scrollen

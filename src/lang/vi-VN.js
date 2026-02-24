@@ -98,6 +98,8 @@ export default {
   'GRID.OMNIFILTER.CLEAR': 'Xóa bộ lọc',
   'GRID.OMNIFILTER.PLACEHOLDER': 'Nhập để lọc hàng...',
   'GRID.OMNIFILTER.TOGGLE': 'Bật/tắt bộ lọc tìm kiếm',
+  'GRID.PAGINATION.ARIA_LABEL': 'Điều hướng trang',
+  'GRID.PAGINATION.GO_TO_PAGE': 'Đi đến trang %s',
   'GRID.PERSPECTIVE_WIN.TEMP_PERSPECTIVE_WARNING': 'Góc nhìn này là tạm thời; cấu hình bên dưới không phản ánh trạng thái hiện tại của bất kỳ mô-đun tùy chọn nào đã liên kết.',
   'GRID.PERSPECTIVE_WIN.TITLE': 'Góc nhìn',
   'GRID.TABLE.ADD_FILTER_HELP': 'Nhấn để thêm bộ lọc cho "%s"',

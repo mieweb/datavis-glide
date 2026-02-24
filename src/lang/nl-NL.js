@@ -98,6 +98,8 @@ export default {
   'GRID.OMNIFILTER.CLEAR': 'Filter wissen',
   'GRID.OMNIFILTER.PLACEHOLDER': 'Typ om rijen te filteren...',
   'GRID.OMNIFILTER.TOGGLE': 'Zoekfilter in-/uitschakelen',
+  'GRID.PAGINATION.ARIA_LABEL': 'Paginanavigatie',
+  'GRID.PAGINATION.GO_TO_PAGE': 'Ga naar pagina %s',
   'GRID.PERSPECTIVE_WIN.TEMP_PERSPECTIVE_WARNING': 'Dit perspectief is tijdelijk; de onderstaande configuratie weerspiegelt niet de huidige status van gekoppelde voorkeurmodules.',
   'GRID.PERSPECTIVE_WIN.TITLE': 'Perspectief',
   'GRID.TABLE.ADD_FILTER_HELP': 'Klik om een filter toe te voegen voor "%s"',

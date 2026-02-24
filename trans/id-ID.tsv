@@ -37,6 +37,11 @@ GRID.OMNIFILTER.ARIA_LABEL	Filter semua baris berdasarkan teks
 GRID.OMNIFILTER.CLEAR	Hapus filter	
 GRID.OMNIFILTER.TOGGLE	Alihkan filter pencarian	
 		
+// Pagination		
+		
+GRID.PAGINATION.ARIA_LABEL	Navigasi halaman	
+GRID.PAGINATION.GO_TO_PAGE	Pergi ke halaman %s	
+		
 // Grid toolbar		
 		
 GRID_TOOLBAR.PLAIN.SHOW_MORE_ON_SCROLL	Tampilkan Lebih Banyak saat Menggulir	
