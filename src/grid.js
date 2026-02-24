@@ -364,7 +364,7 @@ function makeJsonOrderBy(o) {
  * and causes other configurable behavior to occur. By default, the slider appears on the right side
  * of the page to show information about the active row.
  *
- * @property {boolean} [omnifilter=false]
+ * @property {boolean} [omnifilter=true]
  * If true, a text input is shown above the titlebar that filters visible table rows in plain
  * output. Typing into the omnifilter hides all rows whose cell values do not contain the search
  * text. This is a visual-only filter and does not affect the underlying data in the view. The
@@ -629,6 +629,7 @@ var Grid = makeSubclass('Grid', Object, function (defn, opts, cb) {
 					self.ui.omnifilterInput.val('');
 					self._applyOmnifilter();
 					self.ui.omnifilter.hide();
+					self.ui.omnifilterToggle.removeClass('wcdv_omnifilter_active');
 				}
 			});
 
@@ -666,8 +667,10 @@ var Grid = makeSubclass('Grid', Object, function (defn, opts, cb) {
 					self.ui.omnifilterInput.val('');
 					self._applyOmnifilter();
 					self.ui.omnifilter.hide();
+					self.ui.omnifilterToggle.removeClass('wcdv_omnifilter_active');
 				}
 				else {
+					self.ui.omnifilterToggle.addClass('wcdv_omnifilter_active');
 					self.ui.omnifilter.show();
 					self.ui.omnifilterInput.focus();
 				}
@@ -1495,6 +1498,7 @@ Grid.prototype.redraw = function (contOk, contFail) {
 			self.ui.toolbar_group.show();
 			self.ui.toolbar_pivot.hide();
 			if (self.features.omnifilter) {
+				self.ui.omnifilterToggle.removeClass('wcdv_omnifilter_active');
 				self.ui.omnifilterToggle.hide();
 				self.ui.omnifilter.hide();
 			}
@@ -1504,6 +1508,7 @@ Grid.prototype.redraw = function (contOk, contFail) {
 			self.ui.toolbar_group.hide();
 			self.ui.toolbar_pivot.show();
 			if (self.features.omnifilter) {
+				self.ui.omnifilterToggle.removeClass('wcdv_omnifilter_active');
 				self.ui.omnifilterToggle.hide();
 				self.ui.omnifilter.hide();
 			}
@@ -2084,7 +2089,7 @@ Grid.prototype._normalize = function (defn) {
 				columnResize: false,
 				columnReorder: false,
 				activeRow: false,
-				omnifilter: false
+				omnifilter: true
 			},
 			limit: {
 				appendBodyLast: false,
