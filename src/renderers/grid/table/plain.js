@@ -1074,8 +1074,8 @@ GridTablePlain.prototype._paginationDrawControls = function () {
 
 	self.ui.paginationControls = nav;
 
-	// Insert after the table element.
-	self.ui.tbl.after(nav);
+	// Insert after the grid table container so pagination stays outside the scrollable area.
+	self.grid.ui.grid.after(nav);
 };
 
 // #drawFooter {{{2
