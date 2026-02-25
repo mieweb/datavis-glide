@@ -17,6 +17,12 @@ export default {
 			stream: 'undefined',
 		}
 	},
+	onwarn: (warning, warn) => {
+    if (warning.code === 'CIRCULAR_DEPENDENCY') {
+      console.log(warning.message);
+    }
+    warn(warning);
+  },
 	plugins: [
 		// This global CSS rule from Svelte-Gantt messes up other styles, so confine it to graphs.
 		replace({
