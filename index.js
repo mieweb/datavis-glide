@@ -17,6 +17,7 @@ import 'jquery-contextmenu/dist/jquery.contextMenu.min.css';
 import 'sumoselect/sumoselect.min.css';
 import './wcdatavis.css';
 
+import OrdMap from './src/util/ordmap.js';
 import { ParamInput } from './src/source_param.js';
 import { Source } from './src/source.js';
 import { ComputedView } from './src/computed_view.js';
@@ -44,5 +45,6 @@ export {
   Perspective,
   Grid,
   Graph,
-  jQuery
+  jQuery,
+  OrdMap
 };

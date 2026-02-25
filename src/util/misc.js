@@ -6,6 +6,7 @@ import _ from 'underscore';
 import sprintf from 'sprintf-js';
 import JSONFormatter from 'json-formatter-js';
 
+import deepCopy from './deepCopy.js';
 import OrdMap from './ordmap.js';
 import Lock from './lock.js';
 import EXPERIMENTAL_FEATURES from '../flags.js';
@@ -847,67 +848,6 @@ export var shallowCopy = function (x) {
 	else {
 		return x;
 	}
-};
-
-/**
- * Create a deep copy of an object.
- *
- * @memberof util.data_structures
- * @inner
- *
- * @param {any} x0
- * The thing to copy.
- *
- * @return {any}
- * A clean copy of the argument.
- */
-
-export var deepCopy = function (x0) {
-	var depth = 0;
-	var depthLimit = 99;
-	var path = [];
-
-	if (x0 == null) {
-		return {};
-	}
-
-	function recursive(x, depth) {
-		if (depth > depthLimit) {
-			throw new Error('deepCopy: Maximum recursion depth exceeded');
-		}
-
-		var result;
-
-		if (jQuery.isArray(x)) {
-			result = [];
-
-			for (var i = 0; i < x.length; i += 1) {
-				path.push(i);
-				result[i] = recursive(x[i], depth + 1);
-				path.pop();
-			}
-
-			return result;
-		}
-		else if (jQuery.isPlainObject(x)) {
-			result = {};
-
-			for (var k in x) {
-				if (Object.prototype.hasOwnProperty.call(x, k)) {
-					path.push(k);
-					result[k] = recursive(x[k], depth + 1);
-					path.pop();
-				}
-			}
-
-			return result;
-		}
-		else {
-			return x;
-		}
-	}
-
-	return recursive(x0, 0);
 };
 
 export var arrayCopy = deepCopy;
@@ -4031,3 +3971,5 @@ if (!Element.prototype.closest) {
     return null;
   };
 }
+
+export { deepCopy };

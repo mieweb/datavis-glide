@@ -156,7 +156,8 @@ export default defineConfig({
       name: 'MIE.WC_DataVis',
       fileName: 'vite/wcdatavis',
       cssFileName: 'vite/wcdatavis'
-    }
+    },
+    sourcemap: 'inline'
   },
   server: {
     port: process.env['PORT']
