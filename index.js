@@ -24,7 +24,11 @@ import { ComputedView } from './src/computed_view.js';
 import { Grid } from './src/grid.js';
 import { Graph } from './src/graph.js';
 import { Prefs } from './src/prefs.js';
+import { PrefsBackend, PREFS_BACKEND_REGISTRY } from './src/prefs_backend.js';
 import { Perspective } from './src/perspective.js';
+import { Aggregate, AGGREGATE_REGISTRY } from './src/aggregates.js';
+import * as Util from './src/util/misc.js';
+import Lock from './src/util/lock.js';
 
 // We left the global jQuery around long enough for jQuery UI to install itself, and that same
 // jQuery object has been used by all other plugins and DataVis code.  Now that we're all done,
@@ -42,9 +46,15 @@ export {
   ParamInput,
   ComputedView,
   Prefs,
+  PrefsBackend,
   Perspective,
   Grid,
   Graph,
   jQuery,
-  OrdMap
+  OrdMap,
+  Lock,
+  Util,
+  Aggregate,
+  AGGREGATE_REGISTRY,
+  PREFS_BACKEND_REGISTRY
 };
