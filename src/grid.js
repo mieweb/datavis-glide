@@ -15,7 +15,6 @@ import {
 	I,
 	makeRadioButtons,
 	makeSubclass,
-	makeToggleCheckbox,
 	mixinEventHandling,
 	mixinLogging,
 	mixinNameSetting,

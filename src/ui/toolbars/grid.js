@@ -7,12 +7,17 @@ import {trans} from '../../trans.js';
 import {
 	deepCopy,
 	fontAwesome,
+	getProp,
 	makeRadioButtons,
 	makeSubclass,
-	makeToggleCheckbox,
 	mixinLogging,
+	setProp,
+	setPropDef,
 } from '../../util/misc.js';
-import {makeReactButton, updateReactButton} from '../../util/react_bridge.jsx';
+import {
+	makeReactButton, updateReactButton,
+	makeReactCheckbox, updateReactCheckbox,
+} from '../../util/react_bridge.jsx';
 
 import {ToolbarSection} from '../toolbar.js';
 import {PrefsBackendTemporary} from '../../prefs_backend.js';
@@ -34,13 +39,14 @@ var PlainToolbar = makeSubclass('PlainToolbar', ToolbarSection, function (grid) 
 
 	// Create a checkbox that will toggle the "automatically show more" feature for the grid table.
 
-	self.ui.autoShowMore = makeToggleCheckbox(
-		grid.defn,
-		['table', 'limit', 'autoShowMore'],
-		true,
-		trans('GRID_TOOLBAR.PLAIN.SHOW_MORE_ON_SCROLL'),
-		grid.ui.limit_div
-	);
+	setPropDef(true, grid.defn, ['table', 'limit', 'autoShowMore']);
+	self.ui.autoShowMore = makeReactCheckbox({
+		label: trans('GRID_TOOLBAR.PLAIN.SHOW_MORE_ON_SCROLL'),
+		checked: getProp(grid.defn, ['table', 'limit', 'autoShowMore']),
+		onChange: function (isChecked) {
+			setProp(isChecked, grid.defn, ['table', 'limit', 'autoShowMore']);
+		}
+	}).appendTo(grid.ui.limit_div);
 
 	// Create a button that will show all the rows when clicked.  We fake this a little bit by just
 	// turning off the "limit" feature and letting the grid table be redrawn (changing the features
@@ -173,16 +179,16 @@ var GroupToolbar = makeSubclass('GroupToolbar', ToolbarSection, function (grid) 
 	var enableDisable = function (selected) {
 		switch (selected) {
 		case 'summary':
-			self.ui.showTotalRow.prop('disabled', false);
-			self.ui.pinRowVals.prop('disabled', false);
+			updateReactCheckbox(self.ui.showTotalRow, {disabled: false});
+			updateReactCheckbox(self.ui.pinRowVals, {disabled: false});
 			updateReactButton(self.ui.columnConfig, {disabled: true});
-			self.ui.showExpandedGroups.prop('disabled', true);
+			updateReactCheckbox(self.ui.showExpandedGroups, {disabled: true});
 			break;
 		case 'detail':
-			self.ui.showTotalRow.prop('disabled', true);
-			self.ui.pinRowVals.prop('disabled', true);
+			updateReactCheckbox(self.ui.showTotalRow, {disabled: true});
+			updateReactCheckbox(self.ui.pinRowVals, {disabled: true});
 			updateReactButton(self.ui.columnConfig, {disabled: false});
-			self.ui.showExpandedGroups.prop('disabled', false);
+			updateReactCheckbox(self.ui.showExpandedGroups, {disabled: false});
 			break;
 		}
 	};
@@ -205,13 +211,12 @@ var GroupToolbar = makeSubclass('GroupToolbar', ToolbarSection, function (grid) 
 		, self.ui.root
 	);
 
-	self.ui.showTotalRow = makeToggleCheckbox(
-		grid.defn,
-		['table', 'whenGroup', 'showTotalRow'],
-		true,
-		trans('GRID_TOOLBAR.GROUP.TOTAL_ROW'),
-		self.ui.root,
-		function (isChecked) {
+	setPropDef(true, grid.defn, ['table', 'whenGroup', 'showTotalRow']);
+	self.ui.showTotalRow = makeReactCheckbox({
+		label: trans('GRID_TOOLBAR.GROUP.TOTAL_ROW'),
+		checked: getProp(grid.defn, ['table', 'whenGroup', 'showTotalRow']),
+		onChange: function (isChecked) {
+			setProp(isChecked, grid.defn, ['table', 'whenGroup', 'showTotalRow']);
 			var agg = grid.view.getAggregate();
 
 			if (!isChecked) {
@@ -226,29 +231,27 @@ var GroupToolbar = makeSubclass('GroupToolbar', ToolbarSection, function (grid) 
 				sendEvent: false
 			});
 		}
-	);
+	}).appendTo(self.ui.root);
 
-	self.ui.showExpandedGroups = makeToggleCheckbox(
-		grid.defn,
-		['table', 'whenGroup', 'showExpandedGroups'],
-		false,
-		trans('GRID_TOOLBAR.GROUP.EXPAND_ALL'),
-		self.ui.root,
-		function (isChecked) {
+	setPropDef(false, grid.defn, ['table', 'whenGroup', 'showExpandedGroups']);
+	self.ui.showExpandedGroups = makeReactCheckbox({
+		label: trans('GRID_TOOLBAR.GROUP.EXPAND_ALL'),
+		checked: getProp(grid.defn, ['table', 'whenGroup', 'showExpandedGroups']),
+		onChange: function (isChecked) {
+			setProp(isChecked, grid.defn, ['table', 'whenGroup', 'showExpandedGroups']);
 			grid.redraw();
 		}
-	);
+	}).appendTo(self.ui.root);
 
-	self.ui.pinRowVals = makeToggleCheckbox(
-		grid.defn,
-		['table', 'whenGroup', 'pinRowvals'],
-		false,
-		trans('GRID_TOOLBAR.GROUP.PIN_GROUPS'),
-		self.ui.root,
-		function (isChecked) {
+	setPropDef(false, grid.defn, ['table', 'whenGroup', 'pinRowvals']);
+	self.ui.pinRowVals = makeReactCheckbox({
+		label: trans('GRID_TOOLBAR.GROUP.PIN_GROUPS'),
+		checked: getProp(grid.defn, ['table', 'whenGroup', 'pinRowvals']),
+		onChange: function (isChecked) {
+			setProp(isChecked, grid.defn, ['table', 'whenGroup', 'pinRowvals']);
 			grid.redraw();
 		}
-	);
+	}).appendTo(self.ui.root);
 
 	//make a toggle for expanded groups
 
@@ -318,13 +321,12 @@ var PivotToolbar = makeSubclass('PivotToolbar', ToolbarSection, function (grid) 
 		aggSpec = deepCopy(a);
 	});
 
-	self.ui.showTotals = makeToggleCheckbox(
-		grid.defn,
-		['table', 'whenPivot', 'showTotalCol'],
-		true,
-		trans('GRID_TOOLBAR.PIVOT.TOTAL_ROW_COLUMN'),
-		self.ui.root,
-		function (isChecked) {
+	setPropDef(true, grid.defn, ['table', 'whenPivot', 'showTotalCol']);
+	self.ui.showTotals = makeReactCheckbox({
+		label: trans('GRID_TOOLBAR.PIVOT.TOTAL_ROW_COLUMN'),
+		checked: getProp(grid.defn, ['table', 'whenPivot', 'showTotalCol']),
+		onChange: function (isChecked) {
+			setProp(isChecked, grid.defn, ['table', 'whenPivot', 'showTotalCol']);
 			var agg = grid.view.getAggregate();
 
 			if (!isChecked) {
@@ -343,29 +345,27 @@ var PivotToolbar = makeSubclass('PivotToolbar', ToolbarSection, function (grid) 
 				sendEvent: false
 			});
 		}
-	);
+	}).appendTo(self.ui.root);
 
-	self.ui.pinRowVals = makeToggleCheckbox(
-		grid.defn,
-		['table', 'whenGroup', 'pinRowvals'],
-		false,
-		trans('GRID_TOOLBAR.GROUP.PIN_GROUPS'),
-		self.ui.root,
-		function (isChecked) {
+	setPropDef(false, grid.defn, ['table', 'whenGroup', 'pinRowvals']);
+	self.ui.pinRowVals = makeReactCheckbox({
+		label: trans('GRID_TOOLBAR.GROUP.PIN_GROUPS'),
+		checked: getProp(grid.defn, ['table', 'whenGroup', 'pinRowvals']),
+		onChange: function (isChecked) {
+			setProp(isChecked, grid.defn, ['table', 'whenGroup', 'pinRowvals']);
 			grid.redraw();
 		}
-	);
+	}).appendTo(self.ui.root);
 
-	self.ui.hideBottomValueAggResults = makeToggleCheckbox(
-		grid.defn,
-		['table', 'whenPivot', 'hideBottomValueAggResults'],
-		false,
-		trans('GRID_TOOLBAR.PIVOT.HIDE_ZERO_VALUES'),
-		self.ui.root,
-		function (isChecked) {
+	setPropDef(false, grid.defn, ['table', 'whenPivot', 'hideBottomValueAggResults']);
+	self.ui.hideBottomValueAggResults = makeReactCheckbox({
+		label: trans('GRID_TOOLBAR.PIVOT.HIDE_ZERO_VALUES'),
+		checked: getProp(grid.defn, ['table', 'whenPivot', 'hideBottomValueAggResults']),
+		onChange: function (isChecked) {
+			setProp(isChecked, grid.defn, ['table', 'whenPivot', 'hideBottomValueAggResults']);
 			grid.redraw();
 		}
-	);
+	}).appendTo(self.ui.root);
 
 	self.ui.TemplatesEditor = makeReactButton({
 		text: trans('GRID_TOOLBAR.PLAIN.TEMPLATES_EDITOR'),

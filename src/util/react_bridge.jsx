@@ -8,6 +8,7 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { Button } from '@mieweb/ui/components/Button';
+import { Checkbox } from '@mieweb/ui/components/Checkbox';
 import '@mieweb/ui/styles.css';
 import jQuery from 'jquery';
 
@@ -123,4 +124,107 @@ function unmountReactButton($el) {
 	}
 }
 
-export { makeReactButton, updateReactButton, unmountReactButton };
+/**
+ * Creates a @mieweb/ui Checkbox rendered into a jQuery-wrapped container element.
+ *
+ * The returned jQuery element can be appended to a toolbar the same way as any
+ * jQuery element.  Call `updateReactCheckbox` to change props later (e.g.
+ * disabled state).
+ *
+ * @param {object} opts
+ * @param {string}   opts.label     Checkbox label text.
+ * @param {boolean}  [opts.checked] Initial checked state.  Defaults to false.
+ * @param {boolean}  [opts.disabled] Whether the checkbox is disabled.
+ * @param {string}   [opts.size]    Checkbox size: 'sm', 'md', 'lg'.
+ *                                  Defaults to 'sm'.
+ * @param {function} [opts.onChange] Called with (isChecked) when the user
+ *                                  toggles the checkbox.
+ * @returns {jQuery} jQuery-wrapped container element.
+ */
+function makeReactCheckbox(opts) {
+	var container = document.createElement('span');
+	container.style.display = 'inline-block';
+	container.style.verticalAlign = 'middle';
+
+	var reactRoot = createRoot(container);
+
+	var checked = opts.checked != null ? opts.checked : false;
+
+	function renderCheckbox(root, currentOpts, currentChecked) {
+		root.render(
+			React.createElement(Checkbox, {
+				label: currentOpts.label || '',
+				checked: currentChecked,
+				size: currentOpts.size || 'sm',
+				disabled: currentOpts.disabled || false,
+				onChange: function () {
+					var newChecked = !currentChecked;
+					var $el = jQuery(container);
+					$el.data('_reactChecked', newChecked);
+					renderCheckbox(root, $el.data('_reactOpts'), newChecked);
+					if (typeof currentOpts.onChange === 'function') {
+						currentOpts.onChange(newChecked);
+					}
+				}
+			})
+		);
+	}
+
+	renderCheckbox(reactRoot, opts, checked);
+
+	var $el = jQuery(container);
+	$el.data('_reactRoot', reactRoot);
+	$el.data('_reactOpts', opts);
+	$el.data('_reactChecked', checked);
+
+	return $el;
+}
+
+/**
+ * Re-renders a React checkbox previously created by `makeReactCheckbox` with
+ * updated props.  Does not change the checked state unless `newOpts.checked`
+ * is explicitly provided.
+ *
+ * @param {jQuery}  $el      The jQuery element returned by `makeReactCheckbox`.
+ * @param {object}  newOpts  Partial set of options to merge.
+ */
+function updateReactCheckbox($el, newOpts) {
+	var reactRoot = $el.data('_reactRoot');
+	if (reactRoot == null) {
+		return;
+	}
+
+	var opts = jQuery.extend({}, $el.data('_reactOpts'), newOpts);
+	$el.data('_reactOpts', opts);
+
+	var checked = newOpts.checked != null ? newOpts.checked : $el.data('_reactChecked');
+	$el.data('_reactChecked', checked);
+
+	var container = $el[0];
+
+	function renderCheckbox(root, currentOpts, currentChecked) {
+		root.render(
+			React.createElement(Checkbox, {
+				label: currentOpts.label || '',
+				checked: currentChecked,
+				size: currentOpts.size || 'sm',
+				disabled: currentOpts.disabled || false,
+				onChange: function () {
+					var newChecked = !currentChecked;
+					$el.data('_reactChecked', newChecked);
+					renderCheckbox(root, $el.data('_reactOpts'), newChecked);
+					if (typeof currentOpts.onChange === 'function') {
+						currentOpts.onChange(newChecked);
+					}
+				}
+			})
+		);
+	}
+
+	renderCheckbox(reactRoot, opts, checked);
+}
+
+export {
+	makeReactButton, updateReactButton, unmountReactButton,
+	makeReactCheckbox, updateReactCheckbox
+};
