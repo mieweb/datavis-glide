@@ -26,7 +26,7 @@ import { Graph } from './src/graph.js';
 import { Prefs } from './src/prefs.js';
 import { PrefsBackend, PREFS_BACKEND_REGISTRY } from './src/prefs_backend.js';
 import { Perspective } from './src/perspective.js';
-import { Aggregate, AGGREGATE_REGISTRY } from './src/aggregates.js';
+import { Aggregate, AggregateInfo, AGGREGATE_REGISTRY } from './src/aggregates.js';
 import * as Util from './src/util/misc.js';
 import Lock from './src/util/lock.js';
 
@@ -55,6 +55,7 @@ export {
   Lock,
   Util,
   Aggregate,
+  AggregateInfo,
   AGGREGATE_REGISTRY,
   PREFS_BACKEND_REGISTRY
 };
