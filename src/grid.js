@@ -24,17 +24,17 @@ import {
 	setPropDef,
 	Timing,
 } from './util/misc.js';
-import OrdMap from './util/ordmap.js';
-import Lock from './util/lock.js';
+import OrdMap from 'datavis-ace/src/util/ordmap.js';
+import Lock from 'datavis-ace/src/util/lock.js';
 import {
 	AggregateControl,
 	FilterControl,
 	GroupControl,
 	PivotControl,
 } from './grid_control.js';
-import { Prefs } from './prefs.js';
-import { ComputedView } from './computed_view.js';
-import { MirageView } from './mirage_view.js';
+import { Prefs } from 'datavis-ace/src/prefs.js';
+import { ComputedView } from 'datavis-ace/src/computed_view.js';
+import { MirageView } from 'datavis-ace/src/mirage_view.js';
 import { GridRenderer } from './grid_renderer.js';
 import './renderers/grid/handlebars.js';
 import './renderers/grid/squirrelly.js';
@@ -50,13 +50,8 @@ import {
 	RendererToolbar,
 } from './ui/toolbars/grid.js';
 import { OperationsPalette } from './operations_palette.js';
-import { FileSource } from './source.js';
+import { FileSource } from 'datavis-ace/src/source.js';
 import { trans } from './trans.js';
-import {GridRendererDummy} from './renderers/grid/dummy.js';
-import {GridTablePlain} from './renderers/grid/table/plain.js';
-import {GridTableGroupDetail} from './renderers/grid/table/group_detail.js';
-import {GridTableGroupSummary} from './renderers/grid/table/group_summary.js';
-import {GridTablePivot} from './renderers/grid/table/pivot.js';
 
 // Server-Side Filter/Sort {{{1
 

@@ -1,12 +1,13 @@
 {
-  "name": "@mieweb/wcdatavis",
-  "version": "3.3.0",
-  "description": "Data visualization library",
+  "name": "@mieweb/datavis-glide",
+  "version": "4.0.0",
+  "description": "DataVis GLIDE (Graphical Layer for Interactive Data Exploration)",
   "keywords": [
-    "grid",
-    "graph",
     "data",
-    "visualization"
+    "grid",
+    "table",
+    "graph",
+    "chart"
   ],
   "license": "PROPRIETARY",
   "author": "Taylor Venable <tvenable@mieweb.com>",
@@ -41,6 +42,7 @@
     "chart.js": "=4.5.1",
     "core-js": "=3.47.0",
     "css.escape": "=1.5.1",
+    "datavis-ace": "../datavis-ace",
     "es6-symbol": "=3.1.4",
     "flatpickr": "=4.6.13",
     "handlebars": "=4.7.8",
@@ -73,6 +75,7 @@
     "chai": "=6.2.2",
     "chromedriver": "^145.0.5",
     "eslint": "=9.39.2",
+    "eslint-plugin-import": "^2.32.0",
     "globals": "=17.0.0",
     "jsdoc": "=4.0.5",
     "jshint": "=2.13.6",

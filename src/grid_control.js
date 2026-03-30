@@ -18,13 +18,13 @@ import {
 } from './util/misc.js';
 
 import './util/jquery.js';
-import {AGGREGATE_REGISTRY} from './aggregates.js';
-import {ComputedView} from './computed_view.js';
-import {GROUP_FUNCTION_REGISTRY} from './group_fun.js';
+import {AGGREGATE_REGISTRY} from 'datavis-ace/src/aggregates.js';
+import {ComputedView} from 'datavis-ace/src/computed_view.js';
+import {GROUP_FUNCTION_REGISTRY} from 'datavis-ace/src/group_fun.js';
 import {Grid} from './grid.js';
 import {GridFilterSet} from './grid_filter.js';
 import {GroupFunWin} from './group_fun_win.js';
-import types from './types.js';
+import types from 'datavis-ace/src/types.js';
 
 /*
  * Grid controls are the rounded boxes that appear between the toolbar and the grid.  They allow

@@ -1,10 +1,77 @@
-# DataVis
+# DataVis GLIDE
 
-DataVis is a tool for exploring, manipulating, and visualizing data. It can import data over HTTP (XML, JSON, CSV) or from a file (CSV), or it can use data already in JavaScript on the page. It can automatically parse different types of data including dates and times, numbers (including arbitrarily large integers), and currency. It allows interactive filtering, grouping, pivotting, and aggregation with support for custom aggregate functions. For grouped data, it supports "drilling down" to the underlying population. It can store the current configuration as a "perspective" you can immediately return to later. You can export what's shown on screen to CSV, or display it in a graph.
+DataVis is a system for exploring, manipulating, and visualizing data. It consists of multiple components in multiple layers, each responsible for different elements of a complete system. This layer, DataVis GLIDE, provides user interfaces for exploring data. This includes:
 
-[Enjoy this video overview.](https://drive.google.com/file/d/1w1VGRYZbJ0Qyn8tUjQB9181lKfbeveQw/view)
+- Complete interactive controls to filter, group, pivot, aggregate, sort, and export data.
+- “Grids” to display tabular data, including a “tree mode” details view for grouped data.
+- “Graphs” to display aggregate results.
+- View saving, column resizing, row selection, floating headers, pagination, and much more.
+
+**GLIDE = Graphical Layer for Interactive Data Exploration**
 
 ## How to Use
+
+### Vite
+
+Stick this in your `package.json` obviously.
+
+```
+"dependencies": {
+  "wcdatavis": "git+ssh://git@github.com:mieweb/wcdatavis.git",
+  "vite": "=7.3.1"
+}
+```
+
+#### Building a Page
+
+Import FontAwesome 4.7 CSS somehow (this example uses a CDN).
+
+Inside a module script tag, import the CSS for DataVis and its dependents. This is necessary when using Vite in this configuration, but not if using a version of DataVis built via Rollup (which uses the PostCSS plugin to automatically extract and bundle all CSS files imported from JS).
+
+```
+import 'jquery-ui/dist/themes/base/jquery-ui.min.css';
+import 'jquery-contextmenu/dist/jquery.contextMenu.min.css';
+import 'sumoselect/sumoselect.min.css';
+import 'wcdatavis/wcdatavis.css';
+```
+
+Then just use DataVis like normal:
+
+```
+import { Source, ComputedView, Grid } from 'wcdatavis/index.js';
+
+document.addEventListener('DOMContentLoaded', () => {
+  const source = new Source({
+    type: 'http',
+    url: 'fruit.csv'
+  });
+  const computedView = new ComputedView(source);
+  new Grid({
+    id: 'grid',
+    computedView: computedView
+  }, {
+    title: 'DataVis NPM Example (Using Vite)'
+  });
+});
+```
+
+Make sure you also have a div to contain the grid on the page.
+
+```
+<div id=”grid”></div>
+```
+
+#### Available Exports
+
+| Export         | Description                                                  |
+| -------------- | ------------------------------------------------------------ |
+| `Source`       | Fetches and decodes data from HTTP, files, or local JavaScript |
+| `ComputedView` | Implements filtering, grouping, pivoting, and aggregation    |
+| `Grid`         | Renders data in a table with interactive controls            |
+| `Graph`        | Renders data as charts using Chart.js                        |
+| `Prefs`        | User preferences management                                  |
+| `Perspective`  | Save and restore view configurations                         |
+| `ParamInput`   | Parameter input handling for sources                         |
 
 ### Traditional Website
 
@@ -58,7 +125,6 @@ We use GNU Make to provide a simple interface to the various tools to build and 
     * `qunit` — Unit tests, mostly for the view.
   * `selenium` — Selenium test case files.
 
-### Submodules
+## History
 
-* `jaguarjs-jsdoc` — JSDoc template used to build documentation.
-* `json-formatter-js` — A library to render JSON objects in a tree view.
+The original DataVis project consisted of both the data processing and interactive UI functions. It has now been split into two projects: DataVis ACE (this project) and DataVis GLIDE (an intuitive but complete user interface to explore the data).
