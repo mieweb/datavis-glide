@@ -149,6 +149,7 @@ export default defineConfig({
     testScaffold()
   ],
   resolve: {
+    preserveSymlinks: true,
     dedupe: [
       'bignumber.js',
       'numeral',
@@ -158,6 +159,7 @@ export default defineConfig({
       'papaparse',
       'core-js',
       'es6-symbol',
+      'jquery',
     ]
   },
   appType: 'mpa',
