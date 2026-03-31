@@ -1,7 +1,7 @@
 import _ from 'underscore';
 import JSONFormatter from 'json-formatter-js';
 
-import OrdMap from 'datavis-ace/src/util/ordmap.js';
+import { OrdMap } from 'datavis-ace/src/util/ordmap.js';
 
 import jQuery from 'jquery';
 

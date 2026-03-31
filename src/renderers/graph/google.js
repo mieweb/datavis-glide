@@ -18,7 +18,7 @@ import {
 import {AggregateInfo} from 'datavis-ace/src/aggregates';
 import {GROUP_FUNCTION_REGISTRY} from 'datavis-ace/src/group_fun.js';
 
-import OrdMap from 'datavis-ace/src/util/ordmap.js';
+import { OrdMap } from 'datavis-ace/src/util/ordmap.js';
 import { Source } from 'datavis-ace/src/source.js';
 import { GraphRenderer } from '../../graph_renderer.js';
 import { trans } from '../../trans.js';

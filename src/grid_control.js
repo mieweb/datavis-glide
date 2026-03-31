@@ -605,7 +605,8 @@ AggregateControlField.prototype.getInfo = function () {
 		shouldGraph: self.shouldGraph,
 		opts: _.mapObject(self.aggFunOpts, function (input, optName) {
 			return input.val();
-		})
+		}),
+		debug: true
 	};
 };
 

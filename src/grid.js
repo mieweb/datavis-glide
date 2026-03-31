@@ -24,8 +24,8 @@ import {
 	setPropDef,
 	Timing,
 } from './util/misc.js';
-import OrdMap from 'datavis-ace/src/util/ordmap.js';
-import Lock from 'datavis-ace/src/util/lock.js';
+import { OrdMap } from 'datavis-ace/src/util/ordmap.js';
+import { Lock } from 'datavis-ace/src/util/lock.js';
 import {
 	AggregateControl,
 	FilterControl,
@@ -33,6 +33,7 @@ import {
 	PivotControl,
 } from './grid_control.js';
 import { Prefs } from 'datavis-ace/src/prefs.js';
+import './prefs_modules.js';
 import { ComputedView } from 'datavis-ace/src/computed_view.js';
 import { MirageView } from 'datavis-ace/src/mirage_view.js';
 import { GridRenderer } from './grid_renderer.js';

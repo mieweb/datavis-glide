@@ -28,7 +28,7 @@ import {
 	setElement,
 } from '../../util/misc.js';
 
-import Lock from 'datavis-ace/src/util/lock.js';
+import { Lock } from 'datavis-ace/src/util/lock.js';
 import {AggregateInfo} from 'datavis-ace/src/aggregates.js';
 import {GridFilterSet} from '../../grid_filter.js';
 import {GridRenderer} from '../../grid_renderer.js';

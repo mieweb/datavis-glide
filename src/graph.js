@@ -17,7 +17,7 @@ import {
 	setProp,
 	toInt,
 } from './util/misc.js';
-import OrdMap from 'datavis-ace/src/util/ordmap.js';
+import { OrdMap } from 'datavis-ace/src/util/ordmap.js';
 
 import {ComputedView} from 'datavis-ace/src/computed_view.js';
 import {Prefs} from 'datavis-ace/src/prefs.js';

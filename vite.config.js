@@ -148,6 +148,18 @@ export default defineConfig({
   plugins: [
     testScaffold()
   ],
+  resolve: {
+    dedupe: [
+      'bignumber.js',
+      'numeral',
+      'moment',
+      'underscore',
+      'sprintf-js',
+      'papaparse',
+      'core-js',
+      'es6-symbol',
+    ]
+  },
   appType: 'mpa',
   build: {
     lib: {

@@ -21,8 +21,8 @@ import 'sumoselect/sumoselect.min.css';
 import './wcdatavis.css';
 
 import * as Util from './src/util/misc.js';
-import OrdMap from 'datavis-ace/src/util/ordmap.js';
-import Lock from 'datavis-ace/src/util/lock.js';
+import { OrdMap } from 'datavis-ace/src/util/ordmap.js';
+import { Lock } from 'datavis-ace/src/util/lock.js';
 import { Aggregate, AGGREGATE_REGISTRY } from 'datavis-ace/src/aggregates.js';
 import { ParamInput } from 'datavis-ace/src/source_param.js';
 import { Source } from 'datavis-ace/src/source.js';
@@ -68,7 +68,6 @@ window.MIE.WC_DataVis.Perspective     = Perspective;
 window.MIE.WC_DataVis.Prefs           = Prefs;
 window.MIE.WC_DataVis.PrefsBackend    = PrefsBackend;
 window.MIE.WC_DataVis.PrefsModule     = PrefsModule;
-window.MIE.WC_DataVis.PrefsModuleGrid = PrefsModuleGrid;
 window.MIE.WC_DataVis.EXPORT_URL      = 'export.php';
 
 // Expose "registry" extension points

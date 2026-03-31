@@ -1,6 +1,6 @@
 import { PrefsModule, PREFS_MODULE_REGISTRY } from 'datavis-ace/src/prefs_module.js';
 import { makeSubclass, deepDefaults } from './util/misc.js';
-import OrdMap from 'datavis-ace/src/util/ordmap.js';
+import { OrdMap } from 'datavis-ace/src/util/ordmap.js';
 import { Grid } from './grid.js';
 import { Graph } from './graph.js';
 
