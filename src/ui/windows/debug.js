@@ -1,7 +1,7 @@
 import _ from 'underscore';
 import JSONFormatter from 'json-formatter-js';
 
-import OrdMap from '../../util/ordmap.js';
+import OrdMap from 'datavis-ace/src/util/ordmap.js';
 
 import jQuery from 'jquery';
 
@@ -10,6 +10,7 @@ import {
 	getPropDef,
 	makeSubclass,
 	moveArrayElement,
+	ordmapAsHtmlDefnList,
 } from '../../util/misc.js';
 
 // DebugWin {{{1
@@ -63,7 +64,7 @@ DebugWin.prototype.show = function (grid, view, source) {
 				info.set('Source name', source.name);
 				info.set('Source spec', source.origin.spec);
 				return jQuery('<div>')
-					.append(info.asHtmlDefnList());
+					.append(ordmapAsHtmlDefnList(info));
 			})()
 		}, {
 			name: 'Params',
@@ -87,7 +88,7 @@ DebugWin.prototype.show = function (grid, view, source) {
 				info.set('Pivot config', view.getPivot());
 				info.set('Aggregate config', view.getAggregate());
 				return jQuery('<div>')
-					.append(info.asHtmlDefnList());
+					.append(ordmapAsHtmlDefnList(info));
 			})()
 		}]
 	}, {
@@ -110,7 +111,7 @@ DebugWin.prototype.show = function (grid, view, source) {
 				info.set('Current Perspective', jQuery('<span>' + grid.prefs.currentPerspective.id + '<br/><i>' + grid.prefs.currentPerspective.name + '</i></span>'));
 				info.set('Bardo', grid.prefs.bardo);
 				return jQuery('<div>')
-					.append(info.asHtmlDefnList());
+					.append(ordmapAsHtmlDefnList(info));
 			})()
 		}, {
 			name: 'Perspectives',
@@ -124,7 +125,7 @@ DebugWin.prototype.show = function (grid, view, source) {
 					});
 				});
 				return jQuery('<div>')
-					.append(info.asHtmlDefnList());
+					.append(ordmapAsHtmlDefnList(info));
 			})()
 		}]
 	}];

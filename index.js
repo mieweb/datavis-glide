@@ -17,18 +17,20 @@ import 'jquery-contextmenu/dist/jquery.contextMenu.min.css';
 import 'sumoselect/sumoselect.min.css';
 import './wcdatavis.css';
 
-import OrdMap from './src/util/ordmap.js';
-import { ParamInput } from './src/source_param.js';
-import { Source } from './src/source.js';
-import { ComputedView } from './src/computed_view.js';
+import OrdMap from 'datavis-ace/src/util/ordmap.js';
+import { ParamInput } from 'datavis-ace/src/source_param.js';
+import { Source } from 'datavis-ace/src/source.js';
+import { ComputedView } from 'datavis-ace/src/computed_view.js';
+import { Prefs } from 'datavis-ace/src/prefs.js';
+import { PrefsBackend, PREFS_BACKEND_REGISTRY } from 'datavis-ace/src/prefs_backend.js';
+import { Perspective } from 'datavis-ace/src/perspective.js';
+import { Aggregate, AggregateInfo, AGGREGATE_REGISTRY } from 'datavis-ace/src/aggregates.js';
+import Lock from 'datavis-ace/src/util/lock.js';
+
 import { Grid } from './src/grid.js';
 import { Graph } from './src/graph.js';
-import { Prefs } from './src/prefs.js';
-import { PrefsBackend, PREFS_BACKEND_REGISTRY } from './src/prefs_backend.js';
-import { Perspective } from './src/perspective.js';
-import { Aggregate, AggregateInfo, AGGREGATE_REGISTRY } from './src/aggregates.js';
 import * as Util from './src/util/misc.js';
-import Lock from './src/util/lock.js';
+import './src/prefs_modules.js';
 
 // We left the global jQuery around long enough for jQuery UI to install itself, and that same
 // jQuery object has been used by all other plugins and DataVis code.  Now that we're all done,

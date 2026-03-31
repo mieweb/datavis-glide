@@ -3840,6 +3840,28 @@ export function dataURItoBlob(dataURI) {
 
 }
 
+export function ordmapAsHtmlDefnList(o) {
+	var dl = jQuery('<dl>');
+	o.each(function (v, k) {
+		var dt = jQuery('<dt>').text(k);
+		var dd = jQuery('<dd>');
+		if (v instanceof jQuery || v instanceof Element) {
+			dd.append(v);
+		}
+		else if (_.isObject(v)) {
+			dd.append(new JSONFormatter(v, 0).render());
+		}
+		else {
+			dd.text(v);
+		}
+		jQuery('<div>')
+			.append(dt)
+			.append(dd)
+			.appendTo(dl);
+	});
+	return dl;
+}
+
 // Misc {{{1
 
 // https://stackoverflow.com/a/2117523

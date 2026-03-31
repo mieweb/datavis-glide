@@ -34,7 +34,7 @@ import { Graph } from './src/graph.js';
 import { Prefs } from 'datavis-ace/src/prefs.js';
 import { Perspective } from 'datavis-ace/src/perspective.js';
 import { PrefsBackend, PREFS_BACKEND_REGISTRY } from 'datavis-ace/src/prefs_backend.js';
-import { PrefsModule, PrefsModuleGrid, PREFS_MODULE_REGISTRY } from 'datavis-ace/src/prefs_module.js';
+import { PrefsModule, PREFS_MODULE_REGISTRY } from 'datavis-ace/src/prefs_module.js';
 import { trans } from './src/trans.js';
 
 // So we only import Svelte-Gantt when we're building an IIFE via Rollup.  This is mainly because

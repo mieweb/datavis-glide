@@ -29,6 +29,9 @@
     "type": "git",
     "url": "https://github.com/mieweb/wcdatavis.git"
   },
+  "config": {
+    "chromedriver_version": "LATEST"
+  },
   "scripts": {
     "dev": "vite",
     "lint": "eslint src tests/lib tests/selenium",
@@ -73,7 +76,7 @@
     "@types/mocha": "=10.0.10",
     "bluebird": "=3.7.2",
     "chai": "=6.2.2",
-    "chromedriver": "^145.0.5",
+    "chromedriver": "^146.0.6",
     "eslint": "=9.39.2",
     "eslint-plugin-import": "^2.32.0",
     "globals": "=17.0.0",

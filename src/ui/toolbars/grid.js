@@ -14,10 +14,10 @@ import {
 } from '../../util/misc.js';
 
 import {ToolbarSection} from '../toolbar.js';
-import {PrefsBackendTemporary} from '../../prefs_backend.js';
+import {PrefsBackendTemporary} from 'datavis-ace/src/prefs_backend.js';
 import {GridTableOptsWin} from '../windows/grid_table_opts.js';
-import {ComputedView} from '../../computed_view.js';
-import {MirageView} from '../../mirage_view.js';
+import {ComputedView} from 'datavis-ace/src/computed_view.js';
+import {MirageView} from 'datavis-ace/src/mirage_view.js';
 
 // PlainToolbar {{{1
 
