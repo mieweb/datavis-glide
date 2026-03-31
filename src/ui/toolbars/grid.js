@@ -14,10 +14,8 @@ import {
 } from '../../util/misc.js';
 
 import {ToolbarSection} from '../toolbar.js';
-import {PrefsBackendTemporary} from 'datavis-ace/src/prefs_backend.js';
+import {PREFS_BACKEND_REGISTRY, ComputedView, MirageView} from 'datavis-ace';
 import {GridTableOptsWin} from '../windows/grid_table_opts.js';
-import {ComputedView} from 'datavis-ace/src/computed_view.js';
-import {MirageView} from 'datavis-ace/src/mirage_view.js';
 
 // PlainToolbar {{{1
 
@@ -549,7 +547,7 @@ var PrefsToolbar = makeSubclass('PrefsToolbar', ToolbarSection, function (grid) 
 		.appendTo(div)
 	;
 
-	if (grid.prefs.backend instanceof PrefsBackendTemporary) {
+	if (grid.prefs.backend instanceof PREFS_BACKEND_REGISTRY.get('temporary')) {
 		warnMsgText.text(trans('GRID_TOOLBAR.PREFS.BACKEND_DOES_NOT_SAVE'));
 		warnMsg.show();
 	}

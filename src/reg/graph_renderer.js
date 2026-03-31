@@ -1,4 +1,4 @@
-import { OrdMap } from 'datavis-ace/src/util/ordmap.js';
+import { OrdMap } from 'datavis-ace';
 
 import GraphRendererChartJs from '../renderers/graph/chartjs.js';
 import GraphRendererGoogle from '../renderers/graph/google.js';

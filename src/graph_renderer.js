@@ -13,8 +13,7 @@ import {
 	mixinLogging,
 	setProp,
 } from './util/misc.js';
-import {AggregateInfo} from 'datavis-ace/src/aggregates';
-import {GROUP_FUNCTION_REGISTRY} from 'datavis-ace/src/group_fun.js';
+import {AggregateInfo, GROUP_FUNCTION_REGISTRY} from 'datavis-ace';
 
 // GraphRenderer {{{1
 

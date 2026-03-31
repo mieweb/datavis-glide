@@ -30,9 +30,7 @@ import {
 
 import {GridFilterSet} from '../../../grid_filter.js';
 import {GridRenderer} from '../../../grid_renderer.js';
-import {AggregateInfo} from 'datavis-ace/src/aggregates.js';
-import {ComputedView} from 'datavis-ace/src/computed_view.js';
-import {GROUP_FUNCTION_REGISTRY} from 'datavis-ace/src/group_fun.js';
+import {AggregateInfo, ComputedView, GROUP_FUNCTION_REGISTRY} from 'datavis-ace';
 
 import handlebarsUtil from '../../../util/handlebars.js';
 import GridTable from '../table.js';

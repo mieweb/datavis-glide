@@ -1,6 +1,6 @@
 import _ from 'underscore';
 
-import { OrdMap } from 'datavis-ace/src/util/ordmap.js';
+import { OrdMap } from 'datavis-ace';
 
 import jQuery from 'jquery';
 
