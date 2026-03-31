@@ -30,12 +30,28 @@ GRID.TITLEBAR.SHOW_HIDE	Raster tonen/verbergen
 GRID.TITLEBAR.SHOW_HIDE_CONTROLS	Rasterbediening tonen/verbergen
 GRID.TITLEBAR.SHOW_DEBUG_INFO	Raster debug-informatie tonen
 	
+// Grid omnifilter		
+		
+GRID.OMNIFILTER.PLACEHOLDER	Typ om rijen te filteren...	
+GRID.OMNIFILTER.ARIA_LABEL	Filter alle rijen op tekst	
+GRID.OMNIFILTER.CLEAR	Filter wissen	
+GRID.OMNIFILTER.TOGGLE	Zoekfilter in-/uitschakelen	
+		
+// Pagination		
+		
+GRID.PAGINATION.ARIA_LABEL	Paginanavigatie	
+GRID.PAGINATION.GO_TO_PAGE	Ga naar pagina %s	
+		
 // Grid toolbar	
 	
 GRID_TOOLBAR.PLAIN.SHOW_MORE_ON_SCROLL	Meer tonen bij scrollen
 GRID_TOOLBAR.PLAIN.SHOW_ALL_ROWS	Alle rijen tonen
 GRID_TOOLBAR.PLAIN.COLUMNS	Kolommen
 GRID_TOOLBAR.PLAIN.TEMPLATES_EDITOR	Sjabloonbewerker
+GRID_TOOLBAR.PLAIN.ROW_MODE	Rijmodus
+GRID_TOOLBAR.PLAIN.ROW_MODE.WRAPPED	Terugloop	
+GRID_TOOLBAR.PLAIN.ROW_MODE.CLIPPED	Afgekapt	
+GRID_TOOLBAR.PLAIN.AUTO_RESIZE_COLUMNS	Kolommen automatisch aanpassen
 	
 GRID_TOOLBAR.GROUP.MODE.SUMMARY	Samenvatting
 GRID_TOOLBAR.GROUP.MODE.DETAIL	Detail
@@ -136,6 +152,9 @@ GRID.TABLE.SORT_MENU.RESET_SORT	Sortering resetten
 	
 GRID.TABLE.DRAGGABLE_FIELD_HELP	U kunt dit veld slepen en neerzetten in de bovenstaande rasterbediening om te filteren, groeperen of pivoteren.
 GRID.TABLE.ADD_FILTER_HELP	Klik om een filter toe te voegen voor "%s"
+		
+GRID.TABLE.RESIZE_COLUMN	Sleep om de kolom te verkleinen/vergroten
+GRID.TABLE.REORDER_COLUMN	Sleep om de kolom te herordenen
 	
 // Group Functions	
 	

@@ -10,33 +10,33 @@ DataVis is a library for data visualization with presentation via charts and tab
 
 <!-- https://github.com/mieweb/template-mieweb-opensource/blob/main/.github/copilot-instructions.md -->
 
-### 🎯 DRY (Don't Repeat Yourself)
+### DRY (Don't Repeat Yourself)
 - **Never duplicate code**: If you find yourself copying code, extract it into a reusable function
 - **Single source of truth**: Each piece of knowledge should have one authoritative representation
 - **Refactor mercilessly**: When you see duplication, eliminate it immediately
 - **Shared utilities**: Common patterns should be abstracted into utility functions
 
-### 💋 KISS (Keep It Simple, Stupid)
+### KISS (Keep It Simple, Stupid)
 - **Simple solutions**: Prefer the simplest solution that works
 - **Avoid over-engineering**: Don't add complexity for hypothetical future needs
 - **Clear naming**: Functions and variables should be self-documenting
 - **Small functions**: Break down complex functions into smaller, focused ones
 - **Readable code**: Code should be obvious to understand at first glance
 
-### 🧹 Folder Philosophy
+### Folder Philosophy
 - **Clear purpose**: Every folder should have a main thing that anchors its contents.
 - **No junk drawers**: Don’t leave loose files without context or explanation.
 - **Explain relationships**: If it’s not elegantly obvious how files fit together, add a README or note.
 - **Immediate clarity**: Opening a folder should make its organizing principle clear at a glance.
 
-### 🔄 Refactoring Guidelines
+### Refactoring Guidelines
 - **Continuous improvement**: Refactor as you work, not as a separate task
 - **Safe refactoring**: Always run tests before and after refactoring
 - **Incremental changes**: Make small, safe changes rather than large rewrites
 - **Preserve behavior**: Refactoring should not change external behavior
 - **Code reviews**: All refactoring should be reviewed for correctness
 
-### ⚰️ Dead Code Management
+### Dead Code Management
 - **Immediate removal**: Delete unused code immediately when identified
 - **Historical preservation**: Move significant dead code to `.attic/` directory with context
 - **Documentation**: Include comments explaining why code was moved to attic
@@ -50,7 +50,7 @@ DataVis is a library for data visualization with presentation via charts and tab
 
 ## JavaScript Code Standards
 
-### ⚠️ CRITICAL: Browser Compatibility
+### CRITICAL: Browser Compatibility
 - **Maintain compatibility with IE10**: No arrow functions, no template strings, no destructuring, no ES6 classes or modules
 - Use `var` instead of `let`/`const` in source files
 - Use function declarations instead of arrow functions
@@ -79,34 +79,36 @@ DataVis is a library for data visualization with presentation via charts and tab
 
 ## Accessibility (ARIA Labeling)
 
-### 🎯 Interactive Elements
+### Interactive Elements
 - **All interactive elements** (buttons, links, forms, dialogs) must include appropriate ARIA roles and labels
 - **Use ARIA attributes**: Implement aria-label, aria-labelledby, and aria-describedby to provide clear, descriptive information for screen readers
 - **Semantic HTML**: Use semantic HTML wherever possible to enhance accessibility
 
-### 📢 Dynamic Content
+### Dynamic Content
 - **Announce updates**: Ensure all dynamic content updates (modals, alerts, notifications) are announced to assistive technologies using aria-live regions
 - **Maintain tab order**: Maintain logical tab order and keyboard navigation for all features
 - **Visible focus**: Provide visible focus indicators for all interactive elements
 
 ## Internationalization (I18N)
 
-### 🌍 Text and Language Support
+### Text and Language Support
 - **Externalize text**: All user-facing text must be externalized for translation
 - **Multiple languages**: Support multiple languages, including right-to-left (RTL) languages such as Arabic and Hebrew
 - **Language selector**: Provide a language selector for users to choose their preferred language
 
-### 🕐 Localization
+### Localization
 - **Format localization**: Ensure date, time, number, and currency formats are localized based on user settings
 - **UI compatibility**: Test UI layouts for text expansion and RTL compatibility
 - **Unicode support**: Use Unicode throughout to support international character sets
 
-### 📁 DataVis Language Pack System
+### DataVis Language Pack System
 - **Translation labels**: Use labels like `GRID.COLCONFIG_WIN.MOVE_COL_TO_TOP` for all UI text
 - **Language files**: Located in `src/lang/` as JS files named by RFC 5646 codes (e.g., `en-US.js`)
-- **TSV source**: Translations sourced from `en-US.tsv` (root) and `trans.tsv` (multi-language)
+- **TSV source**: Translations sourced from `en-US.tsv` (root) and `<lang>-<region>.tsv` (multi-language)
 - **Placeholder support**: Use `%s` for inserting dynamic values (e.g., "Showing %s of %s records")
 - **Add translations to `en-US.tsv`**: Columns are: label, English text, translator notes
+
+When adding new strings to the user interface: add the label, English message, and any relevant translation notes (clarifying contextual remarks) to the `en-US.tsv` file. Then, for each language TSV file found in the `trans` directory, add the label and translated message. The JS files for each language, including English, are generated automatically as part of the build process. Important: When adding new labels, place them at the same position — relative to other labels — in all TSV files.
 
 ## Documentation Preferences
 
@@ -125,10 +127,11 @@ DataVis is a library for data visualization with presentation via charts and tab
 - Keep documentation DRY (Don't Repeat Yourself) - reference other docs instead of duplicating
 - Use clear cross-references between related documentation files
 - Update the main architecture document when workflow structure changes
+- Don’t use emojis in source code, comments, or documentation
 
 ## Terminal Commands & Process Management
 
-### 🛡️ Safe Process Termination
+### Safe Process Termination
 - **Never use broad `pkill`**: Do not use `pkill -f "vite"` or `pkill -f "node"` — this kills ALL matching processes system-wide
 - **Kill by port only**: When stopping a dev server, kill only the specific port:
   ```bash
@@ -140,13 +143,6 @@ DataVis is a library for data visualization with presentation via charts and tab
   lsof -ti:8099 | xargs kill 2>/dev/null   # Kill only port 8099
   ```
 - **Why this matters**: Developers often run multiple Vite/Node apps simultaneously — killing by process name disrupts unrelated work
-
-### Dev Server for Test Pages
-- **Vite HMR issue**: Vite's Hot Module Replacement causes infinite iframe recursion on legacy test HTML pages
-- **Use static server for tests**: For testing pages in `tests/pages/`, use Python's HTTP server:
-  ```bash
-  python3 -m http.server 8099
-  ```
 
 ## Working with GitHub Actions Workflows
 
@@ -168,6 +164,8 @@ Use GNU Make for all build operations:
 - `make clean` — Remove build products and generated test data
 - `make teardown` — Reset development environment (run when switching branches)
 
+You can run individual tests using `npm run test --file=<NAME>` (note that `<NAME>` is the file name without the `.js` extension).
+
 ## Branch Management
 
 - **`master`**: Development branch, will become next major release
@@ -181,7 +179,7 @@ Use GNU Make for all build operations:
 
 Testing is done using Mocha to run tests, Selenium to communicate with the browser, and Chai for assertions.
 
-Test pages are located in the `tests/pages` directory. They are split up by whether they primarily test grid features or graph features.
+Test pages are located in the `tests/pages` directory. They are split up by whether they primarily test grid features or graph features. When writing a new test page, follow the example set by `vite.html` for including JS and CSS.
 
 The tests themselves are located in the `tests/selenium` directory.
 
@@ -207,7 +205,7 @@ If you must make a commit, follow these guidelines:
 
 ## Quick Reference
 
-### 🪶 All Changes should be considered for Pull Request Philosophy
+### All Changes should be considered for Pull Request Philosophy
 
 * **Smallest viable change**: Always make the smallest change that fully solves the problem.
 * **Fewest files first**: Start with the minimal number of files required.

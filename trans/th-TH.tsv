@@ -30,12 +30,28 @@ GRID.TITLEBAR.SHOW_HIDE	แสดง/ซ่อนตาราง
 GRID.TITLEBAR.SHOW_HIDE_CONTROLS	แสดง/ซ่อนตัวควบคุมตาราง	
 GRID.TITLEBAR.SHOW_DEBUG_INFO	แสดงข้อมูลดีบักของตาราง	
 		
+// Grid omnifilter		
+		
+GRID.OMNIFILTER.PLACEHOLDER	พิมพ์เพื่อกรองแถว...	
+GRID.OMNIFILTER.ARIA_LABEL	กรองทุกแถวตามข้อความ	
+GRID.OMNIFILTER.CLEAR	ล้างตัวกรอง	
+GRID.OMNIFILTER.TOGGLE	สลับตัวกรองการค้นหา	
+		
+// Pagination		
+		
+GRID.PAGINATION.ARIA_LABEL	การนำทางหน้า	
+GRID.PAGINATION.GO_TO_PAGE	ไปยังหน้า %s	
+		
 // Grid toolbar		
 		
 GRID_TOOLBAR.PLAIN.SHOW_MORE_ON_SCROLL	แสดงเพิ่มเติมเมื่อเลื่อน	
 GRID_TOOLBAR.PLAIN.SHOW_ALL_ROWS	แสดงแถวทั้งหมด	
 GRID_TOOLBAR.PLAIN.COLUMNS	คอลัมน์	
 GRID_TOOLBAR.PLAIN.TEMPLATES_EDITOR	ตัวแก้ไขเทมเพลต	
+GRID_TOOLBAR.PLAIN.ROW_MODE	โหมดแถว
+GRID_TOOLBAR.PLAIN.ROW_MODE.WRAPPED	ตัดบรรทัด	
+GRID_TOOLBAR.PLAIN.ROW_MODE.CLIPPED	ตัดข้อความ	
+GRID_TOOLBAR.PLAIN.AUTO_RESIZE_COLUMNS	ปรับขนาดคอลัมน์อัตโนมัติ
 		
 GRID_TOOLBAR.GROUP.MODE.SUMMARY	สรุป	
 GRID_TOOLBAR.GROUP.MODE.DETAIL	รายละเอียด	
@@ -136,6 +152,9 @@ GRID.TABLE.SORT_MENU.RESET_SORT	รีเซ็ตการเรียงลำ
 		
 GRID.TABLE.DRAGGABLE_FIELD_HELP	คุณสามารถลากและวางฟิลด์นี้ไปยังตัวควบคุมตารางด้านบนเพื่อกรอง จัดกลุ่ม หรือ Pivot	
 GRID.TABLE.ADD_FILTER_HELP	คลิกเพื่อเพิ่มตัวกรองสำหรับ "%s"	
+		
+GRID.TABLE.RESIZE_COLUMN	ลากเพื่อปรับขนาดคอลัมน์
+GRID.TABLE.REORDER_COLUMN	ลากเพื่อเรียงลำดับคอลัมน์ใหม่
 		
 // Group Functions		
 		

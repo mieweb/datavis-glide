@@ -30,12 +30,28 @@ GRID.TITLEBAR.SHOW_HIDE	Tampilkan/Sembunyikan Grid
 GRID.TITLEBAR.SHOW_HIDE_CONTROLS	Tampilkan/Sembunyikan Kontrol Grid	
 GRID.TITLEBAR.SHOW_DEBUG_INFO	Tampilkan Info Debug Grid	
 		
+// Grid omnifilter		
+		
+GRID.OMNIFILTER.PLACEHOLDER	Ketik untuk memfilter baris...	
+GRID.OMNIFILTER.ARIA_LABEL	Filter semua baris berdasarkan teks	
+GRID.OMNIFILTER.CLEAR	Hapus filter	
+GRID.OMNIFILTER.TOGGLE	Alihkan filter pencarian	
+		
+// Pagination		
+		
+GRID.PAGINATION.ARIA_LABEL	Navigasi halaman	
+GRID.PAGINATION.GO_TO_PAGE	Pergi ke halaman %s	
+		
 // Grid toolbar		
 		
 GRID_TOOLBAR.PLAIN.SHOW_MORE_ON_SCROLL	Tampilkan Lebih Banyak saat Menggulir	
 GRID_TOOLBAR.PLAIN.SHOW_ALL_ROWS	Tampilkan Semua Baris	
 GRID_TOOLBAR.PLAIN.COLUMNS	Kolom	
 GRID_TOOLBAR.PLAIN.TEMPLATES_EDITOR	Editor Template	
+GRID_TOOLBAR.PLAIN.ROW_MODE	Mode Baris
+GRID_TOOLBAR.PLAIN.ROW_MODE.WRAPPED	Terbungkus	
+GRID_TOOLBAR.PLAIN.ROW_MODE.CLIPPED	Terpotong	
+GRID_TOOLBAR.PLAIN.AUTO_RESIZE_COLUMNS	Ubah ukuran kolom otomatis
 		
 GRID_TOOLBAR.GROUP.MODE.SUMMARY	Ringkasan	
 GRID_TOOLBAR.GROUP.MODE.DETAIL	Rinci	
@@ -136,6 +152,9 @@ GRID.TABLE.SORT_MENU.RESET_SORT	Atur Ulang Urutan
 		
 GRID.TABLE.DRAGGABLE_FIELD_HELP	Anda dapat menyeret & melepaskan bidang ini ke kontrol grid di atas untuk memfilter, mengelompokkan, atau pivot.	
 GRID.TABLE.ADD_FILTER_HELP	Klik untuk menambah filter untuk "%s"	
+		
+GRID.TABLE.RESIZE_COLUMN	Seret untuk mengubah ukuran kolom
+GRID.TABLE.REORDER_COLUMN	Seret untuk mengurutkan ulang kolom
 		
 // Group Functions		
 		

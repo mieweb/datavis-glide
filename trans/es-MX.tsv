@@ -30,12 +30,28 @@ GRID.TITLEBAR.SHOW_HIDE	Mostrar/Ocultar Tabla
 GRID.TITLEBAR.SHOW_HIDE_CONTROLS	Mostrar/Ocultar Controles de Tabla	
 GRID.TITLEBAR.SHOW_DEBUG_INFO	Mostrar Información de Depuración de la Tabla	
 		
+// Grid omnifilter		
+		
+GRID.OMNIFILTER.PLACEHOLDER	Escribe para filtrar filas...	
+GRID.OMNIFILTER.ARIA_LABEL	Filtrar todas las filas por texto	
+GRID.OMNIFILTER.CLEAR	Limpiar filtro	
+GRID.OMNIFILTER.TOGGLE	Alternar filtro de búsqueda	
+		
+// Pagination		
+		
+GRID.PAGINATION.ARIA_LABEL	Navegación de páginas	
+GRID.PAGINATION.GO_TO_PAGE	Ir a la página %s	
+		
 // Grid toolbar		
 		
 GRID_TOOLBAR.PLAIN.SHOW_MORE_ON_SCROLL	Mostrar más al desplazar	
 GRID_TOOLBAR.PLAIN.SHOW_ALL_ROWS	Mostrar todas las filas	
 GRID_TOOLBAR.PLAIN.COLUMNS	Columnas	
 GRID_TOOLBAR.PLAIN.TEMPLATES_EDITOR	Editor de Plantillas	
+GRID_TOOLBAR.PLAIN.ROW_MODE	Modo de fila
+GRID_TOOLBAR.PLAIN.ROW_MODE.WRAPPED	Ajustado	
+GRID_TOOLBAR.PLAIN.ROW_MODE.CLIPPED	Recortado	
+GRID_TOOLBAR.PLAIN.AUTO_RESIZE_COLUMNS	Redimensionar columnas automáticamente
 		
 GRID_TOOLBAR.GROUP.MODE.SUMMARY	Resumen	
 GRID_TOOLBAR.GROUP.MODE.DETAIL	Detalle	
@@ -136,6 +152,9 @@ GRID.TABLE.SORT_MENU.RESET_SORT	Restablecer orden
 		
 GRID.TABLE.DRAGGABLE_FIELD_HELP	Puedes arrastrar y soltar este campo en los controles de la tabla de arriba para filtrar, agrupar o pivotar.	
 GRID.TABLE.ADD_FILTER_HELP	Haz clic para agregar un filtro para "%s"	
+		
+GRID.TABLE.RESIZE_COLUMN	Arrastra para redimensionar columna
+GRID.TABLE.REORDER_COLUMN	Arrastra para reordenar columna
 		
 // Group Functions		
 		

@@ -30,12 +30,28 @@ GRID.TITLEBAR.SHOW_HIDE	Hiện/Ẩn Lưới
 GRID.TITLEBAR.SHOW_HIDE_CONTROLS	Hiện/Ẩn Điều Khiển Lưới	
 GRID.TITLEBAR.SHOW_DEBUG_INFO	Hiện Thông Tin Gỡ Lỗi Lưới	
 		
+// Grid omnifilter		
+		
+GRID.OMNIFILTER.PLACEHOLDER	Nhập để lọc hàng...	
+GRID.OMNIFILTER.ARIA_LABEL	Lọc tất cả hàng theo văn bản	
+GRID.OMNIFILTER.CLEAR	Xóa bộ lọc	
+GRID.OMNIFILTER.TOGGLE	Bật/tắt bộ lọc tìm kiếm	
+		
+// Pagination		
+		
+GRID.PAGINATION.ARIA_LABEL	Điều hướng trang	
+GRID.PAGINATION.GO_TO_PAGE	Đi đến trang %s	
+		
 // Grid toolbar		
 		
 GRID_TOOLBAR.PLAIN.SHOW_MORE_ON_SCROLL	Hiển thị thêm khi cuộn	
 GRID_TOOLBAR.PLAIN.SHOW_ALL_ROWS	Hiển thị tất cả hàng	
 GRID_TOOLBAR.PLAIN.COLUMNS	Cột	
 GRID_TOOLBAR.PLAIN.TEMPLATES_EDITOR	Trình chỉnh sửa mẫu	
+GRID_TOOLBAR.PLAIN.ROW_MODE	Chế độ hàng
+GRID_TOOLBAR.PLAIN.ROW_MODE.WRAPPED	Xuống dòng	
+GRID_TOOLBAR.PLAIN.ROW_MODE.CLIPPED	Cắt bớt	
+GRID_TOOLBAR.PLAIN.AUTO_RESIZE_COLUMNS	Tự động điều chỉnh kích thước cột
 		
 GRID_TOOLBAR.GROUP.MODE.SUMMARY	Tóm tắt	
 GRID_TOOLBAR.GROUP.MODE.DETAIL	Chi tiết	
@@ -136,6 +152,9 @@ GRID.TABLE.SORT_MENU.RESET_SORT	Đặt lại sắp xếp
 		
 GRID.TABLE.DRAGGABLE_FIELD_HELP	Bạn có thể kéo & thả trường này vào các điều khiển lưới phía trên để lọc, nhóm hoặc xoay.	
 GRID.TABLE.ADD_FILTER_HELP	Nhấn để thêm bộ lọc cho "%s"	
+		
+GRID.TABLE.RESIZE_COLUMN	Kéo để thay đổi kích thước cột
+GRID.TABLE.REORDER_COLUMN	Kéo để sắp xếp lại cột
 		
 // Group Functions		
 		

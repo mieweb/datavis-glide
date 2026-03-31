@@ -30,12 +30,28 @@ GRID.TITLEBAR.SHOW_HIDE	Показать/Скрыть таблицу
 GRID.TITLEBAR.SHOW_HIDE_CONTROLS	Показать/Скрыть элементы управления таблицей	
 GRID.TITLEBAR.SHOW_DEBUG_INFO	Показать отладочную информацию таблицы	
 		
+// Grid omnifilter		
+		
+GRID.OMNIFILTER.PLACEHOLDER	Введите для фильтрации строк...	
+GRID.OMNIFILTER.ARIA_LABEL	Фильтровать все строки по тексту	
+GRID.OMNIFILTER.CLEAR	Очистить фильтр	
+GRID.OMNIFILTER.TOGGLE	Переключить фильтр поиска	
+		
+// Pagination		
+		
+GRID.PAGINATION.ARIA_LABEL	Навигация по страницам	
+GRID.PAGINATION.GO_TO_PAGE	Перейти на страницу %s	
+		
 // Grid toolbar		
 		
 GRID_TOOLBAR.PLAIN.SHOW_MORE_ON_SCROLL	Показать больше при прокрутке	
 GRID_TOOLBAR.PLAIN.SHOW_ALL_ROWS	Показать все строки	
 GRID_TOOLBAR.PLAIN.COLUMNS	Столбцы	
 GRID_TOOLBAR.PLAIN.TEMPLATES_EDITOR	Редактор шаблонов	
+GRID_TOOLBAR.PLAIN.ROW_MODE	Режим строки
+GRID_TOOLBAR.PLAIN.ROW_MODE.WRAPPED	С переносом	
+GRID_TOOLBAR.PLAIN.ROW_MODE.CLIPPED	Обрезанный	
+GRID_TOOLBAR.PLAIN.AUTO_RESIZE_COLUMNS	Автоподбор ширины столбцов
 		
 GRID_TOOLBAR.GROUP.MODE.SUMMARY	Сводка	
 GRID_TOOLBAR.GROUP.MODE.DETAIL	Детально	
@@ -136,6 +152,9 @@ GRID.TABLE.SORT_MENU.RESET_SORT	Сбросить сортировку
 		
 GRID.TABLE.DRAGGABLE_FIELD_HELP	Вы можете перетащить это поле в элементы управления таблицей выше для фильтрации, группировки или сводки.	
 GRID.TABLE.ADD_FILTER_HELP	Нажмите, чтобы добавить фильтр для «%s»	
+		
+GRID.TABLE.RESIZE_COLUMN	Перетащите для изменения размера столбца
+GRID.TABLE.REORDER_COLUMN	Перетащите для изменения порядка столбцов
 		
 // Group Functions		
 		

@@ -10,7 +10,7 @@ import {
 	setProp,
 } from '../util/misc.js';
 import { trans } from '../trans.js';
-import OrdMap from '../util/ordmap.js';
+import OrdMap from 'datavis-ace/src/util/ordmap.js';
 
 // TemplatesEditor {{{1
 

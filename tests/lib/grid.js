@@ -119,7 +119,7 @@ class GridUi {
 	 */
 
 	get gearBtn() {
-		return this.driver.findElement(By.css('div.wcdv_titlebar_controls > button[title="Show/Hide Options"]'));
+		return this.driver.findElement(By.css('div.wcdv_titlebar_controls > button[title="Show/Hide Grid Controls"]'));
 	}
 
 	/**
@@ -184,6 +184,38 @@ class GridUi {
 
 	get slider() {
 		return this.grid.findElement(By.css('div.wcdv-slider'));
+	}
+
+	/**
+	 * Locate the omnifilter input element.
+	 */
+
+	get omnifilterInput() {
+		return this.driver.findElement(By.css('.wcdv_omnifilter .wcdv_omnifilter_input'));
+	}
+
+	/**
+	 * Locate the omnifilter container element.
+	 */
+
+	get omnifilterContainer() {
+		return this.driver.findElement(By.css('.wcdv_omnifilter'));
+	}
+
+	/**
+	 * Locate the omnifilter clear button.
+	 */
+
+	get omnifilterClearBtn() {
+		return this.driver.findElement(By.css('.wcdv_omnifilter .wcdv_omnifilter_clear'));
+	}
+
+	/**
+	 * Locate the omnifilter toggle button (magnifying glass icon).
+	 */
+
+	get omnifilterToggle() {
+		return this.driver.findElement(By.css('.wcdv_omnifilter_toggle'));
 	}
 }
 
@@ -263,6 +295,70 @@ class Grid {
 			}
 			return x;
 		}, opts.timeout);
+	}
+
+	// Omnifilter {{{2
+
+	// #openOmnifilter {{{3
+
+	/**
+	 * Ensure the omnifilter input is visible by clicking the toggle if needed.
+	 */
+
+	async openOmnifilter() {
+		const container = await this.ui.omnifilterContainer;
+		if (!(await container.isDisplayed())) {
+			const toggle = await this.ui.omnifilterToggle;
+			await toggle.click();
+			await sleep(0.1);
+		}
+	}
+
+	// #typeInOmnifilter {{{3
+
+	/**
+	 * Type into the omnifilter and wait a moment for the filtering to apply.
+	 *
+	 * @param {string} text The text to type into the omnifilter.
+	 */
+
+	async typeInOmnifilter(text) {
+		await this.openOmnifilter();
+		const input = await this.ui.omnifilterInput;
+		await input.clear();
+		if (text.length > 0) {
+			await input.sendKeys(text);
+		}
+		else {
+			// clear() may not fire an 'input' event in all browsers, so dispatch
+			// one manually to ensure the omnifilter reacts to the empty value.
+			await this.driver.executeScript(
+				'arguments[0].dispatchEvent(new Event("input", {bubbles: true}))',
+				input
+			);
+		}
+		// Wait for the 500ms debounce delay plus a small buffer.
+		await sleep(0.6);
+	}
+
+	// #getVisibleRowCount {{{3
+
+	/**
+	 * Count only the visible data rows in the table body (excludes hidden rows and "show more"
+	 * rows).
+	 *
+	 * @returns {Promise<number>} Number of visible data rows.
+	 */
+
+	async getVisibleRowCount() {
+		return this.driver.executeScript(`
+			var rows = document.querySelectorAll('div.wcdv_grid_table > table > tbody > tr[data-row-num]');
+			var count = 0;
+			for (var i = 0; i < rows.length; i++) {
+				if (rows[i].style.display !== 'none') count++;
+			}
+			return count;
+		`);
 	}
 
 	// #getNumRecords {{{2

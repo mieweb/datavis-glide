@@ -1,9 +1,11 @@
 import globals from "globals";
 import js from "@eslint/js";
 import stylistic from '@stylistic/eslint-plugin';
+import importPlugin from 'eslint-plugin-import';
 
 export default [
   js.configs.recommended,
+  importPlugin.flatConfigs.recommended,
   {
     // "env": {
     //   "browser": true,

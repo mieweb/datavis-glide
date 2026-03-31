@@ -28,12 +28,12 @@ import {
 	setElement,
 } from '../../util/misc.js';
 
-import Lock from '../../util/lock.js';
-import {AggregateInfo} from '../../aggregates.js';
+import Lock from 'datavis-ace/src/util/lock.js';
+import {AggregateInfo} from 'datavis-ace/src/aggregates.js';
 import {GridFilterSet} from '../../grid_filter.js';
 import {GridRenderer} from '../../grid_renderer.js';
-import {ComputedView} from '../../computed_view.js';
-import {GROUP_FUNCTION_REGISTRY} from '../../group_fun.js';
+import {ComputedView} from 'datavis-ace/src/computed_view.js';
+import {GROUP_FUNCTION_REGISTRY} from 'datavis-ace/src/group_fun.js';
 
 import handlebarsUtil from '../../util/handlebars.js';
 

@@ -17,10 +17,10 @@ import {
 	setProp,
 	toInt,
 } from './util/misc.js';
-import OrdMap from './util/ordmap.js';
+import OrdMap from 'datavis-ace/src/util/ordmap.js';
 
-import {ComputedView} from './computed_view.js';
-import {Prefs} from './prefs.js';
+import {ComputedView} from 'datavis-ace/src/computed_view.js';
+import {Prefs} from 'datavis-ace/src/prefs.js';
 import {trans} from './trans.js';
 
 import GRAPH_RENDERER_REGISTRY from './reg/graph_renderer.js';

@@ -22,11 +22,11 @@ import {
 	mixinLogging,
 	setProp,
 } from '../../util/misc.js';
-import {AggregateInfo} from '../../aggregates';
-import {GROUP_FUNCTION_REGISTRY} from '../../group_fun.js';
+import {AggregateInfo} from 'datavis-ace/src/aggregates';
+import {GROUP_FUNCTION_REGISTRY} from 'datavis-ace/src/group_fun.js';
 
 import { GraphRenderer } from '../../graph_renderer.js';
-import { Source } from '../../source.js';
+import { Source } from 'datavis-ace/src/source.js';
 
 // GraphRendererSvelteGantt {{{1
 

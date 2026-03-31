@@ -1,12 +1,13 @@
 {
-  "name": "@mieweb/wcdatavis",
-  "version": "3.3.0",
-  "description": "Data visualization library",
+  "name": "@mieweb/datavis-glide",
+  "version": "4.0.0",
+  "description": "DataVis GLIDE (Graphical Layer for Interactive Data Exploration)",
   "keywords": [
-    "grid",
-    "graph",
     "data",
-    "visualization"
+    "grid",
+    "table",
+    "graph",
+    "chart"
   ],
   "license": "PROPRIETARY",
   "author": "Taylor Venable <tvenable@mieweb.com>",
@@ -28,6 +29,9 @@
     "type": "git",
     "url": "https://github.com/mieweb/wcdatavis.git"
   },
+  "config": {
+    "chromedriver_version": "LATEST"
+  },
   "scripts": {
     "dev": "vite",
     "lint": "eslint src tests/lib tests/selenium",
@@ -41,6 +45,7 @@
     "chart.js": "=4.5.1",
     "core-js": "=3.47.0",
     "css.escape": "=1.5.1",
+    "datavis-ace": "../datavis-ace",
     "es6-symbol": "=3.1.4",
     "flatpickr": "=4.6.13",
     "handlebars": "=4.7.8",
@@ -53,9 +58,9 @@
     "papaparse": "=5.5.3",
     "sprintf-js": "=1.1.3",
     "squirrelly": "=9.1.0",
-    "svelte-gantt": "=4.4.3",
     "sumoselect": "https://github.com/mieweb/jquery.sumoselect.git",
-    "underscore": "=1.13.7"
+    "svelte-gantt": "=4.4.3",
+    "underscore": "=1.13.8"
   },
   "devDependencies": {
     "@babel/core": "=7.28.5",
@@ -71,8 +76,9 @@
     "@types/mocha": "=10.0.10",
     "bluebird": "=3.7.2",
     "chai": "=6.2.2",
-    "chromedriver": "latest",
+    "chromedriver": "^146.0.6",
     "eslint": "=9.39.2",
+    "eslint-plugin-import": "^2.32.0",
     "globals": "=17.0.0",
     "jsdoc": "=4.0.5",
     "jshint": "=2.13.6",

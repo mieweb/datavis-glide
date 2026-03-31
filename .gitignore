@@ -10,14 +10,7 @@ trans.tsv
 doc/_build
 doc/.python-version
 doc/html
-dist/wcdatavis.css
-dist/wcdatavis.js
-dist/wcdatavis.min.js
-examples/wcdatavis.js
-examples/wcdatavis.min.js
-examples/wcdatavis.css
-examples/wcdatavis-extra.css
-examples/test/*.json
+dist
 trans-missing/*.tsv
 trans-missing/*.json
 tests/data/*.csv
@@ -28,7 +21,6 @@ tests/pages/wcdatavis.css
 tests/pages/*.csv
 tests/pages/*.json
 tests/pages/*.xml
-third-party/*.js
-third-party/*.css
 npm-debug.log
 reports
+.playwright-mcp

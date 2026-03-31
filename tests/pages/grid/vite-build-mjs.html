@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8"/>
+		<link rel="stylesheet" href="../font-awesome.css"/>
+		<link rel="stylesheet" href="../base.css"/>
+		<link rel="stylesheet" href="/dist/vite/wcdatavis.css"/>
+		<script type="module">
+import { Source, ComputedView, Grid } from '/dist/vite/wcdatavis.mjs';
+document.addEventListener('DOMContentLoaded', function () {
+	window.MIE = window.MIE || {};
+	window.MIE.DEBUGGING = true;
+
+	let params = new URLSearchParams(document.location.search);
+	let dnd = params.has('dnd');
+
+	var source = new Source({
+		type: 'http',
+		url: '../random100.json'
+	});
+	var view = new ComputedView(source);
+	new Grid({
+		id: 'grid',
+		computedView: view,
+		table: {
+			features: {
+				limit: false,
+				rowSelect: true,
+				columnResize: dnd,
+				columnReorder: dnd,
+			},
+			columns: [
+					'rowId'
+				, 'string1'
+				, 'country'
+				, 'state'
+				, 'fruit'
+				, 'Pentel'
+				, 'Pilot'
+				, 'Uni'
+				, 'Zebra'
+				, 'link'
+				, 'int1'
+				, 'int2'
+				, 'int3'
+				, 'int4'
+				, 'int5'
+				, 'int6'
+				, 'int7'
+				, 'int8'
+				, 'int9'
+				, 'float1'
+				, 'float2'
+				, 'float3'
+				, 'float4'
+				, 'float5'
+				, 'float6'
+				, 'float7'
+				, 'float8'
+				, 'float9'
+				, 'currency1'
+				, 'currency2'
+				, 'currency3'
+				, 'currency4'
+				, 'date1'
+				, 'date2'
+				, 'date3'
+				, 'time1'
+				, 'time2'
+				, 'time3'
+				, 'time4'
+				, 'time5'
+				, 'time6'
+				, 'time7'
+				, 'time8'
+				, 'time9'
+				, 'time10'
+				, 'time11'
+				, 'time12'
+				, 'datetime1'
+				, 'datetime2'
+				, 'datetime3'
+				, 'datetime4'
+				, 'datetime5'
+				, 'datetime6'
+				, 'datetime7'
+				, 'datetime8'
+				, 'datetime9'
+				, 'datetime10'
+				, 'datetime11'
+				, 'datetime12'
+				, 'datetime13'
+				, 'datetime14'
+				, 'datetime15'
+				, 'datetime16'
+				, 'datetime17'
+				, 'datetime18'
+				, 'fixedPrecision1'
+				, 'fixedPrecision2'
+				, 'fixedPrecision3'
+				, 'boolean1'
+				, 'boolean2'
+				, 'duration1'
+				, { field: 'duration2', format: '%[d:%d days ]%02h:%02m:%02s' }
+				, { field: 'duration3', format: '%[d:%d days, ]%h hours, %m minutes' }
+			]
+		}
+	}, {
+		title: 'Test - Grid - Default',
+		showControls: true
+	});
+});
+		</script>
+	</head>
+	<body>
+		<div id="grid"></div>
+	</body>
+</html>

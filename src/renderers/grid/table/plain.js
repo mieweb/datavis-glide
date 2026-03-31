@@ -31,12 +31,12 @@ import {
 	setElement,
 } from '../../../util/misc.js';
 
-import {AggregateInfo} from '../../../aggregates.js';
+import {AggregateInfo} from 'datavis-ace/src/aggregates.js';
 import {GridFilterSet} from '../../../grid_filter.js';
 import {GridRenderer} from '../../../grid_renderer.js';
-import {ComputedView} from '../../../computed_view.js';
-import {Source} from '../../../source.js';
-import {GROUP_FUNCTION_REGISTRY} from '../../../group_fun.js';
+import {ComputedView} from 'datavis-ace/src/computed_view.js';
+import {Source} from 'datavis-ace/src/source.js';
+import {GROUP_FUNCTION_REGISTRY} from 'datavis-ace/src/group_fun.js';
 
 import handlebarsUtil from '../../../util/handlebars.js';
 import GridTable from '../table.js';
@@ -77,6 +77,10 @@ var GridTablePlain = makeSubclass('GridTablePlain', GridTable, function (grid, d
 
 	self._focusEventId = gensym('grid-plain-');
 
+	// Pagination state.
+	self._paginationPage = 0;
+	self._paginationRowsPerPage = getPropDef(40, self.defn, 'table', 'pagination', 'rowsPerPage');
+
 	self.logDebug(self.makeLogTag() + ' DataVis // %s // Constructing grid table; features = %O', self.toString(), features);
 
 	self.addFilterHandler();
@@ -104,6 +108,37 @@ GridTablePlain.prototype.draw = function (root, opts, cont) {
 	var self = this;
 
 	GridTable.prototype.draw.call(self, root, opts, function () {
+		if (self.features.activeRow || self.features.omnifilter) {
+			self._hasFocus = false;
+			addFocusHandler(root, self._focusEventId, function (isFocused) {
+				self._hasFocus = isFocused;
+			});
+		}
+
+		if (self.features.omnifilter) {
+			jQuery(document).on('keydown.omnifilter-' + self._focusEventId, function (evt) {
+				var avoidElts = ['A', 'BUTTON', 'INPUT', 'SELECT', 'TEXTAREA'];
+
+				if (avoidElts.indexOf(evt.target.tagName) >= 0) {
+					return; // These elements don't count for turning on the omnifilter.
+				}
+
+				if (!self._hasFocus) {
+					return;
+				}
+
+				if (evt.key === 'f') {
+					evt.preventDefault();
+					evt.stopPropagation();
+					if (!self.grid.ui.omnifilter.is(':visible')) {
+						self.grid.ui.omnifilterToggle.addClass('wcdv_omnifilter_active');
+						self.grid.ui.omnifilter.show();
+					}
+					self.grid.ui.omnifilterInput.focus();
+				}
+			});
+		}
+
 		if (self.features.activeRow) {
 			if (getProp(self.defn, 'table', 'activeRow', 'slider')) {
 				self.ui.slider = new Slider();
@@ -121,11 +156,6 @@ GridTablePlain.prototype.draw = function (root, opts, cont) {
 				}
 
 				self.setActiveRow(jQuery(this).closest('tr'));
-			});
-
-			self._hasFocus = false;
-			addFocusHandler(root, self._focusEventId, function (isFocused) {
-				self._hasFocus = isFocused;
 			});
 
 			jQuery(document).on('keydown.active-row-' + self._focusEventId, function (evt) {
@@ -401,6 +431,12 @@ GridTablePlain.prototype.drawHeader = function (columns, data, typeInfo, opts) {
 			.css(headingThCss)
 			.append(headingThContainer);
 
+		var fti = typeInfo.get(field);
+
+		if (fti != null && fti.type != null) {
+			headingTh.attr('data-wcdv-field-type', fti.type);
+		}
+
 		// In the plain grid table output, the only way to sort is vertically by field.
 
 		self._addSortingToHeader(data, 'vertical', {field: field}, headingThControls.get(0));
@@ -531,16 +567,35 @@ GridTablePlain.prototype.drawHeader = function (columns, data, typeInfo, opts) {
 
 GridTablePlain.prototype.drawBody = function (data, typeInfo, columns, cont, opts) {
 	var self = this;
-	var useLimit = self.features.limit;
+
+	// When pagination is enabled, disable the limit feature so that all rows are rendered into the
+	// DOM.  Pagination controls visibility by showing/hiding TR elements per page.
+	var useLimit = self.features.pagination ? false : self.features.limit;
 	var limitConfig = getPropDef({}, self.defn, 'table', 'limit');
 	var usingTableTool = self.features.floatingHeader && getProp(self.defn, 'table', 'floatingHeader', 'method') === 'tabletool';
 
-	if (self.features.limit && limitConfig && data.data.length > limitConfig.threshold) {
+	if (self.features.limit && !self.features.pagination && limitConfig && data.data.length > limitConfig.threshold) {
 		self.logDebug(self.makeLogTag() + ' Limiting output to first ' + limitConfig.threshold + ' rows', self.toString());
 	}
 
 	if (self.opts.generateCsv) {
 		self.addDataToCsv(data);
+	}
+
+	// When pagination is enabled, wrap the continuation so that page visibility and pagination
+	// controls are applied after all rows have been rendered.  The originalCont must run first
+	// because it appends the tbody to the table and runs the full draw chain (including
+	// omnifilter, which sets all rows visible).  Pagination is then applied last.
+
+	if (self.features.pagination) {
+		var originalCont = cont;
+		cont = function () {
+			if (typeof originalCont === 'function') {
+				originalCont();
+			}
+			self._paginationApply();
+			self._paginationDrawControls();
+		};
 	}
 
 	// Clear out the body of the table.  We do this in case somebody invokes this function multiple
@@ -549,14 +604,20 @@ GridTablePlain.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 
 	self.ui.tbody.children().remove();
 
+	// Reset pagination to page 0 when redrawing all rows.
+	if (self.features.pagination) {
+		self._paginationPage = 0;
+	}
+
 	self._setupFullValueWin(data);
 
-	var renderDataRow = function (row) {
+	var renderDataRow = function (row, idx) {
 		var tr, td;
 
 		tr = document.createElement('tr');
 		tr.setAttribute('id', self.defn.table.id + '_' + row.rowNum);
 		tr.setAttribute('data-row-num', row.rowNum);
+		tr.classList.add(idx % 2 === 0 ? 'even' : 'odd');
 
 		// Create the check box which selects the row.
 
@@ -757,7 +818,7 @@ GridTablePlain.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 					: ('/ ' + data.data.length - 1)), self.toString());
 
 		for (var rowNum = startIndex; rowNum < data.data.length && rowNum < startIndex + howMany && !atLimit; rowNum += 1) {
-			renderDataRow(data.data[rowNum]);
+			renderDataRow(data.data[rowNum], rowNum);
 
 			if (!self.features.incremental
 					&& useLimit
@@ -859,6 +920,162 @@ GridTablePlain.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 	}
 
 	//self.ui.tbl.css({'table-layout': 'fixed'}); // XXX - Does nothing?!
+};
+
+// #_paginationGetTotalPages {{{2
+
+/**
+ * Return the total number of pages given the current data and rows-per-page setting.
+ *
+ * @return {number}
+ */
+
+GridTablePlain.prototype._paginationGetTotalPages = function () {
+	var self = this;
+	var rows = self.ui.tbody.children('tr[data-row-num]');
+	return Math.max(1, Math.ceil(rows.length / self._paginationRowsPerPage));
+};
+
+// #_paginationApply {{{2
+
+/**
+ * Show rows belonging to the current page and hide all others.  This is the core of the
+ * pagination feature: because every row is already in the DOM, switching pages is just toggling
+ * display on TR elements.
+ */
+
+GridTablePlain.prototype._paginationApply = function () {
+	var self = this;
+	var perPage = self._paginationRowsPerPage;
+	var page = self._paginationPage;
+	var startIdx = page * perPage;
+	var endIdx = startIdx + perPage;
+	var usingTableTool = self.features.floatingHeader && getProp(self.defn, 'table', 'floatingHeader', 'method') === 'tabletool' && window.TableTool != null;
+
+	self.ui.tbody.children('tr[data-row-num]').each(function (idx) {
+		if (idx >= startIdx && idx < endIdx) {
+			this.style.display = '';
+		}
+		else {
+			this.style.display = 'none';
+		}
+	});
+
+	if (usingTableTool) {
+		window.TableTool.update();
+	}
+};
+
+// #_paginationGoToPage {{{2
+
+/**
+ * Navigate to a specific page and update the pagination controls.
+ *
+ * @param {number} page Zero-based page index.
+ */
+
+GridTablePlain.prototype._paginationGoToPage = function (page) {
+	var self = this;
+	var totalPages = self._paginationGetTotalPages();
+
+	if (page < 0) {
+		page = 0;
+	}
+	else if (page >= totalPages) {
+		page = totalPages - 1;
+	}
+
+	self._paginationPage = page;
+	self._paginationApply();
+	self._paginationDrawControls();
+};
+
+// #_paginationDrawControls {{{2
+
+/**
+ * Draw (or redraw) the pagination navigation bar below the table.
+ *
+ * Layout: [first] ... [cur-2] [cur-1] [cur] [cur+1] [cur+2] ... [last]
+ */
+
+GridTablePlain.prototype._paginationDrawControls = function () {
+	var self = this;
+	var totalPages = self._paginationGetTotalPages();
+	var current = self._paginationPage;
+
+	// Remove the existing controls if present.
+	if (self.ui.paginationControls) {
+		self.ui.paginationControls.remove();
+	}
+
+	if (totalPages <= 1) {
+		// Only one page — no need for controls.
+		self.ui.paginationControls = null;
+		return;
+	}
+
+	var nav = jQuery('<nav>', {
+		'class': 'wcdv_pagination',
+		'aria-label': trans('GRID.PAGINATION.ARIA_LABEL')
+	});
+
+	var makeBtn = function (label, pageIdx, isCurrent) {
+		var btn = jQuery('<button>', {
+			'type': 'button',
+			'class': 'wcdv_pagination_btn' + (isCurrent ? ' wcdv_pagination_current' : ''),
+			'aria-label': trans('GRID.PAGINATION.GO_TO_PAGE', pageIdx + 1),
+			'aria-current': isCurrent ? 'page' : undefined
+		}).text(label);
+
+		if (!isCurrent) {
+			btn.on('click', function () {
+				self._paginationGoToPage(pageIdx);
+			});
+		}
+		else {
+			btn.attr('disabled', true);
+		}
+
+		return btn;
+	};
+
+	var makeEllipsis = function () {
+		return jQuery('<span>', { 'class': 'wcdv_pagination_ellipsis', 'aria-hidden': 'true' }).text('\u2026');
+	};
+
+	// Determine the range of page buttons to show around the current page.
+	var rangeStart = Math.max(0, current - 2);
+	var rangeEnd = Math.min(totalPages - 1, current + 2);
+
+	// [first]
+	if (rangeStart > 0) {
+		nav.append(makeBtn('1', 0, current === 0));
+	}
+
+	// ... before range
+	if (rangeStart > 1) {
+		nav.append(makeEllipsis());
+	}
+
+	// Page buttons in range
+	for (var i = rangeStart; i <= rangeEnd; i += 1) {
+		nav.append(makeBtn(String(i + 1), i, i === current));
+	}
+
+	// ... after range
+	if (rangeEnd < totalPages - 2) {
+		nav.append(makeEllipsis());
+	}
+
+	// [last]
+	if (rangeEnd < totalPages - 1) {
+		nav.append(makeBtn(String(totalPages), totalPages - 1, current === totalPages - 1));
+	}
+
+	self.ui.paginationControls = nav;
+
+	// Insert after the grid table container so pagination stays outside the scrollable area.
+	self.grid.ui.grid.after(nav);
 };
 
 // #drawFooter {{{2
@@ -1362,7 +1579,13 @@ GridTablePlain.prototype.clear = function () {
 		self.ui.slider.destroy();
 	}
 
+	if (self.ui != null && self.ui.paginationControls != null) {
+		self.ui.paginationControls.remove();
+		self.ui.paginationControls = null;
+	}
+
 	jQuery(document).off('keydown.active-row-' + self._focusEventId);
+	jQuery(document).off('keydown.omnifilter-' + self._focusEventId);
 	removeFocusHandler(self._focusEventId);
 
 	self.super['GridTable'].clear();
