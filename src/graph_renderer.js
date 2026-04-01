@@ -1,19 +1,10 @@
 import _ from 'underscore';
-import moment from 'moment';
-import numeral from 'numeral';
 
 import {
-	dataURItoBlob,
-	deepCopy,
-	deepDefaults,
-	getProp,
-	loadScript,
 	makeSubclass,
 	mixinEventHandling,
 	mixinLogging,
-	setProp,
 } from './util/misc.js';
-import {AggregateInfo, GROUP_FUNCTION_REGISTRY} from 'datavis-ace';
 
 // GraphRenderer {{{1
 

@@ -7,9 +7,7 @@ import jQuery from 'jquery';
 
 import {
 	fontAwesome,
-	getPropDef,
 	makeSubclass,
-	moveArrayElement,
 	ordmapAsHtmlDefnList,
 } from '../../util/misc.js';
 

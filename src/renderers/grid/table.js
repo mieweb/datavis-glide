@@ -15,24 +15,16 @@ import {
 	getProp,
 	getPropDef,
 	isElement,
-	isVisible,
-	makeOperationButton,
 	makeSubclass,
-	mergeSort2,
 	mixinEventHandling,
 	mixinLogging,
 	objFromArray,
-	onVisibilityChange,
-	setPropDef,
 	setTableCell,
 	setElement,
 } from '../../util/misc.js';
 
-import { Lock, AggregateInfo, ComputedView, GROUP_FUNCTION_REGISTRY } from 'datavis-ace';
-import {GridFilterSet} from '../../grid_filter.js';
+import { Lock, ComputedView, GROUP_FUNCTION_REGISTRY } from 'datavis-ace';
 import {GridRenderer} from '../../grid_renderer.js';
-
-import handlebarsUtil from '../../util/handlebars.js';
 
 import {TableExport, Csv} from '../../util/csv.js';
 import flags from '../../flags.js';

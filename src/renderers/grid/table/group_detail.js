@@ -4,35 +4,21 @@ import _ from 'underscore';
 import sprintf from 'sprintf-js';
 import jQuery from 'jquery';
 
-import { trans } from '../../../trans.js';
 import {
-	deepCopy,
 	determineColumns,
 	fontAwesome,
 	format,
-	gensym,
-	getElement,
 	getProp,
-	getPropDef,
 	isElement,
 	isVisible,
-	makeOperationButton,
 	makeSubclass,
 	mergeSort2,
-	mixinEventHandling,
 	mixinLogging,
-	objFromArray,
-	onVisibilityChange,
-	setPropDef,
-	setTableCell,
-	setElement,
 } from '../../../util/misc.js';
 
-import {GridFilterSet} from '../../../grid_filter.js';
 import {GridRenderer} from '../../../grid_renderer.js';
 import {AggregateInfo, ComputedView, GROUP_FUNCTION_REGISTRY} from 'datavis-ace';
 
-import handlebarsUtil from '../../../util/handlebars.js';
 import GridTable from '../table.js';
 
 // GridTableGroupDetail {{{1

@@ -1,22 +1,15 @@
 import _ from 'underscore';
 import moment from 'moment';
-import numeral from 'numeral';
-import {BigNumber} from 'bignumber.js';
 
 import jQuery from 'jquery';
 
 import {
 	deepDefaults,
-	fontAwesome,
 	gensym,
 	getPropDef,
-	isFloat,
-	isInt,
 	makeSubclass,
 	mixinEventHandling,
 	mixinLogging,
-	toFloat,
-	toInt,
 } from './util/misc.js';
 
 import GridFilter from './ui/grid_filter.js';

@@ -1,7 +1,6 @@
 // Imports {{{1
 
 import _ from 'underscore';
-import sprintf from 'sprintf-js';
 import jQuery from 'jquery';
 
 import { trans } from './trans.js';

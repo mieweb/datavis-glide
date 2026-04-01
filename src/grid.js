@@ -1,7 +1,6 @@
 // Imports {{{1
 
 import _ from 'underscore';
-import sprintf from 'sprintf-js';
 
 import jQuery from 'jquery';
 
@@ -13,9 +12,7 @@ import {
 	getProp,
 	getPropDef,
 	I,
-	makeRadioButtons,
 	makeSubclass,
-	makeToggleCheckbox,
 	mixinEventHandling,
 	mixinLogging,
 	mixinNameSetting,

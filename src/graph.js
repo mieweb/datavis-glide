@@ -17,7 +17,7 @@ import {
 	setProp,
 	toInt,
 } from './util/misc.js';
-import { OrdMap, ComputedView, Prefs } from 'datavis-ace';
+import { ComputedView, Prefs } from 'datavis-ace';
 import {trans} from './trans.js';
 
 import GRAPH_RENDERER_REGISTRY from './reg/graph_renderer.js';

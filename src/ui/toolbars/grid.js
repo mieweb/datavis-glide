@@ -10,11 +10,10 @@ import {
 	makeRadioButtons,
 	makeSubclass,
 	makeToggleCheckbox,
-	mixinLogging,
 } from '../../util/misc.js';
 
 import {ToolbarSection} from '../toolbar.js';
-import {PREFS_BACKEND_REGISTRY, ComputedView, MirageView} from 'datavis-ace';
+import {PREFS_BACKEND_REGISTRY, ComputedView} from 'datavis-ace';
 import {GridTableOptsWin} from '../windows/grid_table_opts.js';
 
 // PlainToolbar {{{1

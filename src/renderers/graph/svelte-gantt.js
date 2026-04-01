@@ -1,6 +1,5 @@
 import _ from 'underscore';
 import moment from 'moment';
-import numeral from 'numeral';
 import jQuery from 'jquery';
 
 // Promise polyfill for Svelte in IE mode.
@@ -13,16 +12,10 @@ import 'css.escape';
 import { SvelteGantt, SvelteGanttTable, SvelteGanttDependencies } from 'svelte-gantt';
 
 import {
-	dataURItoBlob,
-	deepCopy,
-	deepDefaults,
-	getProp,
-	loadScript,
 	makeSubclass,
 	mixinLogging,
-	setProp,
 } from '../../util/misc.js';
-import {AggregateInfo, GROUP_FUNCTION_REGISTRY, Source} from 'datavis-ace';
+import {Source} from 'datavis-ace';
 
 import { GraphRenderer } from '../../graph_renderer.js';
 

@@ -1,18 +1,9 @@
 import _ from 'underscore';
-import moment from 'moment';
-import numeral from 'numeral';
 import jQuery from 'jquery';
 
 import {
-	dataURItoBlob,
-	deepCopy,
-	deepDefaults,
-	getProp,
-	loadScript,
 	makeSubclass,
-	setProp,
 } from '../../util/misc.js';
-import {AggregateInfo, GROUP_FUNCTION_REGISTRY} from 'datavis-ace';
 
 import { GraphRenderer } from '../../graph_renderer.js';
 
@@ -22,7 +13,7 @@ var GraphRendererJit = makeSubclass('GraphRendererJit', GraphRenderer);
 
 // #draw {{{2
 
-GraphRendererJit.prototype.draw = function () {
+GraphRendererJit.prototype.draw = function (elt) {
 	var self = this;
 
 	elt.children().remove();
