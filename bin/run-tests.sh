@@ -36,6 +36,7 @@ main() {
         'selection'
         'sort'
         'sourceParams'
+        'sources'
     )
     npm run test --file="${tests[*]}"
     exit $?

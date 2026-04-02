@@ -3,24 +3,12 @@
 	<head>
 		<meta charset="utf-8"/>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js"></script>
-		<script src="../../jquery.min.js"></script>
-		<script src="../../jquery-ui.min.js"></script>
-		<script src="../../jquery.blockUI.js"></script>
-		<script src="../../jquery.contextMenu.min.js"></script>
-		<script src="../../jquery.sumoselect.min.js"></script>
-		<script src="../../flatpickr.min.js"></script>
-		<script src="../../wcdatavis.js"></script>
+		<script type="module" src="/index.js"></script>
 		<link rel="stylesheet" href="../../font-awesome.css"/>
-		<link rel="stylesheet" href="../../jquery-ui.min.css"/>
-		<link rel="stylesheet" href="../../jquery.contextMenu.min.css"/>
-		<link rel="stylesheet" href="../../sumoselect.min.css"/>
-		<link rel="stylesheet" href="../../flatpickr.min.css"/>
 		<link rel="stylesheet" href="../../base.css"/>
-		<link rel="stylesheet" href="../../wcdatavis.css"/>
-		<script>
-$(document).ready(function () {
-	MIE.DEBUGGING = true;
-
+		<script type="module">
+import { Source, ComputedView, Grid, jQuery } from '/index.js';
+document.addEventListener('DOMContentLoaded', function () {
 	jQuery.ajax('../../../data/random100.json', {
 		success: function (data, status, xhr) {
 			var tbl = jQuery('<table>');
@@ -39,31 +27,30 @@ $(document).ready(function () {
 			jQuery('#table').append(tbl);
 		}
 	});
+	jQuery('#convert').on('click', function () {
+		jQuery(this).hide();
+		var source = new Source({
+			type: 'table',
+			tableSelector: '#table',
+			columnSelector: '#table table thead tr th',
+			dataSelector: '#table table tbody tr td'
+		});
+		var view = new ComputedView(source);
+		new Grid({
+			id: 'grid',
+			computedView: view,
+			source: source,
+		}, {
+			title: 'Test // Source // Table',
+			showControls: true
+		});
+	});
 });
-
-function start(btn) {
-	jQuery(btn).hide();
-	var source = new MIE.WC_DataVis.Source({
-		type: 'table',
-		tableSelector: '#table',
-		columnSelector: '#table table thead tr th',
-		dataSelector: '#table table tbody tr td'
-	});
-	var view = new MIE.WC_DataVis.ComputedView(source);
-	new MIE.WC_DataVis.Grid({
-		id: 'grid',
-		computedView: view,
-		source: source,
-	}, {
-		title: 'Test - Grid - Source - Table',
-		showControls: true
-	});
-}
 		</script>
 	</head>
 	<body>
 		<div id="grid"></div>
-		<button type="button" onclick="start(this)">Convert to DataVis</button>
+		<button id="convert" type="button">Convert to DataVis</button>
 		<div id="table"></div>
 	</body>
 </html>
