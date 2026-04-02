@@ -23,10 +23,8 @@ import {
 	setElement,
 } from '../../util/misc.js';
 
-import { Lock, ComputedView, GROUP_FUNCTION_REGISTRY } from 'datavis-ace';
+import { Lock, ComputedView, GROUP_FUNCTION_REGISTRY, TableExport, Csv } from 'datavis-ace';
 import {GridRenderer} from '../../grid_renderer.js';
-
-import {TableExport, Csv} from '../../util/csv.js';
 import flags from '../../flags.js';
 
 // GridTable {{{1
