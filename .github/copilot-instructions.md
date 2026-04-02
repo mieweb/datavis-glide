@@ -1,10 +1,15 @@
-## DataVis Project Overview
+## DataVis GLIDE Project Overview
 
-DataVis is a library for data visualization with presentation via charts and tables (graphs and grids). The architecture is a modular pipeline: **Source** → **View** → **Grid/Graph**.
+DataVis is a system for data visualization with presentation via charts and tables (graphs and grids). It consists of two components: DataVis ACE (Acquisition + Computation Engine) and DataVis GLIDE (Graphical Layer for Interactive Data Exploration). This project is DataVis GLIDE. It consists of user-interface components such as the Grid and Graph classes, plus their myriad support classes representing widgets such as windows, toolbars, and other controls.
 
-- **Source**: Fetches and decodes data (HTTP, File, Local), handles type conversion
-- **View**: Implements filtering, grouping, pivotting, and aggregation
-- **Grid/Graph**: Renders data with UI controls for user interaction
+### Quick Class Reference
+
+- The toplevel classes are Grid and Graph, which comprise the entire user interface, including: (1) titlebar, (2) toolbar, (3) controls, (4) renderer.
+- The renderer classes (viz. GridRenderer, GraphRenderer, and their subclasses) are the actual visualization output. For grids, this is usually — but not always — a table. For graphs, it’s going to be a chart.
+
+## Tool & Script Use
+
+- Write any temporary scripts needed into the toplevel scripts directory, never into other places on the filesystem or outside the project.
 
 ## Code Quality Principles
 
