@@ -3,25 +3,13 @@
 	<head>
 		<meta charset="utf-8"/>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js"></script>
-		<script src="../../jquery.min.js"></script>
-		<script src="../../jquery-ui.min.js"></script>
-		<script src="../../jquery.blockUI.js"></script>
-		<script src="../../jquery.contextMenu.min.js"></script>
-		<script src="../../jquery.sumoselect.min.js"></script>
-		<script src="../../flatpickr.min.js"></script>
-		<script src="../../wcdatavis.js"></script>
+		<script type="module" src="/index.js"></script>
 		<link rel="stylesheet" href="../../font-awesome.css"/>
-		<link rel="stylesheet" href="../../jquery-ui.min.css"/>
-		<link rel="stylesheet" href="../../jquery.contextMenu.min.css"/>
-		<link rel="stylesheet" href="../../sumoselect.min.css"/>
-		<link rel="stylesheet" href="../../flatpickr.min.css"/>
 		<link rel="stylesheet" href="../../base.css"/>
-		<link rel="stylesheet" href="../../wcdatavis.css"/>
-		<script>
-$(document).ready(function () {
-	MIE.DEBUGGING = true;
-
-	var data = new MIE.WC_DataVis.Util.EagerPipeline(function () {
+		<script type="module">
+import { Source, ComputedView, Grid, Util } from '/index.js';
+document.addEventListener('DOMContentLoaded', function () {
+	var data = new Util.EagerPipeline(function () {
 		var n = (Math.random() * 9999).toFixed(5);
 		return [+n, -1 * n];
 	}).andThenCurry(_.times, 10)
@@ -125,17 +113,17 @@ $(document).ready(function () {
 		}
 	};
 
-	var source = new MIE.WC_DataVis.Source({
+	var source = new Source({
 		type: 'local',
 		varName: 'localData'
 	});
-	var view = new MIE.WC_DataVis.ComputedView(source);
-	new MIE.WC_DataVis.Grid({
+	var view = new ComputedView(source);
+	new Grid({
 		id: 'grid',
 		computedView: view,
 		source: source,
 	}, {
-		title: 'Test - Grid - Source - Local',
+		title: 'Test // Source // Local',
 		showControls: true
 	});
 });

@@ -47,7 +47,19 @@ export default {
 		}),
 		resolve({
 			browser: true,
-			dedupe: ['svelte']
+			dedupe: [
+				'svelte',
+				'jquery',
+				'json-formatter-js',
+				'bignumber.js',
+				'numeral',
+				'moment',
+				'underscore',
+				'sprintf-js',
+				'papaparse',
+				'core-js',
+				'es6-symbol',
+			]
 		}),
 		commonjs(),
 		typescript({

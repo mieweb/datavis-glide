@@ -1,7 +1,6 @@
 // Imports {{{1
 
 import _ from 'underscore';
-import sprintf from 'sprintf-js';
 
 import jQuery from 'jquery';
 
@@ -13,9 +12,7 @@ import {
 	getProp,
 	getPropDef,
 	I,
-	makeRadioButtons,
 	makeSubclass,
-	makeToggleCheckbox,
 	mixinEventHandling,
 	mixinLogging,
 	mixinNameSetting,
@@ -24,17 +21,14 @@ import {
 	setPropDef,
 	Timing,
 } from './util/misc.js';
-import OrdMap from 'datavis-ace/src/util/ordmap.js';
-import Lock from 'datavis-ace/src/util/lock.js';
+import { OrdMap, Lock, Prefs, ComputedView, MirageView, FileSource } from 'datavis-ace';
 import {
 	AggregateControl,
 	FilterControl,
 	GroupControl,
 	PivotControl,
 } from './grid_control.js';
-import { Prefs } from 'datavis-ace/src/prefs.js';
-import { ComputedView } from 'datavis-ace/src/computed_view.js';
-import { MirageView } from 'datavis-ace/src/mirage_view.js';
+import './prefs_modules.js';
 import { GridRenderer } from './grid_renderer.js';
 import './renderers/grid/handlebars.js';
 import './renderers/grid/squirrelly.js';
@@ -54,7 +48,6 @@ import {
 	RendererToolbar,
 } from './ui/toolbars/grid.js';
 import { OperationsPalette } from './operations_palette.js';
-import { FileSource } from 'datavis-ace/src/source.js';
 import { trans } from './trans.js';
 
 // Server-Side Filter/Sort {{{1

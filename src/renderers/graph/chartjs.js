@@ -5,20 +5,14 @@ import jQuery from 'jquery';
 import Chart from 'chart.js/auto'; // FIXME: This imports everything.
 
 import {
-	dataURItoBlob,
-	deepCopy,
 	deepDefaults,
 	gensym,
 	getProp,
-	loadScript,
 	makeSubclass,
 	mixinLogging,
 	setProp,
 } from '../../util/misc.js';
-import {AggregateInfo} from 'datavis-ace/src/aggregates';
-import {GROUP_FUNCTION_REGISTRY} from 'datavis-ace/src/group_fun.js';
-
-import OrdMap from 'datavis-ace/src/util/ordmap.js';
+import {AggregateInfo, OrdMap} from 'datavis-ace';
 import { GraphRenderer } from '../../graph_renderer.js';
 import { trans } from '../../trans.js';
 

@@ -1,7 +1,6 @@
 // Imports {{{1
 
 import _ from 'underscore';
-import Handlebars from 'handlebars';
 import jQuery from 'jquery';
 
 import {

@@ -100,13 +100,13 @@ $(document).ready(function () {
 			setColConfig: {
 				before: function (colConfig, from, grid) {
 					if (from === 'prefs' && grid.initColConfig) {
-						grid.debug('ADVICE // SETCOLCONFIG', 'Replacing `allowHtml` in colConfig: %s', JSON.stringify(colConfig.asMap()));
+						grid.logDebug(grid.makeLogTag('ADVICE // SETCOLCONFIG'), 'Replacing `allowHtml` in colConfig: %s', JSON.stringify(colConfig.asMap()));
 						grid.initColConfig.each(function (v, k) {
 							if (colConfig.isSet(k) && v.allowHtml) {
 								colConfig.get(k).allowHtml = true;
 							}
 						});
-						grid.debug('ADVICE // SETCOLCONFIG', 'Finished replacement: %s', JSON.stringify(colConfig.asMap()));
+						grid.logDebug(grid.makeLogTag('ADVICE // SETCOLCONFIG'), 'Finished replacement: %s', JSON.stringify(colConfig.asMap()));
 					}
 				}
 			}

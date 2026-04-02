@@ -6,7 +6,6 @@ import {
 	deepCopy,
 	deepDefaults,
 	makeSubclass,
-	getProp,
 	getPropDef,
 } from '../../util/misc.js';
 

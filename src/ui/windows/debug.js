@@ -1,15 +1,13 @@
 import _ from 'underscore';
 import JSONFormatter from 'json-formatter-js';
 
-import OrdMap from 'datavis-ace/src/util/ordmap.js';
+import { OrdMap } from 'datavis-ace';
 
 import jQuery from 'jquery';
 
 import {
 	fontAwesome,
-	getPropDef,
 	makeSubclass,
-	moveArrayElement,
 	ordmapAsHtmlDefnList,
 } from '../../util/misc.js';
 

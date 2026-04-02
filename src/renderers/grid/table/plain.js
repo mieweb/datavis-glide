@@ -8,12 +8,10 @@ import { trans } from '../../../trans.js';
 import {
 	addFocusHandler,
 	removeFocusHandler,
-	deepCopy,
 	determineColumns,
 	fontAwesome,
 	format,
 	gensym,
-	getElement,
 	getProp,
 	getPropDef,
 	isElement,
@@ -21,24 +19,15 @@ import {
 	isVisible,
 	makeOperationButton,
 	makeSubclass,
-	mergeSort2,
-	mixinEventHandling,
 	mixinLogging,
-	objFromArray,
 	onVisibilityChange,
-	setPropDef,
 	setTableCell,
-	setElement,
 } from '../../../util/misc.js';
 
-import {AggregateInfo} from 'datavis-ace/src/aggregates.js';
+import {AggregateInfo, ComputedView, Source} from 'datavis-ace';
 import {GridFilterSet} from '../../../grid_filter.js';
 import {GridRenderer} from '../../../grid_renderer.js';
-import {ComputedView} from 'datavis-ace/src/computed_view.js';
-import {Source} from 'datavis-ace/src/source.js';
-import {GROUP_FUNCTION_REGISTRY} from 'datavis-ace/src/group_fun.js';
 
-import handlebarsUtil from '../../../util/handlebars.js';
 import GridTable from '../table.js';
 import Slider from '../../../ui/slider.js';
 

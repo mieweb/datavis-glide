@@ -1,38 +1,23 @@
 // Imports {{{1
 
 import _ from 'underscore';
-import sprintf from 'sprintf-js';
 import jQuery from 'jquery';
 
-import { trans } from '../../../trans.js';
 import {
-	deepCopy,
-	determineColumns,
-	fontAwesome,
 	format,
-	gensym,
 	getElement,
 	getProp,
 	getPropDef,
 	isElement,
-	isVisible,
-	makeOperationButton,
 	makeSubclass,
-	mergeSort2,
-	mixinEventHandling,
 	mixinLogging,
-	objFromArray,
-	onVisibilityChange,
 	setPropDef,
 	setTableCell,
 	setElement,
 } from '../../../util/misc.js';
 
-import {AggregateInfo} from 'datavis-ace/src/aggregates.js';
-import {GridFilterSet} from '../../../grid_filter.js';
+import {ComputedView, GROUP_FUNCTION_REGISTRY} from 'datavis-ace';
 import {GridRenderer} from '../../../grid_renderer.js';
-import {ComputedView} from 'datavis-ace/src/computed_view.js';
-import {GROUP_FUNCTION_REGISTRY} from 'datavis-ace/src/group_fun.js';
 
 import handlebarsUtil from '../../../util/handlebars.js';
 import GridTable from '../table.js';

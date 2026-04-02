@@ -6,12 +6,8 @@ import _ from 'underscore';
 import sprintf from 'sprintf-js';
 import JSONFormatter from 'json-formatter-js';
 
-import deepCopy from 'datavis-ace/src/deepCopy.js';
-import OrdMap from 'datavis-ace/src/util/ordmap.js';
-import Lock from 'datavis-ace/src/util/lock.js';
+import { deepCopy, OrdMap, Lock, types } from 'datavis-ace';
 import EXPERIMENTAL_FEATURES from '../flags.js';
-
-import types from 'datavis-ace/src/types.js';
 
 /**
  * @namespace util

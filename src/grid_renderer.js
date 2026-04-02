@@ -1,19 +1,13 @@
 import _ from 'underscore';
-import jQuery from 'jquery';
-import Handlebars from 'handlebars';
 
 import {
 	deepCopy,
 	getPropDef,
-	I,
 	makeSubclass,
 	mixinEventHandling,
-	mixinLogging,
 } from './util/misc.js';
 
-import OrdMap from 'datavis-ace/src/util/ordmap.js';
-import Lock from 'datavis-ace/src/util/lock.js';
-import {ComputedView} from 'datavis-ace/src/computed_view.js';
+import { OrdMap, Lock, ComputedView } from 'datavis-ace';
 
 // GridRenderer {{{1
 

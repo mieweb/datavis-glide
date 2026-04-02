@@ -2,15 +2,12 @@ import _ from 'underscore';
 import jQuery from 'jquery';
 
 import {
-	fontAwesome,
 	getProp,
-	getPropDef,
 	makeSubclass,
-	moveArrayElement,
 	setProp,
 } from '../util/misc.js';
 import { trans } from '../trans.js';
-import OrdMap from 'datavis-ace/src/util/ordmap.js';
+import { OrdMap } from 'datavis-ace';
 
 // TemplatesEditor {{{1
 

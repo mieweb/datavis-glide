@@ -1,5 +1,5 @@
 import {sprintf} from 'sprintf-js';
-import OrdMap from 'datavis-ace/src/util/ordmap.js';
+import { OrdMap } from 'datavis-ace';
 
 import trans_enUs from './lang/en-US.js';
 import trans_esMx from './lang/es-MX.js';

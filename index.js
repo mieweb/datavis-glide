@@ -17,7 +17,7 @@ import 'jquery-contextmenu/dist/jquery.contextMenu.min.css';
 import 'sumoselect/sumoselect.min.css';
 import './wcdatavis.css';
 
-import OrdMap from 'datavis-ace/src/util/ordmap.js';
+import { OrdMap } from 'datavis-ace/src/util/ordmap.js';
 import { ParamInput } from 'datavis-ace/src/source_param.js';
 import { Source } from 'datavis-ace/src/source.js';
 import { ComputedView } from 'datavis-ace/src/computed_view.js';
@@ -25,7 +25,7 @@ import { Prefs } from 'datavis-ace/src/prefs.js';
 import { PrefsBackend, PREFS_BACKEND_REGISTRY } from 'datavis-ace/src/prefs_backend.js';
 import { Perspective } from 'datavis-ace/src/perspective.js';
 import { Aggregate, AggregateInfo, AGGREGATE_REGISTRY } from 'datavis-ace/src/aggregates.js';
-import Lock from 'datavis-ace/src/util/lock.js';
+import { Lock } from 'datavis-ace/src/util/lock.js';
 
 import { Grid } from './src/grid.js';
 import { Graph } from './src/graph.js';

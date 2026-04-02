@@ -5,15 +5,10 @@ import jQuery from 'jquery';
 import { BigNumber } from 'bignumber.js';
 
 import {
-	deepDefaults,
 	fontAwesome,
-	gensym,
-	getPropDef,
 	isFloat,
 	isInt,
 	makeSubclass,
-	makeSuper,
-	mixinEventHandling,
 	mixinLogging,
 	toFloat,
 	toInt,
