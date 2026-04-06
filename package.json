@@ -1,6 +1,6 @@
 {
-  "name": "@mieweb/datavis-glide",
-  "version": "4.0.0",
+  "name": "datavis-glide",
+  "version": "4.0.0-PRE.0",
   "description": "DataVis GLIDE (Graphical Layer for Interactive Data Exploration)",
   "keywords": [
     "data",
@@ -27,7 +27,7 @@
   "browser": "datavis.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/mieweb/wcdatavis.git"
+    "url": "https://github.com/mieweb/datavis-glide.git"
   },
   "config": {
     "chromedriver_version": "LATEST"
@@ -45,7 +45,7 @@
     "chart.js": "=4.5.1",
     "core-js": "=3.47.0",
     "css.escape": "=1.5.1",
-    "datavis-ace": "=4.0.0-PRE.1",
+    "datavis-ace": "=4.0.0-PRE.2",
     "es6-symbol": "=3.1.4",
     "flatpickr": "=4.6.13",
     "handlebars": "=4.7.8",
