@@ -10,6 +10,7 @@ errmsg() {
 }
 
 main() {
+    local -a args=()
     local -a tests=(
         'active-row'
         'aggregate'
@@ -38,7 +39,10 @@ main() {
         'sourceParams'
         'sources'
     )
-    npm run test --file="${tests[*]}"
+    for test in "${tests[@]}"; do
+        args+=(-t "$test")
+    done
+    npm run test -- "${args[@]}"
     exit $?
 }
 
