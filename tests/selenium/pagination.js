@@ -245,18 +245,8 @@ describe('Pagination', function () {
 			let label = await getCurrentPageLabel();
 			assert.equal(label, '3', 'should start on page 3');
 
-			// Click the "rowId" column header to sort.
-			const headers = await driver.findElements(
-				By.css('div.wcdv_grid_table > table > thead > tr > th')
-			);
-			// Find the "rowId" header and click it.
-			for (const header of headers) {
-				const text = await header.getText();
-				if (text.includes('rowId')) {
-					await header.click();
-					break;
-				}
-			}
+			// Sort by the "rowId" column.
+			await grid.sortByField('rowId', 'asc');
 			await grid.waitForIdle();
 
 			// After sort, the grid redraws and pagination should reset to page 1.

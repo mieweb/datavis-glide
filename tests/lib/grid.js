@@ -284,6 +284,11 @@ class Grid {
 		if (opts.debug) {
 			process.stdout.write('Waiting for idle');
 		}
+
+		// Yield to the browser event loop before polling, so any pending tasks (e.g. deferred sort
+		// operations) have a chance to start and set isIdle to false.
+		await this.driver.executeAsyncScript('var done = arguments[arguments.length - 1]; requestAnimationFrame(function () { done(); });');
+
 		await this.driver.wait(async () => {
 			if (opts.debug) {
 				process.stdout.write('.');
