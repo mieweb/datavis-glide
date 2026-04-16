@@ -9,7 +9,7 @@
     "graph",
     "chart"
   ],
-  "license": "PROPRIETARY",
+  "license": "see LICENSE",
   "author": "Taylor Venable <tvenable@mieweb.com>",
   "files": [
     "index.js",
