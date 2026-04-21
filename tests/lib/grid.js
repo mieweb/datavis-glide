@@ -450,7 +450,7 @@ class Grid {
 	 */
 
 	async sortByField(field, dir) {
-		await this.driver.findElement(By.xpath(`//span[@data-wcdv-field="${field}"]/../div`)).click();
+		await this.driver.findElement(By.xpath(`//span[@data-wcdv-field="${field}"]/..//button[contains(@class, 'wcdv_sort_icon')]`)).click();
 		return this.clickActiveSortMenu(`${field}, ${dir === 'asc' ? 'Ascending' : 'Descending'}`);
 	}
 
@@ -461,7 +461,7 @@ class Grid {
 	 */
 
 	async sortByAgg(agg, dir) {
-		await this.driver.findElement(By.xpath(`//span[contains(@class, 'wcdv_heading_title') and text() = "${agg}"]/../div`)).click();
+		await this.driver.findElement(By.xpath(`//span[contains(@class, 'wcdv_heading_title') and text() = "${agg}"]/..//button[contains(@class, 'wcdv_sort_icon')]`)).click();
 		return this.clickActiveSortMenu(`${agg}, ${dir === 'asc' ? 'Ascending' : 'Descending'}`);
 	}
 
