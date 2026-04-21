@@ -7,6 +7,7 @@ import {trans} from '../../trans.js';
 import {
 	deepCopy,
 	fontAwesome,
+	icon,
 	makeRadioButtons,
 	makeSubclass,
 	makeToggleCheckbox,
@@ -452,7 +453,7 @@ var PrefsToolbar = makeSubclass('PrefsToolbar', ToolbarSection, function (grid) 
 
 	var resetBtn = jQuery('<button>', {'type': 'button', 'title': trans('GRID_TOOLBAR.PREFS.RESET.TOOLTIP')})
 		.addClass('wcdv_icon_button wcdv_text-primary')
-		.append(fontAwesome('fa-undo'))
+		.append(icon('brush-cleaning'))
 		.on('click', function (evt) {
 			evt.stopPropagation();
 			if (confirm(trans('GRID_TOOLBAR.PREFS.RESET.CONFIRM'))) {

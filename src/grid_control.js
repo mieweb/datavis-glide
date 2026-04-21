@@ -488,7 +488,16 @@ AggregateControlField.prototype.draw = function () {
 			self.control.updateView();
 		})
 		.appendTo(self.ui.root)
-		._makeIconCheckbox('fa-eye-slash wcdv_text-primary', 'fa-eye wcdv_text-primary')
+		._makeIconCheckbox({
+			on: {
+				icon: 'fa-eye-slash',
+				classes: 'wcdv_text-primary'
+			},
+			off: {
+				icon: 'fa-eye',
+				classes: 'wcdv_text-primary'
+			}
+		})
 	;
 
 	return self.ui.root;

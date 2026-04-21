@@ -878,11 +878,11 @@ GridTable.prototype._addSortingToHeader = function (data, orientation, spec, con
 			throw new Error('Call Error: `aggNum` must be a number');
 		}
 
-		jQuery('span.' + sortIcon_orientationClass + '.wcdv_sort_icon').each(function (i, elt) {
+		jQuery('button.wcdv_icon_button' + sortIcon_orientationClass + '.wcdv_sort_icon').each(function (i, elt) {
 			replaceSortIndicator(elt);
 		});
 
-		jQuery('span.' + sortIcon_class).each(function (i, elt) {
+		jQuery('button.wcdv_icon_button.' + sortIcon_class).each(function (i, elt) {
 			replaceSortIndicator(elt, dir);
 		});
 
@@ -897,18 +897,19 @@ GridTable.prototype._addSortingToHeader = function (data, orientation, spec, con
 	var sortIcon_class = gensym();
 
 	// Create the sort icon container with an initial neutral "sortable" icon.
-	var sortIcon_span = document.createElement('span');
-	sortIcon_span.classList.add(sortIcon_class);
-	sortIcon_span.classList.add(sortIcon_orientationClass);
-	sortIcon_span.classList.add('wcdv_sort_icon');
+	var sortIcon_btn = document.createElement('button');
+	sortIcon_btn.classList.add('wcdv_icon_button');
+	sortIcon_btn.classList.add(sortIcon_class);
+	sortIcon_btn.classList.add(sortIcon_orientationClass);
+	sortIcon_btn.classList.add('wcdv_sort_icon');
 	if (orientation === 'horizontal') {
-		sortIcon_span.classList.add('wcdv_icon_rotate_270');
+		sortIcon_btn.classList.add('wcdv_icon_rotate_270');
 	}
 	var initialIcon = createLucideSvg('arrow-up-down');
 	if (initialIcon) {
 		initialIcon.classList.add('wcdv_icon');
 		initialIcon.setAttribute('data-icon', 'arrow-up-down');
-		sortIcon_span.appendChild(initialIcon);
+		sortIcon_btn.appendChild(initialIcon);
 	}
 
 	var sortIcon_menu_items = {};
@@ -1018,7 +1019,7 @@ GridTable.prototype._addSortingToHeader = function (data, orientation, spec, con
 
 	self.contextMenuSelectors.push('.' + sortIcon_class);
 
-	container.appendChild(sortIcon_span);
+	container.appendChild(sortIcon_btn);
 
 	// Now check the existing sort specification in the view to see if any of the sort icons that we
 	// just created should be lit up.
@@ -1050,7 +1051,7 @@ GridTable.prototype._addSortingToHeader = function (data, orientation, spec, con
 			self.toString(), orientation, spec_copy, sortSpec_copy[orientation], currentDir);
 
 		if (_.isEqual(sortSpec_copy[orientation], spec_copy)) {
-			replaceSortIndicator(sortIcon_span, currentDir);
+			replaceSortIndicator(sortIcon_btn, currentDir);
 		}
 	}
 };

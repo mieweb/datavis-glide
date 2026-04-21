@@ -7,14 +7,19 @@
 
 button.wcdv_icon_button {
 	cursor: pointer;
-}
-
-button.wcdv_icon_button,
-.wcdv_spinner {
+	height: 16px;
 	border: none;
 	background-color: transparent;
 	padding: 0;
 	vertical-align: middle;
+}
+
+button.wcdv_icon_button > svg.wcdv_icon {
+	height: 16px;
+}
+
+button.wcdv_icon_button_nolabel svg.wcdv_icon {
+	margin-right: 0px !important;
 }
 
 button.wcdv_button_left {
@@ -58,19 +63,6 @@ td button.wcdv_icon_button_incell:hover {
 td button.wcdv_icon_button_incell svg.wcdv_icon {
 	width: 12px;
 	height: 12px;
-}
-
-button.wcdv_icon_button svg.wcdv_icon {
-	width: 18px;
-	height: 18px;
-}
-
-button.wcdv_icon_button svg.wcdv_icon {
-	cursor: pointer;
-}
-
-button.wcdv_icon_button_nolabel svg.wcdv_icon {
-	margin-right: 0px !important;
 }
 
 /*
@@ -267,13 +259,6 @@ div.wcdv_grid_titlebar div.wcdv_loading_spinner {
 	text-decoration: underline;
 }
 
-.wcdv_grid_titlebar .showhide {
-	background-color: transparent;
-	border: 0;
-	cursor: pointer;
-	padding: 0;
-}
-
 /*
  * Controls in the top-right of the titlebar:
  *
@@ -298,6 +283,7 @@ div.wcdv_titlebar_controls button.wcdv_icon_button > svg.wcdv_icon {
     text-align: center;
     user-select: none;
     width: 24px;
+    height: 18px;
     vertical-align: middle;
     margin-top: -4px;
 }
@@ -441,9 +427,14 @@ div.wcdv_titlebar_controls button.wcdv_icon_button > svg.wcdv_icon {
 
 .wcdv_control_clear_button {
 	margin-left: 10px;
+	margin-top: -2px;
 	flex: none;
-	line-height: 15px;
-    font-size: 16px !important;
+	height: 14px !important;
+}
+
+.wcdv_control_clear_button > svg.wcdv_icon {
+	height: 14px !important;
+	stroke-width: 2.5px;
 }
 
 .wcdv_control_pane {
@@ -456,16 +447,6 @@ div.wcdv_titlebar_controls button.wcdv_icon_button > svg.wcdv_icon {
 	border-radius: 8px;
 	margin: 8px;
 }
-
-/*
-.wcdv_control_pane {
-	border-left: 1px solid #c7c7c7;
-}
-
-.wcdv_control_pane:first-child {
-	border-left: none;
-}
-*/
 
 .wcdv_control_pane > div {
 	display: flex;
@@ -575,10 +556,6 @@ div.wcdv_titlebar_controls button.wcdv_icon_button > svg.wcdv_icon {
 	*/
 }
 
-.wcdv_field button + span, .ui-sortable li svg.wcdv_icon {
-	vertical-align: middle;
-}
-
 /* AGGREGATE CONTROL */
 
 .wcdv_aggregate_control_error {
@@ -650,10 +627,6 @@ div.SumoSelect > div.optWrapper {
 }
 
 /* AGGREGATE CONTROL */
-
-.wcdv_aggregate_control .wcdv_field {
-	align-items: baseline !important;
-}
 
 ul.wcdv_aggregate_control_fieldlist {
 	padding-left: 0.5em;
@@ -1049,6 +1022,11 @@ tr.wcdvgrid_more td {
 	color: #FFF;
 }
 
+.wcdv_grid_table table thead th button.wcdv_icon_button > svg.wcdv_icon {
+	color: #FFF;
+	stroke-width: 2.5px;
+}
+
 .wcdv_sort_column_active.wcdv_bg-primary{
 	color: #FFF;
 }
@@ -1386,23 +1364,36 @@ div.wcdv_button_bar {
 	text-align: right;
 }
 
-div.wcdv_button_bar button:first-child {
-	margin-left: 0em;
-}
-
 div.wcdv_button_bar button {
 	margin-left: 0.5em;
 }
 
-div.wcdv_button_bar button svg.wcdv_icon {
+div.wcdv_button_bar button:first-child {
+	margin-left: 0em;
+}
+
+div.wcdv_button_bar button > svg.wcdv_icon {
 	margin-right: 0.25em;
 }
 
-div.wcdv_button_bar button[data-role="ok"] svg.wcdv_icon {
+div.wcdv_button_bar button > svg.wcdv_icon {
+	width: 1.15em;
+	height: 1.15em;
+	padding-right: 3px;
+	vertical-align: middle;
+	margin-top: -2px;
+}
+
+div.wcdv_button_bar button[disabled=disabled] > svg.wcdv_icon {
+	color: #c7c7c77a;
+	cursor: not-allowed;
+}
+
+div.wcdv_button_bar button[data-role="ok"] > svg.wcdv_icon {
 	color: #2e7d32;
 }
 
-div.wcdv_button_bar button[data-role="cancel"] svg.wcdv_icon {
+div.wcdv_button_bar button[data-role="cancel"] > svg.wcdv_icon {
 	color: #c62828;
 }
 
