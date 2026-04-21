@@ -53,6 +53,7 @@
     "jquery-contextmenu": "=2.10.1",
     "jquery-ui": "=1.14.1",
     "json-formatter-js": "https://github.com/mieweb/json-formatter-js.git",
+    "lucide": "^1.8.0",
     "moment": "=2.30.1",
     "numeral": "=2.0.6",
     "papaparse": "=5.5.3",

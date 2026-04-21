@@ -242,3 +242,25 @@ New icon (not an FA replacement):
 1. **Context menu plugin**: `jquery.contextMenu` has built-in FA support. The current SVG-mode workaround in `makeIcon` uses a callback that creates elements -- this approach works for Lucide too, but the plugin's `context-menu-icon--fa` CSS class may need attention.
 2. **External consumers**: Any code outside this repo that passes `fa-xxx` icon names via the operations API can set `op.iconType = 'fontawesome'` to keep using FA icons without changes. This requires that the host page still loads FontAwesome CSS/fonts. Without `iconType`, icon names are treated as Lucide.
 3. **Tree-shaking**: Lucide supports tree-shaking by importing individual icons. Consider whether to import the entire library or just the icons used, to minimize bundle size.
+
+## Execution Notes
+
+### Completed
+
+All phases 1-8 have been executed. Key implementation details:
+
+- **Lucide API**: `lucide` v1.8.0 exports an `icons` object with PascalCase keys. Each icon's data is an array of `[tagName, attributes]` tuples. SVGs are built manually via `document.createElementNS` since Lucide's `createElement` requires `document` as argument.
+- **FA name mapping preserved**: All `fontAwesome('fa-xxx')` calls in consumer code continue to work through the `faToLucideMap` in misc.js. No need to update every call site.
+- **ESLint**: The computed namespace access `lucideIcons[pascalName]` triggers `import/namespace` -- suppressed with inline disable comment. `hasOwnProperty` call fixed to use `Object.prototype.hasOwnProperty.call()`.
+- **jQuery selectors**: Three `children('span.fa, svg.svg-inline--fa')` calls in grid.js updated to `children('svg.wcdv_icon')`.
+- **showHideButton rotation**: `fa-rotate-180` was applied to the button element but the icon is a child SVG. Changed to `children('svg.wcdv_icon').addClass/removeClass('wcdv_icon_rotate_180')`.
+- **Context menu CSS**: `context-menu-icon--fa` rules left as-is -- they're jQuery contextMenu plugin styling, not our icons.
+- **Test pages**: FA CSS links removed from all ~110 HTML files via `sed`.
+- **`tests/pages/font-awesome.css`**: Still exists on disk; should be deleted separately (destructive action).
+
+### Remaining Work
+
+- **Delete `tests/pages/font-awesome.css`** and any FA font files (pending user confirmation for destructive action)
+- **Run `make test`** to verify full Selenium test suite passes
+- **Visual inspection** of sort icons, spinners, and icon rendering in browser
+- **Bundle size check** -- consider tree-shaking individual Lucide icons if bundle size is a concern

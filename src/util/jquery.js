@@ -8,7 +8,6 @@ import {
 	fontAwesome,
 	getProp,
 } from './misc.js';
-import flags from '../flags.js';
 
 /**
  * The jQuery plugin namespace.
@@ -136,19 +135,17 @@ jQuery.fn.extend({
 	 *
 	 * @example
 	 * _makeIconCheckbox('foo') -->
-	 *   off = fontawesome('foo'), class = 'wcdv_icon_checkbox_off'
-	 *   on = fontawesome('foo'), class = 'wcdv_icon_checkbox_on'
+	 *   off = icon('foo'), class = 'wcdv_icon_checkbox_off'
+	 *   on = icon('foo'), class = 'wcdv_icon_checkbox_on'
 	 * _makeIconCheckbox('foo', 'bar') -->
-	 *   off = fontawesome('foo')
-	 *   on = fontawesome('bar')
+	 *   off = icon('foo')
+	 *   on = icon('bar')
 	 * _makeIconCheckbox(obj) -->
-	 *   off = fontawesome(obj.off.icon), class = obj.off.classes
-	 *   on = fontawesome(obj.on.icon), class = obj.on.classes
+	 *   off = icon(obj.off.icon), class = obj.off.classes
+	 *   on = icon(obj.on.icon), class = obj.on.classes
 	 */
 
 	_makeIconCheckbox: (function () {
-		var id = 0;
-
 		return function () {
 			var self = this
 				, args = Array.prototype.slice.call(arguments)
@@ -182,11 +179,6 @@ jQuery.fn.extend({
 				};
 			}
 
-			// IDs are needed to find FontAwesome SVG icons.
-
-			opts.on.id = 'wcdv-icon-checkbox-' + (id++);
-			opts.off.id = 'wcdv-icon-checkbox-' + (id++);
-
 			var button = jQuery('<button>', {
 				'type': 'button',
 				'disabled': jQuery(self).prop('disabled'),
@@ -200,52 +192,32 @@ jQuery.fn.extend({
 			;
 
 			var onIcon = fontAwesome(opts.on.icon, opts.on.classes)
-				.attr({id: opts.on.id})
 				.css('display', 'inline-block')
 				.hide()
 				.appendTo(button);
 			var offIcon = fontAwesome(opts.off.icon, opts.off.classes)
-				.attr({id: opts.off.id})
 				.css('display', 'inline-block')
 				.hide()
 				.appendTo(button);
 
 			var updateIcon = function () {
 				if (self._isChecked()) {
-					if (flags['FontAwesome Method'] === 'svg') {
-						jQuery(document.getElementById(opts.on.id)).show();
-						jQuery(document.getElementById(opts.off.id)).hide();
-					}
-					else {
-						onIcon.show();
-						offIcon.hide();
-					}
+					onIcon.show();
+					offIcon.hide();
 					if (opts.on.tooltip != null) {
 						button.attr('title', opts.on.tooltip);
 					}
 				}
 				else {
-					if (flags['FontAwesome Method'] === 'svg') {
-						jQuery(document.getElementById(opts.on.id)).hide();
-						jQuery(document.getElementById(opts.off.id)).show();
-					}
-					else {
-						onIcon.hide();
-						offIcon.show();
-					}
+					onIcon.hide();
+					offIcon.show();
 					if (opts.off.tooltip != null) {
 						button.attr('title', opts.off.tooltip);
 					}
 				}
 			};
 
-			if (flags['FontAwesome Method'] === 'svg') {
-				// Give FontAwesome a chance to replace the elements we made with SVG versions.
-				window.setTimeout(updateIcon);
-			}
-			else {
-				updateIcon();
-			}
+			updateIcon();
 			self.hide();
 			self.before(button);
 			self.on('change', updateIcon);

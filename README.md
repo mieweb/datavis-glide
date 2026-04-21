@@ -26,8 +26,6 @@ Stick this in your `package.json` obviously.
 
 #### Building a Page
 
-Import FontAwesome 4.7 CSS somehow (this example uses a CDN).
-
 Inside a module script tag, import the CSS for DataVis and its dependents. This is necessary when using Vite in this configuration, but not if using a version of DataVis built via Rollup (which uses the PostCSS plugin to automatically extract and bundle all CSS files imported from JS).
 
 ```

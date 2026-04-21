@@ -1202,9 +1202,8 @@ Grid.prototype.setView = function () {
 Grid.prototype._addTitleWidgets = function (titlebar, doingServerFilter, id) {
 	var self = this;
 
-	self.ui.spinner = jQuery('<span>', {
-		'style': 'font-size: 18px',
-		'class': 'wcdv_icon_button wcdv_spinner'
+	self.ui.spinner = jQuery('<div>', {
+		'class': 'wcdv_loading_spinner'
 	})
 		.appendTo(titlebar)
 	;
@@ -1535,7 +1534,7 @@ Grid.prototype.redraw = function (contOk, contFail) {
 		});
 		self.renderer.on('generateCsvProgress', function (progress) {
 			if (progress === 0) {
-				self.ui.exportBtn.children('span.fa, svg.svg-inline--fa').remove();
+				self.ui.exportBtn.children('svg.wcdv_icon').remove();
 				self.ui.exportBtn.append(fontAwesome('fa-spinner', 'fa-pulse'));
 			}
 		});
@@ -1829,7 +1828,8 @@ Grid.prototype.hide = function () {
 		duration: 0,
 		done: function () {
 			if (self.opts.title) {
-				self.ui.showHideButton.removeClass('open fa-rotate-180');
+				self.ui.showHideButton.removeClass('open');
+				self.ui.showHideButton.children('svg.wcdv_icon').removeClass('wcdv_icon_rotate_180');
 			}
 		}
 	});
@@ -1860,7 +1860,8 @@ Grid.prototype.show = function (opts) {
 		duration: 0,
 		done: function () {
 			if (self.opts.title) {
-				self.ui.showHideButton.addClass('open fa-rotate-180');
+				self.ui.showHideButton.addClass('open');
+				self.ui.showHideButton.children('svg.wcdv_icon').addClass('wcdv_icon_rotate_180');
 			}
 			if (!self.hasRun && opts.redraw) {
 				self.hasRun = true;
@@ -2214,13 +2215,13 @@ Grid.prototype._setExportStatus = function (status) {
 	case 'notReady':
 		self.csvReady = false;
 		self.ui.exportBtn.attr('title', trans('GRID.TITLEBAR.GENERATE_CSV'));
-		self.ui.exportBtn.children('span.fa, svg.svg-inline--fa').remove();
+		self.ui.exportBtn.children('svg.wcdv_icon').remove();
 		self.ui.exportBtn.append(fontAwesome('fa-file-o'));
 		break;
 	case 'ready':
 		self.csvReady = true;
 		self.ui.exportBtn.attr('title', trans('GRID.TITLEBAR.DOWNLOAD_CSV'));
-		self.ui.exportBtn.children('span.fa, svg.svg-inline--fa').remove();
+		self.ui.exportBtn.children('svg.wcdv_icon').remove();
 		self.ui.exportBtn.append(fontAwesome('fa-download'));
 		break;
 	default:

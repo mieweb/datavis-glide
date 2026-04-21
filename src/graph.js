@@ -845,7 +845,8 @@ Graph.prototype.hide = function () {
 		duration: 0,
 		done: function () {
 			if (self.opts.title) {
-				self.ui.showHideButton.removeClass('open fa-rotate-180');
+				self.ui.showHideButton.removeClass('open');
+				self.ui.showHideButton.children('svg.wcdv_icon').removeClass('wcdv_icon_rotate_180');
 			}
 		}
 	});
@@ -874,7 +875,8 @@ Graph.prototype.show = function (opts) {
 		duration: 0,
 		done: function () {
 			if (self.opts.title) {
-				self.ui.showHideButton.addClass('open fa-rotate-180');
+				self.ui.showHideButton.addClass('open');
+				self.ui.showHideButton.children('svg.wcdv_icon').addClass('wcdv_icon_rotate_180');
 			}
 			if (!self.hasRun && opts.redraw) {
 				self.hasRun = true;

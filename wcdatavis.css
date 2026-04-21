@@ -53,50 +53,45 @@ td button.wcdv_icon_button_incell:hover {
 	color: #404040;
 }
 
-/* These font size changes should only affect the CSS+Webfont method of FontAwesome. */
+/* Icon sizing. */
 
-td button.wcdv_icon_button_incell span.fa {
-	font-size: 12px;
+td button.wcdv_icon_button_incell svg.wcdv_icon {
+	width: 12px;
+	height: 12px;
 }
 
-button.wcdv_icon_button span.fa {
-	font-size: 18px;
+button.wcdv_icon_button svg.wcdv_icon {
+	width: 18px;
+	height: 18px;
 }
 
-button.wcdv_icon_button span.fa,
-button.wcdv_icon_button svg.svg-inline--fa {
+button.wcdv_icon_button svg.wcdv_icon {
 	cursor: pointer;
 }
 
-button.wcdv_icon_button_nolabel span.fa,
-button.wcdv_icon_button_nolabel svg.svg-inline--fa {
+button.wcdv_icon_button_nolabel svg.wcdv_icon {
 	margin-right: 0px !important;
 }
 
 /*
- * Styles for checkboxes which are displayed using FontAwesome icons.
+ * Styles for checkboxes which are displayed using icons.
  */
 
-button.wcdv_icon_button > span.fa.wcdv_icon_checkbox_off,
-button.wcdv_icon_button > svg.svg-inline--fa.wcdv_icon_checkbox_off {
+button.wcdv_icon_button > svg.wcdv_icon.wcdv_icon_checkbox_off {
 	color: #000;
 	padding: 0.2em;
 	border-radius: 0.2em;
 }
-button.wcdv_icon_button > span.fa.wcdv_icon_checkbox_on,
-button.wcdv_icon_button > svg.svg-inline--fa.wcdv_icon_checkbox_on {
+button.wcdv_icon_button > svg.wcdv_icon.wcdv_icon_checkbox_on {
 	background-color: #0095D6;
 	color: #FFF;
 	padding: 0.2em;
 	border-radius: 0.2em;
 }
 
-.wcdv_grid button > span.fa,
-.wcdv_graph button > span.fa,
-.wcdv_spinner > span.fa,
-.wcdv_grid button > svg.svg-inline--fa,
-.wcdv_graph button > svg.svg-inline--fa,
-.wcdv_spinner > svg.svg-inline--fa {
+.wcdv_grid button > svg.wcdv_icon,
+.wcdv_graph button > svg.wcdv_icon,
+.wcdv_spinner > svg.wcdv_icon {
 	margin-right: 0.25em;
 }
 
@@ -114,15 +109,37 @@ button.wcdv_expand_button {
 	vertical-align: middle;
 }
 
-button.wcdv_expand_button > span.fa {
-	font-size: 15px;
-}
-
-button.wcdv_expand_button > span.fa,
-button.wcdv_expand_button > svg.svg-inline--fa {
+button.wcdv_expand_button > svg.wcdv_icon {
+	width: 15px;
+	height: 15px;
 	cursor: pointer;
 	margin-right: inherit;
 	color: #737373;
+}
+
+/*
+ * Icon animation and rotation utility classes.
+ */
+
+@keyframes wcdv-spin {
+	from { transform: rotate(0deg); }
+	to { transform: rotate(360deg); }
+}
+
+.wcdv_icon_spin {
+	animation: wcdv-spin 1.5s linear infinite;
+}
+
+.wcdv_icon_pulse {
+	animation: wcdv-spin 1s steps(8) infinite;
+}
+
+.wcdv_icon_rotate_180 {
+	transform: rotate(180deg);
+}
+
+.wcdv_icon_rotate_270 {
+	transform: rotate(270deg);
 }
 
 .wcdv_grid, .wcdv_graph {
@@ -235,8 +252,11 @@ hr.wcdv_hr_gradient {
 	padding-right: 8px;
 }
 
-.wcdv_grid_titlebar .wcdv_spinner{
-	color: #737373
+div.wcdv_grid_titlebar div.wcdv_loading_spinner {
+	display: inline-block;
+	margin-left: -4px;
+	margin-right: 4px;
+	vertical-align: middle;
 }
 
 .wcdv_grid_titlebar .link {
@@ -254,27 +274,33 @@ hr.wcdv_hr_gradient {
 	padding: 0;
 }
 
-.wcdv_titlebar_controls span.fa,
-.wcdv_titlebar_controls svg.svg-inline--fa {
-	cursor: pointer;
-	width: 30px;
-	text-align: center;
-	line-height: 30px;
-	user-select: none;
-}
-
-.wcdv_titlebar_controls span.fa:last-child,
-.wcdv_titlebar_controls svg.svg-inline--fa:last-child {
-	margin-right: 0;
-}
-
 /*
-.wcdv_grid_titlebar .showhide:focus,
-.wcdv_grid_titlebar .showhide:hover,
-.wcdv_grid_titlebar .showhide:active {
-	color: white;
+ * Controls in the top-right of the titlebar:
+ *
+ *   - omnifilter
+ *   - download
+ *   - refresh
+ *   - config
+ *   - show/hide
+ */
+
+div.wcdv_titlebar_controls {
+	float: right;
+	height: 30px;
 }
-*/
+
+div.wcdv_titlebar_controls button.wcdv_icon_button {
+	height: 30px;
+}
+
+div.wcdv_titlebar_controls button.wcdv_icon_button > svg.wcdv_icon {
+    cursor: pointer;
+    text-align: center;
+    user-select: none;
+    width: 24px;
+    vertical-align: middle;
+    margin-top: -4px;
+}
 
 /******************************************************************************/
 
@@ -316,23 +342,23 @@ hr.wcdv_hr_gradient {
 	margin-left: 0;
 }
 
-.wcdv_toolbar_section > span.fa {
-	font-size: 18px;
-}
-.wcdv_toolbar_section > span.fa,
-.wcdv_toolbar_section > svg.svg-inline--fa {
+.wcdv_toolbar_section > svg.wcdv_icon {
+	width: 18px;
+	height: 18px;
 	color: #888;
 }
-.wcdv_toolbar_section > span.fa:hover,
-.wcdv_toolbar_section > svg.svg-inline--fa:hover {
+.wcdv_toolbar_section > svg.wcdv_icon:hover {
 	color: #444;
 }
 
-.wcdv_toolbar_section button .fa {
-	font-size: 1.15em;
+.wcdv_toolbar_section button svg.wcdv_icon {
+	width: 1.15em;
+	height: 1.15em;
 	padding-right: 3px;
+	vertical-align: middle;
+	margin-top: -2px;
 }
-.wcdv_toolbar_section button[disabled=disabled] .fa {
+.wcdv_toolbar_section button[disabled=disabled] svg.wcdv_icon {
 	color: #c7c7c77a;
 	cursor: not-allowed;
 }
@@ -367,8 +393,7 @@ hr.wcdv_hr_gradient {
 	padding: 0;
 }
 
-.wcdv_grid_toolbar span.fa.wcdv_info_icon,
-.wcdv_grid_toolbar svg.svg-inline--fa.wcdv_info_icon {
+.wcdv_grid_toolbar svg.wcdv_icon.wcdv_info_icon {
 	color: #737373;
 	margin-left: 0.5em;
 }
@@ -473,13 +498,11 @@ hr.wcdv_hr_gradient {
  * field elements.
  */
 
-.wcdv_control_pane ul.wcdv_control_horizontal > li:first-child > span.fa,
-.wcdv_control_pane ul.wcdv_control_horizontal > li:first-child > svg.svg-inline--fa {
+.wcdv_control_pane ul.wcdv_control_horizontal > li:first-child > svg.wcdv_icon {
 	display: none;
 }
 
-.wcdv_control_pane ul.wcdv_control_horizontal li > span.fa,
-.wcdv_control_pane ul.wcdv_control_horizontal li > svg.svg-inline--fa {
+.wcdv_control_pane ul.wcdv_control_horizontal li > svg.wcdv_icon {
 	margin-right: 4px;
 }
 
@@ -552,8 +575,7 @@ hr.wcdv_hr_gradient {
 	*/
 }
 
-.wcdv_field button + span, .ui-sortable li span.fa,
-.wcdv_field button + span, .ui-sortable li svg.svg-inline--fa {
+.wcdv_field button + span, .ui-sortable li svg.wcdv_icon {
 	vertical-align: middle;
 }
 
@@ -666,8 +688,7 @@ div.wcdv_operations_category > button.wcdv_operation:first-child {
 	margin-left: 0;
 }
 
-button.wcdv_operation.no_label > span.fa,
-button.wcdv_operation.no_label > svg.svg-inline--fa {
+button.wcdv_operation.no_label > svg.wcdv_icon {
 	margin-right: 0;
 }
 
@@ -693,8 +714,7 @@ button.wcdv_operation[data-operation-type="cell"]:disabled:hover {
 	cursor: default;
 }
 
-button.wcdv_operation[data-operation-type="cell"]:disabled > span.fa,
-button.wcdv_operation[data-operation-type="cell"]:disabled > svg.svg-inline--fa {
+button.wcdv_operation[data-operation-type="cell"]:disabled > svg.wcdv_icon {
 	cursor: default;
 }
 
@@ -729,13 +749,6 @@ button.wcdv_operation[data-operation-type="cell"]:disabled > svg.svg-inline--fa 
 .wcdv_sort_icon {
 	cursor: pointer;
     margin: -0.3333em 0 -0.3333em 0;
-}
-
-.wcdv_sort_arrow_active {
-	color: #FFF;
-}
-.wcdv_sort_arrow_inactive {
-	display: none;
 }
 
 /*
@@ -1235,31 +1248,22 @@ html:not(.ie11) .wcdv_grid_table table th.wcdv_cell_empty div {
 }
 
 /*
-* Font Awesome Tweaks
+* Icon Tweaks
 */
 
-.wcdv_grid .fa, .wcdv_graph .fa{
-	font-size: 18px;
+.wcdv_grid svg.wcdv_icon, .wcdv_graph svg.wcdv_icon {
+	width: 18px;
+	height: 18px;
 }
 
-.wcdv_grid th .fa{
-	font-size: 15px;
+.wcdv_grid th svg.wcdv_icon {
+	width: 15px;
+	height: 15px;
 	opacity: 0.8;
 }
 
-.wcdv_grid th .fa:hover, .wcdv_grid th .fa .fa{
+.wcdv_grid th svg.wcdv_icon:hover {
 	opacity: 1;
-}
-
-/*
- * FONT AWESOME STACK TWEAKS
- */
-
-.wcdv_grid_table table .fa-stack {
-    width: 1.5em;
-    line-height: 1.86667em;
-    height: 1.86667em;
-	top: -1px;
 }
 
 /*
@@ -1271,7 +1275,7 @@ html:not(.ie11) .wcdv_grid_table table th.wcdv_cell_empty div {
 	border-color: #c7c7c7;
 }
 
-.wcdv_grid select + .fa{
+.wcdv_grid select + svg.wcdv_icon {
 	vertical-align: middle;
 }
 
@@ -1390,18 +1394,15 @@ div.wcdv_button_bar button {
 	margin-left: 0.5em;
 }
 
-div.wcdv_button_bar button span.fa,
-div.wcdv_button_bar button svg.svg-inline--fa {
+div.wcdv_button_bar button svg.wcdv_icon {
 	margin-right: 0.25em;
 }
 
-div.wcdv_button_bar button[data-role="ok"] span.fa,
-div.wcdv_button_bar button[data-role="ok"] svg.svg-inline--fa {
+div.wcdv_button_bar button[data-role="ok"] svg.wcdv_icon {
 	color: #2e7d32;
 }
 
-div.wcdv_button_bar button[data-role="cancel"] span.fa,
-div.wcdv_button_bar button[data-role="cancel"] svg.svg-inline--fa {
+div.wcdv_button_bar button[data-role="cancel"] svg.wcdv_icon {
 	color: #c62828;
 }
 

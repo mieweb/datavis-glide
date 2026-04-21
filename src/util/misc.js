@@ -2,6 +2,7 @@ import jQuery from 'jquery';
 import _ from 'underscore';
 import sprintf from 'sprintf-js';
 import JSONFormatter from 'json-formatter-js';
+import { icons as lucideIcons } from 'lucide';
 
 import { OrdMap, Lock, Util } from 'datavis-ace';
 
@@ -251,17 +252,220 @@ export function removeFocusHandler(id) {
 	jQuery(document).off('click.focus-' + id);
 }
 
-// fontAwesome {{{2
+// icon {{{2
 
-export function fontAwesome(icon, cls, title) {
+/**
+ * Mapping from FontAwesome icon names to Lucide icon names (kebab-case).
+ * Used for backward compatibility with external consumers that specify FA icons.
+ */
+
+var faToLucideMap = {
+	'fa-check': 'check',
+	'fa-ban': 'ban',
+	'fa-times': 'x',
+	'fa-search': 'search',
+	'fa-refresh': 'refresh-cw',
+	'fa-cog': 'settings',
+	'fa-gear': 'settings',
+	'fa-chevron-down': 'chevron-down',
+	'fa-download': 'download',
+	'fa-pencil': 'pencil',
+	'fa-pencil-square-o': 'square-pen',
+	'fa-bug': 'bug',
+	'fa-question-circle': 'circle-help',
+	'fa-info-circle': 'info',
+	'fa-minus-square': 'square-minus',
+	'fa-minus-square-o': 'square-minus',
+	'fa-plus-square-o': 'square-plus',
+	'fa-square-o': 'square',
+	'fa-exclamation-triangle': 'triangle-alert',
+	'fa-bolt': 'zap',
+	'fa-eye': 'eye',
+	'fa-eye-slash': 'eye-off',
+	'fa-long-arrow-right': 'arrow-right',
+	'fa-spinner': 'loader-circle',
+	'fa-circle-o-notch': 'loader-circle',
+	'fa-file-o': 'file',
+	'fa-bars': 'menu',
+	'fa-angle-double-up': 'chevrons-up',
+	'fa-angle-double-down': 'chevrons-down',
+	'fa-undo': 'undo-2',
+	'fa-thumb-tack': 'pin',
+	'fa-code': 'code',
+	'fa-paint-brush': 'paintbrush',
+	'fa-columns': 'columns-3',
+	'fa-arrows-h': 'move-horizontal',
+	'fa-chevron-circle-left': 'circle-chevron-left',
+	'fa-chevron-circle-right': 'circle-chevron-right',
+	'fa-chevron-circle-down': 'circle-chevron-down',
+	'fa-clock-o': 'clock',
+	'fa-save': 'save',
+	'fa-trash': 'trash-2',
+	'fa-table': 'table',
+	'fa-filter': 'filter',
+	'fa-sort-asc': 'arrow-up',
+	'fa-sort-desc': 'arrow-down',
+	'fa-sort-amount-asc': 'arrow-up-narrow-wide',
+	'fa-sort-amount-desc': 'arrow-down-wide-narrow',
+	'fa-arrows-v': 'move-vertical',
+	'fa-thumbs-up': 'thumbs-up',
+	'fa-thumbs-o-up': 'thumbs-up',
+	'fa-thumbs-o-down': 'thumbs-down',
+	'fa-battery-0': 'battery',
+	'fa-battery-1': 'battery-low',
+	'fa-battery-2': 'battery-medium',
+	'fa-battery-3': 'battery-full',
+	'fa-battery-4': 'battery-charging',
+	'fa-asterisk': 'asterisk',
+	'fa-bar-chart': 'bar-chart-2',
+	'fa-rotate-180': 'rotate-180',
+	'fa-rotate-270': 'rotate-270'
+};
+
+/**
+ * Map of FA utility classes to wcdv equivalents.
+ */
+
+var faClassMap = {
+	'fa-spin': 'wcdv_icon_spin',
+	'fa-pulse': 'wcdv_icon_pulse',
+	'fa-rotate-180': 'wcdv_icon_rotate_180',
+	'fa-rotate-270': 'wcdv_icon_rotate_270'
+};
+
+/**
+ * Convert a kebab-case Lucide icon name to PascalCase for lookup in the icons object.
+ *
+ * @param {string} name
+ * @returns {string}
+ */
+
+function lucideNameToPascal(name) {
+	return name.split('-').map(function (part) {
+		return part.charAt(0).toUpperCase() + part.slice(1);
+	}).join('');
+}
+
+var SVG_NS = 'http://www.w3.org/2000/svg';
+
+/**
+ * Create an SVG element from Lucide icon data.
+ *
+ * @param {string} name Lucide icon name in kebab-case.
+ * @returns {SVGSVGElement|null} The SVG element, or null if the icon was not found.
+ */
+
+export function createLucideSvg(name) {
+	var pascalName = lucideNameToPascal(name);
+	var iconData = lucideIcons[pascalName]; // eslint-disable-line import/namespace
+
+	if (!iconData) {
+		console.warn('[DataVis] Unknown Lucide icon: ' + name + ' (looked up as ' + pascalName + ')');
+		return null;
+	}
+
+	var svg = document.createElementNS(SVG_NS, 'svg');
+	svg.setAttribute('xmlns', SVG_NS);
+	svg.setAttribute('width', '24');
+	svg.setAttribute('height', '24');
+	svg.setAttribute('viewBox', '0 0 24 24');
+	svg.setAttribute('fill', 'none');
+	svg.setAttribute('stroke', 'currentColor');
+	svg.setAttribute('stroke-width', '2');
+	svg.setAttribute('stroke-linecap', 'round');
+	svg.setAttribute('stroke-linejoin', 'round');
+
+	for (var i = 0; i < iconData.length; i++) {
+		var tag = iconData[i][0];
+		var attrs = iconData[i][1];
+		var child = document.createElementNS(SVG_NS, tag);
+		for (var key in attrs) {
+			if (Object.prototype.hasOwnProperty.call(attrs, key)) {
+				child.setAttribute(key, attrs[key]);
+			}
+		}
+		svg.appendChild(child);
+	}
+
+	return svg;
+}
+
+/**
+ * Create an icon element wrapped in jQuery.
+ *
+ * Accepts either a Lucide icon name (kebab-case, e.g. 'check') or a FontAwesome icon name
+ * (e.g. 'fa-check'), which will be mapped to its Lucide equivalent.
+ *
+ * @param {string} icon The icon name.
+ * @param {string} [cls] Additional CSS classes to add.
+ * @param {string} [title] A title/tooltip for the icon.
+ * @returns {jQuery} A jQuery-wrapped SVG element.
+ */
+
+export function icon(iconName, cls, title) {
+	var lucideName = iconName;
+
+	// Map FA names to Lucide names.
+	if (iconName.substr(0, 3) === 'fa-') {
+		lucideName = faToLucideMap[iconName];
+		if (!lucideName) {
+			console.warn('[DataVis] No Lucide mapping for FontAwesome icon: ' + iconName);
+			lucideName = iconName.substr(3);
+		}
+	}
+
+	var svg = createLucideSvg(lucideName);
+	if (!svg) {
+		// Fallback: create an empty span so callers don't break.
+		return jQuery('<span>');
+	}
+
+	svg.classList.add('wcdv_icon');
+	svg.setAttribute('data-icon', lucideName);
+
+	// Map any FA utility classes in `cls` to wcdv equivalents.
+	if (cls != undefined) {
+		var classes = cls.split(/\s+/);
+		for (var i = 0; i < classes.length; i++) {
+			var c = classes[i];
+			if (c === '') {
+				continue;
+			}
+			if (faClassMap[c]) {
+				svg.classList.add(faClassMap[c]);
+			}
+			else {
+				svg.classList.add(c);
+			}
+		}
+	}
+
+	if (title != undefined) {
+		svg.setAttribute('title', title);
+	}
+
+	return jQuery(svg);
+}
+
+// Backward-compatible alias.
+export var fontAwesome = icon;
+
+/**
+ * Create a FontAwesome icon element (for backward compatibility with external consumers
+ * that set iconType: 'fontawesome' on their operations).
+ *
+ * @param {string} faIcon The FA icon class name (e.g. 'fa-check').
+ * @param {string} [cls] Additional CSS classes.
+ * @param {string} [title] A title/tooltip for the icon.
+ * @returns {jQuery}
+ */
+
+export function fontAwesomeLegacy(faIcon, cls, title) {
 	var span = jQuery('<span>')
 		.addClass('fa');
 
-	if (icon.substr(0, 3) === 'fa-') {
-		span.addClass(icon);
-	}
-	else {
-		span.text(String.fromCharCode(parseInt(icon, 16)));
+	if (faIcon.substr(0, 3) === 'fa-') {
+		span.addClass(faIcon);
 	}
 
 	if (cls != undefined) {
@@ -443,9 +647,9 @@ export function setTableCell(cell, value, opts) {
 		showValueBtn.classList.add('wcdv_icon_button_nolabel');
 		showValueBtn.classList.add('wcdv_show_full_value');
 
-		var showValueSpan = document.createElement('span');
-		showValueSpan.classList.add('fa');
-		showValueSpan.classList.add('fa-asterisk');
+		var showValueIcon = createLucideSvg('asterisk');
+		showValueIcon.classList.add('wcdv_icon');
+		showValueIcon.setAttribute('data-icon', 'asterisk');
 
 		operationDiv = document.createElement('div');
 		operationDiv.style.display = 'inline-block';
@@ -460,14 +664,14 @@ export function setTableCell(cell, value, opts) {
 		// cell (td)
 		//   wrapper (div)
 		//     showValueBtn (button)
-		//       showValueSpan (span.fa)
+		//       showValueIcon (svg.wcdv_icon)
 		//     operationDiv (div)
 		//       (button) (button) (button) ...
 		//     container (div) <-- holds the actual data value
 
 		cell.appendChild(wrapper);
 		wrapper.appendChild(showValueBtn);
-		showValueBtn.appendChild(showValueSpan);
+		showValueBtn.appendChild(showValueIcon);
 		wrapper.appendChild(operationDiv);
 		wrapper.appendChild(container);
 	}
@@ -552,6 +756,13 @@ export function setElement(container, value, opts) {
 
 // makeOperationButton {{{2
 
+function makeOperationIcon(op) {
+	if (op.iconType === 'fontawesome') {
+		return fontAwesomeLegacy(op.icon).get(0);
+	}
+	return icon(op.icon).get(0);
+}
+
 export function makeOperationButton(type, op, index, opts) {
 	opts = opts || {};
 
@@ -570,11 +781,11 @@ export function makeOperationButton(type, op, index, opts) {
 		btn.classList.add('wcdv_icon_button_incell');
 		btn.classList.add('wcdv_icon_button_nolabel');
 		btn.style.float = 'initial';
-		btn.appendChild(fontAwesome(op.icon).get(0));
+		btn.appendChild(makeOperationIcon(op));
 	}
 	else {
 		if (op.icon) {
-			btn.appendChild(fontAwesome(op.icon).get(0));
+			btn.appendChild(makeOperationIcon(op));
 		}
 		if (op.label) {
 			btn.classList.add('wcdv_nowrap');
