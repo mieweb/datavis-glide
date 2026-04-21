@@ -425,8 +425,8 @@ class Grid {
 	 */
 
 	async clickActiveSortMenu(item) {
-		const sortMenus = await asyncFilter(await this.driver.findElements(By.className('context-menu-root')), (elt) => elt.isDisplayed());
-		const sortItems = await sortMenus[0].findElements(By.className('context-menu-item'));
+		const sortMenus = await asyncFilter(await this.driver.findElements(By.className('wcdv-popup-menu')), (elt) => elt.isDisplayed());
+		const sortItems = await sortMenus[0].findElements(By.className('wcdv-popup-menu-item'));
 		const validSortItems = await asyncFilter(sortItems, async (elt) => await elt.getText() !== '');
 		// data:[Promise<WebElement>], predicate:(WebElement)->Promise<bool>
 		const correctItem = await asyncFilter(validSortItems, async (elt) => await elt.getText() === item);
