@@ -26,6 +26,7 @@ import {
 
 import { Lock, ComputedView, GROUP_FUNCTION_REGISTRY, TableExport, Csv } from 'datavis-ace';
 import {GridRenderer} from '../../grid_renderer.js';
+import PopupMenu from '../../ui/popup_menu.js';
 
 // GridTable {{{1
 // JSDoc Types {{{2
@@ -184,7 +185,7 @@ var GridTable = makeSubclass('GridTable', GridRenderer, function () {
 
 	self.selection = [];
 	self.needsRedraw = false;
-	self.contextMenuSelectors = [];
+	self.popupMenus = [];
 	self.csvLock = new Lock('GridTable/csv');
 	self.autoResizeColsLock = new Lock('GridTable/autoResizeCols');
 	self.focus = {
@@ -912,18 +913,7 @@ GridTable.prototype._addSortingToHeader = function (data, orientation, spec, con
 		sortIcon_btn.appendChild(initialIcon);
 	}
 
-	var sortIcon_menu_items = {};
-
-	var makeMenuIcon = function (iconName) {
-		return function (a, b, c, item) {
-			var id = item._icon ? item._icon.id : gensym();
-			if (item._icon) {
-				jQuery(item._icon).remove();
-				jQuery(document.getElementById(id)).remove();
-			}
-			return fontAwesome(iconName).attr({id: id}).get(0);
-		};
-	};
+	var sortIcon_menu = new PopupMenu();
 
 	if (spec.field != null || spec.groupFieldIndex != null || spec.pivotFieldIndex != null) {
 
@@ -942,21 +932,13 @@ GridTable.prototype._addSortingToHeader = function (data, orientation, spec, con
 			: 'Unknown'
 		;
 
-		sortIcon_menu_items[gensym()] = {
-			name: trans('GRID.TABLE.SORT_MENU.ASCENDING', name),
-			icon: makeMenuIcon('arrow-up-narrow-wide'),
-			callback: function () {
-				setSort('asc');
-			}
-		};
-		sortIcon_menu_items[gensym()] = {
-			name: trans('GRID.TABLE.SORT_MENU.DESCENDING', name),
-			icon: makeMenuIcon('arrow-down-wide-narrow'),
-			callback: function () {
-				setSort('desc');
-			}
-		};
-		sortIcon_menu_items[gensym()] = '----';
+		sortIcon_menu.addItem(trans('GRID.TABLE.SORT_MENU.ASCENDING', name), 'arrow-up-narrow-wide', function () {
+			setSort('asc');
+		});
+		sortIcon_menu.addItem(trans('GRID.TABLE.SORT_MENU.DESCENDING', name), 'arrow-down-wide-narrow', function () {
+			setSort('desc');
+		});
+		sortIcon_menu.addSeparator();
 	}
 	else {
 
@@ -968,56 +950,28 @@ GridTable.prototype._addSortingToHeader = function (data, orientation, spec, con
 			}
 
 			//var aggType = aggInfo.instance.getType();
-			sortIcon_menu_items[gensym()] = {
-				name: trans('GRID.TABLE.SORT_MENU.ASCENDING', aggInfo.instance.getFullName()),
-				icon: makeMenuIcon('arrow-up-narrow-wide'),
-				callback: function () {
-					setSort('asc', aggNum);
-				}
-			};
-			sortIcon_menu_items[gensym()] = {
-				name: trans('GRID.TABLE.SORT_MENU.DESCENDING', aggInfo.instance.getFullName()),
-				icon: makeMenuIcon('arrow-down-wide-narrow'),
-				callback: function () {
-					setSort('desc', aggNum);
-				}
-			};
-			sortIcon_menu_items[gensym()] = '----';
+			sortIcon_menu.addItem(trans('GRID.TABLE.SORT_MENU.ASCENDING', aggInfo.instance.getFullName()), 'arrow-up-narrow-wide', (function (n) {
+				return function () { setSort('asc', n); };
+			})(aggNum));
+			sortIcon_menu.addItem(trans('GRID.TABLE.SORT_MENU.DESCENDING', aggInfo.instance.getFullName()), 'arrow-down-wide-narrow', (function (n) {
+				return function () { setSort('desc', n); };
+			})(aggNum));
+			sortIcon_menu.addSeparator();
 		});
 	}
 
 	// Include an option to reset the sort.  This is just as much to fluff up the all-too-common
 	// two-entry menu as anything else.
 
-	sortIcon_menu_items.reset = {
-		name: trans('GRID.TABLE.SORT_MENU.RESET_SORT'),
-		icon: makeMenuIcon('ban'),
-		callback: function () {
-			self.view.clearSort();
-		}
-	};
-
-	// Create the context menu.
-	//
-	// TODO The plugin allow the reuse of the menu among multiple targets.  See if we can use that
-	// within the grid.
-	//
-	// TODO Does spawning a bunch of these (i.e. every time the table is redrawn) use a bunch of
-	// memory?  Is there a way to destroy the menu to reclaim it?
-
-	var sortIcon_menu = jQuery.contextMenu({
-		selector: '.' + sortIcon_class,
-		appendTo: self.ui.contextMenus,
-		trigger: 'left',
-		callback: function (itemKey, opt) {
-			// This should never be called, it's only for items that don't specify their own callback,
-			// which they all should be doing.
-			console.log(itemKey);
-		},
-		items: sortIcon_menu_items
+	sortIcon_menu.addItem(trans('GRID.TABLE.SORT_MENU.RESET_SORT'), 'ban', function () {
+		self.view.clearSort();
 	});
 
-	self.contextMenuSelectors.push('.' + sortIcon_class);
+	sortIcon_btn.addEventListener('click', function () {
+		sortIcon_menu.open(sortIcon_btn);
+	});
+
+	self.popupMenus.push(sortIcon_menu);
 
 	container.appendChild(sortIcon_btn);
 
@@ -1574,7 +1528,6 @@ GridTable.prototype.draw = function (root, opts, cont) {
 			thMap: {},
 			tr: {},
 			progress: jQuery('<div>'),
-		contextMenus: jQuery('<div>'),
 		columnDropIndicator: null
 	};
 
@@ -1595,8 +1548,6 @@ GridTable.prototype.draw = function (root, opts, cont) {
 				.append(self.ui.progress);
 		}
 	}
-
-		self.ui.contextMenus.appendTo(document.body);
 
 		self.view.on(ComputedView.events.workBegin, function () {
 			if (self.features.block) {
@@ -2121,17 +2072,13 @@ GridTable.prototype.drawBody_groupAggregates = function (data, tr, groupNum, dis
 GridTable.prototype.clear = function () {
 	var self = this;
 
-	if (getProp(self, 'ui', 'contextMenus') != null) {
-		self.ui.contextMenus.remove();
-	}
+	self.logDebug(self.makeLogTag() + ' Removing %d popup menus', self.toString(), self.popupMenus.length);
 
-	self.logDebug(self.makeLogTag() + ' Removing %d context menus', self.toString(), self.contextMenuSelectors.length);
-
-	_.each(self.contextMenuSelectors, function (sel) {
-		jQuery.contextMenu('destroy', sel);
+	_.each(self.popupMenus, function (menu) {
+		menu.destroy();
 	});
 
-	self.contextMenuSelectors = [];
+	self.popupMenus = [];
 
 	if (self.features.limit && self.defn.table.limit.method === 'more') {
 		jQuery(self.scrollEventElement).off(self.scrollEvents);

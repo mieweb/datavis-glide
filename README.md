@@ -30,7 +30,6 @@ Inside a module script tag, import the CSS for DataVis and its dependents. This 
 
 ```
 import 'jquery-ui/dist/themes/base/jquery-ui.min.css';
-import 'jquery-contextmenu/dist/jquery.contextMenu.min.css';
 import 'sumoselect/sumoselect.min.css';
 import 'wcdatavis/wcdatavis.css';
 ```
