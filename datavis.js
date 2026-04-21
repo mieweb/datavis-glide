@@ -21,20 +21,26 @@ import 'sumoselect/sumoselect.min.css';
 import './wcdatavis.css';
 
 import * as Util from './src/util/misc.js';
-import { OrdMap } from 'datavis-ace/src/util/ordmap.js';
-import { Lock } from 'datavis-ace/src/util/lock.js';
-import { Aggregate, AGGREGATE_REGISTRY } from 'datavis-ace/src/aggregates.js';
-import { ParamInput } from 'datavis-ace/src/source_param.js';
-import { Source } from 'datavis-ace/src/source.js';
-import { ComputedView } from 'datavis-ace/src/computed_view.js';
-import { MirageView } from 'datavis-ace/src/mirage_view.js';
-import { GroupFunction, GROUP_FUNCTION_REGISTRY } from 'datavis-ace/src/group_fun.js';
+import {
+	OrdMap,
+	Lock,
+	Aggregate,
+	AGGREGATE_REGISTRY,
+	ParamInput,
+	Source,
+	ComputedView,
+	MirageView,
+	GroupFunction,
+	GROUP_FUNCTION_REGISTRY,
+	Prefs,
+	Perspective,
+	PrefsBackend,
+	PREFS_BACKEND_REGISTRY,
+	PrefsModule,
+	PREFS_MODULE_REGISTRY,
+} from 'datavis-ace';
 import { Grid } from './src/grid.js';
 import { Graph } from './src/graph.js';
-import { Prefs } from 'datavis-ace/src/prefs.js';
-import { Perspective } from 'datavis-ace/src/perspective.js';
-import { PrefsBackend, PREFS_BACKEND_REGISTRY } from 'datavis-ace/src/prefs_backend.js';
-import { PrefsModule, PREFS_MODULE_REGISTRY } from 'datavis-ace/src/prefs_module.js';
 import { trans } from './src/trans.js';
 
 // So we only import Svelte-Gantt when we're building an IIFE via Rollup.  This is mainly because

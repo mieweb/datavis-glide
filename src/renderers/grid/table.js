@@ -23,10 +23,8 @@ import {
 	setElement,
 } from '../../util/misc.js';
 
-import { Lock, ComputedView, GROUP_FUNCTION_REGISTRY } from 'datavis-ace';
+import { Lock, ComputedView, GROUP_FUNCTION_REGISTRY, TableExport, Csv } from 'datavis-ace';
 import {GridRenderer} from '../../grid_renderer.js';
-
-import {TableExport, Csv} from '../../util/csv.js';
 import flags from '../../flags.js';
 
 // GridTable {{{1
@@ -987,18 +985,14 @@ GridTable.prototype._addSortingToHeader = function (data, orientation, spec, con
 			name: trans('GRID.TABLE.SORT_MENU.ASCENDING', name),
 			icon: makeIcon('fa-sort-amount-asc'),
 			callback: function () {
-				window.setTimeout(function () {
-					setSort('asc');
-				});
+				setSort('asc');
 			}
 		};
 		sortIcon_menu_items[gensym()] = {
 			name: trans('GRID.TABLE.SORT_MENU.DESCENDING', name),
 			icon: makeIcon('fa-sort-amount-desc'),
 			callback: function () {
-				window.setTimeout(function () {
-					setSort('desc');
-				});
+				setSort('desc');
 			}
 		};
 		sortIcon_menu_items[gensym()] = '----';
@@ -1017,18 +1011,14 @@ GridTable.prototype._addSortingToHeader = function (data, orientation, spec, con
 				name: trans('GRID.TABLE.SORT_MENU.ASCENDING', aggInfo.instance.getFullName()),
 				icon: makeIcon('fa-sort-amount-asc'),
 				callback: function () {
-					window.setTimeout(function () {
-						setSort('asc', aggNum);
-					});
+					setSort('asc', aggNum);
 				}
 			};
 			sortIcon_menu_items[gensym()] = {
 				name: trans('GRID.TABLE.SORT_MENU.DESCENDING', aggInfo.instance.getFullName()),
 				icon: makeIcon('fa-sort-amount-desc'),
 				callback: function () {
-					window.setTimeout(function () {
-						setSort('desc', aggNum);
-					});
+					setSort('desc', aggNum);
 				}
 			};
 			sortIcon_menu_items[gensym()] = '----';
@@ -1042,9 +1032,7 @@ GridTable.prototype._addSortingToHeader = function (data, orientation, spec, con
 		name: trans('GRID.TABLE.SORT_MENU.RESET_SORT'),
 		icon: makeIcon('fa-ban'),
 		callback: function () {
-			window.setTimeout(function () {
-				self.view.clearSort();
-			});
+			self.view.clearSort();
 		}
 	};
 

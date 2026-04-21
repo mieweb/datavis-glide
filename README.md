@@ -1,3 +1,5 @@
+![DataVis GLIDE Logo](logo.png)
+
 # DataVis GLIDE
 
 DataVis is a system for exploring, manipulating, and visualizing data. It consists of multiple components in multiple layers, each responsible for different elements of a complete system. This layer, DataVis GLIDE, provides user interfaces for exploring data. This includes:
