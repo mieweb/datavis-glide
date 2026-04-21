@@ -25,8 +25,8 @@ describe('Operations', function () {
       const allOps = await grid.getOperations('all');
       assert.deepEqual(allOps, {
         '': ['Take Ye Flask'],
-        'Power': ['fa-battery-0', 'fa-battery-1', 'fa-battery-2', 'fa-battery-3', 'fa-battery-4'],
-        'Rating': ['fa-thumbs-o-up', 'fa-thumbs-o-down']
+        'Power': ['battery', 'battery-low', 'battery-medium', 'battery-full', 'battery-charging'],
+        'Rating': ['thumbs-up', 'thumbs-down']
       });
       assert.deepEqual(await grid.getOperations('row', {row: 0}), ['Inspect', 'Delete']);
       assert.deepEqual(await grid.getOperations('cell', {row: 0, col: 'string1'}), ['Like', 'Look Up']);

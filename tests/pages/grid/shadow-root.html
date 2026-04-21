@@ -5,7 +5,6 @@
 		<script src="../wcdatavis.js"></script>
 		<link rel="stylesheet" href="../base.css"/>
 		<!-- The browser doesn't even try to fetch the web fonts if this only goes inside the shadow root. -->
-		<link rel="stylesheet" href="../font-awesome.css"/>
 		<!-- <link rel="stylesheet" href="../wcdatavis.css"/> -->
 		<script>
 document.addEventListener('DOMContentLoaded', function () {
@@ -18,7 +17,6 @@ document.addEventListener('DOMContentLoaded', function () {
 	const shadowRoot = host.attachShadow({mode: 'open'});
 	shadowRoot.innerHTML = `
 		<style>
-			@import url("../font-awesome.css");
 			@import url("../wcdatavis.css");
 @font-face {
   font-family: 'FontAwesome';
