@@ -7,15 +7,16 @@
 
 button.wcdv_icon_button {
 	cursor: pointer;
-	height: 16px;
 	border: none;
 	background-color: transparent;
 	padding: 0;
+	padding-top: 2px;
 	vertical-align: middle;
 }
 
 button.wcdv_icon_button > svg.wcdv_icon {
 	height: 16px;
+	width: 16px;
 }
 
 button.wcdv_icon_button_nolabel svg.wcdv_icon {
@@ -94,11 +95,6 @@ li.wcdv_aggregate_field:first-child {
 li.wcdv_aggregate_field {
 	padding-top: 0.25ex;
 	padding-bottom: 0.25ex;
-}
-
-button.wcdv_expand_button {
-	display: inline-block;
-	vertical-align: middle;
 }
 
 button.wcdv_expand_button > svg.wcdv_icon {
@@ -425,15 +421,19 @@ div.wcdv_titlebar_controls button.wcdv_icon_button > svg.wcdv_icon {
 	flex: 1 1 auto;
 }
 
-.wcdv_control_clear_button {
+button.wcdv_control_clear_button {
 	margin-left: 10px;
+	/* so the clear icon doesn't increase the height of the control pane title */
 	margin-top: -2px;
 	flex: none;
-	height: 14px !important;
+	height: 14px;
 }
 
-.wcdv_control_clear_button > svg.wcdv_icon {
-	height: 14px !important;
+button.wcdv_control_clear_button > svg.wcdv_icon {
+	height: 14px;
+	/* so the clear icon doesn't increase the height of the control pane title */
+	margin-top: -2px;
+	margin-right: 0px;
 	stroke-width: 2.5px;
 }
 
