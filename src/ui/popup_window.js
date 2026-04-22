@@ -191,10 +191,14 @@ PopupWindow.prototype.close = function () {
 		return;
 	}
 
-	self.ui.overlay.css('opacity', 0);
+	self.ui.overlay.css({
+		'opacity': 0,
+		'pointer-events': 'none'
+	});
 
 	setTimeout(function () {
 		self.ui.overlay.detach();
+		self.ui.overlay.css('pointer-events', '');
 
 		// Restore focus to the previously focused element.
 		if (self._prevFocus && self._prevFocus.focus) {
@@ -292,6 +296,7 @@ PopupWindow.prototype.setButtons = function (buttonSpecs) {
 
 			if (spec.label) {
 				btn.append(jQuery('<span>').text(spec.label));
+				btn.attr('title', spec.label);
 			}
 
 			if (spec.attrs) {

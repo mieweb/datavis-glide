@@ -507,8 +507,8 @@ class Grid {
 	 * The field (not column!) to add grouping by.
 	 *
 	 * @param {string} [groupFun]
-	 * Name of the group function to apply.  Using this means waiting for the group function jQuery UI
-	 * window to pop up, then selecting it.  You have to know whether or not the window will pop up
+	 * Name of the group function to apply.  Using this means waiting for the group function popup
+	 * window to appear, then selecting it.  You have to know whether or not the window will appear
 	 * when adding the group: if it does, you must provide a value for this, otherwise you must not.
 	 * In short, if you're grouping by a date/time, provide a value for this parameter.
 	 */
@@ -522,18 +522,16 @@ class Grid {
 		else {
 			await selectByText(dropdown, field);
 
-			const wins = await this.driver.findElements(By.css('div.ui-dialog'));
-			if (wins.length === 0) {
-				throw new Error('Unable to find any jQuery UI windows');
-			}
-			const visibleWins = await asyncFilter(wins, (elt) => elt.isDisplayed());
-			if (visibleWins.length === 0) {
-				throw new Error('Unable to find any visible jQuery UI windows');
-			}
-			if (visibleWins.length > 1) {
-				throw new Error('Found too many visible jQuery UI windows');
-			}
-			return visibleWins[0].findElement(By.css(`button.wcdv_option[data-wcdv-groupfunname="${groupFun}"]`)).click();
+			const popup = await this.driver.wait(async () => {
+				const wins = await this.driver.findElements(By.css('div.wcdv-popup-window-overlay'));
+				for (const win of wins) {
+					if (await win.isDisplayed()) {
+						return win;
+					}
+				}
+				return false;
+			}, 5000, 'Timed out waiting for popup window to appear');
+			return popup.findElement(By.css(`button.wcdv_option[data-wcdv-groupfunname="${groupFun}"]`)).click();
 		}
 	}
 
@@ -583,18 +581,16 @@ class Grid {
 
 		await groupField.findElement(By.css('button[data-wcdv-role=set-group-fun]')).click();
 
-		const wins = await this.driver.findElements(By.css('div.ui-dialog'));
-		if (wins.length === 0) {
-			throw new Error('Unable to find any jQuery UI windows');
-		}
-		const visibleWins = await asyncFilter(wins, (elt) => elt.isDisplayed());
-		if (visibleWins.length === 0) {
-			throw new Error('Unable to find any visible jQuery UI windows');
-		}
-		if (visibleWins.length > 1) {
-			throw new Error('Found too many visible jQuery UI windows');
-		}
-		return visibleWins[0].findElement(By.css(`button.wcdv_option[data-wcdv-groupfunname="${groupFunName}"]`)).click();
+		const popup = await this.driver.wait(async () => {
+			const wins = await this.driver.findElements(By.css('div.wcdv-popup-window-overlay'));
+			for (const win of wins) {
+				if (await win.isDisplayed()) {
+					return win;
+				}
+			}
+			return false;
+		}, 5000, 'Timed out waiting for popup window to appear');
+		return popup.findElement(By.css(`button.wcdv_option[data-wcdv-groupfunname="${groupFunName}"]`)).click();
 	}
 
 	// #getGroupCell {{{3

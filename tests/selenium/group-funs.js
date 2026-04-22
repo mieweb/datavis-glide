@@ -83,7 +83,7 @@ describe('Group Functions', function () {
 					grid = new Grid(driver);
 					await grid.waitForIdle();
 					await grid.addGroup(f, 'none');
-					sleep(1); // give a sec for the jQuery UI dialog to go away
+					sleep(1); // give a sec for the popup window to go away
 					await grid.waitForIdle();
 					await grid.setGroupMode('summary');
 					await grid.waitForIdle();
@@ -95,7 +95,7 @@ describe('Group Functions', function () {
 					describe(`${gf}`, async function () {
 						before(async function () {
 							await grid.setGroupFun(f, gf);
-							sleep(1); // give a sec for the jQuery UI dialog to go away
+						sleep(1); // give a sec for the popup window to go away
 							await grid.waitForIdle();
 						});
 						// it()
