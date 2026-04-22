@@ -6,7 +6,7 @@ import { OrdMap } from 'datavis-ace';
 import jQuery from 'jquery';
 
 import {
-	fontAwesome,
+	icon,
 	makeSubclass,
 	ordmapAsHtmlDefnList,
 } from '../../util/misc.js';
@@ -178,7 +178,7 @@ DebugWin.prototype.show = function (grid, view, source) {
 		'class': '',
 		'title': 'Very Cool'
 	})
-		.append(fontAwesome('fa-thumbs-up'))
+		.append(icon('thumbs-up'))
 		.append(words[Math.floor(Math.random() * words.length)])
 		.on('click', function () {
 			win.dialog('close');

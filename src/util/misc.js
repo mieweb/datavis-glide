@@ -255,85 +255,6 @@ export function removeFocusHandler(id) {
 // icon {{{2
 
 /**
- * Mapping from FontAwesome icon names to Lucide icon names (kebab-case).
- * Used for backward compatibility with external consumers that specify FA icons.
- */
-
-var faToLucideMap = {
-	'fa-check': 'check',
-	'fa-ban': 'ban',
-	'fa-times': 'x',
-	'fa-search': 'search',
-	'fa-refresh': 'refresh-cw',
-	'fa-cog': 'settings',
-	'fa-gear': 'settings',
-	'fa-chevron-down': 'chevron-down',
-	'fa-download': 'download',
-	'fa-pencil': 'pencil',
-	'fa-pencil-square-o': 'square-pen',
-	'fa-bug': 'bug',
-	'fa-question-circle': 'circle-help',
-	'fa-info-circle': 'info',
-	'fa-minus-square': 'square-minus',
-	'fa-minus-square-o': 'square-minus',
-	'fa-plus-square-o': 'square-plus',
-	'fa-square-o': 'square',
-	'fa-exclamation-triangle': 'triangle-alert',
-	'fa-bolt': 'zap',
-	'fa-eye': 'eye',
-	'fa-eye-slash': 'eye-off',
-	'fa-long-arrow-right': 'arrow-right',
-	'fa-spinner': 'loader-circle',
-	'fa-circle-o-notch': 'loader-circle',
-	'fa-file-o': 'file',
-	'fa-bars': 'menu',
-	'fa-angle-double-up': 'chevrons-up',
-	'fa-angle-double-down': 'chevrons-down',
-	'fa-undo': 'undo-2',
-	'fa-thumb-tack': 'pin',
-	'fa-code': 'code',
-	'fa-paint-brush': 'paintbrush',
-	'fa-columns': 'columns-3',
-	'fa-arrows-h': 'move-horizontal',
-	'fa-chevron-circle-left': 'circle-chevron-left',
-	'fa-chevron-circle-right': 'circle-chevron-right',
-	'fa-chevron-circle-down': 'circle-chevron-down',
-	'fa-clock-o': 'clock',
-	'fa-save': 'save',
-	'fa-trash': 'trash-2',
-	'fa-table': 'table',
-	'fa-filter': 'filter',
-	'fa-sort-asc': 'arrow-up',
-	'fa-sort-desc': 'arrow-down',
-	'fa-sort-amount-asc': 'arrow-up-narrow-wide',
-	'fa-sort-amount-desc': 'arrow-down-wide-narrow',
-	'fa-arrows-v': 'move-vertical',
-	'fa-thumbs-up': 'thumbs-up',
-	'fa-thumbs-o-up': 'thumbs-up',
-	'fa-thumbs-o-down': 'thumbs-down',
-	'fa-battery-0': 'battery',
-	'fa-battery-1': 'battery-low',
-	'fa-battery-2': 'battery-medium',
-	'fa-battery-3': 'battery-full',
-	'fa-battery-4': 'battery-charging',
-	'fa-asterisk': 'asterisk',
-	'fa-bar-chart': 'bar-chart-2',
-	'fa-rotate-180': 'rotate-180',
-	'fa-rotate-270': 'rotate-270'
-};
-
-/**
- * Map of FA utility classes to wcdv equivalents.
- */
-
-var faClassMap = {
-	'fa-spin': 'wcdv_icon_spin',
-	'fa-pulse': 'wcdv_icon_pulse',
-	'fa-rotate-180': 'wcdv_icon_rotate_180',
-	'fa-rotate-270': 'wcdv_icon_rotate_270'
-};
-
-/**
  * Convert a kebab-case Lucide icon name to PascalCase for lookup in the icons object.
  *
  * @param {string} name
@@ -402,42 +323,20 @@ export function createLucideSvg(name) {
  * @returns {jQuery} A jQuery-wrapped SVG element.
  */
 
-export function icon(iconName, cls, title) {
-	var lucideName = iconName;
-
-	// Map FA names to Lucide names.
-	if (iconName.substr(0, 3) === 'fa-') {
-		lucideName = faToLucideMap[iconName];
-		if (!lucideName) {
-			console.warn('[DataVis] No Lucide mapping for FontAwesome icon: ' + iconName);
-			lucideName = iconName.substr(3);
-		}
-	}
-
-	var svg = createLucideSvg(lucideName);
+export function icon(icon, cls, title) {
+	var svg = createLucideSvg(icon);
 	if (!svg) {
 		// Fallback: create an empty span so callers don't break.
 		return jQuery('<span>');
 	}
 
 	svg.classList.add('wcdv_icon');
-	svg.setAttribute('data-icon', lucideName);
+	svg.setAttribute('data-icon', icon);
 
-	// Map any FA utility classes in `cls` to wcdv equivalents.
-	if (cls != undefined) {
-		var classes = cls.split(/\s+/);
-		for (var i = 0; i < classes.length; i++) {
-			var c = classes[i];
-			if (c === '') {
-				continue;
-			}
-			if (faClassMap[c]) {
-				svg.classList.add(faClassMap[c]);
-			}
-			else {
-				svg.classList.add(c);
-			}
-		}
+	if (cls != null) {
+		_.each(cls, function (c) {
+			svg.classList.add(c);
+		});
 	}
 
 	if (title != undefined) {
@@ -446,9 +345,6 @@ export function icon(iconName, cls, title) {
 
 	return jQuery(svg);
 }
-
-// Backward-compatible alias.
-export var fontAwesome = icon;
 
 /**
  * Create a FontAwesome icon element (for backward compatibility with external consumers
@@ -460,12 +356,12 @@ export var fontAwesome = icon;
  * @returns {jQuery}
  */
 
-export function fontAwesomeLegacy(faIcon, cls, title) {
+export function fontAwesome(icon, cls, title) {
 	var span = jQuery('<span>')
 		.addClass('fa');
 
-	if (faIcon.substr(0, 3) === 'fa-') {
-		span.addClass(faIcon);
+	if (icon.substr(0, 3) === 'fa-') {
+		span.addClass(icon);
 	}
 
 	if (cls != undefined) {
@@ -758,7 +654,7 @@ export function setElement(container, value, opts) {
 
 function makeOperationIcon(op) {
 	if (op.iconType === 'fontawesome') {
-		return fontAwesomeLegacy(op.icon).get(0);
+		return fontAwesome(op.icon).get(0);
 	}
 	return icon(op.icon).get(0);
 }

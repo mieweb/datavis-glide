@@ -6,7 +6,7 @@ import {
 	deepCopy,
 	deepDefaults,
 	determineColumns,
-	fontAwesome,
+	icon,
 	gensym,
 	getProp,
 	getPropDef,
@@ -369,7 +369,7 @@ Graph.prototype._addTitleWidgets = function (titlebar) {
 			evt.stopPropagation();
 			self.export();
 		})
-		.append(fontAwesome('fa-download'))
+		.append(icon('download'))
 		.appendTo(self.ui.titlebar_controls)
 	;
 
@@ -385,7 +385,7 @@ Graph.prototype._addTitleWidgets = function (titlebar) {
 			evt.stopPropagation();
 			self.refresh();
 		})
-		.append(fontAwesome('fa-refresh'))
+		.append(icon('refresh-cw'))
 		.appendTo(self.ui.titlebar_controls)
 	;
 
@@ -403,7 +403,7 @@ Graph.prototype._addTitleWidgets = function (titlebar) {
 			evt.stopPropagation();
 			self.ui.toolbar.toggle();
 		})
-		.append(jQuery(fontAwesome('fa-cog')))
+		.append(jQuery(icon('settings')))
 		.appendTo(self.ui.titlebar_controls)
 	;
 
@@ -419,7 +419,7 @@ Graph.prototype._addTitleWidgets = function (titlebar) {
 			evt.stopPropagation();
 			self.toggle();
 		})
-		.append(jQuery(fontAwesome('fa-chevron-down')))
+		.append(jQuery(icon('chevron-down')))
 		.appendTo(self.ui.titlebar_controls)
 	;
 };
@@ -932,13 +932,13 @@ Graph.prototype._setSpinner = function (what) {
 
 	switch (what) {
 	case 'loading':
-		self.ui.spinner.html(fontAwesome('fa-refresh', 'fa-spin', 'Loading...'));
+		self.ui.spinner.html(icon('refresh-cw', ['wcdv_icon_spin'], 'Loading...'));
 		break;
 	case 'not-loaded':
-		self.ui.spinner.html(fontAwesome('fa-ban', null, 'Not Loaded'));
+		self.ui.spinner.html(icon('ban', null, 'Not Loaded'));
 		break;
 	case 'working':
-		self.ui.spinner.html(fontAwesome('fa-circle-o-notch', 'fa-spin', 'Working...'));
+		self.ui.spinner.html(icon('loader-circle', ['wcdv_icon_spin'], 'Working...'));
 		break;
 	}
 };

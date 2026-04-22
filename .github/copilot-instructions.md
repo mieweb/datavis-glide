@@ -10,6 +10,7 @@ DataVis is a system for data visualization with presentation via charts and tabl
 ## Tool & Script Use
 
 - Write any temporary scripts needed into the toplevel scripts directory, never into other places on the filesystem or outside the project.
+- When you need to run some code in Python or Node, don’t try to run the code directly by passing it through the shell. Instead, write the script into a file and then run it.
 
 ## Code Quality Principles
 

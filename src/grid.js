@@ -8,7 +8,7 @@ import {
 	deepCopy,
 	deepDefaults,
 	delegate,
-	fontAwesome,
+	icon,
 	getProp,
 	getPropDef,
 	I,
@@ -636,7 +636,7 @@ var Grid = makeSubclass('Grid', Object, function (defn, opts, cb) {
 			'type': 'button',
 			'aria-label': trans('GRID.OMNIFILTER.CLEAR')
 		})
-			.append(fontAwesome('fa-times'))
+			.append(icon('x'))
 			.on('click', function () {
 				clearTimeout(self._omnifilterDebounceTimer);
 				self.ui.omnifilterInput.val('');
@@ -657,7 +657,7 @@ var Grid = makeSubclass('Grid', Object, function (defn, opts, cb) {
 			'class': 'wcdv_icon_button wcdv_text-primary wcdv_omnifilter_toggle',
 			'aria-label': trans('GRID.OMNIFILTER.TOGGLE')
 		})
-			.append(fontAwesome('fa-search'))
+			.append(icon('search'))
 			.on('click', function (evt) {
 				evt.stopPropagation();
 				if (self.ui.omnifilter.is(':visible')) {
@@ -1259,7 +1259,7 @@ Grid.prototype._addTitleWidgets = function (titlebar, doingServerFilter, id) {
 		jQuery('<span>', {
 			'data-tooltip': self.opts.helpText
 		})
-			.append(fontAwesome('fa-question-circle').css({
+			.append(icon('circle-help').css({
 				'margin-bottom': '-4px'
 			}))
 			.appendTo(notHeader);
@@ -1291,7 +1291,7 @@ Grid.prototype._addTitleWidgets = function (titlebar, doingServerFilter, id) {
 				evt.stopPropagation();
 				self.debugWin.show(self, self.view, self.view.source);
 			})
-			.append(fontAwesome('fa-bug'))
+			.append(icon('bug'))
 			.appendTo(self.ui.titlebar_controls);
 	}
 
@@ -1323,7 +1323,7 @@ Grid.prototype._addTitleWidgets = function (titlebar, doingServerFilter, id) {
 			evt.stopPropagation();
 			self.refresh();
 		})
-		.append(fontAwesome('fa-refresh'))
+		.append(icon('refresh-cw'))
 		.appendTo(self.ui.titlebar_controls)
 	;
 
@@ -1379,7 +1379,7 @@ Grid.prototype._addTitleWidgets = function (titlebar, doingServerFilter, id) {
 				self.toggleControls();
 			}
 		})
-		.append(jQuery(fontAwesome('fa-cog')))
+		.append(jQuery(icon('settings')))
 		.appendTo(self.ui.titlebar_controls)
 	;
 
@@ -1395,7 +1395,7 @@ Grid.prototype._addTitleWidgets = function (titlebar, doingServerFilter, id) {
 			evt.stopPropagation();
 			self.toggle();
 		})
-		.append(jQuery(fontAwesome('fa-chevron-down')))
+		.append(jQuery(icon('chevron-down')))
 		.appendTo(self.ui.titlebar_controls)
 	;
 };
@@ -1533,7 +1533,7 @@ Grid.prototype.redraw = function (contOk, contFail) {
 		self.renderer.on('generateCsvProgress', function (progress) {
 			if (progress === 0) {
 				self.ui.exportBtn.children('svg.wcdv_icon').remove();
-				self.ui.exportBtn.append(fontAwesome('fa-spinner', 'fa-pulse'));
+				self.ui.exportBtn.append(icon('loader-circle', ['wcdv_icon_pulse']));
 			}
 		});
 
@@ -2000,13 +2000,13 @@ Grid.prototype._setSpinner = function (what) {
 
 	switch (what) {
 	case 'loading':
-		self.ui.spinner.html(fontAwesome('fa-refresh', 'fa-spin', trans('GRID.TITLEBAR.LOADING')));
+		self.ui.spinner.html(icon('refresh-cw', ['wcdv_icon_spin'], trans('GRID.TITLEBAR.LOADING')));
 		break;
 	case 'not-loaded':
-		self.ui.spinner.html(fontAwesome('fa-ban', null, trans('GRID.TITLEBAR.NOT_LOADED')));
+		self.ui.spinner.html(icon('ban', null, trans('GRID.TITLEBAR.NOT_LOADED')));
 		break;
 	case 'working':
-		self.ui.spinner.html(fontAwesome('fa-circle-o-notch', 'fa-spin', trans('GRID.TITLEBAR.WORKING')));
+		self.ui.spinner.html(icon('loader-circle', ['wcdv_icon_spin'], trans('GRID.TITLEBAR.WORKING')));
 		break;
 	}
 };
@@ -2214,13 +2214,13 @@ Grid.prototype._setExportStatus = function (status) {
 		self.csvReady = false;
 		self.ui.exportBtn.attr('title', trans('GRID.TITLEBAR.GENERATE_CSV'));
 		self.ui.exportBtn.children('svg.wcdv_icon').remove();
-		self.ui.exportBtn.append(fontAwesome('fa-file-o'));
+		self.ui.exportBtn.append(icon('file'));
 		break;
 	case 'ready':
 		self.csvReady = true;
 		self.ui.exportBtn.attr('title', trans('GRID.TITLEBAR.DOWNLOAD_CSV'));
 		self.ui.exportBtn.children('svg.wcdv_icon').remove();
-		self.ui.exportBtn.append(fontAwesome('fa-download'));
+		self.ui.exportBtn.append(icon('download'));
 		break;
 	default:
 		throw new Error('Call Error: invalid status "' + status + '"');

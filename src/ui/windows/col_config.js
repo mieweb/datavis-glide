@@ -4,8 +4,8 @@ import jQuery from 'jquery';
 
 import { trans } from '../../trans.js';
 import {
-	fontAwesome,
 	getPropDef,
+	icon,
 	makeSubclass,
 	moveArrayElement,
 } from '../../util/misc.js';
@@ -102,7 +102,7 @@ ColConfigWin.prototype.show = function (posElt, onSave) {
 			'title': trans('GRID.COLCONFIG_WIN.REORDER_COLS')
 		})
 			.addClass('wcdv_icon_button drag-handle wcdv_button_right')
-			.append(fontAwesome('fa-bars'))
+			.append(icon('menu'))
 			.appendTo(td);
 
 		td = jQuery('<td>')
@@ -124,7 +124,7 @@ ColConfigWin.prototype.show = function (posElt, onSave) {
 			'title': trans('GRID.COLCONFIG_WIN.RENAME_COL')
 		})
 			.addClass('wcdv_icon_button')
-			.append(fontAwesome('fa-pencil'))
+			.append(icon('pencil'))
 			.on('click', function () {
 				var newName = prompt(trans('GRID.COLCONFIG_WIN.RENAME_COL.PROMPT', field));
 
@@ -165,7 +165,7 @@ ColConfigWin.prototype.show = function (posElt, onSave) {
 				}
 			})
 			.appendTo(td)
-			._makeIconCheckbox('fa-thumb-tack');
+			._makeIconCheckbox('pin');
 
 		if (getPropDef(false, colConfig, 'isPinned')) {
 			pinnedCount += 1;
@@ -187,7 +187,7 @@ ColConfigWin.prototype.show = function (posElt, onSave) {
 				colConfig.isHidden = isHiddenCheckbox.prop('checked');
 			})
 			.appendTo(td)
-			._makeIconCheckbox('fa-ban');
+			._makeIconCheckbox('ban');
 
 		td = jQuery('<td>', {
 			'data-prop': 'allowHtml'
@@ -204,7 +204,7 @@ ColConfigWin.prototype.show = function (posElt, onSave) {
 				colConfig.allowHtml = allowHtmlCheckbox.prop('checked');
 			})
 			.appendTo(td)
-			._makeIconCheckbox('fa-code');
+			._makeIconCheckbox('code');
 
 		td = jQuery('<td>', {
 			'data-prop': 'allowFormatting'
@@ -227,7 +227,7 @@ ColConfigWin.prototype.show = function (posElt, onSave) {
 				colConfig.allowFormatting = allowFormattingCheckbox.prop('checked');
 			})
 			.appendTo(td)
-			._makeIconCheckbox('fa-paint-brush');
+			._makeIconCheckbox('paintbrush');
 
 		/*
 		td = jQuery('<td>')
@@ -236,7 +236,7 @@ ColConfigWin.prototype.show = function (posElt, onSave) {
 
 		var configBtn = jQuery('<button>', {'type': 'button', 'title': 'Click to configure column'})
 			.addClass('wcdv_icon_button')
-			.append(fontAwesome('fa-gear'))
+			.append(icon('settings'))
 			.on('click', function () {
 				self.showConfigWin(field);
 			})
@@ -260,7 +260,7 @@ ColConfigWin.prototype.show = function (posElt, onSave) {
 				colTableBody.children('tr').eq(newIndex).effect('highlight', 750);
 				moveArrayElement(keys, oldIndex, newIndex);
 			})
-			.append(fontAwesome('fa-angle-double-up'))
+			.append(icon('chevrons-up'))
 			.appendTo(td);
 
 		td = jQuery('<td>')
@@ -280,7 +280,7 @@ ColConfigWin.prototype.show = function (posElt, onSave) {
 				colTableBody.children('tr').eq(newIndex).effect('highlight', 750);
 				moveArrayElement(keys, oldIndex, newIndex);
 			})
-			.append(fontAwesome('fa-angle-double-down'))
+			.append(icon('chevrons-down'))
 			.appendTo(td);
 
 		tr.appendTo(colTableBody);
@@ -288,7 +288,7 @@ ColConfigWin.prototype.show = function (posElt, onSave) {
 
 	var pinnedMsg = jQuery('<div>')
 		.addClass('wcdv_dlg_info_banner')
-		.append(fontAwesome('fa-info-circle'))
+		.append(icon('info'))
 		.append(' ')
 		.append(trans('GRID.COLCONFIG_WIN.PINNED_COL_WARNING'))
 		.hide()
@@ -311,7 +311,7 @@ ColConfigWin.prototype.show = function (posElt, onSave) {
 			'class': '',
 			'title': trans('GRID.COLCONFIG_WIN.RESET_COL_ORDER')
 		})
-			.append(fontAwesome('fa-undo'))
+			.append(icon('undo-2'))
 			.append(trans('GRID.COLCONFIG_WIN.RESET_COL_ORDER'))
 			.on('click', function (evt) {
 				keys = self.initColConfig.keys();
@@ -331,7 +331,7 @@ ColConfigWin.prototype.show = function (posElt, onSave) {
 		'title': trans('DIALOG.OK'),
 		'data-role': 'ok'
 	})
-		.append(fontAwesome('fa-check'))
+		.append(icon('check'))
 		.append(trans('DIALOG.OK'))
 		.on('click', function () {
 			// Overwrite the "initial" configuration with one derived from the current one, based on the
@@ -355,7 +355,7 @@ ColConfigWin.prototype.show = function (posElt, onSave) {
 		'title': trans('DIALOG.CANCEL'),
 		'data-role': 'cancel'
 	})
-		.append(fontAwesome('fa-ban'))
+		.append(icon('ban'))
 		.append(trans('DIALOG.CANCEL'))
 		.on('click', function () {
 			orderWin.dialog('close');

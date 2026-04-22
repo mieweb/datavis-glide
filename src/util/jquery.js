@@ -5,7 +5,7 @@ import { trans } from '../trans.js';
 
 import {
 	deepDefaults,
-	fontAwesome,
+	icon,
 	getProp,
 } from './misc.js';
 
@@ -191,11 +191,11 @@ jQuery.fn.extend({
 				})
 			;
 
-			var onIcon = fontAwesome(opts.on.icon, opts.on.classes)
+			var onIcon = icon(opts.on.icon, opts.on.classes)
 				.css('display', 'inline-block')
 				.hide()
 				.appendTo(button);
-			var offIcon = fontAwesome(opts.off.icon, opts.off.classes)
+			var offIcon = icon(opts.off.icon, opts.off.classes)
 				.css('display', 'inline-block')
 				.hide()
 				.appendTo(button);
@@ -297,7 +297,7 @@ jQuery.fn.extend({
 		var tooltipContent = jQuery('<div>', {
 			'data-tooltip': tooltipContent
 		})
-			.append(fontAwesome('fa-info-circle').css('padding-right', '0.25em').addClass('wcdv_text-primary'))
+			.append(icon('info').css('padding-right', '0.25em').addClass('wcdv_text-primary'))
 			.append(trans('GRID.TABLE.DRAGGABLE_FIELD_HELP'));
 		return this
 			.draggable(opts);

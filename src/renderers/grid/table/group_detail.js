@@ -6,7 +6,7 @@ import jQuery from 'jquery';
 
 import {
 	determineColumns,
-	fontAwesome,
+	icon,
 	format,
 	getProp,
 	isElement,
@@ -462,7 +462,7 @@ GridTableGroupDetail.prototype.drawBody = function (data, typeInfo, columns, con
 			}
 			tr.attr('data-wcdv-expanded', op === 'show' ? '1' : '0');
 			elt.attr('data-wcdv-expanded', op === 'show' ? '1' : '0');
-			elt.html(fontAwesome(op === 'show' ? 'fa-minus-square-o' : 'fa-plus-square-o'));
+			elt.html(icon(op === 'show' ? 'square-minus' : 'square-plus'));
 		});
 	}
 
@@ -560,7 +560,7 @@ GridTableGroupDetail.prototype.drawBody = function (data, typeInfo, columns, con
                     'class': 'wcdv_icon_button wcdv_expand_button',
                     'data-wcdv-expanded': isExpanded,
                     'disabled': disabled
-                }).html(fontAwesome(isExpanded === '1' ? (disabled ? 'fa-square-o':'fa-minus-square-o' ) : (disabled ? 'fa-square-o' : 'fa-plus-square-o')));
+                }).html(icon(isExpanded === '1' ? (disabled ? 'square':'square-minus' ) : (disabled ? 'square' : 'square-plus')));
 
 				jQuery('<th>', {'class': 'wcdv_group_col_spacer'})
 					.append(expandBtn)
@@ -693,7 +693,7 @@ GridTableGroupDetail.prototype.drawBody = function (data, typeInfo, columns, con
 					'data-wcdv-show-more-start': i,
 					'colspan': colSpan
 				})
-					.append(fontAwesome('fa-chevron-circle-down'))
+					.append(icon('circle-chevron-down'))
 					.append(jQuery('<span>Showing rows 1–' + i + ' of ' + childRowValEltsLen + '.</span>')
 						.css({'padding-left': '0.5em'}))
 					.append(jQuery('<button type="button">Load ' + limitConfig.chunkSize + ' more rows.</button>')
@@ -844,7 +844,7 @@ GridTableGroupDetail.prototype.drawBody = function (data, typeInfo, columns, con
 					'data-wcdv-show-more-start': i,
 					'colspan': colSpan
 				})
-					.append(fontAwesome('fa-chevron-circle-down'))
+					.append(icon('circle-chevron-down'))
 					.append(jQuery('<span>Showing rows 1–' + i + ' of ' + metadataNode.rows.length + '.</span>')
 						.css({'padding-left': '0.5em'}))
 					.append(jQuery('<button type="button">Load ' + limitConfig.chunkSize + ' more rows.</button>')

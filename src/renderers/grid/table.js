@@ -9,7 +9,7 @@ import {
 	createLucideSvg,
 	deepCopy,
 	determineColumns,
-	fontAwesome,
+	icon,
 	format,
 	gensym,
 	getElement,
@@ -1024,7 +1024,7 @@ GridTable.prototype._addFilterToHeader = function (container, field, displayText
 	})
 		.addClass('wcdv_icon_button')
 		.css({'color': '#FFF'})
-		.append(fontAwesome('fa-filter'))
+		.append(icon('filter'))
 		.on('click', function () {
 			self.grid.filterControl.addField(field, displayText, {
 				openControls: true

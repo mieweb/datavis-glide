@@ -7,7 +7,7 @@ import {
 	deepCopy,
 	deepDefaults,
 	determineColumns,
-	fontAwesome,
+	icon,
 	gensym,
 	getProp,
 	makeSubclass,
@@ -127,7 +127,7 @@ GridControlField.prototype.draw = function () {
 	var label = self.displayText || (self.colConfig && self.colConfig.displayText) || self.field.field;
 
 	self.ui.removeButton = jQuery('<button>', {'type': 'button'})
-		.append(fontAwesome('fa-minus-square'))
+		.append(icon('square-minus'))
 		.attr('title', trans('GRID_CONTROL.FIELD.REMOVE'))
 		.addClass('wcdv_icon_button wcdv_remove wcdv_text-primary')
 		.on('click', function () {
@@ -198,7 +198,7 @@ GridControlField.prototype.showError = function (errMsg) {
 GridControlField.prototype._addErrorIndicator = function (parent, cls) {
 	var self = this;
 
-	self.ui.error = fontAwesome('fa-exclamation-triangle', cls)
+	self.ui.error = icon('triangle-alert', cls)
 		.hide()
 		.appendTo(parent);
 };
@@ -256,7 +256,7 @@ FunGridControlField.prototype.draw = function () {
 			.on('click', function () {
 				self.showFunWin();
 			})
-			.append(fontAwesome('fa-bolt'))
+			.append(icon('zap'))
 			.appendTo(self.ui.root)
 		;
 
@@ -452,7 +452,7 @@ AggregateControlField.prototype.draw = function () {
 			.on('click', function () {
 				self.ui.optionsDialog.dialog('open');
 			})
-			.append(fontAwesome('fa-pencil-square-o'))
+			.append(icon('square-pen'))
 			.appendTo(self.ui.root)
 		;
 		self._makeOptionsDialog(aggDefn);
@@ -469,7 +469,7 @@ AggregateControlField.prototype.draw = function () {
 	// 			self.shouldGraph = true;
 	// 			self.control.updateView();
 	// 		})
-	// 		.append(fontAwesome('fa-bar-chart'))
+	// 		.append(icon('bar-chart-2'))
 	// 		.appendTo(self.ui.root)
 	// 	;
 	// }
@@ -484,12 +484,12 @@ AggregateControlField.prototype.draw = function () {
 		.appendTo(self.ui.root)
 		._makeIconCheckbox({
 			on: {
-				icon: 'fa-eye-slash',
-				classes: 'wcdv_text-primary'
+				icon: 'eye-off',
+				classes: ['wcdv_text-primary']
 			},
 			off: {
-				icon: 'fa-eye',
-				classes: 'wcdv_text-primary'
+				icon: 'eye',
+				classes: ['wcdv_text-primary']
 			}
 		})
 	;
@@ -543,7 +543,7 @@ AggregateControlField.prototype._makeOptionsDialog = function (aggDefn) {
 		'title': trans('DIALOG.OK'),
 		'data-role': 'ok'
 	})
-		.append(fontAwesome('fa-check'))
+		.append(icon('check'))
 		.append(trans('DIALOG.OK'))
 		.on('click', function () {
 			self.aggFunOpts = opts;
@@ -558,7 +558,7 @@ AggregateControlField.prototype._makeOptionsDialog = function (aggDefn) {
 		'title': trans('DIALOG.CANCEL'),
 		'data-role': 'cancel'
 	})
-		.append(fontAwesome('fa-ban'))
+		.append(icon('ban'))
 		.append(trans('DIALOG.CANCEL'))
 		.on('click', function () {
 			self.ui.optionsDialog.dialog('close');
@@ -767,7 +767,7 @@ GridControl.prototype.makeClearButton = function (target) {
 
 	return jQuery('<button>')
 		.addClass('wcdv_icon_button wcdv_text-primary wcdv_control_clear_button')
-		.append(fontAwesome('fa-ban'))
+		.append(icon('ban'))
 		.hide()
 		.on('click', function () {
 			jQuery(this).hide();
@@ -866,7 +866,7 @@ GridControl.prototype.addField = function (field, displayText, opts, controlFiel
 		});
 
 	if (self.isHorizontal) {
-		li.append(fontAwesome('fa-long-arrow-right'));
+		li.append(icon('arrow-right'));
 	}
 
 	li.append(cf.draw());

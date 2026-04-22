@@ -5,7 +5,7 @@ import jQuery from 'jquery';
 
 import { trans } from './trans.js';
 import {
-	fontAwesome,
+	icon,
 	makeSubclass,
 	mixinLogging,
 } from './util/misc.js';
@@ -102,7 +102,7 @@ OperationsPalette.prototype.drawPalette = function () {
 				btn.addClass('no_label');
 			}
 			if (op.icon) {
-				btn.append(fontAwesome(op.icon));
+				btn.append(icon(op.icon));
 			}
 			if (op.label) {
 				btn.append(op.label);

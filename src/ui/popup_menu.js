@@ -1,6 +1,6 @@
 import jQuery from 'jquery';
 import {
-	fontAwesome,
+	icon,
 	makeSubclass,
 } from '../util/misc.js';
 
@@ -106,7 +106,7 @@ PopupMenu.prototype.open = function (anchorElement) {
 		item.setAttribute('role', 'menuitem');
 
 		if (entry.iconName) {
-			var iconElt = fontAwesome(entry.iconName).get(0);
+			var iconElt = icon(entry.iconName).get(0);
 			if (iconElt) {
 				item.appendChild(iconElt);
 			}
