@@ -1020,7 +1020,7 @@ GridTable.prototype._addFilterToHeader = function (container, field, displayText
 	}
 
 	jQuery('<button>', {
-		'title': trans('GRID.TABLE.ADD_FILTER_HELP', field)
+		'data-tooltip': trans('GRID.TABLE.ADD_FILTER_HELP', field)
 	})
 		.addClass('wcdv_icon_button')
 		.css({'color': '#FFF'})
@@ -1029,12 +1029,6 @@ GridTable.prototype._addFilterToHeader = function (container, field, displayText
 			self.grid.filterControl.addField(field, displayText, {
 				openControls: true
 			});
-		})
-		.tooltip({
-			classes: {
-				'ui-tooltip': 'ui-corner-all ui-widget-shadow wcdv_info_tooltip wcdv_border-primary'
-			},
-			show: { delay: 1000 }
 		})
 		.appendTo(container);
 };

@@ -1571,4 +1571,39 @@ table tfoot.sticky {
 	}
 }
 
+/* TOOLTIPS */
+
+[data-tooltip] {
+	position: relative;
+	/*border-bottom: 1px dashed #000;*/
+	cursor: help
+}
+
+[data-tooltip]::after {
+	position: absolute;
+	opacity: 0;
+	pointer-events: none;
+	content: attr(data-tooltip);
+	left: 0;
+	top: calc(100% + 10px);
+	min-width: 20em;
+	line-height: initial;
+	border-radius: 4px;
+	box-shadow: 0px 0px 8px 2px rgb(0 0 0 / 60%);
+	background-color: white;
+	z-index: 10;
+	padding: 6px;
+	color: black;
+	text-align: left;
+	border-left: solid 6px #0095D6;
+	transform: translateY(-20px);
+	transition: all 150ms cubic-bezier(.25, .8, .25, 1);
+}
+
+[data-tooltip]:hover::after {
+	opacity: 1;
+	transform: translateY(0);
+	transition-duration: 300ms;
+}
+
 /* vim:set noet sw=4 ts=4: */

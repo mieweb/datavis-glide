@@ -185,7 +185,7 @@ GridControlField.prototype.showError = function (errMsg) {
 	self.logDebug(self.makeLogTag() + ' GRID // CONTROL', errMsg);
 
 	if (self.ui.error) {
-		self.ui.error.attr('title', errMsg);
+		self.ui.error.attr('data-tooltip', errMsg);
 		self.ui.error.show();
 	}
 	else {
@@ -200,12 +200,6 @@ GridControlField.prototype._addErrorIndicator = function (parent, cls) {
 
 	self.ui.error = fontAwesome('fa-exclamation-triangle', cls)
 		.hide()
-		.tooltip({
-			classes: {
-				'ui-tooltip': 'ui-corner-all ui-widget-shadow ' + cls + '_tooltip'
-			},
-			show: { delay: 1000 }
-		})
 		.appendTo(parent);
 };
 

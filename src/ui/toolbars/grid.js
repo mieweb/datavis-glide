@@ -535,15 +535,11 @@ var PrefsToolbar = makeSubclass('PrefsToolbar', ToolbarSection, function (grid) 
 		.append(warnMsgText);
 
 	var warnMsg = fontAwesome('fa-info-circle', 'wcdv_info_icon')
-		.attr({'title': trans('GRID_TOOLBAR.PREFS.INFO.TOOLTIP')})
-		.hide()
-		.tooltip({
-			classes: {
-				'ui-tooltip': 'ui-corner-all ui-widget-shadow wcdv_info_tooltip wcdv_border-primary'
-			},
-			show: { delay: 1000 },
-			content: warnMsgContent,
+		.attr({
+			'title': trans('GRID_TOOLBAR.PREFS.INFO.TOOLTIP'),
+			'data-tooltip': warnMsgContent
 		})
+		.hide()
 		.appendTo(div)
 	;
 
@@ -558,16 +554,13 @@ var PrefsToolbar = makeSubclass('PrefsToolbar', ToolbarSection, function (grid) 
 		.append(fontAwesome('fa-info-circle').css('padding-right', '0.25em').addClass('wcdv_text-primary'))
 		.append(trans('GRID_TOOLBAR.PREFS.SAVE_AS.HELP'));
 
-	var saveAsBtn = jQuery('<button>', {'type': 'button', 'title': trans('GRID_TOOLBAR.PREFS.SAVE_AS.TOOLTIP')})
+	var saveAsBtn = jQuery('<button>', {
+		'type': 'button',
+		'title': trans('GRID_TOOLBAR.PREFS.SAVE_AS.TOOLTIP'),
+		'data-tooltip': saveAsBtnTooltipContent
+	})
 		.append(fontAwesome('fa-save'))
 		.addClass('wcdv_icon_button wcdv_text-primary')
-		.tooltip({
-			classes: {
-				'ui-tooltip': 'ui-corner-all ui-widget-shadow wcdv_info_tooltip wcdv_border-primary'
-			},
-			show: { delay: 1000 },
-			content: saveAsBtnTooltipContent
-		})
 		.on('click', function (evt) {
 			evt.stopPropagation();
 			grid.prefs.clonePerspective();

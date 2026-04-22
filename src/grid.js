@@ -1256,14 +1256,12 @@ Grid.prototype._addTitleWidgets = function (titlebar, doingServerFilter, id) {
 
 	if (typeof self.opts.helpText === 'string' && self.opts.helpText !== '') {
 		notHeader.append(' ');
-		fontAwesome('fa-question-circle')
-			.tooltip({
-				classes: {
-					'ui-tooltip': 'ui-corner-all ui-widget-shadow wcdv_info_tooltip wcdv_border-primary'
-				},
-				show: { delay: 1000 },
-				content: self.opts.helpText
-			})
+		jQuery('<span>', {
+			'data-tooltip': self.opts.helpText
+		})
+			.append(fontAwesome('fa-question-circle').css({
+				'margin-bottom': '-4px'
+			}))
 			.appendTo(notHeader);
 	}
 
