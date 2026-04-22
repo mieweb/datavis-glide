@@ -139,7 +139,10 @@ DebugWin.prototype.show = function (grid, view, source) {
 
 	var contentDiv = jQuery('<div>').css({
 		'display': 'flex',
-		'flex-direction': 'column'
+		'flex-direction': 'column',
+		'flex': '1',
+		'overflow': 'hidden',
+		'min-height': '0'
 	}).append(tabsDiv);
 
 	pw.setContent(contentDiv);
