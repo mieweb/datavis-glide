@@ -9,6 +9,7 @@ import {
 import { trans } from '../trans.js';
 import { OrdMap } from 'datavis-ace';
 import { PopupWindow } from './popup_window.js';
+import { Tabs } from './tabs.js';
 
 // TemplatesEditor {{{1
 
@@ -56,8 +57,7 @@ var TemplatesEditor = makeSubclass('TemplatesEditor', Object, function (grid, on
 		var inputs = {};
 		var labels = {};
 
-		var li = jQuery('<li>').append(jQuery('<a>', {href: '#wcdv_hbe_' + name}).text(displayName));
-		var div = jQuery('<div>', {id: 'wcdv_hbe_' + name});
+		var div = jQuery('<div>');
 
 		_.each([
 			{id: 'empty', label: trans('GRID.TEMPLATE_EDITOR.CONFIG.EMPTY'), rows: 2},
@@ -85,7 +85,7 @@ var TemplatesEditor = makeSubclass('TemplatesEditor', Object, function (grid, on
 			div.append(inputs[x.id]);
 		});
 
-		return { li: li, div: div, inputs: inputs };
+		return { div: div, inputs: inputs };
 	};
 
 	self.tabData = new OrdMap();
@@ -93,15 +93,16 @@ var TemplatesEditor = makeSubclass('TemplatesEditor', Object, function (grid, on
 	self.tabData.set('whenGroup', makeTab('whenGroup', trans('GRID.TEMPLATE_EDITOR.GROUPED')));
 	self.tabData.set('whenPivot', makeTab('whenPivot', trans('GRID.TEMPLATE_EDITOR.PIVOTTED')));
 
-	var tabs = jQuery('<div>');
-	var ul = jQuery('<ul>').appendTo(tabs);
-	self.tabData.each(function (x) {
-		ul.append(x.li);
-		tabs.append(x.div);
+	var tabsContainer = jQuery('<div>');
+	var tabsWidget = new Tabs(tabsContainer);
+	self.tabData.each(function (x, k) {
+		var displayName = k === 'whenPlain' ? trans('GRID.TEMPLATE_EDITOR.PLAIN')
+			: k === 'whenGroup' ? trans('GRID.TEMPLATE_EDITOR.GROUPED')
+			: trans('GRID.TEMPLATE_EDITOR.PIVOTTED');
+		tabsWidget.addPage(displayName, x.div);
 	});
-	tabs.tabs();
 
-	self.win.setContent(tabs);
+	self.win.setContent(tabsContainer);
 });
 
 // #show {{{2

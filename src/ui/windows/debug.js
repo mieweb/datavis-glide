@@ -10,6 +10,8 @@ import {
 	ordmapAsHtmlDefnList,
 } from '../../util/misc.js';
 import { PopupWindow } from '../popup_window.js';
+import { Tabs } from '../tabs.js';
+import { Collapsible } from '../collapsible.js';
 
 // DebugWin {{{1
 
@@ -28,7 +30,7 @@ DebugWin.prototype.show = function (grid, view, source) {
 		maxHeight: 600,
 		position: {
 			my: 'center',
-			at: 'top',
+			at: 'middle',
 			of: window
 		}
 	});
@@ -114,40 +116,26 @@ DebugWin.prototype.show = function (grid, view, source) {
 		}]
 	}];
 
-	var tabsList = jQuery('<ul>').css({
-		'flex-grow': '0',
-		'flex-shrink': '0',
-		'flex-basis': 'auto'
-	});
-	_.each(tabs, function (t) {
-		var tabAnchor = jQuery('<a>', { href: '#' + t.id }).text(t.name);
-		tabsList.append(jQuery('<li>').append(tabAnchor));
-	});
-
 	var tabsDiv = jQuery('<div>').css({
 		'flex': 'auto',
 		'overflow': 'hidden',
 		'display': 'flex',
 		'flex-direction': 'column'
-	})
-		.append(tabsList);
+	});
+	var tabsWidget = new Tabs(tabsDiv);
 	_.each(tabs, function (t) {
-		var container = jQuery('<div>', {id: t.id}).css({
+		var container = jQuery('<div>').css({
 			'flex-grow': '1',
 			'flex-shrink': '1',
 			'flex-basis': 'auto',
 			'overflow': 'scroll'
 		});
+		var collapsible = new Collapsible(container);
 		_.each(t.items, function (ti) {
-			container.append(jQuery('<h3>').text(ti.name));
-			container.append(ti.elt);
+			collapsible.addSection(ti.name, ti.elt);
 		});
-		container.accordion({
-			heightStyle: "content"
-		});
-		tabsDiv.append(container);
+		tabsWidget.addPage(t.name, container);
 	});
-	tabsDiv.tabs();
 
 	var contentDiv = jQuery('<div>').css({
 		'display': 'flex',
