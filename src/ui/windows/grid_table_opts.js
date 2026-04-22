@@ -10,6 +10,7 @@ import {
 } from '../../util/misc.js';
 
 import GridTable from '../../renderers/grid/table.js';
+import { PopupWindow } from '../popup_window.js';
 
 // GridTableOptsWin {{{1
 
@@ -38,30 +39,15 @@ GridTableOptsWin.prototype.show = function (onSave) {
 	var canGroup = self.renderer.canRender('group');
 	var canPivot = self.renderer.canRender('pivot');
 
-	var effectOpts = {
-		effect: 'fade',
-		duration: 100
-	};
-
 	var ui = {};
 
-	var win = jQuery('<div>', { title: 'Columns' }).dialog({
-		autoOpen: false,
-		modal: true,
+	var pw = new PopupWindow({
+		title: 'Columns',
 		width: 600,
-		position: {
-			my: 'center',
-			at: 'center',
-			of: window
-		},
-		classes: {
-			"ui-dialog": "ui-corner-all wcdv_dialog",
-			"ui-dialog-titlebar": "ui-corner-all",
-		},
 		buttons: [{
-			text: 'OK',
-			icon: 'ui-icon-check',
-			click: function () {
+			icon: 'check',
+			label: 'OK',
+			callback: function () {
 				curOpts = deepDefaults(curOpts, {
 					displayFormat: {}
 				});
@@ -84,21 +70,20 @@ GridTableOptsWin.prototype.show = function (onSave) {
 				}
 				*/
 
-				win.dialog('close');
+				pw.close();
 				onSave(curOpts);
 			}
 		}, {
-			text: 'Cancel',
-			icon: 'ui-icon-cancel',
-			click: function () {
-				win.dialog('close');
+			icon: 'ban',
+			label: 'Cancel',
+			callback: function () {
+				pw.close();
 			}
-		}],
-		show: effectOpts,
-		hide: effectOpts,
-		close: function () {
-			win.dialog('destroy');
-		}
+		}]
+	});
+
+	pw.on('close', function () {
+		pw.destroy();
 	});
 
 	ui.root = jQuery('<div>');
@@ -145,8 +130,8 @@ GridTableOptsWin.prototype.show = function (onSave) {
 		}
 	});
 
-	win.append(ui.root);
-	win.dialog('open');
+	pw.setContent(ui.root);
+	pw.open();
 };
 
 export {

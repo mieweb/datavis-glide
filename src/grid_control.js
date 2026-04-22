@@ -22,6 +22,7 @@ import {AGGREGATE_REGISTRY, ComputedView, GROUP_FUNCTION_REGISTRY, types} from '
 import {Grid} from './grid.js';
 import {GridFilterSet} from './grid_filter.js';
 import {GroupFunWin} from './group_fun_win.js';
+import {PopupWindow} from './ui/popup_window.js';
 
 /*
  * Grid controls are the rounded boxes that appear between the toolbar and the grid.  They allow
@@ -450,7 +451,7 @@ AggregateControlField.prototype.draw = function () {
 		})
 			.addClass('wcdv_icon_button wcdv_button_left wcdv_text-primary')
 			.on('click', function () {
-				self.ui.optionsDialog.dialog('open');
+				self.ui.optionsDialog.open();
 			})
 			.append(icon('square-pen'))
 			.appendTo(self.ui.root)
@@ -502,11 +503,9 @@ AggregateControlField.prototype.draw = function () {
 AggregateControlField.prototype._makeOptionsDialog = function (aggDefn) {
 	var self = this;
 
-	self.ui.optionsDiv = jQuery('<div>')
-		.css('display', 'none')
-		.appendTo(document.body);
+	var contentDiv = jQuery('<div>');
 
-	var table = jQuery('<table>').appendTo(self.ui.optionsDiv);
+	var table = jQuery('<table>').appendTo(contentDiv);
 	var opts = {};
 
 	_.each(aggDefn.prototype.options, function (optConfig, optName) {
@@ -530,50 +529,24 @@ AggregateControlField.prototype._makeOptionsDialog = function (aggDefn) {
 			.appendTo(table);
 	});
 
-	jQuery('<hr>')
-		.appendTo(self.ui.optionsDiv);
-
-	var buttonBar = jQuery('<div>')
-		.addClass('wcdv_button_bar')
-		.appendTo(self.ui.optionsDiv);
-
-	jQuery('<button>', {
-		'type': 'button',
-		'class': '',
-		'title': trans('DIALOG.OK'),
-		'data-role': 'ok'
-	})
-		.append(icon('check'))
-		.append(trans('DIALOG.OK'))
-		.on('click', function () {
-			self.aggFunOpts = opts;
-			self.control.updateView();
-			self.ui.optionsDialog.dialog('close');
-		})
-		.appendTo(buttonBar);
-
-	jQuery('<button>', {
-		'type': 'button',
-		'class': '',
-		'title': trans('DIALOG.CANCEL'),
-		'data-role': 'cancel'
-	})
-		.append(icon('ban'))
-		.append(trans('DIALOG.CANCEL'))
-		.on('click', function () {
-			self.ui.optionsDialog.dialog('close');
-		})
-		.appendTo(buttonBar);
-
-	self.ui.optionsDialog = self.ui.optionsDiv.dialog({
-		autoOpen: false,
-		modal: true,
+	self.ui.optionsDialog = new PopupWindow({
 		title: trans('GRID_CONTROL.AGGREGATE.OPTIONS_DIALOG.TITLE', aggDefn.prototype.getTransName()),
-		minHeight: 0,
-		classes: {
-			"ui-dialog": "ui-corner-all wcdv_dialog",
-			"ui-dialog-titlebar": "ui-corner-all",
-		}
+		content: contentDiv,
+		buttons: [{
+			icon: 'check',
+			label: trans('DIALOG.OK'),
+			callback: function () {
+				self.aggFunOpts = opts;
+				self.control.updateView();
+				self.ui.optionsDialog.close();
+			}
+		}, {
+			icon: 'ban',
+			label: trans('DIALOG.CANCEL'),
+			callback: function () {
+				self.ui.optionsDialog.close();
+			}
+		}]
 	});
 };
 
@@ -582,9 +555,8 @@ AggregateControlField.prototype._makeOptionsDialog = function (aggDefn) {
 AggregateControlField.prototype.destroy = function () {
 	var self = this;
 
-	if (self.ui.optionsDiv != null) {
-		self.ui.optionsDialog.dialog('destroy');
-		self.ui.optionsDiv.remove();
+	if (self.ui.optionsDialog != null) {
+		self.ui.optionsDialog.destroy();
 	}
 
 	self.super['GridControlField'].destroy();

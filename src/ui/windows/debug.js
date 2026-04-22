@@ -6,10 +6,10 @@ import { OrdMap } from 'datavis-ace';
 import jQuery from 'jquery';
 
 import {
-	icon,
 	makeSubclass,
 	ordmapAsHtmlDefnList,
 } from '../../util/misc.js';
+import { PopupWindow } from '../popup_window.js';
 
 // DebugWin {{{1
 
@@ -22,33 +22,19 @@ var DebugWin = makeSubclass('DebugWin', Object, function () {
 DebugWin.prototype.show = function (grid, view, source) {
 	var self = this;
 
-	var winEffect = {
-		effect: 'fade',
-		duration: 100
-	};
-
-	var win = jQuery('<div>', { id: 'wcdv_debugwin', title: 'Debug Info' }).css({
-		'display': 'flex',
-		'flex-direction': 'column'
-	}).dialog({
-		autoOpen: false,
-		modal: true,
+	var pw = new PopupWindow({
+		title: 'Debug Info',
 		width: 600,
 		maxHeight: 600,
 		position: {
 			my: 'center',
 			at: 'top',
 			of: window
-		},
-		classes: {
-			"ui-dialog": "ui-corner-all wcdv_dialog",
-			"ui-dialog-titlebar": "ui-corner-all",
-		},
-		show: winEffect,
-		hide: winEffect,
-		close: function () {
-			win.dialog('destroy');
 		}
+	});
+
+	pw.on('close', function () {
+		pw.destroy();
 	});
 
 	var tabs = [{
@@ -161,31 +147,25 @@ DebugWin.prototype.show = function (grid, view, source) {
 		});
 		tabsDiv.append(container);
 	});
-	tabsDiv.appendTo(win).tabs();
+	tabsDiv.tabs();
 
-	var buttonBar = jQuery('<div>').css({
-		'flex-grow': '0',
-		'flex-shrink': '0',
-		'flex-basis': 'auto',
-		'padding-top': '2ex'
-	})
-		.addClass('wcdv_button_bar')
-		.appendTo(win);
+	var contentDiv = jQuery('<div>').css({
+		'display': 'flex',
+		'flex-direction': 'column'
+	}).append(tabsDiv);
+
+	pw.setContent(contentDiv);
 
 	var words = ['Very Cool', 'Thanks', 'Nice!', 'All Right', 'Whatever'];
-	jQuery('<button>', {
-		'type': 'button',
-		'class': '',
-		'title': 'Very Cool'
-	})
-		.append(icon('thumbs-up'))
-		.append(words[Math.floor(Math.random() * words.length)])
-		.on('click', function () {
-			win.dialog('close');
-		})
-		.appendTo(buttonBar);
+	pw.setButtons([{
+		icon: 'thumbs-up',
+		label: words[Math.floor(Math.random() * words.length)],
+		callback: function () {
+			pw.close();
+		}
+	}]);
 
-	win.dialog('open');
+	pw.open();
 };
 
 export {

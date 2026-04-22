@@ -27,6 +27,7 @@ import {
 import { Lock, ComputedView, GROUP_FUNCTION_REGISTRY, TableExport, Csv } from 'datavis-ace';
 import {GridRenderer} from '../../grid_renderer.js';
 import PopupMenu from '../../ui/popup_menu.js';
+import { PopupWindow } from '../../ui/popup_window.js';
 
 // GridTable {{{1
 // JSDoc Types {{{2
@@ -1324,25 +1325,13 @@ GridTable.prototype._setupFullValueWin = function (data) {
 
 	var fullValueWinDiv = document.createElement('div');
 
-	var fullValueWinEffect = {
-		effect: 'fade',
-		duration: 100
-	};
-
-	var fullValueWin = jQuery('<div>', { title: 'Full Value' }).dialog({
-		autoOpen: false,
-		modal: true,
+	var fullValueWin = new PopupWindow({
+		title: 'Full Value',
 		width: 800,
-		maxHeight: 600,
-		classes: {
-			"ui-dialog": "ui-corner-all wcdv_dialog",
-			"ui-dialog-titlebar": "ui-corner-all",
-		},
-		show: fullValueWinEffect,
-		hide: fullValueWinEffect,
+		maxHeight: 600
 	});
 
-	fullValueWin.append(fullValueWinDiv);
+	fullValueWin.setContent(fullValueWinDiv);
 
 	// When the "show full value" button is clicked, use the attached data attributes to determine the
 	// value that will be shown in the window.
@@ -1420,7 +1409,8 @@ GridTable.prototype._setupFullValueWin = function (data) {
 			}
 		}
 
-		fullValueWin.dialog('open');
+		fullValueWin.setContent(fullValueWinDiv);
+		fullValueWin.open();
 	});
 };
 

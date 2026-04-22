@@ -9,6 +9,7 @@ import {
 	makeSubclass,
 	moveArrayElement,
 } from '../../util/misc.js';
+import { PopupWindow } from '../popup_window.js';
 
 // ColConfigWin {{{1
 
@@ -30,39 +31,25 @@ ColConfigWin.prototype.show = function (posElt, onSave) {
 
 	var current = self.colConfig.clone();
 
-	var orderWinEffect = {
-		effect: 'fade',
-		duration: 100
-	};
+	var pw = new PopupWindow({
+		title: trans('GRID.COLCONFIG_WIN.TITLE'),
+		width: 600
+	});
 
-	var orderWin = jQuery('<div>', { title: trans('GRID.COLCONFIG_WIN.TITLE') }).dialog({
-		autoOpen: false,
-		modal: true,
-		width: 600,
-		position: {
-			my: 'center',
-			at: 'center',
-			of: window
-		},
-		classes: {
-			"ui-dialog": "ui-corner-all wcdv_dialog",
-			"ui-dialog-titlebar": "ui-corner-all",
-		},
-		show: orderWinEffect,
-		hide: orderWinEffect,
-		close: function () {
-			orderWin.dialog('destroy');
-		}
+	pw.on('close', function () {
+		pw.destroy();
 	});
 
 	var pinnedCount = 0;
+
+	var contentDiv = jQuery('<div>');
 
 	var colTable = jQuery('<table>')
 		.addClass('wcdv_colconfigwin_table')
 		.appendTo(jQuery('<div>').css({
 			'max-height': '40ex',
 			'overflow-y': 'scroll'
-		}).appendTo(orderWin));
+		}).appendTo(contentDiv));
 
 	var colTableHeader = jQuery('<thead>' +
 			'<th class="wcdv_bottom_border_teal wcdv_width_1em"></th>' +
@@ -292,28 +279,21 @@ ColConfigWin.prototype.show = function (posElt, onSave) {
 		.append(' ')
 		.append(trans('GRID.COLCONFIG_WIN.PINNED_COL_WARNING'))
 		.hide()
-		.appendTo(orderWin);
+		.appendTo(contentDiv);
 
 	if (pinnedCount > 0) {
 		pinnedMsg.show();
 	}
 
-	jQuery('<hr>')
-		.appendTo(orderWin);
+	pw.setContent(contentDiv);
 
-	var buttonBar = jQuery('<div>')
-		.addClass('wcdv_button_bar')
-		.appendTo(orderWin);
+	var buttons = [];
 
 	if (self.initColConfig) {
-		jQuery('<button>', {
-			'type': 'button',
-			'class': '',
-			'title': trans('GRID.COLCONFIG_WIN.RESET_COL_ORDER')
-		})
-			.append(icon('undo-2'))
-			.append(trans('GRID.COLCONFIG_WIN.RESET_COL_ORDER'))
-			.on('click', function (evt) {
+		buttons.push({
+			icon: 'undo-2',
+			label: trans('GRID.COLCONFIG_WIN.RESET_COL_ORDER'),
+			callback: function () {
 				keys = self.initColConfig.keys();
 				_.each(keys, function (k) {
 					if (trsByField[k] !== null) {
@@ -321,48 +301,39 @@ ColConfigWin.prototype.show = function (posElt, onSave) {
 						trsByField[k].effect('highlight', 750);
 					}
 				});
-			})
-			.appendTo(buttonBar);
+			}
+		});
 	}
 
-	jQuery('<button>', {
-		'type': 'button',
-		'class': '',
-		'title': trans('DIALOG.OK'),
-		'data-role': 'ok'
-	})
-		.append(icon('check'))
-		.append(trans('DIALOG.OK'))
-		.on('click', function () {
-			// Overwrite the "initial" configuration with one derived from the current one, based on the
-			// order of the keys saved by the reordering the table rows.
-
+	buttons.push({
+		icon: 'check',
+		label: trans('DIALOG.OK'),
+		attrs: {'data-role': 'ok'},
+		callback: function () {
 			self.colConfig.clear();
 			_.each(keys, function (k) {
 				self.colConfig.set(k, current.get(k));
 			});
 
-			orderWin.dialog('close');
+			pw.close();
 			onSave(self.colConfig, {
 				clearRenderCache: clearRenderCache.length > 0 ? clearRenderCache : null
 			});
-		})
-		.appendTo(buttonBar);
+		}
+	});
 
-	jQuery('<button>', {
-		'type': 'button',
-		'class': '',
-		'title': trans('DIALOG.CANCEL'),
-		'data-role': 'cancel'
-	})
-		.append(icon('ban'))
-		.append(trans('DIALOG.CANCEL'))
-		.on('click', function () {
-			orderWin.dialog('close');
-		})
-		.appendTo(buttonBar);
+	buttons.push({
+		icon: 'ban',
+		label: trans('DIALOG.CANCEL'),
+		attrs: {'data-role': 'cancel'},
+		callback: function () {
+			pw.close();
+		}
+	});
 
-	orderWin.dialog('open');
+	pw.setButtons(buttons);
+
+	pw.open();
 };
 
 export {

@@ -8,35 +8,21 @@ import {
 } from '../util/misc.js';
 import { trans } from '../trans.js';
 import { OrdMap } from 'datavis-ace';
+import { PopupWindow } from './popup_window.js';
 
 // TemplatesEditor {{{1
 
 var TemplatesEditor = makeSubclass('TemplatesEditor', Object, function (grid, onSave, onCancel) {
 	var self = this;
 
-	var winEffect = {
-		effect: 'fade',
-		duration: 100
-	};
-
 	self.grid = grid;
-	self.win = jQuery('<div>', { title: trans('GRID.TEMPLATE_EDITOR.TITLE') }).dialog({
-		autoOpen: false,
-		modal: true,
+	self.win = new PopupWindow({
+		title: trans('GRID.TEMPLATE_EDITOR.TITLE'),
 		width: 'auto',
-		position: {
-			my: 'center',
-			at: 'center',
-			of: window
-		},
-		classes: {
-			"ui-dialog": "ui-corner-all wcdv_dialog",
-			"ui-dialog-titlebar": "ui-corner-all",
-		},
 		buttons: [{
-			text: trans('DIALOG.OK'),
-			icon: 'ui-icon-check',
-			click: function () {
+			icon: 'check',
+			label: trans('DIALOG.OK'),
+			callback: function () {
 				// Update the configuration of the grid.
 
 				self.tabData.each(function (v, k) {
@@ -47,23 +33,21 @@ var TemplatesEditor = makeSubclass('TemplatesEditor', Object, function (grid, on
 					});
 				});
 
-				self.win.dialog('close');
+				self.win.close();
 				if (typeof onSave === 'function') {
 					onSave();
 				}
 			}
 		}, {
-			text: trans('DIALOG.CANCEL'),
-			icon: 'ui-icon-cancel',
-			click: function () {
-				self.win.dialog('close');
+			icon: 'ban',
+			label: trans('DIALOG.CANCEL'),
+			callback: function () {
+				self.win.close();
 				if (typeof onCancel === 'function') {
 					onCancel();
 				}
 			}
-		}],
-		show: winEffect,
-		hide: winEffect,
+		}]
 	});
 
 	// Tabs {{{2
@@ -109,13 +93,15 @@ var TemplatesEditor = makeSubclass('TemplatesEditor', Object, function (grid, on
 	self.tabData.set('whenGroup', makeTab('whenGroup', trans('GRID.TEMPLATE_EDITOR.GROUPED')));
 	self.tabData.set('whenPivot', makeTab('whenPivot', trans('GRID.TEMPLATE_EDITOR.PIVOTTED')));
 
-	var tabs = jQuery('<div>').appendTo(self.win);
+	var tabs = jQuery('<div>');
 	var ul = jQuery('<ul>').appendTo(tabs);
 	self.tabData.each(function (x) {
 		ul.append(x.li);
 		tabs.append(x.div);
 	});
 	tabs.tabs();
+
+	self.win.setContent(tabs);
 });
 
 // #show {{{2
@@ -136,7 +122,7 @@ TemplatesEditor.prototype.show = function () {
 		}
 	});
 
-	self.win.dialog('open');
+	self.win.open();
 };
 
 export {

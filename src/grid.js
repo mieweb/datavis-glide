@@ -39,6 +39,7 @@ import './renderers/grid/table/pivot.js';
 import { ColConfigWin } from './ui/windows/col_config.js';
 import { DebugWin } from './ui/windows/debug.js';
 import { TemplatesEditor } from './ui/templates.js';
+import { PopupWindow } from './ui/popup_window.js';
 import {
 	ComputedViewToolbar,
 	PlainToolbar,
@@ -1327,30 +1328,26 @@ Grid.prototype._addTitleWidgets = function (titlebar, doingServerFilter, id) {
 		.appendTo(self.ui.titlebar_controls)
 	;
 
-	var pWinEffect = {
-		effect: 'fade',
-		duration: 100
-	};
-
-	var pWin = jQuery('<div>', { title: trans('GRID.PERSPECTIVE_WIN.TITLE') }).dialog({
-		autoOpen: false,
-		modal: true,
+	var pWin = new PopupWindow({
+		title: trans('GRID.PERSPECTIVE_WIN.TITLE'),
 		width: 500,
 		position: {
 			my: 'top',
 			at: 'bottom',
 			of: titlebar
-		},
-		show: pWinEffect,
-		hide: pWinEffect,
+		}
 	});
+
+	var pWinContentDiv = jQuery('<div>');
 
 	var pWinWarning = jQuery('<div>')
 		.addClass('wcdv_dlg_warning_banner')
-		.appendTo(pWin);
+		.appendTo(pWinContentDiv);
 
 	var pWinTextArea = jQuery('<textarea>', {'style': 'font-family: monospace; font-size: 10pt; width: 100%', 'rows': '20', 'readonly': true})
-		.appendTo(pWin);
+		.appendTo(pWinContentDiv);
+
+	pWin.setContent(pWinContentDiv);
 
 	// This is the "gear" icon that shows/hides the controls below the toolbar.  The controls are used
 	// to set the group, pivot, aggregate, and filters.  Ideally the user only has to utilize these
@@ -1373,7 +1370,7 @@ Grid.prototype._addTitleWidgets = function (titlebar, doingServerFilter, id) {
 					pWinWarning.hide();
 				}
 				pWinTextArea.val(JSON.stringify(self.prefs.currentPerspective.config, null, 2));
-				pWin.dialog('open');
+				pWin.open();
 			}
 			else {
 				self.toggleControls();

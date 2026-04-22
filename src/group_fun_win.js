@@ -6,45 +6,33 @@ import { trans } from './trans.js';
 import {
 	makeSubclass,
 } from './util/misc.js';
+import { PopupWindow } from './ui/popup_window.js';
 
 // GroupFunWin {{{1
 
 var GroupFunWin = makeSubclass('GroupFunWin', Object, function (title, groupFuns) {
 	var self = this;
 
-	var winEffect = {
-		effect: 'fade',
-		duration: 100
-	};
-
 	var selected = null;
 
-	self.win = jQuery('<div>', { title: title }).dialog({
-		autoOpen: false,
-		modal: true,
-		width: '600',
-		position: {
-			my: 'center',
-			at: 'center',
-			of: window
-		},
-		classes: {
-			"ui-dialog": "ui-corner-all wcdv_dialog",
-			"ui-dialog-titlebar": "ui-corner-all",
-		},
-		show: winEffect,
-		hide: winEffect,
-		open: function () {
-			selected = null;
-		},
-		close: function () {
-			self.cb(selected);
-		}
+	self.win = new PopupWindow({
+		title: title,
+		width: 600
 	});
+
+	self.win.on('open', function () {
+		selected = null;
+	});
+
+	self.win.on('close', function () {
+		self.cb(selected);
+	});
+
+	var contentDiv = jQuery('<div>');
 
 	var root = jQuery('<div>').css({
 		'display': 'flex'
-	}).appendTo(self.win);
+	}).appendTo(contentDiv);
 
 	// These are the columns that contain related group function buttons.
 
@@ -79,7 +67,7 @@ var GroupFunWin = makeSubclass('GroupFunWin', Object, function (title, groupFuns
 			.text(gf.getTransName())
 			.on('click', function () {
 				selected = gfName;
-				self.win.dialog('close');
+				self.win.close();
 			});
 
 		var c = categories.get(gf.category) || categories.get('other');
@@ -107,10 +95,12 @@ var GroupFunWin = makeSubclass('GroupFunWin', Object, function (title, groupFuns
 		.text(trans('GRID.GROUP_FUN.NONE'))
 		.on('click', function () {
 			selected = 'none';
-			self.win.dialog('close');
+			self.win.close();
 		});
 
-	self.win.append(jQuery('<div>').append(self.buttons['none']));
+	contentDiv.append(jQuery('<div>').append(self.buttons['none']));
+
+	self.win.setContent(contentDiv);
 });
 
 // #show {{{2
@@ -119,7 +109,7 @@ GroupFunWin.prototype.show = function (gfName, cb) {
 	var self = this;
 	self.cb = cb;
 
-	self.win.dialog('open');
+	self.win.open();
 
 	if (gfName != null && self.buttons[gfName] != null) {
 		self.buttons[gfName].focus();
