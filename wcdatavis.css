@@ -1284,10 +1284,6 @@ html:not(.ie11) .wcdv_grid_table table th.wcdv_cell_empty div {
  * GRID COLUMN CONFIGURATION WINDOW
  */
 
-.wcdv_dialog {
-	z-index: 1100 !important;
-}
-
 .wcdv_colconfigwin_table {
 	width: 100%;
 	border-collapse: collapse;
@@ -1360,15 +1356,11 @@ div.wcdv_button_bar button:first-child {
 }
 
 div.wcdv_button_bar button > svg.wcdv_icon {
-	margin-right: 0.25em;
-}
-
-div.wcdv_button_bar button > svg.wcdv_icon {
 	width: 1.15em;
 	height: 1.15em;
 	padding-right: 3px;
 	vertical-align: middle;
-	margin-top: -2px;
+	stroke-width: 2.5px;
 }
 
 div.wcdv_button_bar button[disabled=disabled] > svg.wcdv_icon {

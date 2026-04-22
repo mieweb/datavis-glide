@@ -4,6 +4,10 @@ Translation Label	English Text
 DIALOG.OK	ตกลง	
 DIALOG.CANCEL	ยกเลิก	
 		
+// Popup window		
+		
+POPUP_WINDOW.CLOSE	ปิด	
+		
 // Grid titlebar		
 		
 GRAPH.TITLEBAR.SHOW_HIDE	แสดง/ซ่อนกราฟ	

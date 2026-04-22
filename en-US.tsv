@@ -4,6 +4,10 @@ Translation Label	English Text	Translator Notes
 DIALOG.OK	OK	
 DIALOG.CANCEL	Cancel	
 		
+// Popup window		
+		
+POPUP_WINDOW.CLOSE	Close	Aria label for the close button on a popup window
+		
 // Grid titlebar		
 		
 GRAPH.TITLEBAR.SHOW_HIDE	Show/Hide Graph	

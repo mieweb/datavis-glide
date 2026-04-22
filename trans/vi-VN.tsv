@@ -4,6 +4,10 @@ Translation Label	English Text
 DIALOG.OK	OK	
 DIALOG.CANCEL	Hủy	
 		
+// Popup window		
+		
+POPUP_WINDOW.CLOSE	Đóng	
+		
 // Grid titlebar		
 		
 GRAPH.TITLEBAR.SHOW_HIDE	Hiện/Ẩn Biểu Đồ	

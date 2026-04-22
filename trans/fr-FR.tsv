@@ -4,6 +4,10 @@ Translation Label	English Text
 DIALOG.OK	OK	
 DIALOG.CANCEL	Annuler	
 		
+// Popup window		
+		
+POPUP_WINDOW.CLOSE	Fermer	
+		
 // Grid titlebar		
 		
 GRAPH.TITLEBAR.SHOW_HIDE	Afficher/Masquer le graphique	

@@ -183,5 +183,6 @@ export default {
   'GRID_TOOLBAR.PREFS.SAVE_AS.HELP': 'Perspektif yang telah ditentukan ini tidak dapat disimpan dengan nama ini. Klik untuk menyimpan dengan nama baru. Setelah itu, perubahan apa pun akan disimpan dengan nama baru.',
   'GRID_TOOLBAR.PREFS.SAVE_AS.TOOLTIP': 'Simpan Sebagai...',
   'GRID_TOOLBAR.RENDERER.DISPLAY_OPTIONS': 'Opsi Tampilan',
+  'POPUP_WINDOW.CLOSE': 'Tutup',
   'PREFS.MAIN_PERSPECTIVE': 'Perspektif Utama',
 };

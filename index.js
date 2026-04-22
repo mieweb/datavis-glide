@@ -15,6 +15,7 @@ import 'jquery-ui/dist/themes/base/jquery-ui.min.css';
 import 'sumoselect/sumoselect.min.css';
 import './wcdatavis.css';
 import './src/ui/popup_menu.css';
+import './src/ui/popup_window.css';
 
 import {
 	OrdMap,
