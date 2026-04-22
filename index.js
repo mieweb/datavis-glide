@@ -16,6 +16,8 @@ import 'sumoselect/sumoselect.min.css';
 import './wcdatavis.css';
 import './src/ui/popup_menu.css';
 import './src/ui/popup_window.css';
+import './src/ui/tabs.css';
+import './src/ui/collapsible.css';
 
 import {
 	OrdMap,

@@ -1,0 +1,64 @@
+/* Collapsible styles */
+
+.wcdv-collapsible {
+	border: 1px solid #ddd;
+	border-radius: 3px;
+}
+
+.wcdv-collapsible-section {
+	border-bottom: 1px solid #ddd;
+}
+
+.wcdv-collapsible-section:last-child {
+	border-bottom: none;
+}
+
+.wcdv-collapsible-header {
+	display: flex;
+	align-items: center;
+	padding: 6px 10px;
+	cursor: pointer;
+	background: #f9f9f9;
+	user-select: none;
+	font-weight: bold;
+	color: #444;
+}
+
+.wcdv-collapsible-header:hover {
+	background: #f0f0f0;
+}
+
+.wcdv-collapsible-icon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 16px;
+	height: 16px;
+	margin-right: 6px;
+	flex-shrink: 0;
+	transition: transform 150ms ease;
+}
+
+.wcdv-collapsible-icon svg.wcdv_icon {
+	width: 14px;
+	height: 14px;
+}
+
+.wcdv-collapsible-section-open > .wcdv-collapsible-header {
+	color: #0095D6;
+	border-left: 3px solid #0095D6;
+	padding-left: 7px;
+}
+
+.wcdv-collapsible-section-open > .wcdv-collapsible-header .wcdv-collapsible-icon {
+	transform: rotate(90deg);
+}
+
+.wcdv-collapsible-panel {
+	display: none;
+	padding: 8px 10px;
+}
+
+.wcdv-collapsible-section-open > .wcdv-collapsible-panel {
+	display: block;
+}
