@@ -653,7 +653,7 @@ export function setElement(container, value, opts) {
 // makeOperationButton {{{2
 
 function makeOperationIcon(op) {
-	if (op.iconType === 'fontawesome') {
+	if (op.iconType === 'fontawesome' || op.icon.substr(0, 3) === 'fa-') {
 		return fontAwesome(op.icon).get(0);
 	}
 	return icon(op.icon).get(0);
