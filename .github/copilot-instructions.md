@@ -135,6 +135,10 @@ When adding new strings to the user interface: add the label, English message, a
 - Update the main architecture document when workflow structure changes
 - Don’t use emojis in source code, comments, or documentation
 
+## Planning
+
+When writing markdown files, don't insert linebreaks in the middle of a paragraph.
+
 ## Terminal Commands & Process Management
 
 ### Safe Process Termination
