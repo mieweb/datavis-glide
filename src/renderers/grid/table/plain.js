@@ -65,6 +65,9 @@ var GridTablePlain = makeSubclass('GridTablePlain', GridTable, function (grid, d
 	self.features.filter = false;
 
 	self._focusEventId = gensym('grid-plain-');
+	self._cellMarqueeNs = '.wcdv_cell_marquee_' + self._focusEventId;
+	self._cellDragging = false;
+	self._cellSelectFields = [];
 
 	// Pagination state.
 	self._paginationPage = 0;
@@ -97,7 +100,7 @@ GridTablePlain.prototype.draw = function (root, opts, cont) {
 	var self = this;
 
 	GridTable.prototype.draw.call(self, root, opts, function () {
-		if (self.features.activeRow || self.features.omnifilter) {
+		if (self.features.activeRow || self.features.omnifilter || self.features.rowSelect || self.features.cellSelect) {
 			self._hasFocus = false;
 			addFocusHandler(root, self._focusEventId, function (isFocused) {
 				self._hasFocus = isFocused;
@@ -175,6 +178,32 @@ GridTablePlain.prototype.draw = function (root, opts, cont) {
 					self.clearActiveRow();
 					break;
 				}
+			});
+		}
+
+		if (self.features.rowSelect || self.features.cellSelect) {
+			jQuery(document).on('keydown.copy-selection-' + self._focusEventId, function (evt) {
+				var avoidElts = ['A', 'BUTTON', 'INPUT', 'SELECT', 'TEXTAREA'];
+
+				if (avoidElts.indexOf(evt.target.tagName) >= 0) {
+					return;
+				}
+
+				if (!self._hasFocus) {
+					return;
+				}
+
+				if (evt.key.toLowerCase() !== 'c' || (!evt.ctrlKey && !evt.metaKey)) {
+					return;
+				}
+
+				if (self.getSelection().rows.length === 0 && self.getCellSelection().cells.length === 0) {
+					return;
+				}
+
+				evt.preventDefault();
+				evt.stopPropagation();
+				self.grid.copySelection();
 			});
 		}
 
@@ -571,6 +600,8 @@ GridTablePlain.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 		self.addDataToCsv(data);
 	}
 
+	self._cellSelectFields = columns.slice();
+
 	// When pagination is enabled, wrap the continuation so that page visibility and pagination
 	// controls are applied after all rows have been rendered.  The originalCont must run first
 	// because it appends the tbody to the table and runs the full draw chain (including
@@ -660,6 +691,8 @@ GridTablePlain.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 				operations: getProp(self.defn, 'operations', 'cell', field)
 			});
 
+			td.setAttribute('data-wcdv-field', field);
+
 			// Buttons within cells share a common 'onClick' handler, e.g. all "show full value" buttons
 			// have the same callback.  In that handler, we need to be able to figure out what field we
 			// were called for.  So if we're going to render buttons within the data cell, we need to
@@ -669,10 +702,6 @@ GridTablePlain.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 			//
 			//   1. When `maxHeight` is set on the field (the "show full value" button).
 			//   2. When there are operations on the field.
-
-			if (fcc.maxHeight != null || self.hasOperations('cell', field)) {
-				td.setAttribute('data-wcdv-field', field);
-			}
 
 			self.setCss(jQuery(td), field);
 			self.setAlignment(td, fcc, typeInfo.get(field));
@@ -1553,12 +1582,239 @@ GridTablePlain.prototype._addRowSelectHandler = function () {
 	var self = this;
 
 	self.ui.tbody.on('change', '.wcdv_group_col_spacer > input[type="checkbox"]', function () {
+		self.clearCellSelection();
+
 		if (this.checked) {
 			self.select(+(jQuery(this).attr('data-row-num')));
 		}
 		else {
 			self.unselect(+(jQuery(this).attr('data-row-num')));
 		}
+	});
+};
+
+// #_getCellSelectRowNums {{{2
+
+GridTablePlain.prototype._getCellSelectRowNums = function () {
+	var self = this;
+	var rowNums = [];
+
+	self.ui.tbody.children('tr[data-row-num]:visible').each(function () {
+		rowNums.push(+(jQuery(this).attr('data-row-num')));
+	});
+
+	return rowNums;
+};
+
+// #_getCellSelectFields {{{2
+
+GridTablePlain.prototype._getCellSelectFields = function () {
+	var self = this;
+
+	return self._cellSelectFields.slice();
+};
+
+// #_resolveCellSelectTarget {{{2
+
+GridTablePlain.prototype._resolveCellSelectTarget = function (target) {
+	var self = this;
+	var td = jQuery(target).closest('td[data-wcdv-field]');
+
+	if (td.length !== 1) {
+		return null;
+	}
+
+	if (!td.closest(self.ui.tbody).length) {
+		return null;
+	}
+
+	var tr = td.closest('tr[data-row-num]');
+
+	if (tr.length !== 1) {
+		return null;
+	}
+
+	return {
+		rowNum: +(tr.attr('data-row-num')),
+		field: td.attr('data-wcdv-field')
+	};
+};
+
+// #_makeCellSelection {{{2
+
+GridTablePlain.prototype._makeCellSelection = function (anchor, focus) {
+	var self = this;
+	var rowNums = self._getCellSelectRowNums();
+	var fields = self._getCellSelectFields();
+
+	var anchorRow = rowNums.indexOf(anchor.rowNum);
+	var focusRow = rowNums.indexOf(focus.rowNum);
+	var anchorField = fields.indexOf(anchor.field);
+	var focusField = fields.indexOf(focus.field);
+
+	if (anchorRow < 0 || focusRow < 0 || anchorField < 0 || focusField < 0) {
+		return null;
+	}
+
+	var firstRow = Math.min(anchorRow, focusRow);
+	var lastRow = Math.max(anchorRow, focusRow);
+	var firstField = Math.min(anchorField, focusField);
+	var lastField = Math.max(anchorField, focusField);
+
+	return {
+		anchor: {
+			rowNum: anchor.rowNum,
+			field: anchor.field
+		},
+		focus: {
+			rowNum: focus.rowNum,
+			field: focus.field
+		},
+		rowNums: rowNums.slice(firstRow, lastRow + 1),
+		fields: fields.slice(firstField, lastField + 1)
+	};
+};
+
+// #_clearCellSelectionGui {{{2
+
+GridTablePlain.prototype._clearCellSelectionGui = function () {
+	var self = this;
+
+	if (self.ui == null || self.ui.tbody == null) {
+		return;
+	}
+
+	self.ui.tbody.find('td.wcdv_selected_cell').removeClass('wcdv_selected_cell');
+	self.ui.tbody.find('td.wcdv_selected_cell_anchor').removeClass('wcdv_selected_cell_anchor');
+};
+
+// #_updateCellSelectionGui {{{2
+
+GridTablePlain.prototype._updateCellSelectionGui = function () {
+	var self = this;
+	var selection = self.getCellSelection();
+
+	self._clearCellSelectionGui();
+
+	if (selection.cells.length === 0) {
+		return;
+	}
+
+	_.each(selection.rowNums, function (rowNum) {
+		var tr = self.ui.tbody.find('tr[data-row-num="' + rowNum + '"]');
+
+		_.each(selection.fields, function (field) {
+			tr.find('td[data-wcdv-field]').filter(function () {
+				return jQuery(this).attr('data-wcdv-field') === field;
+			}).addClass('wcdv_selected_cell');
+		});
+	});
+
+	if (selection.anchor != null) {
+		self.ui.tbody.find('tr[data-row-num="' + selection.anchor.rowNum + '"] td[data-wcdv-field]').filter(function () {
+			return jQuery(this).attr('data-wcdv-field') === selection.anchor.field;
+		}).addClass('wcdv_selected_cell_anchor');
+	}
+};
+
+// #_setCellSelection {{{2
+
+GridTablePlain.prototype._setCellSelection = function (anchor, focus, fireEvent) {
+	var self = this;
+	var nextSelection = self._makeCellSelection(anchor, focus);
+	var prevCellCount = self.getCellSelection().cells.length;
+
+	if (nextSelection == null) {
+		self.cellSelection = null;
+		self._clearCellSelectionGui();
+
+		if (fireEvent && prevCellCount > 0) {
+			self.fire('cellSelectionChange', null, self.getCellSelection());
+		}
+
+		return;
+	}
+
+	self.cellSelection = nextSelection;
+	self._updateCellSelectionGui();
+
+	if (fireEvent) {
+		self.fire('cellSelectionChange', null, self.getCellSelection());
+	}
+};
+
+// #_addCellSelectHandler {{{2
+
+GridTablePlain.prototype._addCellSelectHandler = function () {
+	var self = this;
+
+	self.ui.tbody.off('mousedown' + self._cellMarqueeNs);
+	self.ui.tbody.on('mousedown' + self._cellMarqueeNs, 'td[data-wcdv-field]', function (evt) {
+		if (evt.which !== 1) {
+			return;
+		}
+
+		var anchor = self._resolveCellSelectTarget(evt.target);
+
+		if (anchor == null) {
+			return;
+		}
+
+		evt.preventDefault();
+
+		if (self.features.rowSelect) {
+			self.unselect();
+		}
+		else {
+			self.clearCellSelection();
+		}
+
+		self._cellDragging = true;
+		self._cellAnchor = anchor;
+		self._cellFocus = anchor;
+		self._setCellSelection(anchor, anchor, false);
+
+		jQuery(document).off('mousemove' + self._cellMarqueeNs);
+		jQuery(document).off('mouseup' + self._cellMarqueeNs);
+
+		jQuery(document).on('mousemove' + self._cellMarqueeNs, function (moveEvt) {
+			if (!self._cellDragging) {
+				return;
+			}
+
+			var target = document.elementFromPoint(moveEvt.clientX, moveEvt.clientY) || moveEvt.target;
+			var focus = self._resolveCellSelectTarget(target);
+
+			if (focus == null) {
+				return;
+			}
+
+			if (self._cellFocus != null
+					&& self._cellFocus.rowNum === focus.rowNum
+					&& self._cellFocus.field === focus.field) {
+				return;
+			}
+
+			self._cellFocus = focus;
+			self._setCellSelection(self._cellAnchor, self._cellFocus, false);
+		});
+
+		jQuery(document).on('mouseup' + self._cellMarqueeNs, function (upEvt) {
+			if (!self._cellDragging) {
+				return;
+			}
+
+			self._cellDragging = false;
+
+			var target = document.elementFromPoint(upEvt.clientX, upEvt.clientY) || upEvt.target;
+			var focus = self._resolveCellSelectTarget(target) || self._cellFocus || self._cellAnchor;
+
+			self._cellFocus = focus;
+			self._setCellSelection(self._cellAnchor, self._cellFocus, true);
+
+			jQuery(document).off('mousemove' + self._cellMarqueeNs);
+			jQuery(document).off('mouseup' + self._cellMarqueeNs);
+		});
 	});
 };
 
@@ -1574,8 +1830,19 @@ GridTablePlain.prototype.clear = function () {
 		self.ui.paginationControls = null;
 	}
 
+	self.cellSelection = null;
+	self._clearCellSelectionGui();
+
+	if (self.ui != null && self.ui.tbody != null) {
+		self.ui.tbody.off('mousedown' + self._cellMarqueeNs);
+	}
+
+	jQuery(document).off('mousemove' + self._cellMarqueeNs);
+	jQuery(document).off('mouseup' + self._cellMarqueeNs);
+
 	jQuery(document).off('keydown.active-row-' + self._focusEventId);
 	jQuery(document).off('keydown.omnifilter-' + self._focusEventId);
+	jQuery(document).off('keydown.copy-selection-' + self._focusEventId);
 	removeFocusHandler(self._focusEventId);
 
 	self.super['GridTable'].clear();

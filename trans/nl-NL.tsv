@@ -33,6 +33,12 @@ GRID.TITLEBAR.REFRESH	Vernieuwen
 GRID.TITLEBAR.SHOW_HIDE	Raster tonen/verbergen
 GRID.TITLEBAR.SHOW_HIDE_CONTROLS	Rasterbediening tonen/verbergen
 GRID.TITLEBAR.SHOW_DEBUG_INFO	Raster debug-informatie tonen
+GRID.TITLEBAR.COPY_SELECTION	Selectie kopiëren
+GRID.TITLEBAR.COPY_SELECTION_TOOLTIP	Kopieer de geselecteerde rijen of cellen naar het klembord
+GRID.TITLEBAR.COPY_SELECTION_CONFIRM	%d waarden worden naar het klembord gekopieerd. Doorgaan?
+
+GRID.TOAST.ROWS_COPIED	%d rijen gekopieerd naar klembord
+GRID.TOAST.CELLS_COPIED	%d cellen gekopieerd naar klembord
 	
 // Grid omnifilter		
 		

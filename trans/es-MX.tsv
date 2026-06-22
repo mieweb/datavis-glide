@@ -33,6 +33,12 @@ GRID.TITLEBAR.REFRESH	Actualizar
 GRID.TITLEBAR.SHOW_HIDE	Mostrar/Ocultar Tabla	
 GRID.TITLEBAR.SHOW_HIDE_CONTROLS	Mostrar/Ocultar Controles de Tabla	
 GRID.TITLEBAR.SHOW_DEBUG_INFO	Mostrar Información de Depuración de la Tabla	
+GRID.TITLEBAR.COPY_SELECTION	Copiar selección	
+GRID.TITLEBAR.COPY_SELECTION_TOOLTIP	Copiar las filas o celdas seleccionadas al portapapeles	
+GRID.TITLEBAR.COPY_SELECTION_CONFIRM	Se copiarán %d valores al portapapeles. ¿Continuar?	
+
+GRID.TOAST.ROWS_COPIED	%d filas copiadas al portapapeles	
+GRID.TOAST.CELLS_COPIED	%d celdas copiadas al portapapeles	
 		
 // Grid omnifilter		
 		

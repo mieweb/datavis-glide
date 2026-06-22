@@ -33,6 +33,12 @@ GRID.TITLEBAR.REFRESH	Muat Ulang
 GRID.TITLEBAR.SHOW_HIDE	Tampilkan/Sembunyikan Grid	
 GRID.TITLEBAR.SHOW_HIDE_CONTROLS	Tampilkan/Sembunyikan Kontrol Grid	
 GRID.TITLEBAR.SHOW_DEBUG_INFO	Tampilkan Info Debug Grid	
+GRID.TITLEBAR.COPY_SELECTION	Salin pilihan	
+GRID.TITLEBAR.COPY_SELECTION_TOOLTIP	Salin baris atau sel yang dipilih ke papan klip	
+GRID.TITLEBAR.COPY_SELECTION_CONFIRM	%d nilai akan disalin ke papan klip. Lanjutkan?	
+
+GRID.TOAST.ROWS_COPIED	%d baris disalin ke papan klip	
+GRID.TOAST.CELLS_COPIED	%d sel disalin ke papan klip	
 		
 // Grid omnifilter		
 		
