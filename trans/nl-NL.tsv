@@ -152,6 +152,8 @@ AGGREGATE.HEADER_DISPLAY	%s van %s
 	
 GRID.TABLE.SORT_MENU.ASCENDING	%s, oplopend
 GRID.TABLE.SORT_MENU.DESCENDING	%s, aflopend
+GRID.TABLE.SORT_MENU.ADD_TO_SORT	Toevoegen aan sortering
+GRID.TABLE.SORT_MENU.PRIORITY_BADGE	Sorteervolgorde %d
 GRID.TABLE.SORT_MENU.RESET_SORT	Sortering resetten
 	
 GRID.TABLE.DRAGGABLE_FIELD_HELP	U kunt dit veld slepen en neerzetten in de bovenstaande rasterbediening om te filteren, groeperen of pivoteren.

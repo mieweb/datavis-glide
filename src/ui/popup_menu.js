@@ -42,9 +42,22 @@ var PopupMenu = makeSubclass('PopupMenu', Object, function () {
  *
  * @param {*} [userdata]
  * Arbitrary data passed to the callback when this item is clicked.
+ *
+ * @param {object} [action]
+ * An optional secondary action rendered as a trailing button on the right of the item.  Clicking it
+ * does not trigger the item's primary callback.
+ *
+ * @param {string} action.iconName
+ * A Lucide icon name for the action button.
+ *
+ * @param {string} action.label
+ * Accessible label and tooltip for the action button.
+ *
+ * @param {function} action.callback
+ * Called when the action button is clicked.  Receives `userdata` as its argument.
  */
 
-PopupMenu.prototype.addItem = function (label, iconName, callback, userdata) {
+PopupMenu.prototype.addItem = function (label, iconName, callback, userdata, action) {
 	var self = this;
 
 	self.items.push({
@@ -52,6 +65,7 @@ PopupMenu.prototype.addItem = function (label, iconName, callback, userdata) {
 		iconName: iconName,
 		callback: callback,
 		userdata: userdata,
+		action: action,
 		separator: false
 	});
 };
@@ -127,6 +141,34 @@ PopupMenu.prototype.open = function (anchorElement) {
 				}
 			});
 		})(entry);
+
+		// Optionally render a trailing action button that performs a secondary action without
+		// triggering the item's primary callback.
+		if (entry.action) {
+			var actionBtn = document.createElement('button');
+			actionBtn.className = 'wcdv-popup-menu-item-action wcdv_icon_button';
+			actionBtn.setAttribute('type', 'button');
+			if (entry.action.label) {
+				actionBtn.setAttribute('aria-label', entry.action.label);
+				actionBtn.setAttribute('title', entry.action.label);
+			}
+			if (entry.action.iconName) {
+				var actionIconElt = icon(entry.action.iconName).get(0);
+				if (actionIconElt) {
+					actionBtn.appendChild(actionIconElt);
+				}
+			}
+			(function (e) {
+				actionBtn.addEventListener('click', function (evt) {
+					evt.stopPropagation();
+					self.close();
+					if (typeof e.action.callback === 'function') {
+						e.action.callback(e.userdata);
+					}
+				});
+			})(entry);
+			item.appendChild(actionBtn);
+		}
 
 		root.appendChild(item);
 	}

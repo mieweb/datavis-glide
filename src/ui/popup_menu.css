@@ -40,6 +40,36 @@
 	flex: 1;
 }
 
+.wcdv-popup-menu .wcdv-popup-menu-item-action {
+	flex-shrink: 0;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	margin-left: 12px;
+	padding: 0px;
+	border: 1px solid #0095D6;
+	border-radius: 4px;
+	background: transparent;
+	color: #0095D6;
+	cursor: pointer;
+}
+
+.wcdv-popup-menu .wcdv-popup-menu-item-action:hover {
+	background-color: #0095D6;
+	border-color: #0095D6;
+	color: #fff;
+}
+
+.wcdv-popup-menu-item-action svg.wcdv_icon {
+	width: 16px;
+	height: 16px;
+	margin-right: 0;
+}
+
+.wcdv-popup-menu-item-action svg.wcdv_icon:hover {
+	color: #fff;
+}
+
 .wcdv-popup-menu-sep {
 	height: 0;
 	margin: 4px 8px;

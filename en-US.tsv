@@ -152,6 +152,8 @@ AGGREGATE.HEADER_DISPLAY	%s of %s	Used to display the header item for an aggrega
 		
 GRID.TABLE.SORT_MENU.ASCENDING	%s, Ascending	
 GRID.TABLE.SORT_MENU.DESCENDING	%s, Descending	
+GRID.TABLE.SORT_MENU.ADD_TO_SORT	Add to Sort	Aria label and tooltip for the button that adds a column to a multi-column sort without replacing the existing sort.
+GRID.TABLE.SORT_MENU.PRIORITY_BADGE	Sort priority %d	Aria label for the numbered badge showing a column's position within a multi-column sort. %d is the 1-based priority.
 GRID.TABLE.SORT_MENU.RESET_SORT	Reset Sort	
 		
 GRID.TABLE.DRAGGABLE_FIELD_HELP	You can drag & drop this field into the grid controls above to filter, group or pivot.	

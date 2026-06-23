@@ -152,6 +152,8 @@ AGGREGATE.HEADER_DISPLAY	%s dari %s
 		
 GRID.TABLE.SORT_MENU.ASCENDING	%s, Naik	
 GRID.TABLE.SORT_MENU.DESCENDING	%s, Turun	
+GRID.TABLE.SORT_MENU.ADD_TO_SORT	Tambahkan ke Urutan	
+GRID.TABLE.SORT_MENU.PRIORITY_BADGE	Prioritas urutan %d	
 GRID.TABLE.SORT_MENU.RESET_SORT	Atur Ulang Urutan	
 		
 GRID.TABLE.DRAGGABLE_FIELD_HELP	Anda dapat menyeret & melepaskan bidang ini ke kontrol grid di atas untuk memfilter, mengelompokkan, atau pivot.	
