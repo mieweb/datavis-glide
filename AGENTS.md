@@ -116,6 +116,15 @@ DataVis is a system for data visualization with presentation via charts and tabl
 
 When adding new strings to the user interface: add the label, English message, and any relevant translation notes (clarifying contextual remarks) to the `en-US.tsv` file. Then, for each language TSV file found in the `trans` directory, add the label and translated message. The JS files for each language, including English, are generated automatically as part of the build process. Important: When adding new labels, place them at the same position — relative to other labels — in all TSV files.
 
+## Planning
+
+Plan files should be written as markdown into the `plans` directory. Such markdown files should be formatted with the following rules to maximize interoperability with external tools:
+
+- Don't insert linebreaks into paragraphs, let them run on the same line as long as they need.
+- Use minus as the bullet list character, not asterisk.
+
+During planning, ask clarifying questions for any unclear task. Also ask questions when unexpected complications arise during planning. The plan should be a complete spec of the change to be made. The agent implementing the change will not have the same complete context as the one that planned it, the plan file serves as that context.
+
 ## Documentation Preferences
 
 ### Diagrams and Visual Documentation
