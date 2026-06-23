@@ -60,7 +60,7 @@
     {
       "field": "date2",
       "type": "date",
-      "format": "MMMM D, YYYY"
+      "format": "MMM D, YYYY"
     },
     {
       "field": "date3",
