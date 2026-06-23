@@ -152,6 +152,8 @@ AGGREGATE.HEADER_DISPLAY	%s de %s
 		
 GRID.TABLE.SORT_MENU.ASCENDING	%s, croissant	
 GRID.TABLE.SORT_MENU.DESCENDING	%s, décroissant	
+GRID.TABLE.SORT_MENU.ADD_TO_SORT	Ajouter au tri	
+GRID.TABLE.SORT_MENU.PRIORITY_BADGE	Priorité de tri %d	
 GRID.TABLE.SORT_MENU.RESET_SORT	Réinitialiser le tri	
 		
 GRID.TABLE.DRAGGABLE_FIELD_HELP	Vous pouvez faire glisser ce champ dans les contrôles de la grille ci-dessus pour filtrer, regrouper ou pivoter.	

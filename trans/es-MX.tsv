@@ -152,6 +152,8 @@ AGGREGATE.HEADER_DISPLAY	%s de %s
 		
 GRID.TABLE.SORT_MENU.ASCENDING	%s, Ascendente	
 GRID.TABLE.SORT_MENU.DESCENDING	%s, Descendente	
+GRID.TABLE.SORT_MENU.ADD_TO_SORT	Agregar al orden	
+GRID.TABLE.SORT_MENU.PRIORITY_BADGE	Prioridad de orden %d	
 GRID.TABLE.SORT_MENU.RESET_SORT	Restablecer orden	
 		
 GRID.TABLE.DRAGGABLE_FIELD_HELP	Puedes arrastrar y soltar este campo en los controles de la tabla de arriba para filtrar, agrupar o pivotar.	

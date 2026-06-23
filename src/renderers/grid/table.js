@@ -818,9 +818,13 @@ GridTable.prototype._addSortingToHeader = function (data, orientation, spec, con
 	 *
 	 * @param {string} [dir]
 	 * What direction we're sorting by, ascending or descending.
+	 *
+	 * @param {number} [priority]
+	 * When this column is part of a multi-column sort, its 1-based position in the sort chain.  When
+	 * given, a numbered badge is shown next to the direction arrow.
 	 */
 
-	var replaceSortIndicator = function (span, dir) {
+	var replaceSortIndicator = function (span, dir, priority) {
 		if (!(span instanceof Element)) {
 			throw new Error('Call Error: `span` must be an Element');
 		}
@@ -831,6 +835,9 @@ GridTable.prototype._addSortingToHeader = function (data, orientation, spec, con
 			else if (dir.toUpperCase() !== 'ASC' && dir.toUpperCase() !== 'DESC') {
 				throw new Error('Call Error: `dir` must be either "ASC" or "DESC"');
 			}
+		}
+		if (priority != null && !_.isNumber(priority)) {
+			throw new Error('Call Error: `priority` must be null or a number');
 		}
 
 		var th = container.closest('th');
@@ -846,15 +853,72 @@ GridTable.prototype._addSortingToHeader = function (data, orientation, spec, con
 			iconName = dir.toUpperCase() === 'ASC' ? 'arrow-up' : 'arrow-down';
 		}
 
+		// Clear any prior content (icon and/or priority badge) before rebuilding.
+		while (span.firstChild) {
+			span.removeChild(span.firstChild);
+		}
+
 		var newIcon = createLucideSvg(iconName);
 		if (newIcon) {
 			newIcon.classList.add('wcdv_icon');
 			newIcon.setAttribute('data-icon', iconName);
-			while (span.firstChild) {
-				span.removeChild(span.firstChild);
-			}
 			span.appendChild(newIcon);
 		}
+
+		// Show a numbered badge when this column is one of several in a multi-column sort.
+		if (dir != null && priority != null) {
+			var badge = document.createElement('span');
+			badge.className = 'wcdv_sort_priority_badge';
+			badge.textContent = String(priority);
+			badge.setAttribute('aria-label', trans('GRID.TABLE.SORT_MENU.PRIORITY_BADGE', priority));
+			span.appendChild(badge);
+		}
+	};
+
+	/**
+	 * Compare two sort specs to see if they refer to the same column or aggregate, ignoring sort
+	 * direction.  Used to avoid adding duplicate entries to a sort chain.
+	 *
+	 * @param {object} a
+	 * @param {object} b
+	 * @returns {boolean}
+	 */
+
+	var sortEntriesMatch = function (a, b) {
+		return a.field === b.field
+			&& a.groupFieldIndex === b.groupFieldIndex
+			&& a.pivotFieldIndex === b.pivotFieldIndex
+			&& a.aggType === b.aggType
+			&& a.aggNum === b.aggNum
+		;
+	};
+
+	/**
+	 * Determine whether a sort entry applies to the current output mode (plain, grouped, or
+	 * pivotted).  The view keeps a single sort chain per orientation, but each output mode produces
+	 * its own kinds of sortable headers, so an entry created in one mode must not count towards the
+	 * sort in another.  This keeps each mode's sort independent.
+	 *
+	 * @param {object} entry
+	 * A sort chain entry.
+	 *
+	 * @returns {boolean}
+	 */
+
+	var sortEntryAppliesTo = function (entry) {
+		if (entry.pivotFieldIndex != null || entry.aggType === 'pivot' || entry.colVal != null || entry.rowVal != null) {
+			return !!data.isPivot;
+		}
+		if (entry.aggType === 'group') {
+			return !!data.isGroup;
+		}
+		if (entry.groupFieldIndex != null) {
+			return !!(data.isGroup || data.isPivot);
+		}
+		if (entry.field != null) {
+			return !!data.isPlain;
+		}
+		return true;
 	};
 
 	/**
@@ -866,9 +930,13 @@ GridTable.prototype._addSortingToHeader = function (data, orientation, spec, con
 	 * @param {number} [aggNum]
 	 * If missing, no aggregate number is added to the sort spec.  Used when sorting directly by the
 	 * field (e.g. in plain output) or by the group field index (e.g. in group detail output).
+	 *
+	 * @param {boolean} [additive]
+	 * When true, this column is appended to the existing sort chain (or its direction updated if it's
+	 * already in the chain) rather than replacing it.  Used by the per-row "add to sort" button.
 	 */
 
-	var setSort = function (dir, aggNum) {
+	var setSort = function (dir, aggNum, additive) {
 		if (!_.isString(dir)) {
 			throw new Error('Call Error: `dir` must be a string');
 		}
@@ -880,19 +948,60 @@ GridTable.prototype._addSortingToHeader = function (data, orientation, spec, con
 			throw new Error('Call Error: `aggNum` must be a number');
 		}
 
-		jQuery('button.wcdv_icon_button' + sortIcon_orientationClass + '.wcdv_sort_icon').each(function (i, elt) {
-			replaceSortIndicator(elt);
-		});
-
-		jQuery('button.wcdv_icon_button.' + sortIcon_class).each(function (i, elt) {
-			replaceSortIndicator(elt, dir);
-		});
-
 		spec.aggNum = aggNum;
 		spec.dir = dir;
 
 		var sortSpec = self.view.getSort() || {};
-		sortSpec[orientation] = deepCopy(spec);
+
+		// The view stores each orientation's sort as a chain (array) of specs.  Older specs may be a
+		// bare object, so normalize to an array before working with it.
+		var chain = _.isArray(sortSpec[orientation])
+			? deepCopy(sortSpec[orientation])
+			: sortSpec[orientation] != null
+			? [deepCopy(sortSpec[orientation])]
+			: []
+		;
+
+		if (additive) {
+
+			// Add this column to the existing chain.  If it's already present, just update its
+			// direction so we never create duplicate entries for the same column.
+
+			var matchIndex = -1;
+			for (var ci = 0; ci < chain.length; ci++) {
+				if (sortEntriesMatch(chain[ci], spec)) {
+					matchIndex = ci;
+					break;
+				}
+			}
+			if (matchIndex < 0) {
+				chain.push(deepCopy(spec));
+			}
+			else {
+				chain[matchIndex].dir = dir;
+			}
+		}
+		else {
+
+			// Replace this output mode's sort with just this column, but keep any sort entries that
+			// belong to the other output modes so each mode keeps its own independent sort.
+
+			var preserved = _.filter(chain, function (entry) {
+				return !sortEntryAppliesTo(entry);
+			});
+			chain = preserved.concat([deepCopy(spec)]);
+
+			// Give immediate visual feedback before the view redraws.
+			jQuery('button.wcdv_icon_button' + sortIcon_orientationClass + '.wcdv_sort_icon').each(function (i, elt) {
+				replaceSortIndicator(elt);
+			});
+
+			jQuery('button.wcdv_icon_button.' + sortIcon_class).each(function (i, elt) {
+				replaceSortIndicator(elt, dir);
+			});
+		}
+
+		sortSpec[orientation] = chain;
 		self.view.setSort(sortSpec, self.makeProgress('Sort'));
 	};
 
@@ -935,9 +1044,17 @@ GridTable.prototype._addSortingToHeader = function (data, orientation, spec, con
 
 		sortIcon_menu.addItem(trans('GRID.TABLE.SORT_MENU.ASCENDING', name), 'arrow-up-narrow-wide', function () {
 			setSort('asc');
+		}, null, {
+			iconName: 'plus',
+			label: trans('GRID.TABLE.SORT_MENU.ADD_TO_SORT'),
+			callback: function () { setSort('asc', null, true); }
 		});
 		sortIcon_menu.addItem(trans('GRID.TABLE.SORT_MENU.DESCENDING', name), 'arrow-down-wide-narrow', function () {
 			setSort('desc');
+		}, null, {
+			iconName: 'plus',
+			label: trans('GRID.TABLE.SORT_MENU.ADD_TO_SORT'),
+			callback: function () { setSort('desc', null, true); }
 		});
 		sortIcon_menu.addSeparator();
 	}
@@ -953,9 +1070,21 @@ GridTable.prototype._addSortingToHeader = function (data, orientation, spec, con
 			//var aggType = aggInfo.instance.getType();
 			sortIcon_menu.addItem(trans('GRID.TABLE.SORT_MENU.ASCENDING', aggInfo.instance.getFullName()), 'arrow-up-narrow-wide', (function (n) {
 				return function () { setSort('asc', n); };
+			})(aggNum), null, (function (n) {
+				return {
+					iconName: 'plus',
+					label: trans('GRID.TABLE.SORT_MENU.ADD_TO_SORT'),
+					callback: function () { setSort('asc', n, true); }
+				};
 			})(aggNum));
 			sortIcon_menu.addItem(trans('GRID.TABLE.SORT_MENU.DESCENDING', aggInfo.instance.getFullName()), 'arrow-down-wide-narrow', (function (n) {
 				return function () { setSort('desc', n); };
+			})(aggNum), null, (function (n) {
+				return {
+					iconName: 'plus',
+					label: trans('GRID.TABLE.SORT_MENU.ADD_TO_SORT'),
+					callback: function () { setSort('desc', n, true); }
+				};
 			})(aggNum));
 			sortIcon_menu.addSeparator();
 		});
@@ -982,31 +1111,52 @@ GridTable.prototype._addSortingToHeader = function (data, orientation, spec, con
 	var sortSpec_copy = deepCopy(self.view.getSort());
 	var spec_copy = deepCopy(spec);
 
-	if (sortSpec_copy[orientation]) {
-		var currentDir = sortSpec_copy[orientation].dir;
+	if (sortSpec_copy && sortSpec_copy[orientation]) {
 
-		// Delete things that would be in the view's spec that aren't in the spec we were provided by
-		// the caller (because they're independent of the user interface reflecting the sort).  This way
-		// we can just do an object-object comparison to see if what we just made corresponds to the
-		// sort that is already set in the view.  Crucially, for grid tables that redraw when the view
-		// is updated, this is the only way you're ever going to see what the sort is.
+		// The view stores each orientation's sort as a chain (array) of specs.  Normalize to an array
+		// so we can light up every column that participates in the sort, each with its 1-based
+		// priority.  Crucially, for grid tables that redraw when the view is updated, this is the only
+		// way you're ever going to see what the sort is.
 
-		delete sortSpec_copy[orientation].dir;
+		var chain = _.isArray(sortSpec_copy[orientation])
+			? sortSpec_copy[orientation]
+			: [sortSpec_copy[orientation]]
+		;
 
-		// Note that `aggNum` is an important part of the spec when sorting group or pivot aggregates
-		// (i.e. total rows/columns) because they have their own row/column, and aren't thrown together
-		// like cell aggregates are.
+		// Restrict the chain to the entries that apply to the current output mode (plain, grouped, or
+		// pivotted), so the priority numbers reflect only this mode's sort and aren't inflated by
+		// sorts configured in the other modes.
+
+		var applicable = _.filter(chain, sortEntryAppliesTo);
+
+		// `aggNum` is an important part of the spec when sorting group or pivot aggregates (i.e. total
+		// rows/columns) because they have their own row/column, and aren't thrown together like cell
+		// aggregates are.  When it's not relevant, ignore it on both sides of the comparison.
 
 		if (spec.aggType == null) {
-			delete sortSpec_copy[orientation].aggNum;
 			delete spec_copy.aggNum;
 		}
 
-		self.logDebug(self.makeLogTag() + ' orientation = %s ; spec = %O ; current = %O ; dir = %s',
-			self.toString(), orientation, spec_copy, sortSpec_copy[orientation], currentDir);
+		for (var pi = 0; pi < applicable.length; pi++) {
 
-		if (_.isEqual(sortSpec_copy[orientation], spec_copy)) {
-			replaceSortIndicator(sortIcon_btn, currentDir);
+			// Compare each chain entry against the spec we were provided, ignoring direction (which is
+			// independent of the user interface reflecting the sort).
+
+			var entry = deepCopy(applicable[pi]);
+			var entryDir = entry.dir;
+			delete entry.dir;
+			if (spec.aggType == null) {
+				delete entry.aggNum;
+			}
+
+			if (_.isEqual(entry, spec_copy)) {
+
+				// Only show a numbered priority badge when the sort spans more than one column.
+
+				var priority = applicable.length > 1 ? pi + 1 : null;
+				replaceSortIndicator(sortIcon_btn, entryDir, priority);
+				break;
+			}
 		}
 	}
 };

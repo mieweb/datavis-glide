@@ -152,6 +152,8 @@ AGGREGATE.HEADER_DISPLAY	%s ของ %s
 		
 GRID.TABLE.SORT_MENU.ASCENDING	%s, น้อยไปมาก	
 GRID.TABLE.SORT_MENU.DESCENDING	%s, มากไปน้อย	
+GRID.TABLE.SORT_MENU.ADD_TO_SORT	เพิ่มในการเรียงลำดับ	
+GRID.TABLE.SORT_MENU.PRIORITY_BADGE	ลำดับความสำคัญการเรียง %d	
 GRID.TABLE.SORT_MENU.RESET_SORT	รีเซ็ตการเรียงลำดับ	
 		
 GRID.TABLE.DRAGGABLE_FIELD_HELP	คุณสามารถลากและวางฟิลด์นี้ไปยังตัวควบคุมตารางด้านบนเพื่อกรอง จัดกลุ่ม หรือ Pivot	
