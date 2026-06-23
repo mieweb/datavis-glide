@@ -122,7 +122,7 @@
     , { "field": "currency3", "type": "currency" }
     , { "field": "currency4", "type": "string" }
     , { "field": "date1", "type": "date" }
-    , { "field": "date2", "type": "date", "format": "MMMM D, YYYY" }
+    , { "field": "date2", "type": "date", "format": "MMM D, YYYY" }
     , { "field": "date3", "type": "date", "format": "MM/DD/YYYY" }
     , { "field": "time1", "type": "time", "format": "HH:mm:ss" }
     , { "field": "time2", "type": "time", "format": "hh:mm:ss a" }
@@ -137,22 +137,22 @@
     , { "field": "time11", "type": "time", "format": "hh:mm:ss a" }
     , { "field": "time12", "type": "time", "format": "h:mm:ss a" }
     , { "field": "datetime1", "type": "datetime" }
-    , { "field": "datetime2", "type": "datetime", "format": "MMMM D, YYYY HH:mm:ss" }
+    , { "field": "datetime2", "type": "datetime", "format": "MMM D, YYYY HH:mm:ss" }
     , { "field": "datetime3", "type": "datetime", "format": "MM/DD/YYYY HH:mm:ss" }
     , { "field": "datetime4", "type": "datetime" }
-    , { "field": "datetime5", "type": "datetime", "format": "MMMM D, YYYY HH:mm:ss" }
+    , { "field": "datetime5", "type": "datetime", "format": "MMM D, YYYY HH:mm:ss" }
     , { "field": "datetime6", "type": "datetime", "format": "MM/DD/YYYY HH:mm:ss" }
     , { "field": "datetime7", "type": "datetime" }
-    , { "field": "datetime8", "type": "datetime", "format": "MMMM D, YYYY HH:mm:ss" }
+    , { "field": "datetime8", "type": "datetime", "format": "MMM D, YYYY HH:mm:ss" }
     , { "field": "datetime9", "type": "datetime", "format": "MM/DD/YYYY HH:mm:ss" }
     , { "field": "datetime10", "type": "datetime" }
-    , { "field": "datetime11", "type": "datetime", "format": "MMMM D, YYYY HH:mm:ss" }
+    , { "field": "datetime11", "type": "datetime", "format": "MMM D, YYYY HH:mm:ss" }
     , { "field": "datetime12", "type": "datetime", "format": "MM/DD/YYYY HH:mm:ss" }
     , { "field": "datetime13", "type": "datetime" }
-    , { "field": "datetime14", "type": "datetime", "format": "MMMM D, YYYY HH:mm:ss" }
+    , { "field": "datetime14", "type": "datetime", "format": "MMM D, YYYY HH:mm:ss" }
     , { "field": "datetime15", "type": "datetime", "format": "MM/DD/YYYY HH:mm:ss" }
     , { "field": "datetime16", "type": "datetime" }
-    , { "field": "datetime17", "type": "datetime", "format": "MMMM D, YYYY HH:mm:ss" }
+    , { "field": "datetime17", "type": "datetime", "format": "MMM D, YYYY HH:mm:ss" }
     , { "field": "datetime18", "type": "datetime", "format": "MM/DD/YYYY HH:mm:ss" }
     , { "field": "fixedPrecision1", "type": "number" }
     , { "field": "fixedPrecision2", "type": "number" }

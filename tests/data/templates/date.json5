@@ -16,7 +16,7 @@
     , { "field": "state", "type": "string" }
     , { "field": "fruit", "type": "string" }
     , { "field": "date1", "type": "date" }
-    , { "field": "date2", "type": "date", "format": "MMMM D, YYYY" }
+    , { "field": "date2", "type": "date", "format": "MMM D, YYYY" }
     , { "field": "date3", "type": "date", "format": "MM/DD/YYYY" }
   ]
 }
