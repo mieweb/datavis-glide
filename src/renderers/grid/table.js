@@ -951,7 +951,11 @@ GridTable.prototype._addSortingToHeader = function (data, orientation, spec, con
 		spec.aggNum = aggNum;
 		spec.dir = dir;
 
-		var sortSpec = self.view.getSort() || {};
+		// Deep-copy the view's current sort so we build a brand-new spec object.  `getSort()` returns
+		// the view's live internal object; mutating it in place would defeat the view's change
+		// detection (it compares the new spec to its current one), which would silently skip saving
+		// the updated sort to the perspective.
+		var sortSpec = deepCopy(self.view.getSort()) || {};
 
 		// The view stores each orientation's sort as a chain (array) of specs.  Older specs may be a
 		// bare object, so normalize to an array before working with it.

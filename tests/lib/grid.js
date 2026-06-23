@@ -465,6 +465,130 @@ class Grid {
 		return this.clickActiveSortMenu(`${agg}, ${dir === 'asc' ? 'Ascending' : 'Descending'}`);
 	}
 
+	/**
+	 * Click the trailing "add to sort" (plus) button on a row in the active sort menu.  Unlike
+	 * clicking the row body (which replaces the sort), this appends the column to the multi-column
+	 * sort chain.
+	 *
+	 * @param {string} item
+	 * The label of the menu row whose add button to click, e.g. `country, Ascending`.
+	 */
+
+	async clickActiveSortMenuAdd(item) {
+		const sortMenus = await asyncFilter(await this.driver.findElements(By.className('wcdv-popup-menu')), (elt) => elt.isDisplayed());
+		const sortItems = await sortMenus[0].findElements(By.className('wcdv-popup-menu-item'));
+		const correctItem = await asyncFilter(sortItems, async (elt) => await elt.getText() === item);
+
+		if (correctItem.length !== 1) {
+			throw new Error(`Invalid item "${item}", found: ${JSON.stringify(await asyncMap(sortItems, (elt) => elt.getText()))}`);
+		}
+
+		return correctItem[0].findElement(By.css('button.wcdv-popup-menu-item-action')).click();
+	}
+
+	/**
+	 * Add a field to the multi-column sort chain (rather than replacing it).  Opens the column's sort
+	 * menu and clicks the matching row's trailing add (plus) button.
+	 *
+	 * @param {string} field
+	 * Name of the column to add to the sort.
+	 *
+	 * @param {string} dir
+	 * Sort direction, either `asc` or `desc`.
+	 */
+
+	async addSortByField(field, dir) {
+		await this.openSortMenu(By.xpath(`//span[@data-wcdv-field="${field}"]/..//button[contains(@class, 'wcdv_sort_icon')]`));
+		return this.clickActiveSortMenuAdd(`${field}, ${dir === 'asc' ? 'Ascending' : 'Descending'}`);
+	}
+
+	/**
+	 * Open a column's sort menu, retrying the icon click until the popup actually appears.  The sort
+	 * icon and its menu are torn down and rebuilt on every grid re-render, so a click issued just
+	 * before the final DOM swap can open a menu that is immediately destroyed.
+	 *
+	 * @param {By} iconLocator
+	 * Locator for the sort icon button to click.
+	 */
+
+	async openSortMenu(iconLocator) {
+		await this.driver.wait(async () => {
+			await this.driver.findElement(iconLocator).click();
+			const menus = await asyncFilter(await this.driver.findElements(By.className('wcdv-popup-menu')), (elt) => elt.isDisplayed());
+			return menus.length > 0;
+		}, 5000, 'sort menu did not appear');
+	}
+
+	/**
+	 * Add an aggregate result to the multi-column sort chain (rather than replacing it).
+	 *
+	 * @param {string} agg
+	 * Name of the aggregate to add to the sort.
+	 *
+	 * @param {string} dir
+	 * Sort direction, either `asc` or `desc`.
+	 */
+
+	async addSortByAgg(agg, dir) {
+		await this.openSortMenu(By.xpath(`//span[contains(@class, 'wcdv_heading_title') and text() = "${agg}"]/..//button[contains(@class, 'wcdv_sort_icon')]`));
+		return this.clickActiveSortMenuAdd(`${agg}, ${dir === 'asc' ? 'Ascending' : 'Descending'}`);
+	}
+
+	/**
+	 * Open a column's sort menu and click "Reset Sort," which clears the entire sort chain.
+	 *
+	 * @param {string} field
+	 * Name of any sortable column whose menu to open.
+	 */
+
+	async resetSort(field) {
+		await this.openSortMenu(By.xpath(`//span[@data-wcdv-field="${field}"]/..//button[contains(@class, 'wcdv_sort_icon')]`));
+		return this.clickActiveSortMenu('Reset Sort');
+	}
+
+	/**
+	 * Read the numbered priority badge shown on a sorted column header.  Returns `null` when the
+	 * column shows no badge (i.e. it isn't part of a multi-column sort).
+	 *
+	 * @param {string} field
+	 * Name of the column whose header to inspect.
+	 *
+	 * @returns {Promise<?{text: string, label: string}>}
+	 * The badge's visible text (its 1-based priority) and its `aria-label`, or `null` if absent.
+	 */
+
+	async getSortPriorityBadge(field) {
+		const badges = await this.driver.findElements(By.xpath(`//span[@data-wcdv-field="${field}"]/..//button[contains(@class, 'wcdv_sort_icon')]//span[contains(@class, 'wcdv_sort_priority_badge')]`));
+		if (badges.length === 0) {
+			return null;
+		}
+		return {
+			text: await badges[0].getText(),
+			label: await badges[0].getAttribute('aria-label')
+		};
+	}
+
+	/**
+	 * Read the numbered priority badge shown on a sorted aggregate column header.  Returns `null`
+	 * when the column shows no badge.
+	 *
+	 * @param {string} agg
+	 * Name of the aggregate column whose header to inspect.
+	 *
+	 * @returns {Promise<?{text: string, label: string}>}
+	 */
+
+	async getAggSortPriorityBadge(agg) {
+		const badges = await this.driver.findElements(By.xpath(`//span[contains(@class, 'wcdv_heading_title') and text() = "${agg}"]/..//button[contains(@class, 'wcdv_sort_icon')]//span[contains(@class, 'wcdv_sort_priority_badge')]`));
+		if (badges.length === 0) {
+			return null;
+		}
+		return {
+			text: await badges[0].getText(),
+			label: await badges[0].getAttribute('aria-label')
+		};
+	}
+
 	// Group {{{2
 
 	// #setGroupMode {{{3
