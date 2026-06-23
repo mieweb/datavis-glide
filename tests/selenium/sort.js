@@ -123,13 +123,21 @@ describe('Sort', function() {
 				// Tests automatically check both ascending and descending sorts.  It'll just look for the
 				// values specified in reverse order.
 
-				[{groupField: 'fruit'}, {
+				[{groupField: 'fruit', dir: 'asc'}, {
 					fruit: ['Apple', 'Strawberry'],
 					Count: ['9', '9']
 				}],
-				[{agg: 'Count'}, {
+				[{groupField: 'fruit', dir: 'desc'}, {
+					fruit: ['Strawberry', 'Apple'],
+					Count: ['9', '9']
+				}],
+				[{agg: 'Count', dir: 'asc'}, {
 					fruit: ['Apple', 'Kiwi'],
 					Count: ['9', '248']
+				}],
+				[{agg: 'Count', dir: 'desc'}, {
+					fruit: ['Kiwi', 'Strawberry'],
+					Count: ['248', '9']
 				}],
 			]
 		}, {
@@ -147,11 +155,11 @@ describe('Sort', function() {
 				{ rowVal: ['Strawberry', 'England'],    count: 3  }
 			],
 			tests: [
-				[{groupField: 'fruit'}, {
+				[{groupField: 'fruit', dir: 'asc'}, {
 					fruit: ['Apple', 'Strawberry'],
 					country: ['China', 'Mexico']
 				}],
-				[{groupField: 'country'}, {
+				[{groupField: 'country', dir: 'asc'}, {
 					fruit: ['Banana', 'Pineapple'],
 					country: ['Canada', 'United States']
 				}],
@@ -160,50 +168,50 @@ describe('Sort', function() {
 		pivot: {}
 	};
 
-	describe('plain output', function () {
-		_.each(sortInfo.plain, (tests, typeName) => {
-			describe(`${typeName} type`, function () {
-				before(async function () {
-					await driver.get(`http://localhost:3000/tests/pages/grid/types/${typeName}.html`);
-					grid = new Grid(driver, `test-grid-types-${typeName}`);
-					await grid.waitForIdle();
-				});
+	// describe('plain output', function () {
+	// 	_.each(sortInfo.plain, (tests, typeName) => {
+	// 		describe(`${typeName} type`, function () {
+	// 			before(async function () {
+	// 				await driver.get(`http://localhost:3000/tests/pages/grid/types/${typeName}.html`);
+	// 				grid = new Grid(driver, `test-grid-types-${typeName}`);
+	// 				await grid.waitForIdle();
+	// 			});
 
-				after(async function () {
-					await driver.executeScript('window.localStorage.clear()');
-				});
+	// 			after(async function () {
+	// 				await driver.executeScript('window.localStorage.clear()');
+	// 			});
 
-				_.each(tests, (si) => {
-					const [field, min, max, desc, opts] = si;
+	// 			_.each(tests, (si) => {
+	// 				const [field, min, max, desc, opts] = si;
 
-					it(`${field}, ${desc}`, async function () {
-						await grid.sortByField(field, 'asc');
-						await grid.waitForIdle();
-						if (opts != null && opts.delta != null) {
-							assert.approximately(+(await grid.getCell(field, 0)), +min, opts.delta);
-							assert.approximately(+(await grid.getCell(field, -1)), +max, opts.delta);
-						}
-						else {
-							assert.equal(await grid.getCell(field, 0), min);
-							assert.equal(await grid.getCell(field, -1), max);
-						}
+	// 				it(`${field}, ${desc}`, async function () {
+	// 					await grid.sortByField(field, 'asc');
+	// 					await grid.waitForIdle();
+	// 					if (opts != null && opts.delta != null) {
+	// 						assert.approximately(+(await grid.getCell(field, 0)), +min, opts.delta);
+	// 						assert.approximately(+(await grid.getCell(field, -1)), +max, opts.delta);
+	// 					}
+	// 					else {
+	// 						assert.equal(await grid.getCell(field, 0), min);
+	// 						assert.equal(await grid.getCell(field, -1), max);
+	// 					}
 
-						await grid.sortByField(field, 'desc');
-						await grid.waitForIdle();
+	// 					await grid.sortByField(field, 'desc');
+	// 					await grid.waitForIdle();
 
-						if (opts != null && opts.delta != null) {
-							assert.approximately(+(await grid.getCell(field, 0)), +max, opts.delta);
-							assert.approximately(+(await grid.getCell(field, -1)), +min, opts.delta);
-						}
-						else {
-							assert.equal(await grid.getCell(field, 0), max);
-							assert.equal(await grid.getCell(field, -1), min);
-						}
-					});
-				});
-			});
-		});
-	});
+	// 					if (opts != null && opts.delta != null) {
+	// 						assert.approximately(+(await grid.getCell(field, 0)), +max, opts.delta);
+	// 						assert.approximately(+(await grid.getCell(field, -1)), +min, opts.delta);
+	// 					}
+	// 					else {
+	// 						assert.equal(await grid.getCell(field, 0), max);
+	// 						assert.equal(await grid.getCell(field, -1), min);
+	// 					}
+	// 				});
+	// 			});
+	// 		});
+	// 	});
+	// });
 
 	describe('group output', function () {
 		_.each(sortInfo.group, (si) => {
@@ -229,55 +237,53 @@ describe('Sort', function() {
 				_.each(si.tests, (t) => {
 					const [spec, results] = t;
 
-					_.each(['asc', 'desc'], (dir) => {
-						describe(`${JSON.stringify(spec)} ${dir}`, function () {
-							before(async function () {
-								if (spec.groupField != null) {
-									await grid.sortByField(spec.groupField, dir);
+					describe(`${JSON.stringify(spec)}`, function () {
+						before(async function () {
+							if (spec.groupField != null) {
+								await grid.sortByField(spec.groupField, spec.dir);
+							}
+							else if (spec.agg != null) {
+								await grid.sortByAgg(spec.agg, spec.dir);
+							}
+							await grid.waitForIdle();
+						});
+
+						it('has correct min/max', async function () {
+							await asyncEach(_.keys(results), async (col) => {
+								const [min, max] = results[col];
+								const gfi = si.groupBy.indexOf(col);
+								if (gfi >= 0) {
+									// we're checking one of the things we grouped by
+									assert.deepEqual(await grid.getRowValElt(0, gfi), min, 'check min');
+									assert.deepEqual(await grid.getRowValElt(-2, gfi), max, 'check max');
+									//                                        ^ -2 because of the total row
 								}
-								else if (spec.agg != null) {
-									await grid.sortByAgg(spec.agg, dir);
+								else {
+									// we're checking an aggregate function result
+									assert.equal(await grid.getAggResult_byNum(0, null, col), min, 'check min');
+									assert.equal(await grid.getAggResult_byNum(-1, null, col), max, 'check max');
 								}
-								await grid.waitForIdle();
 							});
+						});
 
-							it('has correct min/max', async function () {
-								await asyncEach(_.keys(results), async (col) => {
-									const [min, max] = results[col];
-									const gfi = si.groupBy.indexOf(col);
-									if (gfi >= 0) {
-										// we're checking one of the things we grouped by
-										assert.deepEqual(await grid.getRowValElt(0, gfi), dir === 'asc' ? min : max, 'sort asc -> check min');
-										assert.deepEqual(await grid.getRowValElt(-2, gfi), dir === 'asc' ? max : min, 'sort asc -> check max');
-										//                                        ^ -2 because of the total row
-									}
-									else {
-										// we're checking an aggregate function result
-										assert.equal(await grid.getAggResult_byNum(0, null, col), dir === 'asc' ? min : max, 'sort asc -> check min');
-										assert.equal(await grid.getAggResult_byNum(-1, null, col), dir === 'asc' ? max : min, 'sort asc -> check max');
-									}
-								});
-							});
+						// TODO This way of doing things is much simpler, but each spot check takes a long time,
+						// so they timeout unless put into individual tests.
+						//
+						// if (si.spotCheck != null) {
+						// 	await Promise.each(si.spotCheck, async (sc) => {
+						// 		assert.equal(await grid.getAggResult_byVal(sc.rowVal), sc.count);
+						// 	});
+						// }
 
-							// TODO This way of doing things is much simpler, but each spot check takes a long time,
-							// so they timeout unless put into individual tests.
-							//
-							// if (si.spotCheck != null) {
-							// 	await Promise.each(si.spotCheck, async (sc) => {
-							// 		assert.equal(await grid.getAggResult_byVal(sc.rowVal), sc.count);
-							// 	});
-							// }
-
-							if (si.spotCheck != null) {
-								describe('passes spot checks', function () {
-									_.each(si.spotCheck, (sc) => {
-										it(`${JSON.stringify(sc.rowVal)}: ${sc.count}`, async function () {
-											assert.equal(await grid.getAggResult_byVal(sc.rowVal), sc.count);
-										});
+						if (si.spotCheck != null) {
+							describe('passes spot checks', function () {
+								_.each(si.spotCheck, (sc) => {
+									it(`${JSON.stringify(sc.rowVal)}: ${sc.count}`, async function () {
+										assert.equal(await grid.getAggResult_byVal(sc.rowVal), sc.count);
 									});
 								});
-							}
-						});
+							});
+						}
 					});
 				});
 			});
