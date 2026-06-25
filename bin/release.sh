@@ -2,16 +2,21 @@
 
 set -e -u -o pipefail
 
+declare dry_run=0
+declare npm=0
+declare run_tests=1
+declare pkg_name='DataVis GLIDE'
+
 errmsg() {
     echo -e "$@" >&2
 }
 
 usage() {
-    errmsg "USAGE: $0 VERSION"
+    errmsg "USAGE: $0 [ --npm ] VERSION"
     errmsg "       $0 -c / --continue"
     errmsg "       $0 -a / --abort"
     errmsg ""
-    errmsg "Create a DataVis release of the currently checked-out code for VERSION."
+    errmsg "Create a $pkg_name release of the currently checked-out code for VERSION."
     errmsg "If tests fail, use -c / --continue to commit, tag, and push later."
 }
 
@@ -25,12 +30,23 @@ getopt() {
 
 commit_tag_push() {
     local version="$1" ; shift
-    git commit -m "Release: DataVis v$version" package.json package-lock.json
-    git push origin
-    git push github
-    git tag -m "DataVis v$version" "v$version"
-    git push origin tag "v$version"
-    git push github tag "v$version"
+    if [[ $dry_run -eq 1 ]]; then
+        echo "DRY RUN: Tagging $pkg_name v$version"
+    else
+        git commit -m "Release: $pkg_name v$version" package.json package-lock.json
+        git push origin
+        git tag -m "$pkg_name v$version" "v$version"
+        git push origin tag "v$version"
+    fi
+}
+
+npm_publish() {
+    if [[ $dry_run -eq 1 ]]; then
+        echo "DRY RUN: Publishing NPM package $pkg_name v$version"
+    else
+        npm login
+        npm publish
+    fi
 }
 
 update_package_json() {
@@ -43,7 +59,7 @@ update_package_json() {
     jq '.version = "'"$version"'"' < package.json.bak > package.json
     rm package.json.bak
     npm install
-    if [[ "$run_tests" = 1 ]]; then
+    if [[ $run_tests -eq 1 ]]; then
         make clean
         make teardown
         make setup
@@ -58,11 +74,13 @@ update_package_json() {
         }
     fi
     commit_tag_push "$version"
+    if [[ $npm -eq 1 ]]; then
+        npm_publish
+    fi
 }
 
 main() {
-    OPTIONS=$(getopt --options='ach' --longoptions='abort,continue,no-test,help' --name="$0" -- "$@")
-    run_tests=1
+    OPTIONS=$(getopt --options='achn' --longoptions='abort,continue,help,dry-run,no-test,npm' --name="$0" -- "$@")
     if [ $? -ne 0 ]; then
         errmsg 'Error parsing arguments'
         exit 1
@@ -86,9 +104,17 @@ main() {
             commit_tag_push "$version"
             exit 0
             ;;
+        -n|--dry-run)
+            shift
+            dry_run=1
+            ;;
         --no-test)
             shift
             run_tests=0
+            ;;
+        --npm)
+            shift
+            npm=1
             ;;
         -h|--help)
             shift
