@@ -33,6 +33,12 @@ GRID.TITLEBAR.REFRESH	รีเฟรช
 GRID.TITLEBAR.SHOW_HIDE	แสดง/ซ่อนตาราง	
 GRID.TITLEBAR.SHOW_HIDE_CONTROLS	แสดง/ซ่อนตัวควบคุมตาราง	
 GRID.TITLEBAR.SHOW_DEBUG_INFO	แสดงข้อมูลดีบักของตาราง	
+GRID.TITLEBAR.COPY_SELECTION	คัดลอกส่วนที่เลือก	
+GRID.TITLEBAR.COPY_SELECTION_TOOLTIP	คัดลอกแถวหรือเซลล์ที่เลือกไปยังคลิปบอร์ด	
+GRID.TITLEBAR.COPY_SELECTION_CONFIRM	จะคัดลอก %d ค่าไปยังคลิปบอร์ด ดำเนินการต่อหรือไม่?	
+
+GRID.TOAST.ROWS_COPIED	คัดลอก %d แถวไปยังคลิปบอร์ดแล้ว	
+GRID.TOAST.CELLS_COPIED	คัดลอก %d เซลล์ไปยังคลิปบอร์ดแล้ว	
 		
 // Grid omnifilter		
 		

@@ -33,6 +33,12 @@ GRID.TITLEBAR.REFRESH	Atualizar
 GRID.TITLEBAR.SHOW_HIDE	Mostrar/Ocultar Grade	
 GRID.TITLEBAR.SHOW_HIDE_CONTROLS	Mostrar/Ocultar Controles da Grade	
 GRID.TITLEBAR.SHOW_DEBUG_INFO	Mostrar Informações de Depuração da Grade	
+GRID.TITLEBAR.COPY_SELECTION	Copiar seleção	
+GRID.TITLEBAR.COPY_SELECTION_TOOLTIP	Copiar as linhas ou células selecionadas para a área de transferência	
+GRID.TITLEBAR.COPY_SELECTION_CONFIRM	%d valores serão copiados para a área de transferência. Continuar?	
+
+GRID.TOAST.ROWS_COPIED	%d linhas copiadas para a área de transferência	
+GRID.TOAST.CELLS_COPIED	%d células copiadas para a área de transferência	
 		
 // Grid omnifilter		
 		

@@ -33,6 +33,12 @@ GRID.TITLEBAR.REFRESH	Refresh
 GRID.TITLEBAR.SHOW_HIDE	Show/Hide Grid	
 GRID.TITLEBAR.SHOW_HIDE_CONTROLS	Show/Hide Grid Controls	
 GRID.TITLEBAR.SHOW_DEBUG_INFO	Show Grid Debug Info	
+GRID.TITLEBAR.COPY_SELECTION	Copy Selection	Aria-label for the copy-selection button.
+GRID.TITLEBAR.COPY_SELECTION_TOOLTIP	Copy the selected rows or cells to the clipboard	Button tooltip/title.
+GRID.TITLEBAR.COPY_SELECTION_CONFIRM	%d values will be copied to the clipboard. Continue?	Shown before very large copy operations.
+
+GRID.TOAST.ROWS_COPIED	%d rows copied to clipboard	%d is the row count.
+GRID.TOAST.CELLS_COPIED	%d cells copied to clipboard	%d is the cell count.
 		
 // Grid omnifilter		
 		

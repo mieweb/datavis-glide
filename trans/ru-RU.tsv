@@ -33,6 +33,12 @@ GRID.TITLEBAR.REFRESH	Обновить
 GRID.TITLEBAR.SHOW_HIDE	Показать/Скрыть таблицу	
 GRID.TITLEBAR.SHOW_HIDE_CONTROLS	Показать/Скрыть элементы управления таблицей	
 GRID.TITLEBAR.SHOW_DEBUG_INFO	Показать отладочную информацию таблицы	
+GRID.TITLEBAR.COPY_SELECTION	Копировать выделение	
+GRID.TITLEBAR.COPY_SELECTION_TOOLTIP	Скопировать выбранные строки или ячейки в буфер обмена	
+GRID.TITLEBAR.COPY_SELECTION_CONFIRM	%d значений будет скопировано в буфер обмена. Продолжить?	
+
+GRID.TOAST.ROWS_COPIED	%d строк скопировано в буфер обмена	
+GRID.TOAST.CELLS_COPIED	%d ячеек скопировано в буфер обмена	
 		
 // Grid omnifilter		
 		

@@ -21,6 +21,7 @@ import {
 	setPropDef,
 	Timing,
 } from './util/misc.js';
+import { writeToClipboard } from './util/clipboard.js';
 import { OrdMap, Lock, Prefs, ComputedView, MirageView, FileSource } from 'datavis-ace';
 import {
 	AggregateControl,
@@ -40,6 +41,7 @@ import { ColConfigWin } from './ui/windows/col_config.js';
 import { DebugWin } from './ui/windows/debug.js';
 import { TemplatesEditor } from './ui/templates.js';
 import { PopupWindow } from './ui/popup_window.js';
+import Toast from './ui/toast.js';
 import {
 	ComputedViewToolbar,
 	PlainToolbar,
@@ -321,6 +323,9 @@ function makeJsonOrderBy(o) {
  *
  * @property {boolean} [rowSelect=false] If true, the user is allowed to select rows by using the
  * checkbox in the first column.
+
+ * @property {boolean} [cellSelect=false] If true, the user is allowed to select a rectangular range
+ * of cells by clicking and dragging in plain output.
  *
  * @property {boolean} [rowReorder=false] If true, the user is allowed to manually reorder the rows
  * using the handle in the last column.
@@ -451,6 +456,8 @@ function makeJsonOrderBy(o) {
  * @borrows GridTable#select
  * @borrows GridTable#unselect
  * @borrows GridTable#isSelected
+ * @borrows GridTable#getCellSelection
+ * @borrows GridTable#clearCellSelection
  */
 
 var Grid = makeSubclass('Grid', Object, function (defn, opts, cb) {
@@ -490,6 +497,8 @@ var Grid = makeSubclass('Grid', Object, function (defn, opts, cb) {
 	self.grid = null; // List of all grids generated as a result.
 	self.ui = {}; // User interface elements.
 	self.selected = {}; // Information about what rows are selected.
+	self.toast = null;
+	self.copyConfirmThreshold = 10000;
 
 	self._validateFeatures();
 	self._validateId(self.defn.id);
@@ -1038,10 +1047,11 @@ mixinEventHandling(Grid, [
 	, 'renderEnd'
 	, 'colConfigUpdate'
 	, 'selectionChange'
+	, 'cellSelectionChange'
 	, 'rowModeChange'
 ]);
 
-delegate(Grid, 'renderer', ['setSelection', 'getSelection', 'select', 'unselect', 'isSelected']);
+delegate(Grid, 'renderer', ['setSelection', 'getSelection', 'select', 'unselect', 'isSelected', 'getCellSelection', 'clearCellSelection']);
 
 mixinLogging(Grid);
 mixinNameSetting(Grid);
@@ -1087,6 +1097,15 @@ mixinNameSetting(Grid);
  * Data from rows that are selected.
  */
 
+/**
+ * Fired when cell selection is changed.
+ *
+ * @event Grid#cellSelectionChange
+ *
+ * @param {object} selection
+ * Information about selected cells.
+ */
+
 // #toString {{{2
 
 Grid.prototype.toString = function () {
@@ -1108,6 +1127,7 @@ Grid.prototype._validateFeatures = function () {
 		'group',
 		'pivot',
 		'rowSelect',
+		'cellSelect',
 		'rowReorder',
 		'add',
 		'edit',
@@ -1312,6 +1332,23 @@ Grid.prototype._addTitleWidgets = function (titlebar, doingServerFilter, id) {
 
 	self._setExportStatus('notReady');
 
+	if (self.features.rowSelect || self.features.cellSelect) {
+		self.ui.copyBtn = jQuery('<button>', {
+			'type': 'button',
+			'style': 'font-size: 18px',
+			'class': 'wcdv_icon_button wcdv_text-primary',
+			'aria-label': trans('GRID.TITLEBAR.COPY_SELECTION')
+		})
+			.on('click', function (evt) {
+				evt.stopPropagation();
+				self.copySelection();
+			})
+			.appendTo(self.ui.titlebar_controls)
+		;
+
+		self._setCopyStatus('disabled');
+	}
+
 	// Create the Refresh button
 
 	self.ui.refreshBtn = jQuery('<button>', {
@@ -1405,6 +1442,11 @@ Grid.prototype.clear = function () {
 	if (self.resizeObserver != null) {
 		self.resizeObserver.disconnect();
 		self.resizeObserver = null;
+	}
+
+	if (self.toast != null) {
+		self.toast.destroy();
+		self.toast = null;
 	}
 
 	self.ui.root.children().remove();
@@ -1514,6 +1556,7 @@ Grid.prototype.redraw = function (contOk, contFail) {
 		self.renderer.on('renderEnd', function () {
 			self.fire('renderEnd');
 			self._isIdle = true;
+			self._updateCopyStatus();
 		});
 
 		self.renderer.on('unableToRender', function () {
@@ -1554,7 +1597,15 @@ Grid.prototype.redraw = function (contOk, contFail) {
 					str += trans(selection.length === 1 ? 'GRID.TITLEBAR.SELECTED_COUNT_SINGULAR' : 'GRID.TITLEBAR.SELECTED_COUNT_PLURAL', selection.length);
 					self.ui.selectionInfo.text(str);
 				}
+				self._updateCopyStatus();
 				self.fire('selectionChange', null, selection);
+			});
+		}
+
+		if (self.features.cellSelect) {
+			self.renderer.on('cellSelectionChange', function (selection) {
+				self._updateCopyStatus();
+				self.fire('cellSelectionChange', null, selection);
 			});
 		}
 
@@ -1563,6 +1614,7 @@ Grid.prototype.redraw = function (contOk, contFail) {
 				self.colConfigLock.unlock('renderer finished drawing');
 			}
 			self.setSelection();
+			self._updateCopyStatus();
 			self.ui.exportBtn.attr('disabled', false);
 			if (self.features.omnifilter) {
 				self._applyOmnifilter();
@@ -2222,6 +2274,95 @@ Grid.prototype._setExportStatus = function (status) {
 	default:
 		throw new Error('Call Error: invalid status "' + status + '"');
 	}
+};
+
+// #_setCopyStatus {{{2
+
+Grid.prototype._setCopyStatus = function (status) {
+	var self = this;
+
+	if (self.ui.copyBtn == null) {
+		return;
+	}
+
+	switch (status) {
+	case 'disabled':
+		self.ui.copyBtn.attr('disabled', true);
+		self.ui.copyBtn.attr('title', trans('GRID.TITLEBAR.COPY_SELECTION_TOOLTIP'));
+		self.ui.copyBtn.children('svg.wcdv_icon').remove();
+		self.ui.copyBtn.append(icon('clipboard'));
+		break;
+	case 'enabled':
+		self.ui.copyBtn.attr('disabled', false);
+		self.ui.copyBtn.attr('title', trans('GRID.TITLEBAR.COPY_SELECTION_TOOLTIP'));
+		self.ui.copyBtn.children('svg.wcdv_icon').remove();
+		self.ui.copyBtn.append(icon('clipboard'));
+		break;
+	default:
+		throw new Error('Call Error: invalid copy button status "' + status + '"');
+	}
+};
+
+// #_updateCopyStatus {{{2
+
+Grid.prototype._updateCopyStatus = function () {
+	var self = this;
+
+	if (self.ui.copyBtn == null || self.renderer == null) {
+		return;
+	}
+
+	var hasRows = self.renderer.getSelection().rows.length > 0;
+	var hasCells = self.renderer.getCellSelection().cells.length > 0;
+
+	self._setCopyStatus(hasRows || hasCells ? 'enabled' : 'disabled');
+};
+
+// #copySelection {{{2
+
+Grid.prototype.copySelection = function () {
+	var self = this;
+
+	if (self.renderer == null) {
+		return;
+	}
+
+	var rowSelection = self.renderer.getSelection();
+	var cellSelection = self.renderer.getCellSelection();
+	var tsv = '';
+	var count = 0;
+	var toastKey = null;
+
+	if (cellSelection.cells.length > 0) {
+		tsv = self.renderer.getSelectedCellsAsTsv();
+		count = cellSelection.cells.length;
+		toastKey = 'GRID.TOAST.CELLS_COPIED';
+	}
+	else if (rowSelection.rows.length > 0) {
+		tsv = self.renderer.getSelectedDataAsTsv();
+		count = rowSelection.rows.length;
+		toastKey = 'GRID.TOAST.ROWS_COPIED';
+	}
+	else {
+		return;
+	}
+
+	if (count > self.copyConfirmThreshold && !window.confirm(trans('GRID.TITLEBAR.COPY_SELECTION_CONFIRM', count))) {
+		return;
+	}
+
+	if (self.toast == null) {
+		self.toast = new Toast();
+	}
+
+	writeToClipboard(tsv)
+		.then(function () {
+			self.toast.show(trans(toastKey, count));
+		})
+		.catch(function (err) {
+			self.logError(self.makeLogTag() + ' Unable to copy selection to clipboard: %O', err);
+		})
+	;
 };
 
 // #setColConfig {{{2

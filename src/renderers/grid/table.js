@@ -185,6 +185,7 @@ var GridTable = makeSubclass('GridTable', GridRenderer, function () {
 	self.super['GridRenderer'].ctor.apply(self, arguments);
 
 	self.selection = [];
+	self.cellSelection = null;
 	self.needsRedraw = false;
 	self.popupMenus = [];
 	self.csvLock = new Lock('GridTable/csv');
@@ -275,6 +276,7 @@ mixinEventHandling(GridTable, [
 	, 'renderBegin'
 	, 'renderEnd'
 	, 'selectionChange'
+	, 'cellSelectionChange'
 ]);
 
 // #_validateFeatures {{{2
@@ -1749,6 +1751,15 @@ GridTable.prototype.draw = function (root, opts, cont) {
 			}
 		}
 
+		if (self.features.cellSelect && data.isPlain) {
+			if (typeof self._addCellSelectHandler !== 'function') {
+				self.logWarning(self.makeLogTag() + ' Requested feature "cellSelect" is not available: `_addCellSelectHandler` method does not exist');
+			}
+			else {
+				self._addCellSelectHandler();
+			}
+		}
+
 		if (self.features.rowReorder) {
 			self._addRowReorderHandler();
 		}
@@ -2310,6 +2321,130 @@ GridTable.prototype.getCsv = function () {
 	return self.csv.toString();
 };
 
+// #_getPlainVisibleColumns {{{2
+
+GridTable.prototype._getPlainVisibleColumns = function () {
+	var self = this;
+
+	return _.filter(determineColumns(self.colConfig, self.data, self.typeInfo), function (field) {
+		var fcc = self.colConfig.get(field) || {};
+		return !fcc.isHidden;
+	});
+};
+
+// #_getPlainCellDisplayValue {{{2
+
+GridTable.prototype._getPlainCellDisplayValue = function (field, cell) {
+	var self = this;
+	var fcc = self.colConfig.get(field) || {};
+	var value = format(fcc, self.typeInfo.get(field), cell);
+
+	if (value instanceof Element) {
+		return jQuery(value).text();
+	}
+	if (value instanceof jQuery) {
+		return value.text();
+	}
+	if (value == null) {
+		return '';
+	}
+	if (fcc.allowHtml && self.typeInfo.get(field).type === 'string' && typeof value === 'string' && value.charAt(0) === '<') {
+		return jQuery(value).text();
+	}
+
+	return value;
+};
+
+// #_getPlainCellCopyValue {{{2
+
+GridTable.prototype._getPlainCellCopyValue = function (rowData, field) {
+	var self = this;
+	var fcc = self.colConfig.get(field) || {};
+	var cell = rowData[field] || {};
+	var value = cell.cachedRender;
+
+	if (value == null) {
+		value = cell.value;
+	}
+	if (value == null) {
+		value = cell.orig;
+	}
+
+	if (value instanceof Element) {
+		return jQuery(value).text();
+	}
+	if (value instanceof jQuery) {
+		return value.text();
+	}
+	if (value == null) {
+		return '';
+	}
+	if (fcc.allowHtml && self.typeInfo.get(field).type === 'string' && typeof value === 'string' && value.charAt(0) === '<') {
+		return jQuery(value).text();
+	}
+
+	return value;
+};
+
+// #getSelectedDataAsTsv {{{2
+
+GridTable.prototype.getSelectedDataAsTsv = function () {
+	var self = this;
+	var selectedRows = self.getSelection().rows;
+	var fields = self._getPlainVisibleColumns();
+	var tsv = new Csv({
+		separator: '\t'
+	});
+
+	if (selectedRows.length === 0 || fields.length === 0) {
+		return '';
+	}
+
+	tsv.addRow();
+	_.each(fields, function (field) {
+		var fcc = self.colConfig.get(field) || {};
+		tsv.addCol(fcc.displayText || field);
+	});
+
+	_.each(selectedRows, function (rowData) {
+		tsv.addRow();
+		_.each(fields, function (field) {
+			tsv.addCol(self._getPlainCellDisplayValue(field, rowData[field]));
+		});
+	});
+
+	return tsv.toString();
+};
+
+// #getSelectedCellsAsTsv {{{2
+
+GridTable.prototype.getSelectedCellsAsTsv = function () {
+	var self = this;
+	var selection = self.getCellSelection();
+	var tsv = new Csv({
+		separator: '\t'
+	});
+
+	if (selection.rowNums.length === 0 || selection.fields.length === 0) {
+		return '';
+	}
+
+	_.each(selection.rowNums, function (rowNum) {
+		var rowData = self.data.dataByRowId[rowNum];
+
+		if (rowData == null) {
+			return;
+		}
+
+		tsv.addRow();
+		_.each(selection.fields, function (field) {
+			tsv.addCol(self._getPlainCellCopyValue(rowData, field));
+		});
+	});
+
+	return tsv.toString();
+};
+
 // #getSelection {{{2
 
 /**
@@ -2340,6 +2475,63 @@ GridTable.prototype.getSelection = function () {
 	};
 };
 
+// #getCellSelection {{{2
+
+GridTable.prototype.getCellSelection = function () {
+	var self = this;
+	var selection = self.cellSelection;
+	var rowNums = [];
+	var fields = [];
+	var cells = [];
+
+	if (selection == null || !_.isArray(selection.rowNums) || !_.isArray(selection.fields)) {
+		return {
+			rowNums: rowNums,
+			fields: fields,
+			cells: cells
+		};
+	}
+
+	rowNums = selection.rowNums.slice();
+	fields = selection.fields.slice();
+
+	_.each(rowNums, function (rowNum) {
+		_.each(fields, function (field) {
+			cells.push({
+				rowNum: rowNum,
+				field: field
+			});
+		});
+	});
+
+	return {
+		rowNums: rowNums,
+		fields: fields,
+		cells: cells,
+		anchor: selection.anchor,
+		focus: selection.focus
+	};
+};
+
+// #clearCellSelection {{{2
+
+GridTable.prototype.clearCellSelection = function () {
+	var self = this;
+	var prevSelection = self.getCellSelection();
+
+	if (prevSelection.cells.length === 0) {
+		return;
+	}
+
+	self.cellSelection = null;
+
+	if (typeof self._clearCellSelectionGui === 'function') {
+		self._clearCellSelectionGui();
+	}
+
+	self.fire('cellSelectionChange', null, self.getCellSelection());
+};
+
 // #setSelection {{{2
 
 /**
@@ -2354,6 +2546,8 @@ GridTable.prototype.getSelection = function () {
 GridTable.prototype.setSelection = function (what) {
 	var self = this;
 	var data = self.data.data;
+
+	self.clearCellSelection();
 
 	if (!self.features.rowSelect) {
 		return;
@@ -2409,6 +2603,8 @@ GridTable.prototype.setSelection = function (what) {
 GridTable.prototype.select = function (what) {
 	var self = this;
 	var data = self.data.data;
+
+	self.clearCellSelection();
 
 	if (self.data.isGroup) {
 		data = _.flatten(data);
@@ -2469,6 +2665,8 @@ GridTable.prototype.select = function (what) {
 GridTable.prototype.unselect = function (what) {
 	var self = this;
 	var data = self.data.data;
+
+	self.clearCellSelection();
 
 	if (self.data.isGroup) {
 		data = _.flatten(data);

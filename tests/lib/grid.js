@@ -1138,6 +1138,40 @@ class Grid {
 		});`);
 	}
 
+	// #getCellSelection {{{3
+
+	async getCellSelection() {
+		return this.driver.executeScript(`return MIE.WC_DataVis.grids['${this.id}'].getCellSelection();`);
+	}
+
+	// #selectCellRange {{{3
+
+	async selectCellRange(startCol, startRow, endCol, endRow) {
+		const startTd = await this.getCell(startCol, startRow, {result: 'element'});
+		const endTd = await this.getCell(endCol, endRow, {result: 'element'});
+
+		return this.driver.actions()
+			.move({origin: startTd})
+			.press()
+			.move({origin: endTd})
+			.release()
+			.perform();
+	}
+
+	// #clickCopySelection {{{3
+
+	async clickCopySelection() {
+		const btn = await this.driver.findElement(By.xpath("//div[contains(@class, 'wcdv_titlebar_controls')]/button[.//*[local-name()='svg' and @data-icon='clipboard']]"));
+		return btn.click();
+	}
+
+	// #isCopySelectionDisabled {{{3
+
+	async isCopySelectionDisabled() {
+		const btn = await this.driver.findElement(By.xpath("//div[contains(@class, 'wcdv_titlebar_controls')]/button[.//*[local-name()='svg' and @data-icon='clipboard']]"));
+		return (await btn.getAttribute('disabled')) != null;
+	}
+
 	// Operations {{{2
 
 	// #getOperations {{{3

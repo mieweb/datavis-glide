@@ -33,6 +33,12 @@ GRID.TITLEBAR.REFRESH	Làm mới
 GRID.TITLEBAR.SHOW_HIDE	Hiện/Ẩn Lưới	
 GRID.TITLEBAR.SHOW_HIDE_CONTROLS	Hiện/Ẩn Điều Khiển Lưới	
 GRID.TITLEBAR.SHOW_DEBUG_INFO	Hiện Thông Tin Gỡ Lỗi Lưới	
+GRID.TITLEBAR.COPY_SELECTION	Sao chép vùng chọn	
+GRID.TITLEBAR.COPY_SELECTION_TOOLTIP	Sao chép các hàng hoặc ô đã chọn vào bảng tạm	
+GRID.TITLEBAR.COPY_SELECTION_CONFIRM	%d giá trị sẽ được sao chép vào bảng tạm. Tiếp tục?	
+
+GRID.TOAST.ROWS_COPIED	Đã sao chép %d hàng vào bảng tạm	
+GRID.TOAST.CELLS_COPIED	Đã sao chép %d ô vào bảng tạm	
 		
 // Grid omnifilter		
 		

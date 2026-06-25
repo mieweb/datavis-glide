@@ -33,6 +33,12 @@ GRID.TITLEBAR.REFRESH	Actualiser
 GRID.TITLEBAR.SHOW_HIDE	Afficher/Masquer la grille	
 GRID.TITLEBAR.SHOW_HIDE_CONTROLS	Afficher/Masquer les contrôles de la grille	
 GRID.TITLEBAR.SHOW_DEBUG_INFO	Afficher les informations de débogage de la grille	
+GRID.TITLEBAR.COPY_SELECTION	Copier la sélection	
+GRID.TITLEBAR.COPY_SELECTION_TOOLTIP	Copier les lignes ou cellules sélectionnées dans le presse-papiers	
+GRID.TITLEBAR.COPY_SELECTION_CONFIRM	%d valeurs seront copiées dans le presse-papiers. Continuer ?	
+
+GRID.TOAST.ROWS_COPIED	%d lignes copiées dans le presse-papiers	
+GRID.TOAST.CELLS_COPIED	%d cellules copiées dans le presse-papiers	
 		
 // Grid omnifilter		
 		
