@@ -900,6 +900,7 @@ GridTable.prototype._addSortingToHeader = function (data, orientation, spec, con
 
 	// Create the sort icon container with an initial neutral "sortable" icon.
 	var sortIcon_btn = document.createElement('button');
+	sortIcon_btn.setAttribute('type', 'button');
 	sortIcon_btn.classList.add('wcdv_icon_button');
 	sortIcon_btn.classList.add(sortIcon_class);
 	sortIcon_btn.classList.add(sortIcon_orientationClass);
@@ -1021,6 +1022,7 @@ GridTable.prototype._addFilterToHeader = function (container, field, displayText
 	}
 
 	jQuery('<button>', {
+		'type': 'button',
 		'data-tooltip': trans('GRID.TABLE.ADD_FILTER_HELP', field)
 	})
 		.addClass('wcdv_icon_button')

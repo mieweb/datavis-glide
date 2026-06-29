@@ -61,6 +61,7 @@ Slider.prototype.draw = function (root) {
 	});
 	self.ui.header = jQuery('<h1>');
 	self.ui.closeBtn = jQuery('<button>', {
+		'type': 'button',
 		'class': 'wcdv-slider-close'
 	}).text('×').on('click', function () {
 		self.hide();
