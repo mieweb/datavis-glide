@@ -969,7 +969,10 @@ GridTable.prototype._addSortingToHeader = function (data, orientation, spec, con
 		self.view.clearSort();
 	});
 
-	sortIcon_btn.addEventListener('click', function () {
+	// Bind with jQuery (not the native addEventListener) so that the handler survives when the
+	// TableTool floating-header feature clones the table header via jQuery's clone(true).  Native
+	// listeners are not copied by clone(true), which would leave the cloned sort icon inert.
+	jQuery(sortIcon_btn).on('click', function () {
 		sortIcon_menu.open(sortIcon_btn);
 	});
 

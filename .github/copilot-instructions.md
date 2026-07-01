@@ -83,6 +83,9 @@ DataVis is a system for data visualization with presentation via charts and tabl
 - **`log.error()` for recoverable errors**: When handling something wrong but continuing
 - **`log.warn()` for non-breaking issues**: Wrong but won't break anything
 
+### Event Handling
+- **Use jQuery, not `addEventListener`, for elements inside the table**: The TableTool floating-header feature clones the table header (and footer) with jQuery's `clone(true)`. That only copies jQuery-attached event handlers; native `addEventListener` listeners are NOT copied, leaving the cloned controls (e.g. sort icons, column menus) inert. Any interactive element rendered into a `thead`/`tbody`/`tfoot` must bind events with `jQuery(el).on(...)` so clicks keep working in the floating header. Elements rendered outside the table (e.g. popup menus appended to `document.body`, toolbar file inputs) are unaffected.
+
 ## Accessibility (ARIA Labeling)
 
 ### Interactive Elements
