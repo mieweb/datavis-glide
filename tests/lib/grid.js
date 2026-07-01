@@ -1204,11 +1204,12 @@ class Grid {
 			const categories = await operationsPanes[0].findElements(By.css('div.wcdv_operations_category'));
 			let result = {};
 			await asyncEach(categories, async (elt) => {
-				const categoryName = await elt.findElement(By.css('span')).getText() || '';
+				const categoryNameSpan = await elt.findElements(By.css('span'));
+				const categoryName = categoryNameSpan.length > 0 ? await categoryNameSpan[0].getText() : '';
 				const operationButtons = await elt.findElements(By.css('button.wcdv_operation'));
 				result[categoryName] = await asyncMap(operationButtons, async (btn) =>
 					(await hasClass(btn, 'no_label'))
-						? await btn.findElement(By.css('svg')).getAttribute('data-icon')
+						? await btn.getAttribute('data-icon')
 						: await btn.getText());
 			});
 			return result;
@@ -1220,13 +1221,13 @@ class Grid {
 			}
 			const operationButtons = await tr.findElements(By.css('td.wcdv_row_operations > button'));
 			return await asyncMap(operationButtons, async (btn) =>
-				await btn.getAttribute('title') || await btn.findElement(By.css('svg')).getAttribute('data-icon'));
+				await btn.getAttribute('title') || await btn.getAttribute('data-icon'));
 		}
 		case 'cell': {
 			const td = await this.getCell(opts.col, opts.row, {result: 'element'});
 			const operationButtons = await td.findElements(By.css('button.wcdv_operation'));
 			return await asyncMap(operationButtons, async (btn) =>
-				await btn.getAttribute('title') || await btn.findElement(By.css('svg')).getAttribute('data-icon'));
+				await btn.getAttribute('title') || await btn.getAttribute('data-icon'));
 		}
 		}
 	}

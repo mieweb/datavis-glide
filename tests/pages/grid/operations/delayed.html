@@ -12,6 +12,10 @@ document.addEventListener('DOMContentLoaded', function () {
 	window.MIE = window.MIE || {};
 	window.MIE.DEBUGGING = true;
 
+	const params = new URLSearchParams(document.location.search);
+	const iconType = params.get('icon-type') || 'fontawesome';
+	const opIcon = (fa, lucide) => iconType === 'fontawesome' ? fa : iconType === 'lucide' ? lucide : null;
+
 	var source = new Source({
 		type: 'http',
 		url: '../../random100.json'
@@ -35,13 +39,13 @@ document.addEventListener('DOMContentLoaded', function () {
 	window.setTimeout(function () {
 		grid.setOperations({
 			row: [{
-				icon: 'fa-search',
+				icon: opIcon('fa-search', 'search'),
 				tooltip: 'Inspect',
 				callback: function (row) {
 					console.info('Performing "inspect" operation on row: %O', row);
 				}
 			}, {
-				icon: 'fa-trash',
+				icon: opIcon('fa-trash', 'trash-2'),
 				tooltip: 'Delete',
 				callback: function (row) {
 					console.info('Performing "delete" operation on row: %O', row);
@@ -49,7 +53,7 @@ document.addEventListener('DOMContentLoaded', function () {
 			}],
 			cell: {
 				'string1': [{
-					icon: 'fa-heart',
+					icon: opIcon('fa-heart', 'heart'),
 					tooltip: 'Like',
 					callback: function (info) {
 						console.info('Performing "like" operation on row: %O', info.row);
@@ -57,7 +61,7 @@ document.addEventListener('DOMContentLoaded', function () {
 						info.opBtn.css('color', !!+info.cellElt.attr('data-liked') ? 'red' : '')
 					}
 				}, {
-					icon: 'fa-book',
+					icon: opIcon('fa-book', 'book'),
 					tooltip: 'Look Up',
 					callback: function (info) {
 						window.open('https://www.thefreedictionary.com/' + encodeURI(info.cell), '_blank');
@@ -65,34 +69,34 @@ document.addEventListener('DOMContentLoaded', function () {
 				}]
 			},
 			all: [{
-				icon: 'fa-flask',
+				icon: opIcon('fa-flask', 'flask-conical'),
 				label: 'Take Ye Flask',
 				callback: function (info) {
 					alert(info.rows.length + ' rows selected');
 				}
 			}, {
-				icon: 'fa-battery-0',
+				icon: opIcon('fa-battery-0', 'battery'),
 				category: 'Power'
 			}, {
-				icon: 'fa-battery-1',
+				icon: opIcon('fa-battery-1', 'battery-low'),
 				category: 'Power'
 			}, {
-				icon: 'fa-battery-2',
+				icon: opIcon('fa-battery-2', 'battery-medium'),
 				category: 'Power'
 			}, {
-				icon: 'fa-battery-3',
+				icon: opIcon('fa-battery-3', 'battery-full'),
 				category: 'Power'
 			}, {
-				icon: 'fa-battery-4',
+				icon: opIcon('fa-battery-4', 'battery-charging'),
 				category: 'Power'
 			}, {
-				icon: 'fa-thumbs-o-up',
+				icon: opIcon('fa-thumbs-o-up', 'thumbs-up'),
 				category: 'Rating',
 				callback: function (sel) {
 					alert('good');
 				}
 			}, {
-				icon: 'fa-thumbs-o-down',
+				icon: opIcon('fa-thumbs-o-down', 'thumbs-down'),
 				category: 'Rating',
 				callback: function (sel) {
 					alert('bad');
