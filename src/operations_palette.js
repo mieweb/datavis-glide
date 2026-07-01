@@ -5,7 +5,7 @@ import jQuery from 'jquery';
 
 import { trans } from './trans.js';
 import {
-	icon,
+	makeOperationButton,
 	makeSubclass,
 	mixinLogging,
 } from './util/misc.js';
@@ -93,20 +93,8 @@ OperationsPalette.prototype.drawPalette = function () {
 			var catLabel = jQuery('<span>').text(c).appendTo(catDiv);
 		}
 		_.each(ops, function (op) {
-			var btn = jQuery('<button>', {
-				'type': 'button',
-				'class': 'wcdv_operation',
-				'data-operation-index': op.idx
-			}).appendTo(catDiv);
-			if (op.label == null) {
-				btn.addClass('no_label');
-			}
-			if (op.icon) {
-				btn.append(icon(op.icon));
-			}
-			if (op.label) {
-				btn.append(op.label);
-			}
+			var btn = makeOperationButton('all', op, op.idx);
+			catDiv.append(btn);
 		});
 	});
 };

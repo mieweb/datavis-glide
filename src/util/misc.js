@@ -682,10 +682,16 @@ export function makeOperationButton(type, op, index, opts) {
 	}
 	else {
 		if (op.icon) {
-			btn.appendChild(makeOperationIcon(op));
+			var icon = makeOperationIcon(op);
+			if (op.label) {
+				icon.style.paddingRight = '0.25em';
+			}
+			btn.setAttribute('data-icon', op.icon);
+			btn.appendChild(icon);
 		}
 		if (op.label) {
 			btn.classList.add('wcdv_nowrap');
+			btn.setAttribute('aria-label', op.label);
 			btn.append(op.label);
 		}
 		else {
@@ -694,6 +700,7 @@ export function makeOperationButton(type, op, index, opts) {
 	}
 	if (op.tooltip) {
 		btn.setAttribute('title', op.tooltip);
+		btn.setAttribute('aria-description', op.tooltip);
 	}
 	return btn;
 }
