@@ -1,6 +1,6 @@
 {
   "name": "datavis-glide",
-  "version": "4.1.0-PRE.0",
+  "version": "4.1.0",
   "description": "DataVis GLIDE (Graphical Layer for Interactive Data Exploration)",
   "keywords": [
     "data",
