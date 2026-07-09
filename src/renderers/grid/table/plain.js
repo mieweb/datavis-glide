@@ -16,6 +16,7 @@ import {
 	getPropDef,
 	isElement,
 	isElementInViewport,
+	isInteractiveTarget,
 	isVisible,
 	makeOperationButton,
 	makeSubclass,
@@ -106,9 +107,7 @@ GridTablePlain.prototype.draw = function (root, opts, cont) {
 
 		if (self.features.omnifilter) {
 			jQuery(document).on('keydown.omnifilter-' + self._focusEventId, function (evt) {
-				var avoidElts = ['A', 'BUTTON', 'INPUT', 'SELECT', 'TEXTAREA'];
-
-				if (avoidElts.indexOf(evt.target.tagName) >= 0) {
+				if (isInteractiveTarget(evt)) {
 					return; // These elements don't count for turning on the omnifilter.
 				}
 
@@ -138,9 +137,7 @@ GridTablePlain.prototype.draw = function (root, opts, cont) {
 			}
 
 			self.ui.tbody.on('click', 'td', function (evt) {
-				var avoidElts = ['A', 'BUTTON', 'INPUT', 'SELECT', 'TEXTAREA'];
-
-				if (avoidElts.indexOf(evt.target.tagName) >= 0) {
+				if (isInteractiveTarget(evt)) {
 					return; // These elements don't count for setting the active row.
 				}
 
@@ -148,9 +145,7 @@ GridTablePlain.prototype.draw = function (root, opts, cont) {
 			});
 
 			jQuery(document).on('keydown.active-row-' + self._focusEventId, function (evt) {
-				var avoidElts = ['A', 'BUTTON', 'INPUT', 'SELECT', 'TEXTAREA'];
-
-				if (avoidElts.indexOf(evt.target.tagName) >= 0) {
+				if (isInteractiveTarget(evt)) {
 					return; // These elements don't count for setting the active row.
 				}
 
