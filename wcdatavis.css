@@ -1598,4 +1598,17 @@ table tfoot.sticky {
 	transition-duration: 300ms;
 }
 
+/*
+ * The TableTool floating-header clone lives inside a thin, overflow:hidden strip, which clips the
+ * absolutely-positioned tooltip so it never becomes visible.  Switching the tooltip to fixed
+ * positioning lets it escape that clipping region; with auto insets it anchors to its static
+ * (in-flow) position, keeping it aligned with the button just below the floating header.
+ */
+.tabletool .thead [data-tooltip]::after {
+	position: fixed;
+	left: auto;
+	top: auto;
+	margin-top: 10px;
+}
+
 /* vim:set noet sw=4 ts=4: */
