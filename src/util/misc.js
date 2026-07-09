@@ -171,6 +171,26 @@ export function getElement(x) {
 		: null;
 }
 
+// isInteractiveTarget {{{2
+
+/**
+ * Responds whether the target of an event is (or is nested inside) an interactive element that
+ * should suppress interactions such as active-row selection, the omnifilter, and copy shortcuts.
+ * Ancestors are checked (not just the immediate target) because interactive elements like buttons
+ * often contain nested elements (e.g. a SPAN holding an icon) which would otherwise become the
+ * target and defeat a plain tag-name check.
+ *
+ * @param {Event} evt
+ * The event whose target is to be checked.
+ *
+ * @return {boolean}
+ * True if the target is or is contained within an interactive element.
+ */
+
+export function isInteractiveTarget(evt) {
+	return jQuery(evt.target).closest('a, button, input, select, textarea').length > 0;
+}
+
 // isElementInViewport {{{2
 
 /*
