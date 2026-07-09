@@ -38,6 +38,9 @@ document.addEventListener('DOMContentLoaded', function () {
 				tooltip: 'Inspect',
 				callback: function (row) {
 					console.info('Performing "inspect" operation on row: %O', row);
+				},
+				hideWhen: function (row) {
+					return row.rowData.state.value === 'Indiana';
 				}
 			}, {
 				icon: opIcon('fa-trash', 'trash-2'),

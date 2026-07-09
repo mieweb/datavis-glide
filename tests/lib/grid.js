@@ -1061,7 +1061,7 @@ class Grid {
 			if (tr == null) {
 				throw new Error(`No such row: ${opts.row}`);
 			}
-			const operationButtons = await tr.findElements(By.css('td.wcdv_row_operations > button'));
+			const operationButtons = await tr.findElements(By.css('td.wcdv_row_operations button'));
 			return await asyncMap(operationButtons, async (btn) =>
 				await btn.getAttribute('title') || await btn.getAttribute('data-icon'));
 		}
