@@ -321,6 +321,14 @@ div.wcdv_titlebar_controls button.wcdv_icon_button[disabled] > svg.wcdv_icon {
 	flex-direction: column;
 	border: 1px solid #c7c7c7;
     border-top: none;
+
+	/*
+	 * Allow this flex item to shrink below its content's intrinsic height.  Without this, the
+	 * default `min-height: auto` lets the table grow past a fixed-height grid container instead of
+	 * scrolling inside it. This is typically noticed when using the CSS method for floating header.
+	 */
+
+	min-height: 0;
 }
 
 /******************************************************************************/
