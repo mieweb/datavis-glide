@@ -654,6 +654,9 @@ GridTablePlain.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 			td.classList.add('wcdv_nowrap');
 			td.classList.add('wcdv_row_operations');
 
+			var opButtons = document.createElement('div');
+			opButtons.classList.add('wcdv_row_operations_buttons');
+
 			_.each(self.defn.operations.row, function (op, index) {
 				var opBtn = makeOperationButton('row', op, index);
 				if (op.disableWhen && op.disableWhen(row)) {
@@ -662,9 +665,10 @@ GridTablePlain.prototype.drawBody = function (data, typeInfo, columns, cont, opt
 				if (op.hideWhen && op.hideWhen(row)) {
 					opBtn.style.display = 'none';
 				}
-				td.appendChild(opBtn);
+				opButtons.appendChild(opBtn);
 			});
 
+			td.appendChild(opButtons);
 			tr.appendChild(td);
 		}
 

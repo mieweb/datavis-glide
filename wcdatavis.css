@@ -708,13 +708,10 @@ div.wcdv_grid_table td.wcdv_row_operations {
 	text-align: left;
 }
 
-
-div.wcdv_grid_table td.wcdv_row_operations > button.wcdv_operation {
-	margin-left: 0.25em;
-}
-
-div.wcdv_grid_table td.wcdv_row_operations > button.wcdv_operation:first-child {
-	margin-left: 0;
+div.wcdv_grid_table td.wcdv_row_operations > div.wcdv_row_operations_buttons {
+	display: flex;
+	align-items: flex-start;
+	gap: 0.25em;
 }
 
 /* CELL OPERATIONS */
