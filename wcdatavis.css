@@ -1658,16 +1658,24 @@ table tfoot.sticky {
 }
 
 /*
- * The TableTool floating-header clone lives inside a thin, overflow:hidden strip, which clips the
- * absolutely-positioned tooltip so it never becomes visible.  Switching the tooltip to fixed
- * positioning lets it escape that clipping region; with auto insets it anchors to its static
- * (in-flow) position, keeping it aligned with the button just below the floating header.
+ * Grid header tooltips -- both the in-table header and the TableTool floating-header clone (the
+ * clone is nested inside .wcdv_grid_table and its buttons carry .wcdv_heading_container, so this one
+ * rule covers both) -- are shown with fixed positioning.  Fixed positioning keeps the tooltip out of
+ * the table's horizontal scroll overflow (so it adds no blank space to the right of the table) and
+ * lets it escape the floating header's thin overflow:hidden strip.  A fixed element's auto insets
+ * resolve to its static position, which ignores the container's/strip's scroll offset, so the
+ * left/right/top insets are driven by custom properties that the "mouseenter.wcdvHeaderTooltip"
+ * handler in the grid table renderer sets from the hovered button's current viewport rectangle,
+ * choosing whichever horizontal edge keeps the tooltip on-screen.  Only opacity is transitioned, so
+ * the tooltip fades in place instead of sliding in from its previously-positioned location.
  */
-.tabletool .thead [data-tooltip]::after {
+.wcdv_grid_table .wcdv_heading_container [data-tooltip]::after {
 	position: fixed;
-	left: auto;
-	top: auto;
-	margin-top: 10px;
+	left: var(--wcdv-tt-left, auto);
+	right: var(--wcdv-tt-right, auto);
+	top: var(--wcdv-tt-top, auto);
+	transform: none;
+	transition: opacity 150ms cubic-bezier(.25, .8, .25, 1);
 }
 
 /* vim:set noet sw=4 ts=4: */

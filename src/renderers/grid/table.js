@@ -1792,6 +1792,33 @@ GridTable.prototype.draw = function (root, opts, cont) {
 
 		self.root.get(0).appendChild(self.ui.tbl.get(0));
 
+		// Position grid header tooltips relative to the hovered button's current viewport rectangle.
+		// These tooltips use fixed positioning (see wcdatavis.css) so they stay out of the table's
+		// horizontal scroll overflow (no phantom blank space) and can escape the TableTool floating
+		// header's overflow:hidden strip.  Fixed positioning resolves auto insets from the static
+		// position, which ignores scroll offsets, so the coordinates are supplied here instead.  The
+		// handler is delegated (so it also covers buttons cloned into the floating header by TableTool)
+		// and namespaced (so repeated draws do not stack duplicates).  The tooltip opens leftward,
+		// flipping to rightward for columns near the left edge, so it never runs off-screen.
+		self.root
+			.off('mouseenter.wcdvHeaderTooltip')
+			.on('mouseenter.wcdvHeaderTooltip', '.wcdv_heading_container [data-tooltip]', function () {
+				var rect = this.getBoundingClientRect();
+				var tipWidth = 20 * (parseFloat(window.getComputedStyle(this).fontSize) || 16) + 18;
+				var style = this.style;
+				if (rect.right - tipWidth < 0) {
+					// Opening leftward would run off the left edge, so open rightward from the button instead.
+					style.setProperty('--wcdv-tt-left', rect.left + 'px');
+					style.setProperty('--wcdv-tt-right', 'auto');
+				}
+				else {
+					// Anchor the tooltip's right edge to the button so it opens leftward.
+					style.setProperty('--wcdv-tt-left', 'auto');
+					style.setProperty('--wcdv-tt-right', (window.innerWidth - rect.right) + 'px');
+				}
+				style.setProperty('--wcdv-tt-top', (rect.bottom + 10) + 'px');
+			});
+
 		self.drawBody(data, typeInfo, columns, function () {
 			if (!self.features.incremental || getProp(self.defn, 'table', 'incremental', 'appendBodyLast')) {
 				self.ui.tbl.append(self.ui.tbody);
