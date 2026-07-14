@@ -197,7 +197,13 @@ You can run individual tests using `npm run test --file=<NAME>` (note that `<NAM
 - **New features**: Create new minor branch off latest stable (e.g., `v3.3` from `v3.2`)
 - **Always run** `make teardown && make setup` when switching branches
 
-## Testing
+## Manual Tests
+
+The pages in `tests/pages` provide many different configurations for manual testing.
+
+Many test pages make use of Vite to dynamically reload when the JS or CSS content changes, but some do not. If code changes do not have the expected effect, or just to be on the safe side, re-run `make tests` before verifying fixes using manual testing.
+
+## Automated Tests
 
 Testing is done using Mocha to run tests, Selenium to communicate with the browser, and Chai for assertions.
 
