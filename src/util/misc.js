@@ -318,7 +318,7 @@ export function createLucideSvg(name) {
  * (e.g. 'fa-check'), which will be mapped to its Lucide equivalent.
  *
  * @param {string} icon The icon name.
- * @param {string} [cls] Additional CSS classes to add.
+ * @param {string|string[]} [cls] Additional CSS class(es) to add, as a space-separated string or an array.
  * @param {string} [title] A title/tooltip for the icon.
  * @returns {jQuery} A jQuery-wrapped SVG element.
  */
@@ -334,8 +334,12 @@ export function icon(icon, cls, title) {
 	svg.setAttribute('data-icon', icon);
 
 	if (cls != null) {
-		_.each(cls, function (c) {
-			svg.classList.add(c);
+		// cls may be an array of classes or a (possibly space-separated) string.
+		var classes = _.isArray(cls) ? cls : String(cls).split(/\s+/);
+		_.each(classes, function (c) {
+			if (c) {
+				svg.classList.add(c);
+			}
 		});
 	}
 
